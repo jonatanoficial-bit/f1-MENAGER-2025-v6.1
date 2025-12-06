@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+    width="900" 
+    height="700" 
+    viewBox="0 0 900 700" 
+    xmlns="http://www.w3.org/2000/svg">
+
+    <!-- BACKGROUND -->
+    <rect width="100%" height="100%" fill="#0c0c0c"/>
+
+    <!-- DEEP SHADOW -->
+    <path 
+        d="M680 330
+           C710 300 720 270 705 245
+           C690 220 650 200 600 190
+           C550 180 490 185 440 210
+           C390 235 350 275 330 320
+           C310 365 310 405 330 440
+           C350 475 390 505 440 520
+           C490 535 550 535 600 525
+           C650 515 690 490 710 455
+           C730 420 730 385 710 350
+           C690 315 660 290 620 275
+           C580 260 540 260 500 270
+           C460 280 430 300 420 320
+           C410 340 420 360 450 375
+           C480 390 520 395 560 390
+           C600 385 640 370 680 330 Z"
+        stroke="rgba(255,255,255,0.18)"
+        stroke-width="28"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"
+    />
+
+    <!-- INNER SHADOW -->
+    <path 
+        d="M680 330
+           C710 300 720 270 705 245
+           C690 220 650 200 600 190
+           C550 180 490 185 440 210
+           C390 235 350 275 330 320
+           C310 365 310 405 330 440
+           C350 475 390 505 440 520
+           C490 535 550 535 600 525
+           C650 515 690 490 710 455
+           C730 420 730 385 710 350
+           C690 315 660 290 620 275
+           C580 260 540 260 500 270
+           C460 280 430 300 420 320
+           C410 340 420 360 450 375
+           C480 390 520 395 560 390
+           C600 385 640 370 680 330 Z"
+        stroke="rgba(255,255,255,0.35)"
+        stroke-width="16"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"
+    />
+
+    <!-- TRACK LINE -->
+    <path 
+        d="M680 330
+           C710 300 720 270 705 245
+           C690 220 650 200 600 190
+           C550 180 490 185 440 210
+           C390 235 350 275 330 320
+           C310 365 310 405 330 440
+           C350 475 390 505 440 520
+           C490 535 550 535 600 525
+           C650 515 690 490 710 455
+           C730 420 730 385 710 350
+           C690 315 660 290 620 275
+           C580 260 540 260 500 270
+           C460 280 430 300 420 320
+           C410 340 420 360 450 375
+           C480 390 520 395 560 390
+           C600 385 640 370 680 330 Z"
+        stroke="#ffffff"
+        stroke-width="10"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"
+    />
+
+    <!-- PIT LANE -->
+    <path
+        d="M630 345 
+           C610 360 580 370 550 372"
+        stroke="#bbbbbb"
+        stroke-width="8"
+        stroke-linecap="round"
+        fill="none"
+    />
+
+    <!-- START/FINISH LINE -->
+    <rect 
+        x="665" 
+        y="324" 
+        width="28" 
+        height="8" 
+        fill="#ffffff"
+    />
+    <rect 
+        x="665" 
+        y="324" 
+        width="28" 
+        height="8" 
+        fill="none" 
+        stroke="#000" 
+        stroke-width="1"
+    />
+
+    <!-- START POINT MARKER -->
+    <circle 
+        cx="679" 
+        cy="328" 
+        r="6" 
+        fill="#ff0000"
+    />
+
+    <!-- TRACK LABEL -->
+    <text 
+        x="40" 
+        y="70" 
+        font-size="28" 
+        fill="#ffffff" 
+        font-family="Arial" 
+        stroke="#000" 
+        stroke-width="0.8"
+    >
+        Circuit Zandvoort - Netherlands
+    </text>
+
+</svg>

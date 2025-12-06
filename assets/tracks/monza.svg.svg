@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="2e3" height="1214.6" version="1.1" viewBox="0 0 529.17 321.44" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <marker id="marker5029" overflow="visible" orient="auto">
+      <path transform="matrix(.8 0 0 .8 10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill="#cf000f" fill-rule="evenodd" stroke="#cf000f" stroke-width="1pt"/>
+    </marker>
+    <marker id="marker1562" overflow="visible" orient="auto">
+      <path transform="matrix(.8 0 0 .8 10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+    </marker>
+    <marker id="marker1512" overflow="visible" orient="auto">
+      <path transform="matrix(.8 0 0 .8 10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+    </marker>
+    <marker id="Arrow2Lstart" overflow="visible" orient="auto">
+      <path transform="matrix(1.1,0,0,1.1,1.1,0)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill-rule="evenodd" stroke="#000" stroke-linejoin="round" stroke-width=".625"/>
+    </marker>
+    <marker id="Arrow2Lstart-0" overflow="visible" orient="auto">
+      <path transform="matrix(1.1,0,0,1.1,1.1,0)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill-rule="evenodd" stroke="#000" stroke-linejoin="round" stroke-width=".625"/>
+    </marker>
+    <marker id="marker1562-7" overflow="visible" orient="auto">
+      <path transform="matrix(.8 0 0 .8 10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+    </marker>
+    <marker id="Arrow2Lstart-7" overflow="visible" orient="auto">
+      <path transform="matrix(1.1,0,0,1.1,1.1,0)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill-rule="evenodd" stroke="#000" stroke-linejoin="round" stroke-width=".625"/>
+    </marker>
+    <marker id="Arrow2Lstart-9" overflow="visible" orient="auto">
+      <path transform="matrix(1.1,0,0,1.1,1.1,0)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill-rule="evenodd" stroke="#000" stroke-linejoin="round" stroke-width=".625"/>
+    </marker>
+    <marker id="marker1562-7-8" overflow="visible" orient="auto">
+      <path transform="matrix(.8 0 0 .8 10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+    </marker>
+    <marker id="marker5029-5" overflow="visible" orient="auto">
+      <path transform="matrix(.8 0 0 .8 10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill="#cf000f" fill-rule="evenodd" stroke="#cf000f" stroke-width="1pt"/>
+    </marker>
+    <marker id="marker5029-6" overflow="visible" orient="auto">
+      <path transform="matrix(.8 0 0 .8 10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill="#cf000f" fill-rule="evenodd" stroke="#cf000f" stroke-width="1pt"/>
+    </marker>
+    <marker id="marker5029-0" overflow="visible" orient="auto">
+      <path transform="matrix(.8 0 0 .8 10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill="#cf000f" fill-rule="evenodd" stroke="#cf000f" stroke-width="1pt"/>
+    </marker>
+    <pattern id="pattern4599" patternTransform="matrix(2.4813 0 0 2.4813 388.69 -226.65)" xlink:href="#Checkerboard"/>
+    <pattern id="Checkerboard" width="2" height="2" patternTransform="translate(0) scale(10)" patternUnits="userSpaceOnUse">
+      <rect width="1" height="1"/>
+      <rect x="1" y="1" width="1" height="1"/>
+    </pattern>
+  </defs>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <dc:title/>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g transform="translate(-13.196 -90.282)">
+    <path d="m66.239 182.29c3e-6 -28.342 31.873-53.333 52.15-53.333 22.594 0 37.501 18.36 37.501 35 0 18.93-19.602 35.383-35.866 35.383h-33.1" fill="none" stroke="#000" stroke-width="3.9688"/>
+    <path d="m134.02 213.33h32.45c9.8847 0 26.727 7.2112 26.727 20.71 0 10.521-4.196 21.197-17.883 21.197-7.2 0-19.172-11.449-25.88-11.449" fill="none" stroke="#000" stroke-width="3.9688"/>
+    <path d="m66.874 215.47h69.215c8.8 0 25.863 7.6265 25.863 20.64 0 17.65-3.02 24.56-17.128 41.203-4.81 5.7059-8.852 16.996-8.9004 24.241-0.0147 2.1832 0.1601 4.225 0.40473 6.2801 1.2239 10.489 7.3668 19.361 12.486 29.007 6.3914 11.955 22.887 24.003 35.109 24.003l161.24-0.53572c8.38-0.0278 20.013-4.9049 24.191-12.829 4.8022-9.0556 18.935-27.915 18.935-44.221 0-11.201 0.0546-25.514-0.83375-36.19-0.6519-7.8894-3.8926-26.917-7.3884-36.309-3.1016-8.3387-6.2188-18.675-25.978-38.702-12.194-12.431-27.137-29.292-37.722-36.331-7.6311-5.0402-12.984-8.6314-19.785-8.9786-7.6803-0.39069-14.456 7.7571-19.429 10.248-7.7149 3.8665-18.245 12.108-26.383 17.899-6.474 4.5782-12.121 10.231-18.831 14.529-5.8657 3.7748-12.678 6.9881-20.305 6.9881h-15.297" fill="none" stroke="#000" stroke-width="3.9688"/>
+    <g transform="translate(11.493 23.39)" fill="none">
+      <circle cx="114.18" cy="158.9" r="6.5753" fill="none" stroke="#000" stroke-width=".52917"/>
+    </g>
+    <g transform="translate(26.271 35.915)">
+      <text x="86.689117" y="127.38032" fill="#000000" font-family="sans-serif" font-size="9.6229px" stroke-width=".24057" style="line-height:1.25" xml:space="preserve"><tspan x="86.689117" y="127.38032" stroke-width=".24057">1</tspan></text>
+    </g>
+    <g fill="none" stroke="#000">
+      <g stroke-width=".52917">
+        <circle cx="114.81" cy="192.91" r="6.5753"/>
+        <circle cx="102.29" cy="157.71" r="6.5753"/>
+        <circle cx="151.16" cy="192.01" r="6.5753"/>
+        <circle cx="167.1" cy="219.89" r="6.5753"/>
+        <circle cx="214.82" cy="237.44" r="6.5753"/>
+        <circle cx="197.54" cy="269.57" r="6.5753"/>
+        <circle cx="183.38" cy="298.61" r="6.5753"/>
+        <circle cx="207.73" cy="311.4" r="6.5753"/>
+        <circle cx="233.1" cy="312.56" r="6.5753"/>
+        <circle cx="263.67" cy="312.56" r="6.5753"/>
+        <circle cx="294.13" cy="311.51" r="6.5753"/>
+        <circle cx="322.41" cy="311.31" r="6.5753"/>
+        <circle cx="351.95" cy="311.1" r="6.5753"/>
+        <circle cx="375.43" cy="307.71" r="6.5753"/>
+        <circle cx="396.99" cy="293.45" r="6.5753"/>
+        <circle cx="406.59" cy="260.02" r="6.5753"/>
+        <circle cx="409.07" cy="236.85" r="6.5753"/>
+        <circle cx="404.08" cy="213.52" r="6.5753"/>
+        <circle cx="394.37" cy="186.06" r="6.5753"/>
+        <circle cx="375.58" cy="162.36" r="6.5753"/>
+        <circle cx="344.11" cy="136.76" r="6.5753"/>
+        <circle cx="307.27" cy="117.67" r="6.5753"/>
+        <circle cx="275.64" cy="114.72" r="6.5753"/>
+        <circle cx="246.03" cy="125.76" r="6.5753"/>
+        <circle cx="219.18" cy="133.77" r="6.5753"/>
+        <circle cx="196.55" cy="148.07" r="6.5753"/>
+      </g>
+      <g>
+        <path d="m136.28 178.5c4.8208-1.4661 9.6414-2.9321 14.461-4.3981" marker-start="url(#Arrow2Lstart)" stroke-width=".60657"/>
+        <path d="m86.674 172.59c3.7512-1.2892 7.5021-2.5783 11.252-3.8672" marker-start="url(#Arrow2Lstart-0)" stroke-width=".76926"/>
+        <g stroke-width=".79375">
+          <path d="m99.216 217.54c-1.2665-4.3083-2.5327-8.6162-3.7988-12.924" marker-start="url(#marker1512)"/>
+          <path d="m180.5 273.72c-3.2034-4.3859-6.4065-8.7715-9.6095-13.157" marker-start="url(#marker1562)"/>
+          <path d="m176.34 330.66c-0.83209-5.3671-1.6641-10.734-2.4961-16.1" marker-start="url(#marker1562-7)"/>
+        </g>
+        <path d="m250.63 322.88c1.3305 1.6638 2.661 3.3277 3.9916 4.9915" marker-start="url(#Arrow2Lstart-7)" stroke-width=".54715"/>
+        <path d="m374.93 271.13c-1.0052-1.3584-2.0103-2.7167-3.0155-4.0751" marker-start="url(#Arrow2Lstart-9)" stroke-width=".577"/>
+      </g>
+    </g>
+    <g transform="translate(-16.03 13.112)">
+      <text x="128.61627" y="188.80035" fill="#000000" font-family="sans-serif" font-size="9.6229px" stroke-width=".24057" style="line-height:1.25" xml:space="preserve"><tspan x="128.61627" y="188.80035" stroke-width=".24057">2</tspan></text>
+    </g>
+    <g transform="translate(-30.389 52.139)">
+      <text x="128.61627" y="188.80035" fill="#000000" font-family="sans-serif" font-size="9.6229px" stroke-width=".24057" style="line-height:1.25" xml:space="preserve"><tspan x="128.61627" y="188.80035" stroke-width=".24057">3</tspan></text>
+    </g>
+    <g transform="translate(18.558 51.11)">
+      <text x="128.61627" y="188.80035" fill="#000000" font-family="sans-serif" font-size="9.6229px" stroke-width=".24057" style="line-height:1.25" xml:space="preserve"><tspan x="128.61627" y="188.80035" stroke-width=".24057">4</tspan></text>
+    </g>
+    <g transform="translate(34.999 77.535)">
+      <text x="128.61627" y="188.80035" fill="#000000" font-family="sans-serif" font-size="9.6229px" stroke-width=".24057" style="line-height:1.25" xml:space="preserve"><tspan x="128.61627" y="188.80035" stroke-width=".24057">5</tspan></text>
+    </g>
+    <g transform="translate(82.744 95.261)">
+      <text x="128.61627" y="188.80035" fill="#000000" font-family="sans-serif" font-size="9.6229px" stroke-width=".24057" style="line-height:1.25" xml:space="preserve"><tspan x="128.61627" y="188.80035" stroke-width=".24057">6</tspan></text>
+    </g>
+    <g transform="translate(65.408 126.25)">
+      <text x="128.61627" y="188.80035" fill="#000000" font-family="sans-serif" font-size="9.6229px" stroke-width=".24057" style="line-height:1.25" xml:space="preserve"><tspan x="128.61627" y="188.80035" stroke-width=".24057">7</tspan></text>
+    </g>
+    <g transform="translate(48.841 154.61)">
+      <text x="128.61627" y="188.80035" fill="#000000" font-family="sans-serif" font-size="9.6229px" stroke-width=".24057" style="line-height:1.25" xml:space="preserve"><tspan x="128.61627" y="188.80035" stroke-width=".24057">8</tspan></text>
+    </g>
+    <g transform="translate(73.531 166.03)">
+      <text x="128.61627" y="188.80035" fill="#000000" font-family="sans-serif" font-size="9.6229px" stroke-width=".24057" style="line-height:1.25" xml:space="preserve"><tspan x="128.61627" y="188.80035" stroke-width=".24057">9</tspan></text>
+    </g>
+    <g transform="translate(100.83 165.29)">
+      <text x="126.74947" y="187.58525" fill="#000000" font-family="sans-serif" font-size="7.6243px" stroke-width=".19061" style="line-height:1.25" xml:space="preserve"><tspan x="126.74947" y="187.58525" stroke-width=".19061">10</tspan></text>
+    </g>
+    <text x="243.54123" y="353.74142" fill="#000000" font-family="sans-serif" font-size="7.6243px" stroke-width=".19061" style="line-height:1.25" xml:space="preserve"><tspan x="243.54123" y="353.74142" stroke-width=".19061">11</tspan></text>
+    <text x="274.22699" y="353.75623" fill="#000000" font-family="sans-serif" font-size="7.6243px" stroke-width=".19061" style="line-height:1.25" xml:space="preserve"><tspan x="274.22699" y="353.75623" stroke-width=".19061">12</tspan></text>
+    <g fill="none" stroke="#000" stroke-width=".52917">
+      <circle cx="71.662" cy="164.68" r="6.5753"/>
+      <circle cx="84.92" cy="151.85" r="6.5753"/>
+      <circle cx="92.52" cy="139.93" r="6.5753"/>
+      <circle cx="108.76" cy="121.25" r="6.5753"/>
+      <circle cx="121.92" cy="117.97" r="6.5753"/>
+      <circle cx="146.82" cy="118.11" r="6.5753"/>
+      <circle cx="171.73" cy="119.28" r="6.5753"/>
+      <circle cx="193.47" cy="126.57" r="6.5753"/>
+      <circle cx="60.044" cy="193.62" r="6.5753"/>
+    </g>
+    <g fill="#000000" font-family="sans-serif" font-size="7.6243px" stroke-width=".19061">
+      <text x="66.520096" y="167.92374" style="line-height:1.25" xml:space="preserve"><tspan x="66.520096" y="167.92374" fill="#000000" stroke-width=".19061">13</tspan></text>
+      <text x="79.74041" y="154.44957" style="line-height:1.25" xml:space="preserve"><tspan x="79.74041" y="154.44957" stroke-width=".19061">14</tspan></text>
+      <text x="87.819901" y="142.43959" style="line-height:1.25" xml:space="preserve"><tspan x="87.819901" y="142.43959" stroke-width=".19061">15</tspan></text>
+      <text x="104.11539" y="123.82375" style="line-height:1.25" xml:space="preserve"><tspan x="104.11539" y="123.82375" stroke-width=".19061">16</tspan></text>
+      <text x="117.68736" y="120.84864" style="line-height:1.25" xml:space="preserve"><tspan x="117.68736" y="120.84864" stroke-width=".19061">17</tspan></text>
+      <text x="141.66112" y="120.45744" style="line-height:1.25" xml:space="preserve"><tspan x="141.66112" y="120.45744" stroke-width=".19061">18</tspan></text>
+      <text x="166.89734" y="122.04053" style="line-height:1.25" xml:space="preserve"><tspan x="166.89734" y="122.04053" stroke-width=".19061">19</tspan></text>
+      <text x="188.69318" y="128.95308" style="line-height:1.25" xml:space="preserve"><tspan x="188.69318" y="128.95308" stroke-width=".19061">20</tspan></text>
+      <text x="54.997482" y="196.06184" style="line-height:1.25" xml:space="preserve"><tspan x="54.997482" y="196.06184" stroke-width=".19061">21</tspan></text>
+    </g>
+    <path d="m318.45 120.03c-6.27 2.3091-12.539 4.6183-18.809 6.9274" fill="none" marker-start="url(#marker1562-7-8)" stroke="#000" stroke-width=".658"/>
+    <g fill="#000000" font-family="sans-serif" font-size="7.6243px" stroke-width=".19061">
+      <text x="337.79739" y="144.3349" style="line-height:1.25" xml:space="preserve"><tspan x="337.79739" y="144.3349" stroke-width=".19061">22</tspan></text>
+      <text x="371.36621" y="168.04216" style="line-height:1.25" xml:space="preserve"><tspan x="371.36621" y="168.04216" stroke-width=".19061">23</tspan></text>
+      <text x="389.25085" y="191.41441" style="line-height:1.25" xml:space="preserve"><tspan x="389.25085" y="191.41441" stroke-width=".19061">24</tspan></text>
+      <text x="399.6524" y="218.75938" style="line-height:1.25" xml:space="preserve"><tspan x="399.6524" y="218.75938" stroke-width=".19061">25</tspan></text>
+      <text x="404.11264" y="242.44778" style="line-height:1.25" xml:space="preserve"><tspan x="404.11264" y="242.44778" stroke-width=".19061">26</tspan></text>
+      <text x="401.08832" y="267.51822" style="line-height:1.25" xml:space="preserve"><tspan x="401.08832" y="267.51822" stroke-width=".19061">27</tspan></text>
+      <text x="391.10321" y="299.99725" style="line-height:1.25" xml:space="preserve"><tspan x="391.10321" y="299.99725" stroke-width=".19061">28</tspan></text>
+      <text x="370.22012" y="313.63788" style="line-height:1.25" xml:space="preserve"><tspan x="370.22012" y="313.63788" stroke-width=".19061">29</tspan></text>
+      <text x="347.75565" y="316.09174" style="line-height:1.25" xml:space="preserve"><tspan x="347.75565" y="316.09174" stroke-width=".19061">30</tspan></text>
+      <text x="318.77414" y="316.30392" style="line-height:1.25" xml:space="preserve"><tspan x="318.77414" y="316.30392" stroke-width=".19061">31</tspan></text>
+    </g>
+    <circle cx="361.88" cy="158.22" r="0" fill="#0c0028" stroke="#ff000f" stroke-width=".26458"/>
+    <g fill="none" stroke="#cf000f" stroke-width=".79375">
+      <path d="m208.36 181.04c0.537-0.71082 1.074-1.4217 1.6111-2.1325" marker-start="url(#marker5029)"/>
+      <path d="m250.45 107.86c0.79368-0.40325 1.5874-0.8065 2.381-1.2097" marker-start="url(#marker5029-5)"/>
+      <path d="m292.86 104.89c0.61185 0.27789 1.2237 0.55577 1.8356 0.83366" marker-start="url(#marker5029-6)"/>
+      <path d="m388.91 169.79c0.62672 0.13134 1.2534 0.26268 1.8802 0.39402" marker-start="url(#marker5029-0)"/>
+    </g>
+    <rect transform="matrix(-.034188 .99942 -.99965 -.026946 0 0)" x="303.87" y="-411.02" width="24.759" height="9.3785" fill="#fff" style="mix-blend-mode:normal"/>
+    <rect transform="matrix(-.034188 .99942 -.99965 -.026946 0 0)" x="303.87" y="-411.02" width="24.759" height="9.3785" fill="url(#pattern4599)" stroke="#000" stroke-width=".31842" style="mix-blend-mode:normal"/>
+  </g>
+</svg>

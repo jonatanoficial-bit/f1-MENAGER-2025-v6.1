@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+    width="900" 
+    height="700" 
+    viewBox="0 0 900 700" 
+    xmlns="http://www.w3.org/2000/svg">
+
+    <!-- BACKGROUND -->
+    <rect width="100%" height="100%" fill="#0c0c0c"/>
+
+    <!-- TRACK SHADOW 1 (deep) -->
+    <path 
+        d="M600 200
+           C640 220 660 250 650 280
+           C640 310 600 340 550 355
+           C500 370 450 370 410 355
+           C370 340 350 315 350 290
+           C350 265 370 240 405 220
+           C440 200 490 185 540 185
+           C590 185 630 190 600 200 Z"
+        stroke="rgba(255,255,255,0.18)"
+        stroke-width="28"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"
+    />
+
+    <!-- TRACK SHADOW 2 (inner) -->
+    <path 
+        d="M600 200
+           C640 220 660 250 650 280
+           C640 310 600 340 550 355
+           C500 370 450 370 410 355
+           C370 340 350 315 350 290
+           C350 265 370 240 405 220
+           C440 200 490 185 540 185
+           C590 185 630 190 600 200 Z"
+        stroke="rgba(255,255,255,0.32)"
+        stroke-width="16"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"
+    />
+
+    <!-- FINAL TRACK LINE -->
+    <path 
+        d="M600 200
+           C640 220 660 250 650 280
+           C640 310 600 340 550 355
+           C500 370 450 370 410 355
+           C370 340 350 315 350 290
+           C350 265 370 240 405 220
+           C440 200 490 185 540 185
+           C590 185 630 190 600 200 Z"
+        stroke="#ffffff"
+        stroke-width="10"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"
+    />
+
+    <!-- PIT LANE -->
+    <path
+        d="M560 360 
+           C545 380 525 390 505 390"
+        stroke="#d0d0d0"
+        stroke-width="8"
+        stroke-linecap="round"
+        fill="none"
+    />
+
+    <!-- START/FINISH LINE -->
+    <rect 
+        x="585" 
+        y="197" 
+        width="24" 
+        height="8" 
+        fill="#ffffff"
+    />
+    <rect 
+        x="585" 
+        y="197" 
+        width="24" 
+        height="8" 
+        fill="none" 
+        stroke="#000" 
+        stroke-width="1"
+    />
+
+    <!-- START POINT MARKER -->
+    <circle 
+        cx="597" 
+        cy="201" 
+        r="5" 
+        fill="#ff0000"
+    />
+
+    <!-- TRACK LABEL -->
+    <text 
+        x="40" 
+        y="70" 
+        font-size="28" 
+        fill="#ffffff" 
+        font-family="Arial" 
+        stroke="#000" 
+        stroke-width="0.8"
+    >
+        Hungaroring - Hungary
+    </text>
+
+</svg>
