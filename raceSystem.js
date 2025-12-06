@@ -1,11 +1,11 @@
-// Sistema de corrida 2D com mapa, pneus e pit-stop
+// ============================================================
+// RACE SYSTEM 2D – F1 MANAGER 2025
+// Usa mapa SVG, pneus, pit-stop e grid completo (20 pilotos).
+// ============================================================
 (function () {
-  // Intervalo base (ms) do loop de corrida. A velocidade real = base / raceSpeedMultiplier
-  const BASE_INTERVAL = 250;
-  let raceSpeedMultiplier = 1;
+  const BASE_INTERVAL = 250;          // ms base do loop
+  let raceSpeedMultiplier = 1;        // 1x, 2x, 4x
   let raceInterval = null;
-
-  // Estado global da corrida
   let RACE_STATE = null;
 
   // =========================
@@ -15,7 +15,6 @@
     if (![1, 2, 4].includes(mult)) mult = 1;
     raceSpeedMultiplier = mult;
 
-    // Atualiza estado visual dos botões
     ['speed-1x', 'speed-2x', 'speed-4x'].forEach((id) => {
       const btn = document.getElementById(id);
       if (!btn) return;
@@ -24,7 +23,6 @@
       else btn.classList.remove('active');
     });
 
-    // Se a corrida já estiver rodando, reinicia o intervalo
     if (RACE_STATE && RACE_STATE.running) {
       if (raceInterval) clearInterval(raceInterval);
       raceInterval = setInterval(raceTick, BASE_INTERVAL / raceSpeedMultiplier);
@@ -32,12 +30,8 @@
   };
 
   // =========================
-  // GERAÇÃO DO TRAÇADO
+  // TRAÇADO DA PISTA
   // =========================
-  /**
-   * Gera um traçado estilizado (0–1) para a pista.
-   * Não é 100% igual ao real, mas dá personalidade para cada GP.
-   */
   function generateTrackPath(key, n) {
     const pts = [];
     key = (key || '').toLowerCase();
@@ -110,12 +104,9 @@
     return pts;
   }
 
-  /**
-   * Gera um pit lane paralelo ao traçado principal (levemente “para dentro”).
-   */
   function generatePitLane(mainPath) {
     return mainPath.map((p) => {
-      const factor = 0.92; // 8% mais para dentro
+      const factor = 0.92; // “para dentro”
       return {
         x: 0.5 + (p.x - 0.5) * factor,
         y: 0.5 + (p.y - 0.5) * factor
@@ -136,7 +127,7 @@
   }
 
   // =========================
-  // RENDERIZAÇÃO / HUD
+  // RENDERIZAÇÃO: TABELA / HUD
   // =========================
   function renderStandings() {
     const standingsEl = document.getElementById('race-standings');
@@ -188,10 +179,14 @@
   function renderHud(player) {
     if (!player || !player.tyreSet) return;
 
-    const tyreEl = document.getElementById('hud-tyre');
-    const wearEl = document.getElementById('hud-wear');
+    // IDs em português, batendo com o HTML
+    const pilotEl = document.getElementById('hud-piloto');
+    const tyreEl = document.getElementById('hud-pneus');
+    const wearEl = document.getElementById('hud-desgaste');
     const tempEl = document.getElementById('hud-temp');
-    const deltaEl = document.getElementById('hud-delta');
+    const pitEl = document.getElementById('hud-paradas');
+
+    if (pilotEl) pilotEl.textContent = player.name + ' (' + (player.team || '') + ')';
 
     if (tyreEl) {
       const comp = window.TyreCompounds
@@ -199,28 +194,14 @@
         : player.tyreSet.compound;
       tyreEl.textContent = comp;
     }
-    if (wearEl) wearEl.textContent = player.tyreSet.wear.toFixed(0);
 
-    // Temperatura “virtual” baseada no desgaste (só para feedback visual)
+    if (wearEl) wearEl.textContent = player.tyreSet.wear.toFixed(0) + '%';
+
     const virtTemp = 80 + player.tyreSet.wear * 0.4;
-    if (tempEl) tempEl.textContent = virtTemp.toFixed(0);
+    if (tempEl) tempEl.textContent = virtTemp.toFixed(0) + ' ºC';
 
-    if (deltaEl && RACE_STATE) {
-      const racers = RACE_STATE.racers;
-      const idx = racers.indexOf(player);
-      if (idx <= 0) {
-        deltaEl.textContent = '-';
-      } else {
-        const leader = racers[0];
-        const diffIndex =
-          (leader.lap - player.lap) * RACE_STATE.mainPath.length +
-          (leader.positionIndex - player.positionIndex);
-        const seconds = Math.max(0, diffIndex * 0.04);
-        deltaEl.textContent = seconds.toFixed(1);
-      }
-    }
+    if (pitEl) pitEl.textContent = player.pitStopCount || 0;
 
-    // Atualiza também o indicador de voltas
     const lapIndicator = document.getElementById('lap-indicator');
     if (lapIndicator && RACE_STATE) {
       const currentLap = Math.min(player.lap + 1, RACE_STATE.lapsTotal);
@@ -230,7 +211,7 @@
   }
 
   // =========================
-  // LÓGICA PRINCIPAL DA CORRIDA
+  // LÓGICA PRINCIPAL
   // =========================
   function raceTick() {
     if (!RACE_STATE || !RACE_STATE.running) return;
@@ -240,35 +221,37 @@
     const pathLen = mainPath.length;
 
     racers.forEach((dr) => {
-      // Se está no pit
       if (dr.inPit) {
+        // Contagem do tempo de pit
         dr.pitTime -= BASE_INTERVAL / 1000;
         if (dr.pitTime <= 0) {
           dr.inPit = false;
           dr.pitStopCount = (dr.pitStopCount || 0) + 1;
-          dr.tyreSet = window.createTyreSet
-            ? window.createTyreSet(dr.nextCompound || dr.tyreSet.compound)
-            : dr.tyreSet;
+          if (window.createTyreSet) {
+            dr.tyreSet = window.createTyreSet(dr.nextCompound || dr.tyreSet.compound);
+          }
           dr.pitError = null;
         }
       } else {
-        // Atualiza pneus e aplica penalidade
+        // Desgaste / penalidade de pneus
         let penalty = 0;
         if (window.updateTyresForLap && dr.tyreSet) {
           penalty = window.updateTyresForLap(dr.tyreSet, 1.0, 1.0);
         }
+        penalty = Math.min(Math.max(penalty, 0), 20); // trava para não “matar” o carro
 
-        // Velocidade base (rating 80–100 => ~1.0–1.4)
-        const baseSpeed = 1 + (dr.rating - 80) / 100;
-        dr.positionIndex += baseSpeed - penalty * 0.02;
+        // Velocidade base bem maior para a corrida andar (3–6 por tick)
+        const baseSpeed = 3 + (dr.rating - 80) * 0.15;
+        const speed = Math.max(1, baseSpeed - penalty * 0.05);
 
-        // Completou volta
+        dr.positionIndex += speed;
+
         if (dr.positionIndex >= pathLen) {
           dr.positionIndex -= pathLen;
           dr.lap += 1;
         }
 
-        // Decisão de pit da IA
+        // IA decide ir ao box
         if (!dr.isPlayer && !dr.inPit && window.decideAiPit) {
           if (window.decideAiPit(dr, RACE_STATE)) {
             dr.inPit = true;
@@ -294,7 +277,7 @@
         }
       }
 
-      // Atualiza posição visual do carro
+      // Movimento visual
       const path = dr.inPit ? pitPath : mainPath;
       const idx = Math.floor(dr.positionIndex) % path.length;
       const nextIdx = (idx + 1) % path.length;
@@ -311,20 +294,17 @@
       }
     });
 
-    // Ordena pilotos (volta desc, posiçãoIndex desc)
+    // Ordena grid
     racers.sort((a, b) => {
       if (a.lap !== b.lap) return b.lap - a.lap;
       return b.positionIndex - a.positionIndex;
     });
 
     renderStandings();
+    const player = racers.find((r) => drIsPlayer(dr = r)); // truque só pra não quebrar
+    if (player) renderHud(player);
 
-    const player = racers.find((r) => r.isPlayer);
-    if (player) {
-      renderHud(player);
-    }
-
-    // Verifica fim de corrida (quando líder completa todas as voltas)
+    // Fim de corrida: líder completou todas as voltas
     const leader = racers[0];
     if (leader && leader.lap >= RACE_STATE.lapsTotal) {
       RACE_STATE.running = false;
@@ -332,23 +312,18 @@
     }
   }
 
+  function drIsPlayer(dr) {
+    return dr && dr.isPlayer;
+  }
+
   // =========================
-  // INÍCIO DA CORRIDA 2D
+  // INÍCIO DA CORRIDA
   // =========================
   window.startRace2D = function (trackKey, driversList, totalLaps) {
     const laps = totalLaps || 10;
 
     const standingsEl = document.getElementById('race-standings');
     if (standingsEl) standingsEl.innerHTML = '';
-
-    const hudTyre = document.getElementById('hud-tyre');
-    const hudWear = document.getElementById('hud-wear');
-    const hudTemp = document.getElementById('hud-temp');
-    const hudDelta = document.getElementById('hud-delta');
-    if (hudTyre) hudTyre.textContent = '-';
-    if (hudWear) hudWear.textContent = '-';
-    if (hudTemp) hudTemp.textContent = '-';
-    if (hudDelta) hudDelta.textContent = '-';
 
     const lapInd = document.getElementById('lap-indicator');
     if (lapInd) lapInd.textContent = 'Volta 1 / ' + laps;
@@ -358,7 +333,16 @@
     const carsLayer = document.getElementById('cars-layer');
     if (!trackImg || !trackContainer || !carsLayer) return;
 
-    // Seleciona o arquivo de pista (usa svg.svg que você já criou)
+    // GRID COMPLETO: se vier só 2 pilotos do script, completa com const PILOTOS (20)
+    let grid;
+    if (driversList && driversList.length >= 10) {
+      grid = driversList;
+    } else if (typeof PILOTOS !== 'undefined') {
+      grid = PILOTOS; // usa 20 pilotos do data.js
+    } else {
+      grid = driversList || [];
+    }
+
     const key = (trackKey || 'monaco').toLowerCase().replace(/\s+/g, '_');
     const candidates = [
       'assets/tracks/' + key + '.svg.svg',
@@ -379,14 +363,13 @@
       const mainPath = scalePath(basePath, width, height);
       const pitPath = scalePath(basePit, width, height);
 
-      // Cria lista interna de pilotos da corrida
-      const racers = (driversList || []).map((p, idx) => {
+      const racers = (grid || []).map((p, idx) => {
         const tyreSet = window.createTyreSet
           ? window.createTyreSet('MEDIUM')
           : { compound: 'MEDIUM', wear: 0 };
         return {
           name: p.nome || p.name || 'Piloto ' + (idx + 1),
-          team: p.equipe || p.team || '',
+          team: (p.equipe || p.team || '').toLowerCase(),
           rating: p.rating || 80,
           tyreSet,
           pitStopCount: 0,
@@ -397,12 +380,11 @@
           lap: 0,
           positionIndex: idx * 10,
           el: null,
-          isPlayer: idx === 0, // primeiro da lista é o jogador
+          isPlayer: idx === 0, // primeiro é o jogador
           order: idx
         };
       });
 
-      // Cria elementos DOM dos carros
       carsLayer.innerHTML = '';
       racers.forEach((dr) => {
         const img = document.createElement('img');
@@ -429,7 +411,7 @@
   };
 
   // =========================
-  // PIT DO JOGADOR
+  // COMANDO DE BOX (JOGADOR)
   // =========================
   window.comandarBox = function () {
     if (!RACE_STATE || !RACE_STATE.running) return;
@@ -449,17 +431,16 @@
       const btn = document.createElement('button');
       btn.textContent = window.TyreCompounds[c].name;
       btn.onclick = function () {
-        if (!window.calculatePitTime) {
-          player.inPit = true;
-          player.pitTime = 3;
-          player.nextCompound = c;
-        } else {
-          player.inPit = true;
+        player.inPit = true;
+        if (window.calculatePitTime) {
           const pitInfo = window.calculatePitTime();
           player.pitTime = pitInfo.time;
           player.pitError = pitInfo.error;
-          player.nextCompound = c;
+        } else {
+          player.pitTime = 3;
+          player.pitError = null;
         }
+        player.nextCompound = c;
         popup.classList.add('hidden');
       };
       optionsEl.appendChild(btn);
@@ -471,7 +452,6 @@
     if (popup) popup.classList.add('hidden');
   };
 
-  // Permite parar a corrida externamente (ex.: ao voltar para o GP)
   window.stopRace2D = function () {
     if (raceInterval) {
       clearInterval(raceInterval);
