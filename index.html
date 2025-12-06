@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>F1 Manager 2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="race.css">
+</head>
+<body>
+
+  <!-- CAPA -->
+  <section id="tela-capa" class="tela tela-fundo-capa visible">
+    <div class="overlay">
+      <div class="capa-container">
+        <h1 class="titulo-capa">F1 MANAGER <span>2025</span></h1>
+        <p class="subtitulo-capa">Simulador de gerenciamento no estilo Fórmula 1</p>
+
+        <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
+          <button id="btn-novo" class="btn-principal">Novo Jogo</button>
+          <button id="btn-continuar" class="btn-secundario">Continuar Carreira</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOBBY -->
+  <section id="tela-lobby" class="tela tela-fundo-lobby">
+    <div class="overlay">
+      <h2>Lobby da Equipe</h2>
+
+      <div class="painel-superior">
+        <div class="gerente-info">
+          <img id="lobby-avatar" class="avatar-img" src="" alt="Avatar gerente">
+          <div>
+            <h3>Gerente</h3>
+            <p id="lobby-gerente-nome">-</p>
+          </div>
+        </div>
+
+        <div class="equipe-info">
+          <img id="lobby-logo" class="logo-equipe-img" src="" alt="Logo equipe">
+          <div>
+            <h3>Equipe</h3>
+            <p id="lobby-equipe-nome">-</p>
+          </div>
+        </div>
+
+        <div class="financas-info">
+          <div>
+            <h3>Finanças</h3>
+            <p>Saldo atual:</p>
+            <p id="lobby-dinheiro">R$ 0</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="pilotos-lobby" class="pilotos-lobby">
+        <!-- opcional: você pode popular essa área depois com JS -->
+      </div>
+
+      <div class="lobby-botoes">
+        <button id="btn-treino">Treino Livre</button>
+        <button id="btn-classificacao">Classificação (Q1/Q2/Q3)</button>
+        <button id="btn-oficina">Oficina / Setup</button>
+        <button id="btn-salvar">Salvar Carreira</button>
+      </div>
+
+      <!-- ESTE volta pra CAPA -->
+      <button id="btn-voltar-capa" class="btn-voltar">Voltar à Capa</button>
+    </div>
+  </section>
+
+  <!-- TREINO LIVRE -->
+  <section id="tela-treino" class="tela tela-fundo-lobby">
+    <div class="overlay">
+      <h2>Treino Livre</h2>
+      <p class="small-text">
+        Aqui os pilotos dão voltas e trazem feedback sobre o carro de acordo com o setup atual.
+      </p>
+
+      <div id="treino-feedback" class="tabela"></div>
+
+      <!-- ESTES voltam pro LOBBY -->
+      <button class="btn-voltar btn-voltar-lobby">Voltar ao Lobby</button>
+    </div>
+  </section>
+
+  <!-- OFICINA / SETUP -->
+  <section id="tela-oficina" class="tela tela-fundo-oficina">
+    <div class="overlay">
+      <h2>Oficina / Setup do Carro</h2>
+      <p class="small-text">
+        Ajuste asas, suspensão, altura e diferencial. Essas escolhas influenciam
+        curvas, retas, desgaste e desempenho em treino, classificação e corrida.
+      </p>
+
+      <div class="tabela">
+        <label for="slider-asa">Asa Aerodinâmica (Downforce)</label>
+        <input id="slider-asa" type="range" min="0" max="100" step="1">
+
+        <label for="slider-susp">Suspensão</label>
+        <input id="slider-susp" type="range" min="0" max="100" step="1">
+
+        <label for="slider-altura">Altura do Carro</label>
+        <input id="slider-altura" type="range" min="0" max="100" step="1">
+
+        <label for="slider-dif">Diferencial</label>
+        <input id="slider-dif" type="range" min="0" max="100" step="1">
+      </div>
+
+      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="btn-salvar-setup" class="btn-principal">Salvar Setup</button>
+        <button class="btn-voltar btn-voltar-lobby">Voltar ao Lobby</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLASSIFICAÇÃO -->
+  <section id="tela-classificacao" class="tela tela-fundo-lobby">
+    <div class="overlay">
+      <h2>Classificação</h2>
+      <p class="small-text">
+        O resultado da classificação é calculado com base no setup atual e
+        habilidades dos pilotos da equipe.
+      </p>
+
+      <div id="classificacao-result" class="tabela"></div>
+
+      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="btn-ir-corrida" class="btn-principal">Ir para a Corrida</button>
+        <button class="btn-voltar btn-voltar-lobby">Voltar ao Lobby</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CORRIDA 2D -->
+  <section id="tela-corrida" class="tela tela-fundo-pista">
+    <div class="overlay-corrida">
+      <h2 id="corrida-gp-nome">Corrida</h2>
+
+      <div id="lap-indicator" class="lap-indicator">Volta 1 / 10</div>
+
+      <div id="race-speed-controls" class="race-speed-controls">
+        <button id="speed-1x" class="active" onclick="setRaceSpeed(1)">1x</button>
+        <button id="speed-2x" onclick="setRaceSpeed(2)">2x</button>
+        <button id="speed-4x" onclick="setRaceSpeed(4)">4x</button>
+      </div>
+
+      <div id="track-container" class="track-container">
+        <img id="track-image" src="" alt="Pista">
+        <div id="cars-layer" class="cars-layer"></div>
+      </div>
+
+      <div class="race-layout">
+        <div id="race-standings" class="standings"></div>
+
+        <div id="race-hud" class="race-hud">
+          <div>Piloto: <span id="hud-driver">-</span></div>
+          <div>Pneus: <span id="hud-tyre">-</span></div>
+          <div>Desgaste: <span id="hud-wear">-</span>%</div>
+          <div>Temp: <span id="hud-temp">-</span>°C</div>
+          <div>Paradas: <span id="hud-stops">0</span></div>
+          <button id="btn-box">BOX THIS LAP</button>
+        </div>
+      </div>
+
+      <!-- POPUP PIT -->
+      <div id="pit-popup" class="pit-popup hidden">
+        <div class="pit-inner">
+          <h3>Escolha o composto</h3>
+          <p class="small-text">Selecione o tipo de pneu para o próximo stint.</p>
+          <div class="pit-options">
+            <button onclick="confirmarBox('SOFT')">Soft</button>
+            <button onclick="confirmarBox('MEDIUM')">Medium</button>
+            <button onclick="confirmarBox('HARD')">Hard</button>
+            <button onclick="confirmarBox('INTER')">Inter</button>
+            <button onclick="confirmarBox('WET')">Wet</button>
+          </div>
+          <div class="pit-popup-actions">
+            <button onclick="cancelarBox()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-voltar btn-voltar-lobby">Voltar ao Lobby</button>
+    </div>
+  </section>
+
+  <!-- PÓDIO -->
+  <section id="tela-podio" class="tela tela-fundo-podio">
+    <div class="overlay">
+      <h2>Pódio</h2>
+      <p class="small-text">
+        Resultado final da corrida (Top 3 com avatar, bandeira e logo da equipe).
+      </p>
+
+      <div id="podio-top3"></div>
+
+      <button class="btn-voltar btn-voltar-lobby">Voltar ao Lobby</button>
+    </div>
+  </section>
+
+  <!-- SCRIPTS -->
+  <script src="data.js"></script>
+  <script src="tyreSystem.js"></script>
+  <script src="raceSystem.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

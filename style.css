@@ -1,0 +1,600 @@
+/* ============================================================
+   STYLE.CSS — F1 MANAGER 2025 AAA
+   Tema vermelho e preto, estilo Netflix / F1
+   ============================================================ */
+
+:root {
+  --bg: #050508;
+  --bg-soft: #111118;
+  --bg-elevated: #171720;
+  --accent: #e10600;
+  --accent-soft: #ff3b30;
+  --text: #f5f5f5;
+  --muted: #aaaaaa;
+  --border: rgba(255, 255, 255, 0.12);
+  --shadow-strong: 0 0 30px rgba(0, 0, 0, 0.9);
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --transition-fast: 0.18s ease-out;
+  --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* RESET BÁSICO */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-main);
+  background: radial-gradient(circle at top, #121218, #050508 65%, #000000 100%);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* BOTÕES GENÉRICOS */
+button {
+  font-family: inherit;
+  border: none;
+  outline: none;
+}
+
+/* SEÇÕES/TELAS PRINCIPAIS */
+.tela {
+  position: fixed;
+  inset: 0;
+  display: none;
+  background: radial-gradient(circle at top, #191924, #050508);
+  color: var(--text);
+  overflow-y: auto;
+  padding: 24px 16px 32px;
+}
+
+.tela.visible {
+  display: block;
+}
+
+/* FUNDOS ESPECÍFICOS (podem ser sobrescritos por JS) */
+.tela-fundo-capa {
+  background: radial-gradient(circle at center, #1a1a1f, #050508);
+}
+
+.tela-fundo-lobby {
+  background: radial-gradient(circle at top, #181821, #050508);
+}
+
+.tela-fundo-patrocinio {
+  background: radial-gradient(circle at top, #20141a, #050508);
+}
+
+.tela-fundo-funcionarios {
+  background: radial-gradient(circle at top, #141c20, #050508);
+}
+
+.tela-fundo-mercado {
+  background: radial-gradient(circle at top, #1d1522, #050508);
+}
+
+.tela-fundo-oficina {
+  background: radial-gradient(circle at top, #151b1e, #050508);
+}
+
+.tela-fundo-pista {
+  background: radial-gradient(circle at center, #101018, #050508);
+}
+
+.tela-fundo-podio {
+  background: radial-gradient(circle at top, #220d12, #050508);
+}
+
+/* SOBREPOSIÇÃO CENTRALIZADA */
+.overlay {
+  max-width: 1120px;
+  margin: 0 auto;
+  background: linear-gradient(145deg, rgba(5, 5, 10, 0.96), rgba(10, 10, 18, 0.94));
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-strong);
+  padding: 20px 18px 24px;
+}
+
+/* CAPA */
+.capa-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 48px);
+  text-align: center;
+  background: radial-gradient(circle at top, rgba(225, 6, 0, 0.3), transparent 55%);
+}
+
+.titulo-capa {
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.titulo-capa span {
+  color: var(--accent);
+}
+
+.subtitulo-capa {
+  font-size: 0.95rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  margin-bottom: 30px;
+}
+
+/* BOTÕES PRINCIPAIS */
+.btn-principal {
+  padding: 12px 28px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, var(--accent), var(--accent-soft));
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(225, 6, 0, 0.95);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+}
+
+.btn-principal:hover {
+  transform: translateY(-1px) scale(1.01);
+  filter: brightness(1.05);
+  box-shadow: 0 0 26px rgba(225, 6, 0, 1);
+}
+
+.btn-voltar {
+  margin-top: 12px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btn-voltar:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* TÍTULOS SEÇÕES */
+.overlay h2 {
+  font-size: 1.4rem;
+  margin-bottom: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 6px;
+}
+
+/* GRID MENU PRINCIPAL */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.menu-grid button {
+  padding: 10px 10px;
+  border-radius: var(--radius-md);
+  background: radial-gradient(circle at top left, rgba(225, 6, 0, 0.12), rgba(0, 0, 0, 0.85));
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.menu-grid button:hover {
+  background: radial-gradient(circle at top left, rgba(225, 6, 0, 0.35), rgba(0, 0, 0, 0.9));
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(225, 6, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+/* GRIDS GENÉRICOS PARA LISTAS */
+.avatar-grid,
+.bandeira-grid,
+.lista-reais,
+.escuderia-grid,
+.corrida-grid,
+.patrocinio-grid,
+.func-grid,
+.mercado-grid,
+.oficina-grid,
+.pilotos-lobby,
+.lobby-botoes {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.avatar-grid {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+
+.bandeira-grid {
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+}
+
+.lista-reais,
+.escuderia-grid,
+.corrida-grid,
+.patrocinio-grid,
+.func-grid,
+.mercado-grid,
+.oficina-grid,
+.pilotos-lobby {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.lobby-botoes {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* INPUTS */
+input,
+select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: #0b0b12;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.9rem;
+  margin: 6px 0 10px;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(225, 6, 0, 0.6);
+}
+
+/* CARDS GENÉRICOS */
+.card {
+  background: linear-gradient(145deg, rgba(13, 13, 20, 0.96), rgba(6, 6, 10, 0.96));
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  padding: 10px 10px 12px;
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.8);
+  font-size: 0.9rem;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card img {
+  max-width: 100%;
+  display: block;
+}
+
+.card h3 {
+  font-size: 1rem;
+  margin: 4px 0;
+}
+
+.card p {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* CARD SELECIONADO (AVATAR/BANDEIRA) */
+.card.selecionado {
+  border-color: var(--accent);
+  box-shadow: 0 0 14px rgba(225, 6, 0, 0.8);
+}
+
+/* CARD DESTAQUE (PRÓXIMO GP, ETC.) */
+.card.destaque {
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(225, 6, 0, 0.8);
+}
+
+.card button {
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(225, 6, 0, 0.15);
+  color: var(--text);
+  border: 1px solid rgba(225, 6, 0, 0.5);
+  cursor: pointer;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.card button:hover {
+  background: var(--accent);
+  border-color: var(--accent-soft);
+  transform: translateY(-1px);
+}
+
+/* LOBBY – TOPO (GERENTE / EQUIPE / FINANÇAS) */
+.painel-superior {
+  display: grid;
+  grid-template-columns: 1.6fr 1.6fr 1.2fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.gerente-info,
+.equipe-info,
+.financas-info {
+  background: linear-gradient(145deg, rgba(10, 10, 18, 0.96), rgba(6, 6, 12, 0.96));
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  padding: 10px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gerente-info h3,
+.equipe-info h3,
+.financas-info h3 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 4px;
+}
+
+.gerente-info p,
+.equipe-info p,
+.financas-info p {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+/* IMAGENS PEQUENAS NO LOBBY */
+.avatar-img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.logo-equipe-img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  background: #000000;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+/* LISTA DE PILOTOS NO LOBBY */
+.pilotos-lobby .card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mini-avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  margin-right: 8px;
+}
+
+/* TABELAS GENÉRICAS (OFICINA, CLASSIFICAÇÃO ETC.) */
+.tabela {
+  margin-top: 10px;
+  background: rgba(5, 5, 10, 0.95);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  border: 1px solid var(--border);
+}
+
+/* FORM CONTÍNUO (OFICINA / SETUP) */
+label {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 6px;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* SLIDERS (RANGE) */
+input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  background: transparent;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: linear-gradient(90deg, #444, var(--accent));
+  border-radius: 999px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  margin-top: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 8px rgba(225, 6, 0, 0.8);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: linear-gradient(90deg, #444, var(--accent));
+  border-radius: 999px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--accent);
+}
+
+/* PÓDIO */
+#podio-top3 {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.podio-card {
+  background: radial-gradient(circle at top, rgba(225, 6, 0, 0.28), rgba(0, 0, 0, 0.96));
+  border-radius: var(--radius-md);
+  padding: 12px 10px 14px;
+  border: 1px solid rgba(225, 6, 0, 0.7);
+  box-shadow: 0 0 20px rgba(225, 6, 0, 0.85);
+  text-align: left;
+}
+
+.podio-card h3 {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.podio-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.podio-logo {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  background: #000000;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.podio-flag {
+  width: 32px;
+  height: 22px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.85);
+}
+
+/* TABELAS DE PILOTOS / EQUIPES */
+.tabela-campeonato {
+  margin-top: 10px;
+}
+
+.tabela-campeonato table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  background: rgba(5, 5, 10, 0.96);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.tabela-campeonato thead {
+  background: linear-gradient(90deg, var(--accent), #b00000);
+}
+
+.tabela-campeonato th,
+.tabela-campeonato td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tabela-campeonato th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+}
+
+.tabela-campeonato tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tabela-campeonato tbody tr:hover {
+  background: rgba(225, 6, 0, 0.16);
+}
+
+/* TEXTOS AUXILIARES */
+p {
+  line-height: 1.4;
+}
+
+/* RODAPÉS / INFO PEQUENA */
+.small-text {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 900px) {
+  .painel-superior {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .overlay {
+    padding: 16px 12px 20px;
+    border-radius: 12px;
+  }
+
+  .capa-container {
+    padding-inline: 12px;
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #podio-top3 {
+    grid-template-columns: 1fr;
+  }
+}
