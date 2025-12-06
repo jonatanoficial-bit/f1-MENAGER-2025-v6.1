@@ -1,48 +1,61 @@
 // ============================================================
 // RACE SYSTEM 2D – F1 MANAGER 2025
-// Usa mapa SVG, pneus, pit-stop e grid completo (20 pilotos).
+// Usa mapa da pista, pneus, pit-stop e tabela completa.
 // ============================================================
 (function () {
-  const BASE_INTERVAL = 250;          // ms base do loop
-  let raceSpeedMultiplier = 1;        // 1x, 2x, 4x
-  let raceInterval = null;
-  let RACE_STATE = null;
+  // Intervalo base (ms) – será dividido por 1x/2x/4x
+  const BASE_INTERVAL = 200;
+  let speedMultiplier = 1;
+  let raceTimer = null;
 
-  // =========================
-  // CONTROLE DE VELOCIDADE
-  // =========================
+  /** Estado interno da corrida */
+  let STATE = null;
+
+  // ------------------------------------------------------------
+  // Utilidades de HUD (funciona com os dois layouts possíveis)
+  // ------------------------------------------------------------
+  function setHudValue(idList, value) {
+    idList.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    });
+  }
+
+  // ------------------------------------------------------------
+  // CONTROLE DE VELOCIDADE (1x / 2x / 4x)
+  // ------------------------------------------------------------
   window.setRaceSpeed = function (mult) {
     if (![1, 2, 4].includes(mult)) mult = 1;
-    raceSpeedMultiplier = mult;
+    speedMultiplier = mult;
 
     ['speed-1x', 'speed-2x', 'speed-4x'].forEach((id) => {
       const btn = document.getElementById(id);
       if (!btn) return;
-      const btnMult = id === 'speed-1x' ? 1 : id === 'speed-2x' ? 2 : 4;
-      if (btnMult === mult) btn.classList.add('active');
+      const val = id === 'speed-1x' ? 1 : id === 'speed-2x' ? 2 : 4;
+      if (val === mult) btn.classList.add('active');
       else btn.classList.remove('active');
     });
 
-    if (RACE_STATE && RACE_STATE.running) {
-      if (raceInterval) clearInterval(raceInterval);
-      raceInterval = setInterval(raceTick, BASE_INTERVAL / raceSpeedMultiplier);
+    if (STATE && STATE.running) {
+      if (raceTimer) clearInterval(raceTimer);
+      raceTimer = setInterval(tickRace, BASE_INTERVAL / speedMultiplier);
     }
   };
 
-  // =========================
-  // TRAÇADO DA PISTA
-  // =========================
+  // ------------------------------------------------------------
+  // GERAÇÃO DO TRAÇADO (normalizado 0–1)
+  // ------------------------------------------------------------
   function generateTrackPath(key, n) {
     const pts = [];
-    key = (key || '').toLowerCase();
+    const k = (key || '').toLowerCase();
 
     for (let i = 0; i < n; i++) {
       const t = (2 * Math.PI * i) / n;
-      let r = 0.45;
-      let xMod = 1;
-      let yMod = 1;
+      let r = 0.44;
+      let xMod = 1.0;
+      let yMod = 0.9;
 
-      switch (key) {
+      switch (k) {
         case 'bahrain':
           r = 0.42 + 0.05 * Math.sin(2 * t);
           xMod = 1.05;
@@ -50,8 +63,8 @@
           break;
         case 'jeddah':
           r = 0.40 + 0.04 * Math.sin(6 * t);
-          xMod = 1.2;
-          yMod = 0.65;
+          xMod = 1.25;
+          yMod = 0.7;
           break;
         case 'australia':
           r = 0.43 + 0.05 * Math.sin(3 * t + Math.cos(5 * t));
@@ -59,20 +72,9 @@
           yMod = 0.9;
           break;
         case 'monaco':
-          r = 0.38 + 0.05 * Math.sin(4 * t);
-          xMod = 1.0;
-          yMod = 0.7;
-          break;
-        case 'imola':
-          r = 0.43 + 0.04 * Math.sin(2 * t) * Math.cos(2 * t);
-          xMod = 1.0;
-          yMod = 0.9;
-          break;
-        case 'interlagos':
-        case 'brazil':
-          r = 0.41 + 0.05 * Math.sin(2 * t + Math.cos(4 * t));
-          xMod = 1.0;
-          yMod = 0.9;
+          r = 0.38 + 0.06 * Math.sin(4 * t);
+          xMod = 0.9;
+          yMod = 1.05;
           break;
         case 'monza':
           r = 0.46 + 0.03 * Math.sin(2 * t);
@@ -93,7 +95,7 @@
         default:
           r = 0.44 + 0.04 * Math.sin(3 * t);
           xMod = 1.0;
-          yMod = 0.85;
+          yMod = 0.9;
           break;
       }
 
@@ -105,41 +107,39 @@
   }
 
   function generatePitLane(mainPath) {
-    return mainPath.map((p) => {
-      const factor = 0.92; // “para dentro”
-      return {
-        x: 0.5 + (p.x - 0.5) * factor,
-        y: 0.5 + (p.y - 0.5) * factor
-      };
-    });
+    const factor = 0.9; // “para dentro” da pista principal
+    return mainPath.map((p) => ({
+      x: 0.5 + (p.x - 0.5) * factor,
+      y: 0.5 + (p.y - 0.5) * factor
+    }));
   }
 
   function scalePath(path, width, height, margin = 0.08) {
     const w = width * (1 - margin * 2);
     const h = height * (1 - margin * 2);
-    const offsetX = width * margin;
-    const offsetY = height * margin;
+    const offX = width * margin;
+    const offY = height * margin;
 
     return path.map((p) => ({
-      x: offsetX + p.x * w,
-      y: offsetY + p.y * h
+      x: offX + p.x * w,
+      y: offY + p.y * h
     }));
   }
 
-  // =========================
-  // RENDERIZAÇÃO: TABELA / HUD
-  // =========================
+  // ------------------------------------------------------------
+  // RENDERIZAÇÃO – TABELA E HUD
+  // ------------------------------------------------------------
   function renderStandings() {
-    const standingsEl = document.getElementById('race-standings');
-    if (!standingsEl || !RACE_STATE) return;
+    const el = document.getElementById('race-standings');
+    if (!el || !STATE) return;
 
-    const racers = RACE_STATE.racers;
+    const racers = STATE.racers;
     if (!racers || !racers.length) {
-      standingsEl.innerHTML = '';
+      el.innerHTML = '';
       return;
     }
 
-    const mainLen = RACE_STATE.mainPath.length;
+    const mainLen = STATE.mainPath.length;
     const leader = racers[0];
 
     let html = '<table><thead><tr>' +
@@ -147,129 +147,133 @@
       '<th>Pneu</th><th>Desg.</th><th>Pits</th>' +
       '</tr></thead><tbody>';
 
-    racers.forEach((dr, idx) => {
-      let gapText = 'Líder';
-      if (idx > 0) {
+    racers.forEach((d, i) => {
+      let gapTxt = 'Líder';
+      if (i > 0) {
         const diffIndex =
-          (leader.lap - dr.lap) * mainLen +
-          (leader.positionIndex - dr.positionIndex);
+          (leader.lap - d.lap) * mainLen +
+          (leader.positionIndex - d.positionIndex);
         const seconds = Math.max(0, diffIndex * 0.04);
-        gapText = '+' + seconds.toFixed(1) + 's';
+        gapTxt = '+' + seconds.toFixed(1) + 's';
       }
-      const tyreName = dr.tyreSet && window.TyreCompounds
-        ? (window.TyreCompounds[dr.tyreSet.compound] || {}).name || dr.tyreSet.compound
-        : '-';
-      const wear = dr.tyreSet ? dr.tyreSet.wear.toFixed(0) + '%' : '-';
 
-      html += `<tr>
-        <td>${idx + 1}</td>
-        <td>${dr.name}</td>
-        <td>${dr.lap + 1}</td>
-        <td>${gapText}</td>
-        <td>${tyreName}</td>
-        <td>${wear}</td>
-        <td>${dr.pitStopCount || 0}</td>
-      </tr>`;
+      let tyreName = '-';
+      let wearTxt = '-';
+      if (d.tyreSet) {
+        if (window.TyreCompounds &&
+            window.TyreCompounds[d.tyreSet.compound]) {
+          tyreName = window.TyreCompounds[d.tyreSet.compound].name;
+        } else {
+          tyreName = d.tyreSet.compound;
+        }
+        wearTxt = d.tyreSet.wear.toFixed(0) + '%';
+      }
+
+      html += '<tr>' +
+        `<td>${i + 1}</td>` +
+        `<td>${d.name}</td>` +
+        `<td>${d.lap + 1}</td>` +
+        `<td>${gapTxt}</td>` +
+        `<td>${tyreName}</td>` +
+        `<td>${wearTxt}</td>` +
+        `<td>${d.pitStopCount || 0}</td>` +
+        '</tr>';
     });
 
     html += '</tbody></table>';
-    standingsEl.innerHTML = html;
+    el.innerHTML = html;
   }
 
   function renderHud(player) {
     if (!player || !player.tyreSet) return;
 
-    // IDs em português, batendo com o HTML
-    const pilotEl = document.getElementById('hud-piloto');
-    const tyreEl = document.getElementById('hud-pneus');
-    const wearEl = document.getElementById('hud-desgaste');
-    const tempEl = document.getElementById('hud-temp');
-    const pitEl = document.getElementById('hud-paradas');
+    // Piloto / pneus / desgaste / temperatura / paradas (para layouts antigos e novos)
+    setHudValue(['hud-piloto', 'hud-piloto-valor'], player.name);
 
-    if (pilotEl) pilotEl.textContent = player.name + ' (' + (player.team || '') + ')';
-
-    if (tyreEl) {
-      const comp = window.TyreCompounds
-        ? (window.TyreCompounds[player.tyreSet.compound] || {}).name || player.tyreSet.compound
-        : player.tyreSet.compound;
-      tyreEl.textContent = comp;
+    let tyreName = player.tyreSet.compound;
+    if (window.TyreCompounds &&
+        window.TyreCompounds[player.tyreSet.compound]) {
+      tyreName = window.TyreCompounds[player.tyreSet.compound].name;
     }
 
-    if (wearEl) wearEl.textContent = player.tyreSet.wear.toFixed(0) + '%';
+    setHudValue(['hud-tyre', 'hud-pneus', 'hud-pneus-valor'], tyreName);
+    setHudValue(
+      ['hud-wear', 'hud-desgaste', 'hud-desgaste-valor'],
+      player.tyreSet.wear.toFixed(0)
+    );
 
     const virtTemp = 80 + player.tyreSet.wear * 0.4;
-    if (tempEl) tempEl.textContent = virtTemp.toFixed(0) + ' ºC';
+    setHudValue(['hud-temp', 'hud-temp-valor'], virtTemp.toFixed(0));
+    setHudValue(
+      ['hud-paradas', 'hud-paradas-valor'],
+      String(player.pitStopCount || 0)
+    );
 
-    if (pitEl) pitEl.textContent = player.pitStopCount || 0;
-
-    const lapIndicator = document.getElementById('lap-indicator');
-    if (lapIndicator && RACE_STATE) {
-      const currentLap = Math.min(player.lap + 1, RACE_STATE.lapsTotal);
-      lapIndicator.textContent =
-        'Volta ' + currentLap + ' / ' + RACE_STATE.lapsTotal;
+    // Lap indicator
+    const lapEl = document.getElementById('lap-indicator');
+    if (lapEl && STATE) {
+      const cur = Math.min(player.lap + 1, STATE.totalLaps);
+      lapEl.textContent = 'Volta ' + cur + ' / ' + STATE.totalLaps;
     }
   }
 
-  // =========================
-  // LÓGICA PRINCIPAL
-  // =========================
-  function raceTick() {
-    if (!RACE_STATE || !RACE_STATE.running) return;
+  // ------------------------------------------------------------
+  // LOOP PRINCIPAL DA CORRIDA
+  // ------------------------------------------------------------
+  function tickRace() {
+    if (!STATE || !STATE.running) return;
 
-    const { mainPath, pitPath } = RACE_STATE;
-    const racers = RACE_STATE.racers;
-    const pathLen = mainPath.length;
+    const { mainPath, pitPath } = STATE;
+    const len = mainPath.length;
 
-    racers.forEach((dr) => {
-      if (dr.inPit) {
-        // Contagem do tempo de pit
-        dr.pitTime -= BASE_INTERVAL / 1000;
-        if (dr.pitTime <= 0) {
-          dr.inPit = false;
-          dr.pitStopCount = (dr.pitStopCount || 0) + 1;
+    STATE.racers.forEach((d) => {
+      if (d.inPit) {
+        d.pitTime -= BASE_INTERVAL / 1000;
+        if (d.pitTime <= 0) {
+          d.inPit = false;
+          d.pitStopCount = (d.pitStopCount || 0) + 1;
+
           if (window.createTyreSet) {
-            dr.tyreSet = window.createTyreSet(dr.nextCompound || dr.tyreSet.compound);
+            d.tyreSet = window.createTyreSet(d.nextCompound || d.tyreSet.compound);
           }
-          dr.pitError = null;
         }
       } else {
-        // Desgaste / penalidade de pneus
+        // Desgaste dos pneus
         let penalty = 0;
-        if (window.updateTyresForLap && dr.tyreSet) {
-          penalty = window.updateTyresForLap(dr.tyreSet, 1.0, 1.0);
+        if (window.updateTyresForLap && d.tyreSet) {
+          penalty = window.updateTyresForLap(d.tyreSet, 1.0, 1.0);
         }
-        penalty = Math.min(Math.max(penalty, 0), 20); // trava para não “matar” o carro
+        penalty = Math.min(Math.max(penalty, 0), 20);
 
-        // Velocidade base bem maior para a corrida andar (3–6 por tick)
-        const baseSpeed = 3 + (dr.rating - 80) * 0.15;
+        const baseSpeed = 3 + (d.rating - 80) * 0.15;
         const speed = Math.max(1, baseSpeed - penalty * 0.05);
 
-        dr.positionIndex += speed;
-
-        if (dr.positionIndex >= pathLen) {
-          dr.positionIndex -= pathLen;
-          dr.lap += 1;
+        d.positionIndex += speed;
+        if (d.positionIndex >= len) {
+          d.positionIndex -= len;
+          d.lap += 1;
         }
 
-        // IA decide ir ao box
-        if (!dr.isPlayer && !dr.inPit && window.decideAiPit) {
-          if (window.decideAiPit(dr, RACE_STATE)) {
-            dr.inPit = true;
+        // Decisão de box (IA)
+        if (!d.isPlayer && !d.inPit && window.decideAiPit) {
+          if (window.decideAiPit(d, STATE)) {
+            d.inPit = true;
             if (window.calculatePitTime) {
-              const pitInfo = window.calculatePitTime();
-              dr.pitTime = pitInfo.time;
-              dr.pitError = pitInfo.error;
+              const pit = window.calculatePitTime();
+              d.pitTime = pit.time;
+              d.pitError = pit.error;
             } else {
-              dr.pitTime = 3;
-              dr.pitError = null;
+              d.pitTime = 3;
+              d.pitError = null;
             }
+
             if (window.chooseNextCompoundForAi) {
-              dr.nextCompound = window.chooseNextCompoundForAi(dr, RACE_STATE);
+              d.nextCompound = window.chooseNextCompoundForAi(d, STATE);
             } else {
-              dr.nextCompound =
-                dr.tyreSet.compound === 'SOFT'
+              d.nextCompound =
+                d.tyreSet.compound === 'SOFT'
                   ? 'MEDIUM'
-                  : dr.tyreSet.compound === 'MEDIUM'
+                  : d.tyreSet.compound === 'MEDIUM'
                   ? 'HARD'
                   : 'SOFT';
             }
@@ -277,73 +281,77 @@
         }
       }
 
-      // Movimento visual
-      const path = dr.inPit ? pitPath : mainPath;
-      const idx = Math.floor(dr.positionIndex) % path.length;
+      // Atualiza posição visual
+      const path = d.inPit ? pitPath : mainPath;
+      const idx = Math.floor(d.positionIndex) % path.length;
       const nextIdx = (idx + 1) % path.length;
       const p = path[idx];
       const np = path[nextIdx];
 
-      if (p && np && dr.el) {
+      if (p && np && d.el) {
         const dx = np.x - p.x;
         const dy = np.y - p.y;
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-        dr.el.style.left = p.x + 'px';
-        dr.el.style.top = p.y + 'px';
-        dr.el.style.transform = 'rotate(' + angle + 'deg)';
+        const ang = Math.atan2(dy, dx) * (180 / Math.PI);
+        d.el.style.left = p.x + 'px';
+        d.el.style.top = p.y + 'px';
+        d.el.style.transform = 'rotate(' + ang + 'deg)';
       }
     });
 
     // Ordena grid
-    racers.sort((a, b) => {
+    STATE.racers.sort((a, b) => {
       if (a.lap !== b.lap) return b.lap - a.lap;
       return b.positionIndex - a.positionIndex;
     });
 
     renderStandings();
-    const player = racers.find((r) => drIsPlayer(dr = r)); // truque só pra não quebrar
+    const player = STATE.racers.find((r) => r.isPlayer);
     if (player) renderHud(player);
 
-    // Fim de corrida: líder completou todas as voltas
-    const leader = racers[0];
-    if (leader && leader.lap >= RACE_STATE.lapsTotal) {
-      RACE_STATE.running = false;
-      if (raceInterval) clearInterval(raceInterval);
+    const leader = STATE.racers[0];
+    if (leader && leader.lap >= STATE.totalLaps) {
+      STATE.running = false;
+      if (raceTimer) clearInterval(raceTimer);
     }
   }
 
-  function drIsPlayer(dr) {
-    return dr && dr.isPlayer;
-  }
-
-  // =========================
-  // INÍCIO DA CORRIDA
-  // =========================
-  window.startRace2D = function (trackKey, driversList, totalLaps) {
-    const laps = totalLaps || 10;
+  // ------------------------------------------------------------
+  // INICIALIZAÇÃO DA CORRIDA
+  // ------------------------------------------------------------
+  window.startRace2D = function (trackKey, driversList, lapsTotal) {
+    const totalLaps = lapsTotal || 10;
 
     const standingsEl = document.getElementById('race-standings');
     if (standingsEl) standingsEl.innerHTML = '';
 
-    const lapInd = document.getElementById('lap-indicator');
-    if (lapInd) lapInd.textContent = 'Volta 1 / ' + laps;
+    const lapEl = document.getElementById('lap-indicator');
+    if (lapEl) lapEl.textContent = 'Volta 1 / ' + totalLaps;
+
+    const hudEl = document.getElementById('race-hud');
+    if (hudEl) hudEl.style.display = 'flex';
+
+    const popup = document.getElementById('pit-popup');
+    if (popup) popup.classList.add('hidden');
+
+    const boxBtn = document.getElementById('btn-box');
+    if (boxBtn) boxBtn.disabled = false;
 
     const trackImg = document.getElementById('track-image');
     const trackContainer = document.getElementById('track-container');
     const carsLayer = document.getElementById('cars-layer');
     if (!trackImg || !trackContainer || !carsLayer) return;
 
-    // GRID COMPLETO: se vier só 2 pilotos do script, completa com const PILOTOS (20)
-    let grid;
+    // Garante grid completo: se lista tiver poucos pilotos, usa PILOTOS
+    let grid = [];
     if (driversList && driversList.length >= 10) {
       grid = driversList;
     } else if (typeof PILOTOS !== 'undefined') {
-      grid = PILOTOS; // usa 20 pilotos do data.js
+      grid = PILOTOS;
     } else {
       grid = driversList || [];
     }
 
-    const key = (trackKey || 'monaco').toLowerCase().replace(/\s+/g, '_');
+    const key = (trackKey || 'monaco').toLowerCase();
     const candidates = [
       'assets/tracks/' + key + '.svg.svg',
       'assets/tracks/' + key + '.svg',
@@ -354,22 +362,21 @@
     trackImg.src = candidates[0];
 
     trackImg.onload = function () {
-      const width = trackContainer.clientWidth || 600;
-      const height = trackContainer.clientHeight || 400;
+      const w = trackContainer.clientWidth || 600;
+      const h = trackContainer.clientHeight || 400;
 
-      const basePath = generateTrackPath(key, 500);
-      const basePit = generatePitLane(basePath);
+      const baseMain = generateTrackPath(key, 500);
+      const basePit = generatePitLane(baseMain);
+      const mainPath = scalePath(baseMain, w, h);
+      const pitPath = scalePath(basePit, w, h);
 
-      const mainPath = scalePath(basePath, width, height);
-      const pitPath = scalePath(basePit, width, height);
-
-      const racers = (grid || []).map((p, idx) => {
+      const racers = grid.map((p, idx) => {
         const tyreSet = window.createTyreSet
           ? window.createTyreSet('MEDIUM')
           : { compound: 'MEDIUM', wear: 0 };
         return {
           name: p.nome || p.name || 'Piloto ' + (idx + 1),
-          team: (p.equipe || p.team || '').toLowerCase(),
+          team: p.equipe || p.team || '',
           rating: p.rating || 80,
           tyreSet,
           pitStopCount: 0,
@@ -380,50 +387,49 @@
           lap: 0,
           positionIndex: idx * 10,
           el: null,
-          isPlayer: idx === 0, // primeiro é o jogador
+          isPlayer: idx === 0,
           order: idx
         };
       });
 
       carsLayer.innerHTML = '';
-      racers.forEach((dr) => {
+      racers.forEach((d) => {
         const img = document.createElement('img');
         img.className = 'car-icon';
-        const teamKey = (dr.team || 'generic').toLowerCase().replace(/\s+/g, '_');
+        const teamKey = (d.team || 'generic').toLowerCase().replace(/\s+/g, '_');
         img.src = 'assets/cars/' + teamKey + '.png';
-        img.alt = dr.name;
+        img.alt = d.name;
         carsLayer.appendChild(img);
-        dr.el = img;
+        d.el = img;
       });
 
-      RACE_STATE = {
+      STATE = {
         running: true,
-        lapsTotal: laps,
+        totalLaps,
         mainPath,
         pitPath,
         racers
       };
 
-      if (raceInterval) clearInterval(raceInterval);
-      raceInterval = setInterval(raceTick, BASE_INTERVAL / raceSpeedMultiplier);
-      setRaceSpeed(raceSpeedMultiplier);
+      if (raceTimer) clearInterval(raceTimer);
+      raceTimer = setInterval(tickRace, BASE_INTERVAL / speedMultiplier);
     };
   };
 
-  // =========================
+  // ------------------------------------------------------------
   // COMANDO DE BOX (JOGADOR)
-  // =========================
+  // ------------------------------------------------------------
   window.comandarBox = function () {
-    if (!RACE_STATE || !RACE_STATE.running) return;
-    const player = RACE_STATE.racers.find((r) => r.isPlayer);
+    if (!STATE || !STATE.running) return;
+    const player = STATE.racers.find((r) => r.isPlayer);
     if (!player || player.inPit) return;
 
     const popup = document.getElementById('pit-popup');
-    const optionsEl = document.getElementById('pit-tyre-options');
-    if (!popup || !optionsEl) return;
+    const opts = document.getElementById('pit-tyre-options');
+    if (!popup || !opts) return;
 
     popup.classList.remove('hidden');
-    optionsEl.innerHTML = '';
+    opts.innerHTML = '';
 
     const compounds = ['SOFT', 'MEDIUM', 'HARD', 'INTER', 'WET'];
     compounds.forEach((c) => {
@@ -433,9 +439,9 @@
       btn.onclick = function () {
         player.inPit = true;
         if (window.calculatePitTime) {
-          const pitInfo = window.calculatePitTime();
-          player.pitTime = pitInfo.time;
-          player.pitError = pitInfo.error;
+          const pit = window.calculatePitTime();
+          player.pitTime = pit.time;
+          player.pitError = pit.error;
         } else {
           player.pitTime = 3;
           player.pitError = null;
@@ -443,7 +449,7 @@
         player.nextCompound = c;
         popup.classList.add('hidden');
       };
-      optionsEl.appendChild(btn);
+      opts.appendChild(btn);
     });
   };
 
@@ -453,10 +459,8 @@
   };
 
   window.stopRace2D = function () {
-    if (raceInterval) {
-      clearInterval(raceInterval);
-      raceInterval = null;
-    }
-    RACE_STATE = null;
+    if (raceTimer) clearInterval(raceTimer);
+    raceTimer = null;
+    STATE = null;
   };
 })();
