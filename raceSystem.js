@@ -1,264 +1,558 @@
-// =======================================
-// F1 MANAGER 2025 - SISTEMA DE CORRIDA
-// =======================================
+// ================================
+// F1 MANAGER 2025 - RACE SYSTEM
+// ================================
+// Responsável por:
+// - Montar grid da corrida
+// - Simular voltas, posições e gaps
+// - Desgaste de pneus / combustível (simplificado)
+// - Controle de velocidade: 1x / 2x / 4x
+// - Atualizar HUD e torre
+// - Encerrar corrida e chamar tela de pódio
+//
+// Depende apenas de window.gameState (se existir).
+// Se não existir, cria um estado mínimo para não quebrar nada.
 
-console.log("raceSystem.js carregado");
-
-// Referência ao estado global
-const GS = window.GAME_STATE || {
-  calendario: [],
-  pilotos: [],
-  equipes: []
-};
-
-// ------------------------
-// CONFIGURAÇÃO DA SIMULAÇÃO
-// ------------------------
-
-// duração virtual de UMA volta em ms (em 1x)
-const BASE_LAP_INTERVAL_MS = 1000;
-
-// multiplicador de velocidade (1x, 2x, 4x...)
-let raceSpeedMultiplier = 1;
-
-// controle interno da corrida
-let raceAnimationId = null;
-let currentRace = null;
-let lastFrameTime = null;
-
-// ------------------------
-// FUNÇÕES PÚBLICAS
-// ------------------------
-
-function setRaceSpeed(mult) {
-  raceSpeedMultiplier = mult || 1;
-  console.log("Velocidade da corrida:", raceSpeedMultiplier, "x");
-}
-
-function startRace(etapaIndex, onFinishCallback) {
-  cancelRaceLoop();
-
-  const pista =
-    GS.calendario && GS.calendario[etapaIndex]
-      ? GS.calendario[etapaIndex]
-      : { nome: "Pista Genérica", voltas: 20 };
-
-  const totalLaps = pista.voltas || 20;
-
-  // monta grid inicial
-  const grid = buildInitialGrid();
-
-  currentRace = {
-    etapaIndex,
-    pista,
-    totalLaps,
+(function () {
+  // -------------------------------
+  // ESTADO GLOBAL DA CORRIDA
+  // -------------------------------
+  const raceState = {
+    running: false,
+    paused: false,
+    speedMultiplier: 1, // 1x, 2x, 4x
+    totalLaps: 10,
     currentLap: 1,
-    grid,
-    finished: false,
-    onFinish: onFinishCallback
+    trackLengthKm: 5.0, // usado apenas para cálculo de desgaste
+    cars: [], // array de objetos {id, driverName, teamName, isPlayer, lap, progress, gapToLeader, tyreWear, fuel, pitStops, inPit, basePace}
+    lastFrameTime: 0,
+    accumulatedTime: 0,
+    leaderRaceTime: 0,
+    raceFinished: false
   };
 
-  lastFrameTime = null;
-
-  console.log(
-    `Corrida iniciada: ${pista.nome} (${totalLaps} voltas) com ${grid.length} pilotos`
-  );
-
-  // chama primeira atualização para preencher UI
-  if (typeof window.onRaceUpdate === "function") {
-    window.onRaceUpdate({
-      volta: currentRace.currentLap,
-      total: currentRace.totalLaps,
-      grid: cloneGrid(currentRace.grid)
-    });
+  // Pequeno helper para garantir gameState
+  function getGameState() {
+    if (!window.gameState) {
+      window.gameState = {};
+    }
+    if (!window.gameState.currentTeam) {
+      // fallback simples para não quebrar caso não tenha carreira criada
+      window.gameState.currentTeam = {
+        name: "Vale GP",
+        drivers: [
+          { name: "J. Vale", rating: 88 },
+          { name: "D. Kamila", rating: 85 }
+        ]
+      };
+    }
+    if (!window.gameState.currentGP) {
+      window.gameState.currentGP = {
+        name: "GP do Brasil",
+        country: "Brasil",
+        laps: 10,
+        trackLengthKm: 4.3
+      };
+    }
+    return window.gameState;
   }
 
-  raceAnimationId = requestAnimationFrame(raceLoop);
-}
+  // -------------------------------
+  // INICIALIZAÇÃO DA TELA DE CORRIDA
+  // -------------------------------
+  function initRaceSystem() {
+    // Botões de controle de corrida
+    const btnStart = document.getElementById("btnStartRace");
+    const btnPause = document.getElementById("btnPauseRace");
+    const btnSpeed1 = document.getElementById("btnSpeed1x");
+    const btnSpeed2 = document.getElementById("btnSpeed2x");
+    const btnSpeed4 = document.getElementById("btnSpeed4x");
 
-// expõe globalmente para o main.js
-window.setRaceSpeed = setRaceSpeed;
-window.startRace = startRace;
-
-// ------------------------
-// CONSTRUÇÃO DO GRID
-// ------------------------
-
-function buildInitialGrid() {
-  let pilotosFonte = [];
-
-  if (Array.isArray(GS.pilotos) && GS.pilotos.length > 0) {
-    pilotosFonte = GS.pilotos;
-  } else {
-    // fallback se não tiver pilotos no data.js
-    for (let i = 1; i <= 20; i++) {
-      pilotosFonte.push({
-        id: i,
-        nome: "Piloto " + i,
-        equipeId: null,
-        ritmo: 80 + Math.random() * 20 // 80–100
+    if (btnStart) {
+      btnStart.addEventListener("click", () => {
+        if (!raceState.running || raceState.raceFinished) {
+          startNewRace();
+        } else {
+          resumeRace();
+        }
       });
     }
-  }
 
-  // cria objetos internos da corrida
-  const grid = pilotosFonte.map((p, index) => ({
-    id: p.id || index + 1,
-    nome: p.nome || p.name || `Piloto ${index + 1}`,
-    equipeId: p.equipeId || p.teamId || null,
-    ritmoBase: p.ritmo || p.rating || 80 + Math.random() * 20,
-    pos: index + 1,
-    tempoTotal: 0,
-    pneus: "M",
-    desgaste: 0,
-    fezPit: false
-  }));
-
-  return grid;
-}
-
-// ------------------------
-// LOOP DA CORRIDA
-// ------------------------
-
-function raceLoop(timestamp) {
-  if (!currentRace || currentRace.finished) return;
-
-  if (!lastFrameTime) {
-    lastFrameTime = timestamp;
-    raceAnimationId = requestAnimationFrame(raceLoop);
-    return;
-  }
-
-  const delta = (timestamp - lastFrameTime) * raceSpeedMultiplier;
-
-  if (delta >= BASE_LAP_INTERVAL_MS) {
-    // processa uma volta
-    processLap();
-    lastFrameTime = timestamp;
-  }
-
-  if (!currentRace.finished) {
-    raceAnimationId = requestAnimationFrame(raceLoop);
-  }
-}
-
-function cancelRaceLoop() {
-  if (raceAnimationId) {
-    cancelAnimationFrame(raceAnimationId);
-    raceAnimationId = null;
-  }
-}
-
-// ------------------------
-// LÓGICA DE CADA VOLTA
-// ------------------------
-
-function processLap() {
-  const race = currentRace;
-  if (!race) return;
-
-  const lap = race.currentLap;
-  const total = race.totalLaps;
-
-  // simula tempo de volta para cada piloto
-  race.grid.forEach((p) => {
-    // ritmo base mais/menos aleatório
-    const base = 80; // tempo base em segundos imaginários
-    const ritmoFactor = (100 - p.ritmoBase) * 0.03; // quanto pior o ritmo, maior tempo
-    const randomVar = (Math.random() - 0.5) * 0.8; // variação +/- 0.4s
-
-    let lapTime = base + ritmoFactor + randomVar;
-
-    // impacto do desgaste
-    lapTime += p.desgaste * 0.01;
-
-    // pit-stop ainda simples: chance pequena
-    let fezPitAgora = false;
-    if (!p.fezPit && lap > 5 && Math.random() < 0.05) {
-      fezPitAgora = true;
-      lapTime += 20 + Math.random() * 5; // tempo extra de pit
-      p.fezPit = true;
-      p.desgaste = Math.max(0, p.desgaste - 30); // pneus trocados
+    if (btnPause) {
+      btnPause.addEventListener("click", () => {
+        pauseRace();
+      });
     }
 
-    // aumenta desgaste geral
-    const desgasteExtra = 2 + Math.random() * 3;
-    p.desgaste = Math.min(100, p.desgaste + desgasteExtra);
-
-    p.tempoTotal += lapTime;
-
-    // só para debug
-    if (fezPitAgora) {
-      console.log(`${p.nome} realizou pit-stop na volta ${lap}`);
+    if (btnSpeed1) {
+      btnSpeed1.addEventListener("click", () => setSpeed(1));
     }
-  });
+    if (btnSpeed2) {
+      btnSpeed2.addEventListener("click", () => setSpeed(2));
+    }
+    if (btnSpeed4) {
+      btnSpeed4.addEventListener("click", () => setSpeed(4));
+    }
 
-  // ordena por tempo total
-  race.grid.sort((a, b) => a.tempoTotal - b.tempoTotal);
+    // Expor alguns métodos para outros scripts (se precisarem)
+    window.raceSystem = {
+      startNewRace,
+      pauseRace,
+      resumeRace,
+      setSpeed,
+      getRaceState: () => raceState
+    };
 
-  // atualiza posições
-  race.grid.forEach((p, index) => {
-    p.pos = index + 1;
-  });
+    // Opcional: se quiser iniciar automaticamente ao entrar na tela,
+    // pode descomentar a linha abaixo:
+    // startNewRace();
+  }
 
-  // envia atualização para UI
-  if (typeof window.onRaceUpdate === "function") {
-    window.onRaceUpdate({
-      volta: lap,
-      total,
-      grid: cloneGrid(race.grid)
+  // -------------------------------
+  // CONFIGURAÇÃO DA CORRIDA
+  // -------------------------------
+
+  function startNewRace() {
+    const gs = getGameState();
+
+    // Configuração básica
+    raceState.totalLaps = gs.currentGP?.laps || 10;
+    raceState.trackLengthKm = gs.currentGP?.trackLengthKm || 5.0;
+    raceState.currentLap = 1;
+    raceState.leaderRaceTime = 0;
+    raceState.raceFinished = false;
+
+    // Monta grid de carros
+    raceState.cars = buildGridFromGameState(gs);
+
+    // Reseta estados
+    raceState.running = true;
+    raceState.paused = false;
+    raceState.speedMultiplier = 1;
+    raceState.lastFrameTime = 0;
+    raceState.accumulatedTime = 0;
+
+    highlightSpeedButtons();
+    updateHUD(true);
+    renderTower();
+
+    // Garantir que a tela de corrida esteja visível (se existir lógica de telas)
+    const telaCorrida = document.getElementById("tela-corrida");
+    if (telaCorrida && !telaCorrida.classList.contains("visible")) {
+      // Se você tiver um gerenciador de telas (showScreen), ele deve ser usado aqui.
+      // Por segurança, apenas marcamos como visible:
+      telaCorrida.classList.add("visible");
+    }
+
+    requestAnimationFrame(raceLoop);
+  }
+
+  function buildGridFromGameState(gs) {
+    const cars = [];
+    let idCounter = 1;
+
+    // Carros do jogador
+    const playerTeam = gs.currentTeam;
+    if (playerTeam && Array.isArray(playerTeam.drivers)) {
+      playerTeam.drivers.forEach((driver, index) => {
+        cars.push({
+          id: idCounter++,
+          driverName: driver.name,
+          teamName: playerTeam.name || "Equipe Jogador",
+          isPlayer: true,
+          lap: 1,
+          progress: 0, // 0–1 dentro da volta
+          gapToLeader: 0,
+          tyreWear: 0.0, // 0–1
+          fuel: 1.0, // 0–1
+          pitStops: 0,
+          inPit: false,
+          pitTimer: 0,
+          basePace: calcBasePace(driver.rating || 85, true),
+          gridPosition: index + 1
+        });
+      });
+    }
+
+    // Times IA simples (placeholder) - você pode depois ligar com seu database
+    const aiTeams = gs.aiTeams || getDefaultAITeams();
+
+    aiTeams.forEach((team) => {
+      team.drivers.forEach((driver) => {
+        cars.push({
+          id: idCounter++,
+          driverName: driver.name,
+          teamName: team.name,
+          isPlayer: false,
+          lap: 1,
+          progress: 0,
+          gapToLeader: 0,
+          tyreWear: 0,
+          fuel: 1,
+          pitStops: 0,
+          inPit: false,
+          pitTimer: 0,
+          basePace: calcBasePace(driver.rating, false),
+          gridPosition: idCounter // apenas para diferenciar
+        });
+      });
+    });
+
+    // Embaralha grid levemente
+    cars.sort((a, b) => b.basePace - a.basePace);
+
+    return cars;
+  }
+
+  function getDefaultAITeams() {
+    // Grid simples de exemplo (pode ser substituído por dados reais do seu database)
+    return [
+      {
+        name: "Mercedes",
+        drivers: [
+          { name: "G. Russell", rating: 89 },
+          { name: "L. Hamilton", rating: 92 }
+        ]
+      },
+      {
+        name: "Red Bull",
+        drivers: [
+          { name: "M. Verstappen", rating: 96 },
+          { name: "S. Perez", rating: 88 }
+        ]
+      },
+      {
+        name: "Ferrari",
+        drivers: [
+          { name: "C. Leclerc", rating: 91 },
+          { name: "C. Sainz", rating: 90 }
+        ]
+      },
+      {
+        name: "McLaren",
+        drivers: [
+          { name: "L. Norris", rating: 92 },
+          { name: "O. Piastri", rating: 88 }
+        ]
+      }
+      // Você pode adicionar todas as equipes reais depois
+    ];
+  }
+
+  function calcBasePace(rating = 80, isPlayer = false) {
+    // Quanto maior o rating, menor o tempo de volta (melhor o pace).
+    // Aqui vamos usar um valor "pace" invertido: quanto MAIOR, mais rápido no nosso cálculo interno.
+    const base = rating / 100; // 0.8–1.0
+    const bonus = isPlayer ? 0.05 : 0;
+    return base + bonus;
+  }
+
+  // -------------------------------
+  // CONTROLE DE VELOCIDADE
+  // -------------------------------
+  function setSpeed(multiplier) {
+    raceState.speedMultiplier = multiplier;
+    highlightSpeedButtons();
+  }
+
+  function highlightSpeedButtons() {
+    const btn1 = document.getElementById("btnSpeed1x");
+    const btn2 = document.getElementById("btnSpeed2x");
+    const btn4 = document.getElementById("btnSpeed4x");
+
+    [btn1, btn2, btn4].forEach((btn) => {
+      if (!btn) return;
+      btn.classList.remove("active-speed");
+    });
+
+    if (raceState.speedMultiplier === 1 && btn1) btn1.classList.add("active-speed");
+    if (raceState.speedMultiplier === 2 && btn2) btn2.classList.add("active-speed");
+    if (raceState.speedMultiplier === 4 && btn4) btn4.classList.add("active-speed");
+  }
+
+  // -------------------------------
+  // LOOP DA CORRIDA
+  // -------------------------------
+  function raceLoop(timestamp) {
+    if (!raceState.running || raceState.paused || raceState.raceFinished) return;
+
+    if (!raceState.lastFrameTime) {
+      raceState.lastFrameTime = timestamp;
+    }
+
+    const delta = (timestamp - raceState.lastFrameTime) / 1000; // segundos
+    raceState.lastFrameTime = timestamp;
+
+    // Em vez de usar delta real, usamos um tempo "virtual" para a simulação ficar mais previsível
+    const virtualDelta = delta * raceState.speedMultiplier * 4; // acelera um pouco
+
+    updateCars(virtualDelta);
+    updateHUD();
+    renderTower();
+
+    if (!raceState.raceFinished) {
+      requestAnimationFrame(raceLoop);
+    }
+  }
+
+  function updateCars(dt) {
+    if (raceState.cars.length === 0) return;
+
+    // Atualiza progressos
+    raceState.cars.forEach((car) => {
+      if (car.inPit) {
+        car.pitTimer -= dt;
+        if (car.pitTimer <= 0) {
+          car.inPit = false;
+        }
+        return;
+      }
+
+      // Desgaste / combustível
+      const wearRate = 0.003 * (1 + (car.basePace - 0.8)); // quem é mais rápido desgasta um pouco mais
+      const fuelRate = 0.002;
+      car.tyreWear = Math.min(1, car.tyreWear + wearRate * dt);
+      car.fuel = Math.max(0, car.fuel - fuelRate * dt);
+
+      // Se combustível acabar demais, carro perde ritmo
+      let paceFactor = car.basePace * (1 - car.tyreWear * 0.4);
+      if (car.fuel < 0.1) {
+        paceFactor *= 0.7;
+      }
+
+      // progresso dentro da volta (0–1)
+      const lapProgressGain = paceFactor * 0.008 * dt;
+      car.progress += lapProgressGain;
+
+      // Comportamento de pitstop simples de IA
+      if (!car.isPlayer) {
+        const shouldPit =
+          (car.tyreWear > 0.75 && car.lap > 2) ||
+          (car.fuel < 0.25 && car.lap < raceState.totalLaps - 1);
+        if (shouldPit) {
+          doPitStop(car);
+        }
+      }
+
+      // Completou volta
+      if (car.progress >= 1) {
+        car.progress -= 1;
+        car.lap += 1;
+
+        // Volta concluída do líder (usaremos o carro mais rápido como referência)
+        if (car.lap > raceState.currentLap) {
+          raceState.currentLap = car.lap;
+        }
+
+        // Reabastecer um pouco a cada volta (simplificado)
+        car.fuel = Math.min(1, car.fuel + 0.35);
+      }
+    });
+
+    // Recalcula ordenação de posições
+    raceState.cars.sort((a, b) => {
+      // maior volta primeiro
+      if (b.lap !== a.lap) return b.lap - a.lap;
+      // maior progresso dentro da volta
+      if (b.progress !== a.progress) return b.progress - a.progress;
+      // se empatar, quem tem melhor basePace fica na frente
+      return b.basePace - a.basePace;
+    });
+
+    // Atualiza gaps
+    const leader = raceState.cars[0];
+    raceState.cars.forEach((car, index) => {
+      car.position = index + 1;
+      if (car === leader) {
+        car.gapToLeader = 0;
+        return;
+      }
+      // Gap simples baseado em diferença de volta e progresso
+      const lapDiff = leader.lap - car.lap;
+      const progDiff = leader.progress - car.progress;
+      const baseLapTime = 90; // 1min30s por volta (exemplo)
+      const gapSeconds = lapDiff * baseLapTime + progDiff * baseLapTime;
+      car.gapToLeader = Math.max(0, gapSeconds);
+    });
+
+    // Avança tempo de corrida do líder
+    const baseLapTimeSec = 90;
+    const leaderSpeedFactor = leader.basePace;
+    raceState.leaderRaceTime += (baseLapTimeSec / raceState.totalLaps) * (leaderSpeedFactor * dt);
+
+    // Verifica fim de corrida
+    if (leader.lap > raceState.totalLaps) {
+      finishRace();
+    }
+  }
+
+  // -------------------------------
+  // PIT STOP
+  // -------------------------------
+  function doPitStop(car) {
+    if (car.inPit) return;
+    car.inPit = true;
+    car.pitTimer = 5 + Math.random() * 4; // 5–9 segundos de pit (simulado)
+    car.pitStops += 1;
+    car.tyreWear = 0;
+    car.fuel = 1;
+  }
+
+  // -------------------------------
+  // HUD E TORRE
+  // -------------------------------
+  function updateHUD(force) {
+    const gs = getGameState();
+
+    const lapInfoEl = document.getElementById("raceLapInfo");
+    const statusEl = document.getElementById("raceStatusLabel");
+    const trackInfoEl = document.getElementById("raceTrackInfo");
+    const timerEl = document.getElementById("raceTimer");
+
+    if (trackInfoEl && force) {
+      trackInfoEl.textContent = `${gs.currentGP?.name || "GP"} • ${
+        gs.currentGP?.country || ""
+      } • ${raceState.totalLaps} voltas`;
+    }
+
+    if (lapInfoEl) {
+      const current = Math.min(raceState.currentLap, raceState.totalLaps);
+      lapInfoEl.textContent = `Volta ${current} / ${raceState.totalLaps}`;
+    }
+
+    if (statusEl) {
+      if (raceState.raceFinished) {
+        statusEl.textContent = "Corrida concluída";
+      } else if (!raceState.running) {
+        statusEl.textContent = "Pronto para iniciar";
+      } else if (raceState.paused) {
+        statusEl.textContent = "Corrida pausada";
+      } else {
+        statusEl.textContent = `Corrida em andamento • x${raceState.speedMultiplier}`;
+      }
+    }
+
+    if (timerEl) {
+      timerEl.textContent = formatRaceTime(raceState.leaderRaceTime);
+    }
+  }
+
+  function renderTower() {
+    const towerBody = document.getElementById("raceTowerBody");
+    if (!towerBody) return;
+
+    towerBody.innerHTML = "";
+
+    raceState.cars.forEach((car) => {
+      const row = document.createElement("div");
+      row.className = "race-tower-row";
+      if (car.isPlayer) row.classList.add("meus-pilotos");
+
+      const pos = document.createElement("div");
+      pos.textContent = car.position || "-";
+
+      const shortTeam = document.createElement("div");
+      shortTeam.textContent = getTeamShortName(car.teamName);
+
+      const driver = document.createElement("div");
+      driver.textContent = car.driverName;
+
+      const gap = document.createElement("div");
+      if (car.position === 1) {
+        gap.textContent = "Líder";
+      } else if (car.gapToLeader >= 90) {
+        const lapsDown = Math.floor(car.gapToLeader / 90);
+        gap.textContent = `+${lapsDown}V`;
+      } else {
+        gap.textContent = `+${car.gapToLeader.toFixed(1)}s`;
+      }
+
+      row.appendChild(pos);
+      row.appendChild(shortTeam);
+      row.appendChild(driver);
+      row.appendChild(gap);
+
+      towerBody.appendChild(row);
     });
   }
 
-  // verifica fim
-  race.currentLap++;
-
-  if (race.currentLap > total) {
-    finishRace();
-  }
-}
-
-// ------------------------
-// FINALIZA CORRIDA
-// ------------------------
-
-function finishRace() {
-  if (!currentRace) return;
-
-  currentRace.finished = true;
-  cancelRaceLoop();
-
-  const pista = currentRace.pista;
-  const gridFinal = currentRace.grid.slice().sort((a, b) => a.pos - b.pos);
-
-  const podiumNames = gridFinal.slice(0, 3).map((p) => p.nome);
-
-  const resultado = {
-    etapaIndex: currentRace.etapaIndex,
-    pista: pista.nome || "Pista",
-    pais: pista.pais || "",
-    classificacao: gridFinal.map((p) => ({
-      nome: p.nome,
-      equipeId: p.equipeId,
-      pos: p.pos
-    })),
-    podium: podiumNames
-  };
-
-  console.log("Corrida finalizada:", resultado);
-
-  if (typeof currentRace.onFinish === "function") {
-    currentRace.onFinish(resultado);
+  function getTeamShortName(name) {
+    if (!name) return "";
+    const upper = name.toUpperCase();
+    if (upper.includes("RED BULL")) return "RBR";
+    if (upper.includes("MERCEDES")) return "MER";
+    if (upper.includes("FERRARI")) return "FER";
+    if (upper.includes("MCLAREN")) return "MCL";
+    if (upper.includes("ASTON")) return "AMR";
+    if (upper.includes("ALPINE")) return "ALP";
+    if (upper.includes("WILLIAMS")) return "WIL";
+    if (upper.includes("HAAS")) return "HAA";
+    if (upper.includes("SAUBER")) return "SAU";
+    if (upper.includes("RB")) return "RB";
+    return upper.slice(0, 3);
   }
 
-  currentRace = null;
-}
+  function formatRaceTime(seconds) {
+    const total = Math.max(0, Math.floor(seconds));
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  }
 
-// ------------------------
-// HELPERS
-// ------------------------
+  // -------------------------------
+  // CONTROLE DE ESTADO (PAUSE/FIM)
+  // -------------------------------
+  function pauseRace() {
+    if (!raceState.running || raceState.raceFinished) return;
+    raceState.paused = true;
+    updateHUD();
+  }
 
-function cloneGrid(grid) {
-  return grid.map((p) => ({ ...p }));
-}
+  function resumeRace() {
+    if (!raceState.running || raceState.raceFinished) return;
+    raceState.paused = false;
+    raceState.lastFrameTime = 0;
+    updateHUD();
+    requestAnimationFrame(raceLoop);
+  }
+
+  function finishRace() {
+    raceState.raceFinished = true;
+    raceState.running = false;
+    raceState.paused = false;
+    updateHUD();
+    renderTower();
+
+    // Salvar resultado em gameState para usar no pódio, classificação, finanças, etc.
+    const gs = getGameState();
+    gs.lastRaceResult = {
+      gp: gs.currentGP,
+      cars: raceState.cars.map((c) => ({
+        position: c.position,
+        driverName: c.driverName,
+        teamName: c.teamName,
+        isPlayer: c.isPlayer,
+        pitStops: c.pitStops,
+        gapToLeader: c.gapToLeader,
+        lapsCompleted: c.lap - 1
+      }))
+    };
+
+    // Se houver função de navegação para pódio, chama aqui
+    if (typeof window.showPodiumScreen === "function") {
+      window.showPodiumScreen();
+    } else {
+      // fallback: tenta mostrar tela de pódio via id
+      const telaPodio = document.getElementById("tela-podio");
+      const telaCorrida = document.getElementById("tela-corrida");
+      if (telaCorrida) telaCorrida.classList.remove("visible");
+      if (telaPodio) telaPodio.classList.add("visible");
+    }
+  }
+
+  // -------------------------------
+  // INICIALIZAÇÃO NO DOMCONTENTLOADED
+  // -------------------------------
+  document.addEventListener("DOMContentLoaded", () => {
+    initRaceSystem();
+  });
+})();
