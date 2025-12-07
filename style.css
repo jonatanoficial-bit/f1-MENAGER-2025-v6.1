@@ -1,170 +1,1240 @@
-/* ============================================================
-   GLOBAL
-============================================================ */
+/* ============================
+   F1 MANAGER 2025 - STYLE.CSS
+   Layout geral e telas
+   ============================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap');
+/* ---------- RESET / BASE ---------- */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
 
 body {
-  margin: 0;
-  background: #000;
-  color: #fff;
-  font-family: 'Montserrat', sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #1b1b1f 0, #050509 55%, #000 100%);
+  color: #f5f5f5;
+  overflow: hidden;
 }
 
-button {
-  cursor: pointer;
-  border: none;
-  padding: 14px 20px;
-  font-weight: 600;
-  font-size: 16px;
-  border-radius: 8px;
-  background: #e10600;
-  color: #fff;
-  text-transform: uppercase;
-  transition: 0.2s;
+/* ---------- CORES PRINCIPAIS ---------- */
+
+:root {
+  --f1-red: #e10600;
+  --f1-red-dark: #b90500;
+  --bg-main: #050509;
+  --bg-panel: rgba(10, 10, 14, 0.96);
+  --bg-panel-soft: rgba(18, 18, 24, 0.9);
+  --bg-chip: rgba(35, 35, 45, 0.9);
+  --border-soft: rgba(180, 180, 200, 0.2);
+  --text-main: #f5f5f5;
+  --text-muted: #b3b3c0;
+  --accent-green: #23d18b;
+  --accent-yellow: #f3c623;
+  --accent-purple: #b172ff;
 }
 
-button:hover {
-  background: #ff3b2f;
-}
-
-/* ============================================================
-   TELAS
-============================================================ */
+/* ---------- TELAS (SEÇÕES PRINCIPAIS) ---------- */
 
 .tela {
+  position: fixed;
+  inset: 0;
   display: none;
-  text-align: center;
-  padding: 40px;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #151519 0, #020208 55%, #000 100%);
+  z-index: 1;
+  padding: 24px;
 }
 
-.tela.active {
-  display: block;
+.tela.visible {
+  display: flex;
 }
 
-h1, h2 {
+.tela-fundo-capa {
+  background:
+    radial-gradient(circle at top, #241010 0, #030305 50%, #000 100%),
+    url("assets/ui/capa_bg.png") center/cover no-repeat fixed;
+}
+
+.tela-fundo-menu {
+  background:
+    radial-gradient(circle at top, #101018 0, #020207 50%, #000 100%),
+    url("assets/ui/menu_bg.png") center/cover no-repeat fixed;
+}
+
+.tela-fundo-lobby {
+  background:
+    radial-gradient(circle at top, #121219 0, #020207 50%, #000 100%),
+    url("assets/ui/lobby_bg.png") center/cover no-repeat fixed;
+}
+
+.tela-fundo-race {
+  background:
+    radial-gradient(circle at top, #05050a 0, #020207 50%, #000 100%);
+}
+
+/* Camada escurecida sobre o fundo */
+.overlay {
+  position: relative;
+  width: 100%;
+  max-width: 1280px;
+  height: 100%;
+  max-height: 720px;
+  background: linear-gradient(145deg, rgba(6, 6, 10, 0.96), rgba(10, 10, 18, 0.96));
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+/* ---------- HEADER PADRÃO DAS TELAS ---------- */
+
+.tela-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.tela-titulo {
+  font-size: 1.4rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  letter-spacing: 0.10em;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* ============================================================
-   MENU CONTAINER
-============================================================ */
+.tela-titulo span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
 
-.menu-container {
-  max-width: 400px;
-  margin: 100px auto;
+.tela-subinfo {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tela-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- BOTÕES GERAIS ---------- */
+
+.btn-principal,
+.btn-secundario,
+.btn-voltar,
+.btn-inline,
+.btn-danger {
+  border: none;
+  cursor: pointer;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+/* Botão vermelho principal */
+.btn-principal {
+  background: linear-gradient(135deg, var(--f1-red), #ff3b2f);
+  color: #fff;
+  box-shadow: 0 0 22px rgba(225, 6, 0, 0.6);
+}
+
+.btn-principal:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px rgba(225, 6, 0, 0.9);
+}
+
+/* Botão secundário escuro */
+.btn-secundario,
+.btn-voltar,
+.btn-inline {
+  background: linear-gradient(135deg, #22232a, #171821);
+  color: #f1f1f8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-secundario:hover,
+.btn-voltar:hover,
+.btn-inline:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.18);
+}
+
+/* Botão perigo */
+.btn-danger {
+  background: linear-gradient(135deg, #8a1212, #ff3030);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 25px rgba(255, 48, 48, 0.9);
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+/* ---------- CAPA (TELA INICIAL) ---------- */
+
+.capa-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.capa-left {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.capa-tagline {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-yellow);
+}
+
+.titulo-capa {
+  font-size: clamp(2.4rem, 4vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.titulo-capa span {
+  color: var(--f1-red);
+}
+
+.capa-subtitulo {
+  font-size: 0.98rem;
+  color: var(--text-muted);
+  max-width: 430px;
+}
+
+.capa-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.capa-bottom-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.capa-bottom-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Imagem/arte da capa */
+.capa-right {
+  position: relative;
+  height: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(225, 6, 0, 0.25), transparent 60%),
+    url("assets/ui/carro_garagem.png") center/cover no-repeat;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.capa-right::before {
+  content: "MANAGE • STRATEGY • LEGACY";
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  font-size: 0.7rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ---------- MENU PRINCIPAL ---------- */
+
+.menu-principal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 24px;
+  height: 100%;
+}
+
+.menu-left {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.menu-container h1 {
-  font-size: 40px;
+.menu-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-/* ============================================================
-   MENU GRID
-============================================================ */
+.menu-title-block h1 {
+  font-size: 1.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.menu-title-block p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
 
 .menu-grid {
-  max-width: 600px;
-  margin: 60px auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.menu-grid button {
-  padding: 16px 10px;
-}
-
-/* ============================================================
-   VOLTAR
-============================================================ */
-
-.btn-voltar {
-  background: #444;
-}
-
-.btn-voltar:hover {
-  background: #666;
-}
-
-/* ============================================================
-   SCROLL LIST
-============================================================ */
-
-.menu-scroll {
-  max-height: 500px;
-  overflow-y: auto;
-  margin: 30px auto;
-  width: 80%;
-  padding: 10px;
-  border: 1px solid #222;
-  background: #111;
-  border-radius: 10px;
-}
-
-.menu-scroll::-webkit-scrollbar {
-  width: 10px;
-}
-
-.menu-scroll::-webkit-scrollbar-thumb {
-  background: #e10600;
-  border-radius: 10px;
-}
-
-/* ============================================================
-   EQUIPES LISTA
-============================================================ */
-
-#lista-equipes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 14px;
 }
 
-.equipe-card {
-  background: #161616;
-  border: 1px solid #222;
-  border-radius: 10px;
-  padding: 12px;
-  transition: 0.2s;
+.menu-card {
+  position: relative;
+  padding: 16px 16px 14px;
+  border-radius: 16px;
+  background: radial-gradient(circle at top left, rgba(225, 6, 0, 0.16), rgba(14, 14, 20, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    border-color 0.12s ease,
+    background 0.12s ease;
 }
 
-.equipe-card:hover {
+.menu-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
+  border-color: rgba(225, 6, 0, 0.7);
+}
+
+.menu-card-title {
+  font-size: 0.9rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.menu-card-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.menu-card-meta {
+  margin-top: auto;
+  font-size: 0.7rem;
+  color: var(--accent-purple);
+}
+
+.menu-card-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Coluna direita do menu (resumo, últimos saves, etc.) */
+.menu-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.menu-panel {
+  background: var(--bg-panel-soft);
+  border-radius: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menu-panel-header h3 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.menu-panel-body {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ---------- NOVO JOGO / CONTINUAR CARREIRA ---------- */
+
+.novo-jogo-layout,
+.carregar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 22px;
+  height: 100%;
+}
+
+.form-bloco {
+  background: var(--bg-panel-soft);
+  border-radius: 20px;
+  border: 1px solid var(--border-soft);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-bloco h2 {
+  font-size: 1rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.form-row label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.form-row input,
+.form-row select {
+  background: #101018;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  outline: none;
+}
+
+.form-row input:focus,
+.form-row select:focus {
+  border-color: var(--f1-red);
+  box-shadow: 0 0 0 1px rgba(225, 6, 0, 0.5);
+}
+
+/* Lista de saves / carreiras */
+.save-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.save-card {
+  background: #101018;
+  border-radius: 16px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+
+.save-card:hover {
+  background: #151520;
+  transform: translateY(-1px);
+}
+
+.save-card-title {
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.save-card-meta {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+/* ---------- GERENTES REAIS / ESCUDERIAS ---------- */
+
+.lista-reais,
+.escuderia-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+  max-height: 430px;
+  overflow-y: auto;
+}
+
+.card-gerente,
+.card-escuderia {
+  background: var(--bg-panel-soft);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.card-gerente:hover,
+.card-escuderia:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.8);
+  border-color: rgba(225, 6, 0, 0.7);
+}
+
+.card-gerente-header,
+.card-escuderia-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar-gerente,
+.logo-escuderia {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #15151f;
+  object-fit: cover;
+}
+
+.card-gerente-nome,
+.card-escuderia-nome {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.card-gerente-meta,
+.card-escuderia-meta {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.badge-dificuldade {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* ---------- LOBBY / HUB DA EQUIPE ---------- */
+
+.lobby-layout {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  height: 100%;
+}
+
+.painel-superior {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.2fr);
+  gap: 14px;
+}
+
+.painel-inferior {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* Cards do lobby */
+.painel-card {
+  background: var(--bg-panel);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.painel-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.painel-titulo {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.painel-badge {
+  font-size: 0.7rem;
+  color: var(--accent-purple);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.painel-texto {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.painel-metricas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.chip-metrica {
+  background: var(--bg-chip);
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip-metrica span.valor {
+  color: var(--accent-green);
+}
+
+/* Cabeçalho da equipe no lobby */
+.gerente-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.avatar-img {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: #15151f;
+  object-fit: cover;
+}
+
+.gerente-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gerente-meta h2 {
+  font-size: 1rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.gerente-meta small {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+/* Botões principais do lobby (corrida, calendário, etc.) */
+.lobby-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- CALENDÁRIO ---------- */
+
+.grid-calendario {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.card-gp {
+  background: var(--bg-panel);
+  border-radius: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.card-gp:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.85);
+  border-color: rgba(225, 6, 0, 0.7);
+}
+
+.card-gp-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flag-gp {
+  width: 32px;
+  height: 22px;
+  border-radius: 4px;
   background: #222;
-  transform: scale(1.03);
+  object-fit: cover;
 }
 
-.equipe-card img {
-  width: 100px;
-  height: auto;
-  margin-bottom: 8px;
+.nome-gp {
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
 }
 
-.equipe-card button {
+.status-gp {
+  font-size: 0.72rem;
+  color: var(--accent-yellow);
+}
+
+/* ---------- GARAGEM / CARROS ---------- */
+
+.garagem-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr);
+  gap: 16px;
+  height: 100%;
+}
+
+.garagem-carros {
+  background: var(--bg-panel);
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.carro-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.card-carro {
+  background: #101018;
+  border-radius: 14px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-carro-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-carro-nome {
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.card-carro-piloto {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.carro-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* ---------- OFICINA / SETUP ---------- */
+
+.oficina-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+}
+
+.oficina-card {
+  background: var(--bg-panel);
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.setup-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.setup-row {
+  display: grid;
+  grid-template-columns: 1.1fr minmax(0, 1.9fr) 0.8fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.setup-row label {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--text-muted);
+}
+
+.setup-row input[type="range"] {
+  -webkit-appearance: none;
   width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: #242435;
+  outline: none;
 }
 
-/* ============================================================
-   LOBBY
-============================================================ */
-
-#tela-lobby h2 {
-  margin-bottom: 20px;
-  font-size: 32px;
+/* thumb do slider */
+.setup-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--f1-red);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(225, 6, 0, 0.7);
 }
 
-#tela-lobby .menu-grid {
-  max-width: 800px;
+.setup-row input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--f1-red);
+  cursor: pointer;
 }
 
-#btn-salvar {
-  background: #0c7a0c;
+.setup-value {
+  text-align: right;
+  font-size: 0.8rem;
 }
 
-#btn-salvar:hover {
-  background: #14a314;
+/* Bloco de feedback do piloto */
+.setup-feedback {
+  background: #101018;
+  border-radius: 14px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* ---------- FUNCIONÁRIOS / MERCADO ---------- */
+
+.funcionarios-grid,
+.mercado-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+
+.card-funcionario,
+.card-mercado {
+  background: var(--bg-panel);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-funcionario-header,
+.card-mercado-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.funcao-tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent-purple);
+}
+
+.card-atributos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ---------- CONTRATOS / PATROCÍNIO ---------- */
+
+.contratos-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 14px;
+  height: 100%;
+}
+
+.contrato-lista {
+  background: var(--bg-panel);
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.contrato-card {
+  background: #101018;
+  border-radius: 14px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contrato-card strong {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.contrato-meta {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+/* ---------- FINANÇAS ---------- */
+
+.financas-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+  gap: 14px;
+  height: 100%;
+}
+
+.financas-resumo {
+  background: var(--bg-panel);
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.financas-lista {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.financa-linha {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+
+.financa-linha span.valor-positivo {
+  color: var(--accent-green);
+}
+
+.financa-linha span.valor-negativo {
+  color: #ff5c5c;
+}
+
+/* ---------- RACE / CORRIDA (COMPLEMENTAR) ---------- */
+
+.race-wrapper {
+  display: grid;
+  grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr);
+  gap: 12px;
+  height: 100%;
+}
+
+.race-canvas-container {
+  position: relative;
+  background: radial-gradient(circle at top, #15151c 0, #05050a 55%, #000 100%);
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  overflow: hidden;
+}
+
+.race-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Torre de posições */
+.race-tower {
+  background: var(--bg-panel);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  padding: 10px 10px 8px;
+  font-size: 0.78rem;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.race-tower-row {
+  display: grid;
+  grid-template-columns: 20px 44px 1fr 60px;
+  gap: 6px;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.race-tower-row.meus-pilotos {
+  background: rgba(225, 6, 0, 0.12);
+}
+
+/* Painéis auxiliares */
+.race-panel {
+  background: var(--bg-panel);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  padding: 8px 10px;
+  font-size: 0.78rem;
+}
+
+/* Barra inferior com controles de tempo e pit */
+.race-controls {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* ---------- PÓDIO ---------- */
+
+.podio-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 18px;
+  height: 100%;
+}
+
+.podio-stage {
+  background: radial-gradient(circle at top, rgba(225, 6, 0, 0.32), #050509 55%);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  position: relative;
+  overflow: hidden;
+}
+
+.podio-plataformas {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.podio-slot {
+  position: relative;
+  background: linear-gradient(180deg, #15151f, #050509);
+  border-radius: 14px 14px 4px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 10px 10px 12px;
+}
+
+.podio-slot-1 {
+  height: 150px;
+}
+
+.podio-slot-2 {
+  height: 120px;
+}
+
+.podio-slot-3 {
+  height: 110px;
+}
+
+.podio-piloto-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: #202030;
+  border: 2px solid #fff;
+  object-fit: cover;
+  margin-bottom: 6px;
+}
+
+.podio-piloto-nome {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.podio-equipe {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.podio-flag {
+  width: 32px;
+  height: 22px;
+  border-radius: 4px;
+  background: #222;
+  object-fit: cover;
+  margin-top: 4px;
+}
+
+/* ---------- SCROLLBAR ---------- */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050509;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a38;
+  border-radius: 999px;
+}
+
+/* ---------- RESPONSIVO BÁSICO ---------- */
+
+@media (max-width: 1024px) {
+  .overlay {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+
+  .capa-container,
+  .menu-principal-layout,
+  .novo-jogo-layout,
+  .carregar-layout,
+  .garagem-layout,
+  .oficina-layout,
+  .financas-layout,
+  .race-wrapper,
+  .podio-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .painel-inferior {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .tela {
+    padding: 10px;
+  }
+
+  .painel-inferior {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lista-reais,
+  .escuderia-grid {
+    grid-template-columns: 1fr;
+  }
 }
