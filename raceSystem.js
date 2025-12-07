@@ -1,131 +1,264 @@
 // =======================================
-// F1 MANAGER 2025 - RACE SYSTEM
+// F1 MANAGER 2025 - SISTEMA DE CORRIDA
 // =======================================
 
-console.log("raceSystem.js carregado com sucesso.");
+console.log("raceSystem.js carregado");
 
-// velocidade da simulação
-let RATE = 1;
+// Referência ao estado global
+const GS = window.GAME_STATE || {
+  calendario: [],
+  pilotos: [],
+  equipes: []
+};
 
-// ---------------------------------------
-// SIMULAR CORRIDA
-// ---------------------------------------
+// ------------------------
+// CONFIGURAÇÃO DA SIMULAÇÃO
+// ------------------------
 
-function startRace(etapa, onFinish) {
+// duração virtual de UMA volta em ms (em 1x)
+const BASE_LAP_INTERVAL_MS = 1000;
 
-    console.log("Iniciando simulação etapa:", etapa);
+// multiplicador de velocidade (1x, 2x, 4x...)
+let raceSpeedMultiplier = 1;
 
-    const pista = GAME_STATE.calendario[etapa];
-    const voltasTotais = pista.voltas;
+// controle interno da corrida
+let raceAnimationId = null;
+let currentRace = null;
+let lastFrameTime = null;
 
-    // clonar pilotos
-    let grid = GAME_STATE.pilotos.map(p => ({
-        ...p,
-        voltaAtual: 0,
-        pos: 0,
-        tempoTotal: 0,
-        pneus: "Medium",
-        desgaste: 100,
-        temperatura: 100,
-        paradas: 0
-    }));
+// ------------------------
+// FUNÇÕES PÚBLICAS
+// ------------------------
 
-    // embaralhar grid inicial
-    grid.sort(() => Math.random() - 0.5);
-
-    // loop por volta
-    let currentLap = 1;
-
-    function simularVolta() {
-
-        grid.forEach(p => {
-
-            // desgaste progressivo
-            const desgastePerLap = (Math.random() * 2 + 1); // 1% a 3%
-            p.desgaste -= desgastePerLap;
-            if (p.desgaste < 10) p.desgaste = 10;
-
-            // temperatura sobe
-            p.temperatura += (Math.random() * 3);
-
-            // tempo volta base
-            let tempo = 90 + (Math.random() * 8);
-
-            // desgaste e temperatura afetam
-            tempo += ((100 - p.desgaste) * 0.25);
-            tempo += ((p.temperatura - 100) * 0.4);
-
-            // chance de erro
-            if (Math.random() < 0.05) tempo += (Math.random() * 5);
-
-            // chance de pitstop se desgaste < 40
-            if (p.desgaste < 40) {
-                tempo += 22 + Math.random() * 3;
-                p.desgaste = 100;
-                p.temperatura = 100;
-                p.paradas++;
-            }
-
-            p.tempoTotal += tempo;
-            p.voltaAtual = currentLap;
-        });
-
-        // ordenar
-        grid.sort((a, b) => a.tempoTotal - b.tempoTotal);
-
-        // atualizar posição
-        grid.forEach((p, i) => p.pos = i + 1);
-
-        // usar callback parcial para UI
-        if (window.onRaceUpdate) {
-            window.onRaceUpdate({
-                volta: currentLap,
-                total: voltasTotais,
-                grid
-            });
-        }
-
-        currentLap++;
-
-        // terminou?
-        if (currentLap <= voltasTotais) {
-            setTimeout(simularVolta, 500 / RATE);
-        } else {
-            finalizarCorrida();
-        }
-    }
-
-    simularVolta();
-
-    // ---------------------------------------
-    // ENCERRAR
-    // ---------------------------------------
-
-    function finalizarCorrida() {
-
-        console.log("Corrida finalizada!");
-
-        // ordenar final
-        grid.sort((a, b) => a.tempoTotal - b.tempoTotal);
-
-        const resultado = {
-            etapa,
-            pista: pista.nome,
-            podium: grid.slice(0, 3).map(p => p.nome),
-            classificacao: grid
-        };
-
-        // callback para o main
-        if (onFinish) onFinish(resultado);
-    }
+function setRaceSpeed(mult) {
+  raceSpeedMultiplier = mult || 1;
+  console.log("Velocidade da corrida:", raceSpeedMultiplier, "x");
 }
 
-// ---------------------------------------
-// CONTROLE DE VELOCIDADE DO HUD
-// ---------------------------------------
+function startRace(etapaIndex, onFinishCallback) {
+  cancelRaceLoop();
 
-function setRaceSpeed(multiplier) {
-    RATE = multiplier;
+  const pista =
+    GS.calendario && GS.calendario[etapaIndex]
+      ? GS.calendario[etapaIndex]
+      : { nome: "Pista Genérica", voltas: 20 };
+
+  const totalLaps = pista.voltas || 20;
+
+  // monta grid inicial
+  const grid = buildInitialGrid();
+
+  currentRace = {
+    etapaIndex,
+    pista,
+    totalLaps,
+    currentLap: 1,
+    grid,
+    finished: false,
+    onFinish: onFinishCallback
+  };
+
+  lastFrameTime = null;
+
+  console.log(
+    `Corrida iniciada: ${pista.nome} (${totalLaps} voltas) com ${grid.length} pilotos`
+  );
+
+  // chama primeira atualização para preencher UI
+  if (typeof window.onRaceUpdate === "function") {
+    window.onRaceUpdate({
+      volta: currentRace.currentLap,
+      total: currentRace.totalLaps,
+      grid: cloneGrid(currentRace.grid)
+    });
+  }
+
+  raceAnimationId = requestAnimationFrame(raceLoop);
 }
+
+// expõe globalmente para o main.js
 window.setRaceSpeed = setRaceSpeed;
 window.startRace = startRace;
+
+// ------------------------
+// CONSTRUÇÃO DO GRID
+// ------------------------
+
+function buildInitialGrid() {
+  let pilotosFonte = [];
+
+  if (Array.isArray(GS.pilotos) && GS.pilotos.length > 0) {
+    pilotosFonte = GS.pilotos;
+  } else {
+    // fallback se não tiver pilotos no data.js
+    for (let i = 1; i <= 20; i++) {
+      pilotosFonte.push({
+        id: i,
+        nome: "Piloto " + i,
+        equipeId: null,
+        ritmo: 80 + Math.random() * 20 // 80–100
+      });
+    }
+  }
+
+  // cria objetos internos da corrida
+  const grid = pilotosFonte.map((p, index) => ({
+    id: p.id || index + 1,
+    nome: p.nome || p.name || `Piloto ${index + 1}`,
+    equipeId: p.equipeId || p.teamId || null,
+    ritmoBase: p.ritmo || p.rating || 80 + Math.random() * 20,
+    pos: index + 1,
+    tempoTotal: 0,
+    pneus: "M",
+    desgaste: 0,
+    fezPit: false
+  }));
+
+  return grid;
+}
+
+// ------------------------
+// LOOP DA CORRIDA
+// ------------------------
+
+function raceLoop(timestamp) {
+  if (!currentRace || currentRace.finished) return;
+
+  if (!lastFrameTime) {
+    lastFrameTime = timestamp;
+    raceAnimationId = requestAnimationFrame(raceLoop);
+    return;
+  }
+
+  const delta = (timestamp - lastFrameTime) * raceSpeedMultiplier;
+
+  if (delta >= BASE_LAP_INTERVAL_MS) {
+    // processa uma volta
+    processLap();
+    lastFrameTime = timestamp;
+  }
+
+  if (!currentRace.finished) {
+    raceAnimationId = requestAnimationFrame(raceLoop);
+  }
+}
+
+function cancelRaceLoop() {
+  if (raceAnimationId) {
+    cancelAnimationFrame(raceAnimationId);
+    raceAnimationId = null;
+  }
+}
+
+// ------------------------
+// LÓGICA DE CADA VOLTA
+// ------------------------
+
+function processLap() {
+  const race = currentRace;
+  if (!race) return;
+
+  const lap = race.currentLap;
+  const total = race.totalLaps;
+
+  // simula tempo de volta para cada piloto
+  race.grid.forEach((p) => {
+    // ritmo base mais/menos aleatório
+    const base = 80; // tempo base em segundos imaginários
+    const ritmoFactor = (100 - p.ritmoBase) * 0.03; // quanto pior o ritmo, maior tempo
+    const randomVar = (Math.random() - 0.5) * 0.8; // variação +/- 0.4s
+
+    let lapTime = base + ritmoFactor + randomVar;
+
+    // impacto do desgaste
+    lapTime += p.desgaste * 0.01;
+
+    // pit-stop ainda simples: chance pequena
+    let fezPitAgora = false;
+    if (!p.fezPit && lap > 5 && Math.random() < 0.05) {
+      fezPitAgora = true;
+      lapTime += 20 + Math.random() * 5; // tempo extra de pit
+      p.fezPit = true;
+      p.desgaste = Math.max(0, p.desgaste - 30); // pneus trocados
+    }
+
+    // aumenta desgaste geral
+    const desgasteExtra = 2 + Math.random() * 3;
+    p.desgaste = Math.min(100, p.desgaste + desgasteExtra);
+
+    p.tempoTotal += lapTime;
+
+    // só para debug
+    if (fezPitAgora) {
+      console.log(`${p.nome} realizou pit-stop na volta ${lap}`);
+    }
+  });
+
+  // ordena por tempo total
+  race.grid.sort((a, b) => a.tempoTotal - b.tempoTotal);
+
+  // atualiza posições
+  race.grid.forEach((p, index) => {
+    p.pos = index + 1;
+  });
+
+  // envia atualização para UI
+  if (typeof window.onRaceUpdate === "function") {
+    window.onRaceUpdate({
+      volta: lap,
+      total,
+      grid: cloneGrid(race.grid)
+    });
+  }
+
+  // verifica fim
+  race.currentLap++;
+
+  if (race.currentLap > total) {
+    finishRace();
+  }
+}
+
+// ------------------------
+// FINALIZA CORRIDA
+// ------------------------
+
+function finishRace() {
+  if (!currentRace) return;
+
+  currentRace.finished = true;
+  cancelRaceLoop();
+
+  const pista = currentRace.pista;
+  const gridFinal = currentRace.grid.slice().sort((a, b) => a.pos - b.pos);
+
+  const podiumNames = gridFinal.slice(0, 3).map((p) => p.nome);
+
+  const resultado = {
+    etapaIndex: currentRace.etapaIndex,
+    pista: pista.nome || "Pista",
+    pais: pista.pais || "",
+    classificacao: gridFinal.map((p) => ({
+      nome: p.nome,
+      equipeId: p.equipeId,
+      pos: p.pos
+    })),
+    podium: podiumNames
+  };
+
+  console.log("Corrida finalizada:", resultado);
+
+  if (typeof currentRace.onFinish === "function") {
+    currentRace.onFinish(resultado);
+  }
+
+  currentRace = null;
+}
+
+// ------------------------
+// HELPERS
+// ------------------------
+
+function cloneGrid(grid) {
+  return grid.map((p) => ({ ...p }));
+}
