@@ -169,3 +169,98 @@ const GAME_DATA = {
                 suspension: [6, 8]
             }
         },
+{
+            id: "canada",
+            name: "Canadian Grand Prix",
+            country: "Canada",
+            flag: "assets/flags/canada.png",
+            date: "08 JUN 2025",
+            svg: "assets/tracks/canada.svg.svg",
+            laps: 70,
+            lengthKm: 4.361,
+            tyreWear: "medium",
+            fuelUse: "high",
+            rainChance: 0.48,
+            setupWindow: {
+                frontWing: [5, 7],
+                rearWing: [5, 7],
+                rideHeight: [4, 6],
+                suspension: [5, 6]
+            }
+        },
+        {
+            id: "spain",
+            name: "Spanish Grand Prix",
+            country: "Spain",
+            flag: "assets/flags/spain.png",
+            date: "22 JUN 2025",
+            svg: "assets/tracks/spain.svg.svg",
+            laps: 66,
+            lengthKm: 4.657,
+            tyreWear: "high",
+            fuelUse: "medium",
+            rainChance: 0.29,
+            setupWindow: {
+                frontWing: [7, 9],
+                rearWing: [6, 9],
+                rideHeight: [5, 7],
+                suspension: [6, 7]
+            }
+        },
+        {
+            id: "austria",
+            name: "Austrian Grand Prix",
+            country: "Austria",
+            flag: "assets/flags/austria.png",
+            date: "29 JUN 2025",
+            svg: "assets/tracks/austria.svg.svg",
+            laps: 71,
+            lengthKm: 4.318,
+            tyreWear: "low",
+            fuelUse: "low",
+            rainChance: 0.23,
+            setupWindow: {
+                frontWing: [4, 6],
+                rearWing: [4, 6],
+                rideHeight: [3, 5],
+                suspension: [4, 5]
+            }
+        },
+        {
+            id: "silverstone",
+            name: "British Grand Prix",
+            country: "United Kingdom",
+            flag: "assets/flags/uk.png",
+            date: "06 JUL 2025",
+            svg: "assets/tracks/silverstone.svg.svg",
+            laps: 52,
+            lengthKm: 5.891,
+            tyreWear: "medium",
+            fuelUse: "high",
+            rainChance: 0.51,
+            setupWindow: {
+                frontWing: [6, 8],
+                rearWing: [5, 7],
+                rideHeight: [4, 6],
+                suspension: [5, 6]
+            }
+        },
+        {
+            id: "hungary",
+            name: "Hungarian Grand Prix",
+            country: "Hungary",
+            flag: "assets/flags/hungary.png",
+            date: "20 JUL 2025",
+            svg: "assets/tracks/hungary.svg.svg",
+            laps: 70,
+            lengthKm: 4.381,
+            tyreWear: "very_high",
+            fuelUse: "medium",
+            rainChance: 0.43,
+            setupWindow: {
+                frontWing: [8, 10],
+                rearWing: [8, 10],
+                rideHeight: [6, 8],
+                suspension: [7, 8]
+            }
+        },
