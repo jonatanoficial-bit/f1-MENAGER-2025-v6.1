@@ -359,3 +359,118 @@ const GAME_DATA = {
                 suspension: [7, 8]
             }
         },
+{
+            id: "cota",
+            name: "United States Grand Prix",
+            country: "USA",
+            flag: "assets/flags/usa.png",
+            date: "19 OCT 2025",
+            svg: "assets/tracks/cota.svg.svg",
+            laps: 56,
+            lengthKm: 5.513,
+            tyreWear: "medium",
+            fuelUse: "high",
+            rainChance: 0.22,
+            setupWindow: {
+                frontWing: [5, 7],
+                rearWing: [5, 7],
+                rideHeight: [4, 6],
+                suspension: [5, 6]
+            }
+        },
+        {
+            id: "mexico",
+            name: "Mexico City Grand Prix",
+            country: "Mexico",
+            flag: "assets/flags/mexico.png",
+            date: "26 OCT 2025",
+            svg: "assets/tracks/mexico.svg.svg",
+            laps: 71,
+            lengthKm: 4.304,
+            tyreWear: "high",
+            fuelUse: "medium",
+            rainChance: 0.28,
+            setupWindow: {
+                frontWing: [6, 8],
+                rearWing: [6, 8],
+                rideHeight: [5, 7],
+                suspension: [5, 7]
+            }
+        },
+        {
+            id: "brazil",
+            name: "São Paulo Grand Prix",
+            country: "Brazil",
+            flag: "assets/flags/brazil.png",
+            date: "09 NOV 2025",
+            svg: "assets/tracks/brazil.svg.svg",
+            laps: 71,
+            lengthKm: 4.309,
+            tyreWear: "high",
+            fuelUse: "high",
+            rainChance: 0.47,
+            setupWindow: {
+                frontWing: [6, 8],
+                rearWing: [6, 8],
+                rideHeight: [5, 7],
+                suspension: [5, 7]
+            }
+        },
+        {
+            id: "qatar",
+            name: "Qatar Grand Prix",
+            country: "Qatar",
+            flag: "assets/flags/qatar.png",
+            date: "23 NOV 2025",
+            svg: "assets/tracks/qatar.svg.svg",
+            laps: 57,
+            lengthKm: 5.380,
+            tyreWear: "medium",
+            fuelUse: "medium",
+            rainChance: 0.08,
+            setupWindow: {
+                frontWing: [6, 8],
+                rearWing: [6, 8],
+                rideHeight: [4, 6],
+                suspension: [5, 6]
+            }
+        },
+        {
+            id: "lasvegas",
+            name: "Las Vegas Grand Prix",
+            country: "USA",
+            flag: "assets/flags/usa.png",
+            date: "29 NOV 2025",
+            svg: "assets/tracks/lasvegas.svg.svg",
+            laps: 50,
+            lengthKm: 6.120,
+            tyreWear: "low",
+            fuelUse: "high",
+            rainChance: 0.10,
+            setupWindow: {
+                frontWing: [4, 6],
+                rearWing: [4, 6],
+                rideHeight: [3, 5],
+                suspension: [4, 5]
+            }
+        },
+        {
+            id: "abudhabi",
+            name: "Abu Dhabi Grand Prix",
+            country: "United Arab Emirates",
+            flag: "assets/flags/uae.png",
+            date: "07 DEC 2025",
+            svg: "assets/tracks/abudhabi.svg.svg",
+            laps: 58,
+            lengthKm: 5.281,
+            tyreWear: "medium",
+            fuelUse: "medium",
+            rainChance: 0.05,
+            setupWindow: {
+                frontWing: [6, 8],
+                rearWing: [6, 8],
+                rideHeight: [4, 6],
+                suspension: [5, 6]
+            }
+        }
+    ], // end of tracks array
