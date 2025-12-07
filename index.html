@@ -1,210 +1,263 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<title>F1 Manager 2025</title>
+    <meta charset="UTF-8">
+    <title>F1 Manager 2025</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- ESTILOS -->
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="ui.css">
-
-<style>
-body { background:black; }
-</style>
-
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="ui.css">
 </head>
 
 <body>
 
-<!-- HUD GLOBAL (DINHEIRO / INFO) -->
-<div id="hudBar" style="padding:10px; background:#111; color:white; display:flex; justify-content:space-between;">
-  <div>💰 Caixa: <span id="hud-saldo">R$ 0,00</span></div>
-  <div>🏁 Etapa: <span id="hud-etapa">1</span></div>
-</div>
+    <div class="app-root">
 
-<!-- MENSAGEM SAVE -->
-<div id="msgSave" style="
-  position:fixed; bottom:20px; right:20px;
-  background:#111; padding:10px; border-radius:6px;
-  opacity:0; transition:0.4s; z-index:99;
-"></div>
+        <!-- ================================
+             HUD SUPERIOR
+        ==================================== -->
+        <div class="top-bar">
+            <div class="top-info-left">
+                <span class="top-label">Caixa:</span>
+                <span id="hud-cash">R$ 0,00</span>
+            </div>
 
-<!-- ===================================================================
-     TELAS
-==================================================================== -->
+            <div class="top-info-right">
+                <span class="top-label">Etapa:</span>
+                <span id="hud-stage">1</span>
+            </div>
+        </div>
 
-<!-- =========================================
-     TELA MENU INICIAL
-========================================= -->
-<div id="telaMenuInicial" class="tela">
-  <h1 style="text-align:center;margin-top:60px;">F1 MANAGER 2025</h1>
+        <!-- ================================
+             MENU PRINCIPAL
+        ==================================== -->
+        <div id="screen-menu" class="screen active">
 
-  <div style="text-align:center; margin-top:40px;">
-    <button onclick="MenuSystem.iniciarNovoJogo()">Novo Jogo</button>
-    <button id="btnContinuar" onclick="MenuSystem.continuarJogo()">Continuar</button>
-  </div>
-</div>
+            <h1>F1 Manager 2025</h1>
 
-<!-- =========================================
-     TELA ESCOLHA MANAGER
-========================================= -->
-<div id="telaEscolhaManager" class="tela container">
-  <h2>Escolha o Manager</h2>
+            <div class="menu-buttons">
+                <button id="btn-new-game">Novo Jogo</button>
+                <button id="btn-continue">Continuar Carreira</button>
+            </div>
 
-  <div class="flex-row">
+        </div>
 
-    <!-- Criar Manager -->
-    <div class="card" onclick="MenuSystem.criarManagerCustom()">
-      <h3>Criar Novo Manager</h3>
+        <!-- ================================
+             ESCOLHA DO MANAGER
+        ==================================== -->
+        <div id="screen-manager-select" class="screen">
+
+            <h2>Escolha o Manager</h2>
+
+            <div class="manager-options">
+
+                <button class="btn-manager-preset" data-name="Toto Wolff">
+                    Toto Wolff
+                </button>
+
+                <button class="btn-manager-preset" data-name="Christian Horner">
+                    Christian Horner
+                </button>
+
+                <button id="btn-manager-create" class="btn-secondary">
+                    Criar Manager
+                </button>
+            </div>
+
+            <br>
+            <button onclick="showScreen('screen-menu')">Voltar</button>
+
+        </div>
+
+        <!-- ================================
+             HUB DO MANAGER (LOBBY)
+        ==================================== -->
+        <div id="screen-manager-hub" class="screen">
+
+            <h2>Manager Hub</h2>
+
+            <p id="manager-name">Nome do Manager</p>
+            <p id="manager-team">Equipe: Nenhuma</p>
+
+            <div class="lobby-grid">
+
+                <div class="lobby-card">
+                    <div class="lobby-card-title">Calendário</div>
+                    <p>Acompanhe as etapas.</p>
+                    <div class="card-actions">
+                        <button id="btn-open-calendar">Abrir</button>
+                    </div>
+                </div>
+
+                <div class="lobby-card">
+                    <div class="lobby-card-title">Corrida</div>
+                    <p>Inicie a etapa atual.</p>
+                    <div class="card-actions">
+                        <button id="btn-open-race">Ir para Corrida</button>
+                    </div>
+                </div>
+
+                <div class="lobby-card">
+                    <div class="lobby-card-title">Finanças</div>
+                    <p>Saldo, custos e patrocínios.</p>
+                    <div class="card-actions">
+                        <button id="btn-open-finance">Abrir</button>
+                    </div>
+                </div>
+
+                <div class="lobby-card">
+                    <div class="lobby-card-title">Funcionários</div>
+                    <p>Contrate pilotos, engenheiros e equipe.</p>
+                    <div class="card-actions">
+                        <button id="btn-open-staff">Abrir</button>
+                    </div>
+                </div>
+
+                <div class="lobby-card">
+                    <div class="lobby-card-title">Patrocínios</div>
+                    <p>Negocie contratos de marcas.</p>
+                    <div class="card-actions">
+                        <button id="btn-open-sponsors">Abrir</button>
+                    </div>
+                </div>
+
+                <div class="lobby-card">
+                    <div class="lobby-card-title">Contratos</div>
+                    <p>Gerencie equipes e propostas.</p>
+                    <div class="card-actions">
+                        <button id="btn-open-contracts">Abrir</button>
+                    </div>
+                </div>
+
+                <div class="lobby-card">
+                    <div class="lobby-card-title">Sistema</div>
+                    <p>Salvar ou voltar ao menu.</p>
+                    <div class="card-actions">
+                        <button id="btn-save-game">Salvar Jogo</button>
+                        <button id="btn-back-menu">Voltar ao Menu</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================================
+             CALENDÁRIO
+        ==================================== -->
+        <div id="screen-calendar" class="screen">
+
+            <h2>Calendário 2025</h2>
+
+            <div id="calendar-list"></div>
+
+            <br>
+            <button id="btn-calendar-back">Voltar</button>
+        </div>
+
+        <!-- ================================
+             CORRIDA
+        ==================================== -->
+        <div id="screen-race" class="screen">
+
+            <h2>Corrida</h2>
+
+            <div id="race-status">Pronto</div>
+
+            <table id="race-table" class="table">
+                <thead>
+                    <tr>
+                        <th>Pos</th>
+                        <th>Piloto</th>
+                        <th>Tempo</th>
+                        <th>Pneu</th>
+                        <th>Desgaste</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <div class="card-actions">
+                <button id="btn-start-race">Iniciar Corrida</button>
+                <button id="btn-race-back">Voltar</button>
+            </div>
+
+            <div class="card-actions">
+                <button id="btn-race-speed-1">1x</button>
+                <button id="btn-race-speed-2">2x</button>
+                <button id="btn-race-speed-4">4x</button>
+            </div>
+
+            <div id="race-result"></div>
+        </div>
+
+        <!-- ================================
+             PÓDIO
+        ==================================== -->
+        <div id="screen-podio" class="screen">
+
+            <h2>Pódio</h2>
+
+            <div id="podioP1" class="podium-step podium-1"></div>
+            <div id="podioP2" class="podium-step podium-2"></div>
+            <div id="podioP3" class="podium-step podium-3"></div>
+
+            <br>
+            <button onclick="showScreen('screen-manager-hub')">Voltar ao Lobby</button>
+
+        </div>
+
+        <!-- ================================
+             FINANÇAS
+        ==================================== -->
+        <div id="screen-finance" class="screen">
+
+            <h2>Finanças</h2>
+
+            <div class="finance-panel">
+
+                <div class="finance-balance">
+                    Saldo atual:
+                    <span id="financeBalance">R$ 0,00</span>
+                </div>
+
+                <div class="finance-grid">
+
+                    <div class="finance-box">
+                        <h3>Evolução do Saldo</h3>
+                        <canvas id="chartFinanceLine" width="300" height="150"></canvas>
+                    </div>
+
+                    <div class="finance-box">
+                        <h3>Distribuição por Categoria</h3>
+                        <canvas id="chartFinancePie" width="300" height="150"></canvas>
+                    </div>
+                </div>
+
+                <div class="finance-history">
+                    <h3>Histórico</h3>
+                    <ul id="financeHistory"></ul>
+                </div>
+
+                <div class="finance-actions">
+                    <button id="btnFinanceExport">Exportar PDF</button>
+                    <button onclick="showScreen('screen-manager-hub')">Voltar</button>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 
-    <!-- Exemplos de Managers Reais -->
-    <div class="card" onclick="MenuSystem.escolherManagerReal('wolff')">
-      <h3>Toto Wolff</h3>
-    </div>
-
-    <div class="card" onclick="MenuSystem.escolherManagerReal('horner')">
-      <h3>Christian Horner</h3>
-    </div>
-
-  </div>
-</div>
-
-<!-- =========================================
-     TELA ESCOLHA DE EQUIPE
-========================================= -->
-<div id="telaEscolherEquipe" class="tela container">
-  <h2>Escolha a Equipe</h2>
-  <div id="listaEquipes" class="flex-row"></div>
-</div>
-
-<!-- =========================================
-     TELA LOBBY PRINCIPAL
-========================================= -->
-<div id="telaLobby" class="tela container">
-  <h2>Manager: <span id="lobbyNomeManager"></span></h2>
-  <h3>Equipe: <span id="lobbyEquipe"></span></h3>
-
-  <button onclick="mostrarTela('telaCalendario')">Calendário</button>
-  <button onclick="mostrarTela('telaCorrida')">Corrida</button>
-  <button onclick="mostrarTela('telaFinancas')">Finanças</button>
-  <button onclick="mostrarTela('telaStaff')">Funcionários</button>
-  <button onclick="mostrarTela('telaPatrocinios')">Patrocínios</button>
-  <button onclick="mostrarTela('telaContratos')">Contratos</button>
-
-  <br><br>
-
-  <button onclick="SaveSystem.salvarJogo()">Salvar</button>
-  <button onclick="MenuSystem.sairParaMenu()">Sair para o Menu</button>
-</div>
-
-<!-- =========================================
-     TELA CALENDÁRIO
-========================================= -->
-<div id="telaCalendario" class="tela container">
-  <h2>Calendário 2025</h2>
-  <div id="calendarioLista" class="flex-row"></div>
-
-  <br>
-  <button onclick="mostrarTela('telaLobby')">Voltar</button>
-</div>
-
-<!-- =========================================
-     TELA CORRIDA
-========================================= -->
-<div id="telaCorrida" class="tela container">
-
-  <h2>Corrida</h2>
-
-  <div id="raceTrack"></div>
-
-  <h3>Info:</h3>
-  <div id="raceHUD"></div>
-
-  <br>
-  <button onclick="RaceSystem.iniciarCorrida()">Iniciar Corrida</button>
-  <button onclick="mostrarTela('telaLobby')">Voltar</button>
-
-</div>
-
-<!-- =========================================
-     TELA FINANÇAS
-========================================= -->
-<div id="telaFinancas" class="tela container">
-  <h2>Finanças</h2>
-  
-  <h3>Saldo Atual:</h3>
-  <div id="financeSaldo"></div>
-
-  <h3>Histórico:</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Tipo</th>
-        <th>Descrição</th>
-        <th>Valor</th>
-      </tr>
-    </thead>
-    <tbody id="financeHistorico"></tbody>
-  </table>
-
-  <h3>Resumo:</h3>
-  <div id="financeResumo"></div>
-
-  <h3>Projeção:</h3>
-  <div id="financeProjecao"></div>
-
-  <br>
-  <button onclick="mostrarTela('telaLobby')">Voltar</button>
-</div>
-
-<!-- =========================================
-     TELA STAFF
-========================================= -->
-<div id="telaStaff" class="tela container">
-  <h2>Funcionários</h2>
-  <div id="listaStaff" class="flex-row"></div>
-
-  <button onclick="mostrarTela('telaLobby')">Voltar</button>
-</div>
-
-<!-- =========================================
-     TELA PATROCÍNIOS
-========================================= -->
-<div id="telaPatrocinios" class="tela container">
-  <h2>Patrocínios</h2>
-  <div id="listaPatrocinadores" class="flex-row"></div>
-
-  <button onclick="mostrarTela('telaLobby')">Voltar</button>
-</div>
-
-<!-- =========================================
-     TELA CONTRATOS
-========================================= -->
-<div id="telaContratos" class="tela container">
-  <h2>Contratos</h2>
-
-  <h3>Pilotos da Equipe</h3>
-  <div id="contratosPilotos" class="flex-row"></div>
-
-  <h3>Mercado de Pilotos</h3>
-  <div id="mercadoPilotos" class="flex-row"></div>
-
-  <h3>Ofertas para o Manager</h3>
-  <div id="ofertasManager" class="flex-row"></div>
-
-  <button onclick="mostrarTela('telaLobby')">Voltar</button>
-</div>
-
-<!-- ===================================================================
-     SCRIPTS
-==================================================================== -->
-<script src="data.js"></script>
-<script src="script.js"></script>
-<script src="raceSystem.js"></script>
-<script src="financeSystem.js"></script>
-<script src="saveSystem.js"></script>
-<script src="menuSystem.js"></script>
+    <!-- ================================
+         SCRIPTS
+    ==================================== -->
+    <script src="main.js"></script>
+    <script src="raceSystem.js"></script>
+    <script src="financeSystem.js"></script>
 
 </body>
+
 </html>
