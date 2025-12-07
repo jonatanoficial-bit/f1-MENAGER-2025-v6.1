@@ -1,242 +1,490 @@
-// =======================================================
-// financeSystem.js
-// SISTEMA FINANCEIRO – SALDO, HISTÓRICO, PROJEÇÕES
-// =======================================================
-//
-// Estrutura usada:
-//
-// gameState.finances = {
-//   balance: number,          // saldo atual
-//   history: [                // lançamentos
-//      { tipo: "receita"|"despesa", valor: number, desc: string, pista?: string, gpIndex?: number }
-//   ]
-// }
-//
-// Funções principais:
-// - mostrarTelaFinancas()
-// - registrarReceita(valor, desc, extra)
-// - registrarDespesa(valor, desc, extra)
-// =======================================================
+/* ============================================================
+   FINANCE SYSTEM — F1 MANAGER 2025
+   Gerencia dinheiro, patrocínios, salários e histórico.
+   ============================================================ */
 
+const FinanceSystem = (() => {
+  // ==========================
+  //   CONFIGURAÇÕES GERAIS
+  // ==========================
+  const MOEDA = "R$";
 
-// ---------------------------------------------------------------------
-// GARANTIR gameState E finances INICIALIZADOS
-// ---------------------------------------------------------------------
-if (typeof window.gameState === "undefined") {
-    window.gameState = {};
-}
+  // Custos fixos por fim de semana (ex.: logística, fábrica, etc.)
+  const CUSTO_FIXO_FIM_DE_SEMANA = 250_000;
 
-if (!gameState.finances) {
-    gameState.finances = {
-        balance: 20_000_000, // valor padrão de início de carreira
-        history: []          // lista de lançamentos
-    };
-}
+  // Multiplicador de salário mensal para calcular custo por corrida
+  // (aprox. 12 corridas/ano -> /12; se quiser mudar depois é fácil)
+  const DIVISOR_SALARIO_POR_CORRIDA = 12;
 
-// Segurança: garantir que history seja sempre array
-if (!Array.isArray(gameState.finances.history)) {
-    gameState.finances.history = [];
-}
+  // Limite máximo de registros no histórico (para não crescer infinito)
+  const LIMITE_HISTORICO = 200;
 
+  // ==========================
+  //   ESTADO INTERNO
+  // ==========================
+  let inicializado = false;
 
-// ---------------------------------------------------------------------
-// MOSTRAR TELA DE FINANÇAS
-// ---------------------------------------------------------------------
-function mostrarTelaFinancas() {
-    if (typeof mostrarTela === "function") {
-        mostrarTela("tela-financas");
+  // ==========================
+  //   FUNÇÕES AUXILIARES
+  // ==========================
+
+  function existeJogo() {
+    if (typeof JOGO === "undefined") {
+      console.warn("[FinanceSystem] Objeto global JOGO não encontrado.");
+      return false;
+    }
+    return true;
+  }
+
+  function garantirEstruturaFinanceira() {
+    if (!existeJogo()) return;
+
+    if (!JOGO.financas) {
+      JOGO.financas = {
+        receitaTotal: 0,
+        despesaTotal: 0,
+        historico: [],
+        ultimaEtapaProcessada: 0
+      };
     }
 
-    atualizarCabecalhoFinancas();
-    renderHistoricoFinanceiro();
-    renderResumoFinanceiro();
-    renderProjecaoFinanceira();
-}
+    // Se vier de saves antigos, garante campos
+    JOGO.financas.receitaTotal ??= 0;
+    JOGO.financas.despesaTotal ??= 0;
+    JOGO.financas.historico ??= [];
+    JOGO.financas.ultimaEtapaProcessada ??= 0;
 
+    // Dinheiro base se não definido
+    if (typeof JOGO.dinheiro !== "number") {
+      JOGO.dinheiro = 5_000_000;
+    }
+  }
 
-// ---------------------------------------------------------------------
-// ATUALIZA CABEÇALHO (SALDO ATUAL)
-// ---------------------------------------------------------------------
-function atualizarCabecalhoFinancas() {
-    const f = gameState.finances;
-    const elSaldo = document.getElementById("financeSaldo");
+  function formatarMoeda(valor) {
+    if (isNaN(valor)) valor = 0;
+    return `${MOEDA} ${valor.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  }
 
-    if (!elSaldo) return;
+  function adicionarAoHistorico(registro) {
+    if (!existeJogo()) return;
 
-    elSaldo.innerHTML = `$ ${Number(f.balance).toLocaleString()}`;
-}
+    garantirEstruturaFinanceira();
 
+    const agora = new Date();
+    const etapa = JOGO.etapaAtual ?? 0;
 
-// ---------------------------------------------------------------------
-// HISTÓRICO – ÚLTIMOS LANÇAMENTOS
-// ---------------------------------------------------------------------
-function renderHistoricoFinanceiro() {
-    const tabela = document.getElementById("financeHistorico");
-    if (!tabela) return;
+    const entrada = {
+      id: `${agora.getTime()}-${Math.random().toString(16).slice(2)}`,
+      dataReal: agora.toISOString(),
+      etapa,
+      tipo: registro.tipo,            // "receita" | "despesa"
+      categoria: registro.categoria,  // "Salários", "Patrocínio", etc.
+      descricao: registro.descricao ?? "",
+      valor: Number(registro.valor) || 0,
+      saldoApos: JOGO.dinheiro
+    };
 
-    tabela.innerHTML = "";
+    JOGO.financas.historico.unshift(entrada);
 
-    // mostra os 30 últimos, mais recente primeiro
-    const itens = [...gameState.finances.history].slice(-30).reverse();
+    if (JOGO.financas.historico.length > LIMITE_HISTORICO) {
+      JOGO.financas.historico.length = LIMITE_HISTORICO;
+    }
 
-    itens.forEach(item => {
-        const linha = document.createElement("tr");
+    // Atualiza totais simples
+    if (entrada.tipo === "receita") {
+      JOGO.financas.receitaTotal += entrada.valor;
+    } else if (entrada.tipo === "despesa") {
+      JOGO.financas.despesaTotal += entrada.valor;
+    }
 
-        const tdTipo = document.createElement("td");
-        const tdDesc = document.createElement("td");
-        const tdValor = document.createElement("td");
+    atualizarTabelaHistorico();
+  }
 
-        tdTipo.textContent = item.tipo || "";
-        tdDesc.textContent = item.pista || item.desc || "";
+  // ==========================
+  //   API PÚBLICA PRINCIPAL
+  // ==========================
 
-        const valor = Number(item.valor) || 0;
-        const prefix = valor >= 0 ? "+" : "-";
-        const absVal = Math.abs(valor).toLocaleString();
+  function init() {
+    if (!existeJogo()) return;
+    garantirEstruturaFinanceira();
+    inicializado = true;
 
-        tdValor.textContent = `${prefix} $${absVal}`;
-        tdValor.style.color = valor >= 0 ? "#3ddc84" : "#ff4b4b";
-        tdValor.style.fontWeight = "600";
+    atualizarHUD();
+    atualizarTabelaHistorico();
 
-        linha.appendChild(tdTipo);
-        linha.appendChild(tdDesc);
-        linha.appendChild(tdValor);
+    console.info("[FinanceSystem] Inicializado.");
+  }
 
-        tabela.appendChild(linha);
+  /** Retorna o saldo atual de caixa da equipe do jogador */
+  function getSaldo() {
+    if (!existeJogo()) return 0;
+    return JOGO.dinheiro ?? 0;
+  }
+
+  /** Registra receita no caixa (patrocínio, prêmio, bônus etc.) */
+  function registrarReceita(categoria, descricao, valor) {
+    if (!existeJogo()) return;
+
+    valor = Number(valor) || 0;
+    if (valor <= 0) return;
+
+    garantirEstruturaFinanceira();
+
+    JOGO.dinheiro += valor;
+
+    adicionarAoHistorico({
+      tipo: "receita",
+      categoria,
+      descricao,
+      valor
     });
-}
 
+    atualizarHUD();
+  }
 
-// ---------------------------------------------------------------------
-// RESUMO – RECEITA x DESPESA TOTAL
-// ---------------------------------------------------------------------
-function renderResumoFinanceiro() {
-    const box = document.getElementById("financeResumo");
-    if (!box) return;
+  /** Registra despesa no caixa (salário, custos de GP, upgrades…) */
+  function registrarDespesa(categoria, descricao, valor) {
+    if (!existeJogo()) return;
 
-    let totalReceita = 0;
-    let totalDespesa = 0;
+    valor = Number(valor) || 0;
+    if (valor <= 0) return;
 
-    gameState.finances.history.forEach(item => {
-        const v = Number(item.valor) || 0;
-        if (v >= 0) totalReceita += v;
-        else totalDespesa += v;
+    garantirEstruturaFinanceira();
+
+    JOGO.dinheiro -= valor;
+
+    adicionarAoHistorico({
+      tipo: "despesa",
+      categoria,
+      descricao,
+      valor
     });
 
-    const textoReceita = `$ ${totalReceita.toLocaleString()}`;
-    const textoDespesa = `$ ${Math.abs(totalDespesa).toLocaleString()}`;
+    atualizarHUD();
+  }
 
-    box.innerHTML = `
-        <p><b>Receita acumulada:</b> ${textoReceita}</p>
-        <p><b>Despesas acumuladas:</b> ${textoDespesa}</p>
-    `;
-}
+  // ==========================
+  //   CÁLCULOS DE CUSTOS
+  // ==========================
 
+  /** Calcula custo de salários (pilotos + funcionários) para UMA corrida */
+  function calcularCustoSalariosPorCorrida() {
+    if (!existeJogo()) return 0;
+    garantirEstruturaFinanceira();
 
-// ---------------------------------------------------------------------
-// PROJEÇÃO FINANCEIRA SIMPLES ATÉ O FIM DA TEMPORADA
-// ---------------------------------------------------------------------
-function renderProjecaoFinanceira() {
-    const box = document.getElementById("financeProjecao");
-    if (!box) return;
+    const pilotos = JOGO.pilotosEquipe || [];
+    const funcionarios = JOGO.funcionarios || [];
 
-    const f = gameState.finances;
-
-    const totalHistorico = gameState.finances.history.reduce((sum, item) => {
-        const v = Number(item.valor) || 0;
-        return sum + v;
+    const somaSalariosPilotos = pilotos.reduce((acc, p) => {
+      const s = Number(p.salarioAnual ?? p.salario ?? 0);
+      return acc + s;
     }, 0);
 
-    // número de GPs já corridos (se existir gameState.results)
-    const raceCount = Array.isArray(gameState.results)
-        ? gameState.results.length
-        : 0;
+    const somaSalariosFuncionarios = funcionarios.reduce((acc, f) => {
+      const s = Number(f.salarioAnual ?? f.salario ?? 0);
+      return acc + s;
+    }, 0);
 
-    let mediaPorGP = 0;
-    if (raceCount > 0) {
-        mediaPorGP = totalHistorico / raceCount;
+    const totalAnual = somaSalariosPilotos + somaSalariosFuncionarios;
+
+    if (totalAnual <= 0) return 0;
+
+    return totalAnual / DIVISOR_SALARIO_POR_CORRIDA;
+  }
+
+  /** Custos fixos de um fim de semana (logística, operação, etc.) */
+  function custoFixoDeFimDeSemana() {
+    return CUSTO_FIXO_FIM_DE_SEMANA;
+  }
+
+  /**
+   * Receitas de patrocínio para a corrida atual:
+   * - fixa por GP
+   * - bônus por pontos / pódio / vitória, se existir
+   *
+   * `resultadoGP` deve conter:
+   * {
+   *   pontosPiloto1: number,
+   *   pontosPiloto2: number,
+   *   posicaoMelhorCarro: number
+   * }
+   */
+  function calcularReceitaPatrocinio(resultadoGP = {}) {
+    if (!existeJogo()) return 0;
+
+    const patrocinador = JOGO.patrocinador;
+    if (!patrocinador) return 0;
+
+    const {
+      pagamentoPorCorrida = patrocinador.fixoPorCorrida ?? 0,
+      bonusPorPonto = 0,
+      bonusPorPodio = 0,
+      bonusPorVitoria = 0
+    } = patrocinador;
+
+    let receita = 0;
+
+    // Receita fixa por GP
+    receita += Number(pagamentoPorCorrida) || 0;
+
+    const p1 = Number(resultadoGP.pontosPiloto1 ?? 0);
+    const p2 = Number(resultadoGP.pontosPiloto2 ?? 0);
+    const totalPontos = p1 + p2;
+
+    // Bônus por pontos marcados
+    receita += totalPontos * (Number(bonusPorPonto) || 0);
+
+    const melhorPos = Number(resultadoGP.posicaoMelhorCarro ?? 0);
+    if (melhorPos > 0 && melhorPos <= 3) {
+      // pódio
+      receita += Number(bonusPorPodio) || 0;
+    }
+    if (melhorPos === 1) {
+      // vitória
+      receita += Number(bonusPorVitoria) || 0;
     }
 
-    const totalGPsTemporada = 22; // pode ajustar para 24 se quiser
-    const restantes = Math.max(totalGPsTemporada - raceCount, 0);
+    return receita;
+  }
 
-    const projFinal = f.balance + mediaPorGP * restantes;
+  /**
+   * Prêmio da Fórmula 1 pela posição final – valor base simples,
+   * você pode ajustar depois ou puxar de uma tabela real.
+   */
+  function calcularPremioResultadoGP(resultadoGP = {}) {
+    const pos = Number(resultadoGP.posicaoMelhorCarro ?? 0);
+    if (!pos || pos > 20) return 0;
 
-    box.innerHTML = `
-        <p><b>Projeção de saldo ao fim da temporada:</b></p>
-        <p>$ ${projFinal.toLocaleString()}</p>
-        <small>Média atual por GP: $ ${Math.round(mediaPorGP).toLocaleString()}</small>
-    `;
-}
+    // Tabela base (você pode trocar por dados oficiais se quiser)
+    const tabelaPremios = {
+      1: 500_000,
+      2: 350_000,
+      3: 250_000,
+      4: 180_000,
+      5: 150_000,
+      6: 120_000,
+      7: 100_000,
+      8: 80_000,
+      9: 70_000,
+      10: 60_000
+      // 11+ nada
+    };
 
+    return tabelaPremios[pos] ?? 0;
+  }
 
-// ---------------------------------------------------------------------
-// REGISTRAR RECEITA
-// ---------------------------------------------------------------------
-/**
- * Registra uma entrada de dinheiro
- * @param {number} valor - valor positivo
- * @param {string} desc - descrição (ex: "Prêmio P2", "Patrocínio X")
- * @param {object} extra - opcional (pista, gpIndex, etc.)
- */
-function registrarReceita(valor, desc, extra = {}) {
-    if (!gameState.finances) {
-        gameState.finances = { balance: 0, history: [] };
+  // ==========================
+  //   PROCESSO POR FIM DE SEMANA
+  // ==========================
+
+  /**
+   * Chamar no INÍCIO do fim de semana de GP para debitar custos fixos.
+   */
+  function processarCustosInicioFimDeSemana() {
+    if (!existeJogo()) return;
+    garantirEstruturaFinanceira();
+
+    const etapa = JOGO.etapaAtual ?? 0;
+    if (JOGO.financas.ultimaEtapaProcessada >= etapa) {
+      // evita aplicar 2x no mesmo GP, caso a função seja chamada novamente
+      return;
     }
 
-    const numVal = Number(valor) || 0;
+    const custoSalarios = calcularCustoSalariosPorCorrida();
+    const custoFixo = custoFixoDeFimDeSemana();
 
-    gameState.finances.balance += numVal;
-    gameState.finances.history.push({
-        tipo: "receita",
-        valor: numVal,
-        desc: desc || "",
-        pista: extra.pista || null,
-        gpIndex: typeof extra.gpIndex === "number" ? extra.gpIndex : null
+    if (custoSalarios > 0) {
+      registrarDespesa(
+        "Salários",
+        `Salários de pilotos e staff - GP ${etapa}`,
+        custoSalarios
+      );
+    }
+
+    registrarDespesa(
+      "Custos Operacionais",
+      `Custos fixos de operação - GP ${etapa}`,
+      custoFixo
+    );
+
+    JOGO.financas.ultimaEtapaProcessada = etapa;
+  }
+
+  /**
+   * Chamar ao FINAL da corrida para aplicar patrocínios e prêmios.
+   *
+   * `resultadoGP` = {
+   *   pontosPiloto1,
+   *   pontosPiloto2,
+   *   posicaoMelhorCarro
+   * }
+   */
+  function processarReceitasPosCorrida(resultadoGP = {}) {
+    if (!existeJogo()) return;
+    garantirEstruturaFinanceira();
+
+    const etapa = JOGO.etapaAtual ?? 0;
+
+    const receitaPatroc = calcularReceitaPatrocinio(resultadoGP);
+    if (receitaPatroc > 0) {
+      registrarReceita(
+        "Patrocínio",
+        `Patrocínio recebido - GP ${etapa}`,
+        receitaPatroc
+      );
+    }
+
+    const premioGP = calcularPremioResultadoGP(resultadoGP);
+    if (premioGP > 0) {
+      registrarReceita(
+        "Prêmios",
+        `Prêmio por resultado - GP ${etapa}`,
+        premioGP
+      );
+    }
+  }
+
+  /**
+   * Atalho: processa tudo de um GP de uma vez.
+   * Pode ser chamado no fim do GP se você não quiser separar.
+   */
+  function processarFimDeSemanaCompleto(resultadoGP = {}) {
+    processarCustosInicioFimDeSemana();
+    processarReceitasPosCorrida(resultadoGP);
+  }
+
+  // ==========================
+  //   ATUALIZAÇÃO DE HUD
+  // ==========================
+
+  function atualizarHUD() {
+    if (!existeJogo()) return;
+
+    const saldo = getSaldo();
+
+    // HUD principal no topo (ex.: <span id="hud-saldo"></span>)
+    const elSaldo = document.getElementById("hud-saldo");
+    if (elSaldo) {
+      elSaldo.textContent = formatarMoeda(saldo);
+    }
+
+    // Painel de finanças em alguma tela (ex.: <span id="painel-saldo-atual"></span>)
+    const elPainel = document.getElementById("painel-saldo-atual");
+    if (elPainel) {
+      elPainel.textContent = formatarMoeda(saldo);
+    }
+
+    // Receita/Despesas acumuladas (se existirem)
+    const elReceita = document.getElementById("painel-receita-total");
+    if (elReceita && JOGO.financas) {
+      elReceita.textContent = formatarMoeda(JOGO.financas.receitaTotal);
+    }
+
+    const elDespesa = document.getElementById("painel-despesa-total");
+    if (elDespesa && JOGO.financas) {
+      elDespesa.textContent = formatarMoeda(JOGO.financas.despesaTotal);
+    }
+  }
+
+  function atualizarTabelaHistorico() {
+    if (!existeJogo()) return;
+    if (!JOGO.financas || !Array.isArray(JOGO.financas.historico)) return;
+
+    const corpo = document.getElementById("tabela-financas-corpo");
+    if (!corpo) return;
+
+    corpo.innerHTML = "";
+
+    JOGO.financas.historico.forEach(item => {
+      const tr = document.createElement("tr");
+
+      const dataEtapa = item.etapa
+        ? `GP ${item.etapa}`
+        : new Date(item.dataReal).toLocaleDateString("pt-BR");
+
+      const tdData = document.createElement("td");
+      tdData.textContent = dataEtapa;
+
+      const tdTipo = document.createElement("td");
+      tdTipo.textContent = item.tipo === "receita" ? "Receita" : "Despesa";
+      tdTipo.classList.add(item.tipo === "receita" ? "fin-receita" : "fin-despesa");
+
+      const tdCat = document.createElement("td");
+      tdCat.textContent = item.categoria ?? "-";
+
+      const tdDesc = document.createElement("td");
+      tdDesc.textContent = item.descricao ?? "-";
+
+      const tdValor = document.createElement("td");
+      tdValor.textContent = formatarMoeda(item.valor);
+
+      const tdSaldo = document.createElement("td");
+      tdSaldo.textContent = formatarMoeda(item.saldoApos);
+
+      tr.appendChild(tdData);
+      tr.appendChild(tdTipo);
+      tr.appendChild(tdCat);
+      tr.appendChild(tdDesc);
+      tr.appendChild(tdValor);
+      tr.appendChild(tdSaldo);
+
+      corpo.appendChild(tr);
     });
+  }
 
-    if (typeof salvarGame === "function") {
-        salvarGame();
+  // ==========================
+  //   RESUMO PARA OUTROS SISTEMAS
+  // ==========================
+
+  /**
+   * Retorna um resumo simples para ser usado em relatórios, saves, etc.
+   */
+  function getResumoFinanceiro() {
+    if (!existeJogo()) {
+      return {
+        saldo: 0,
+        receitaTotal: 0,
+        despesaTotal: 0
+      };
     }
 
-    // se estiver na tela de finanças, atualizar
-    atualizarCabecalhoFinancas();
-    renderHistoricoFinanceiro();
-    renderResumoFinanceiro();
-    renderProjecaoFinanceira();
-}
+    garantirEstruturaFinanceira();
 
+    return {
+      saldo: JOGO.dinheiro,
+      receitaTotal: JOGO.financas.receitaTotal,
+      despesaTotal: JOGO.financas.despesaTotal
+    };
+  }
 
-// ---------------------------------------------------------------------
-// REGISTRAR DESPESA
-// ---------------------------------------------------------------------
-/**
- * Registra uma saída de dinheiro
- * @param {number} valor - valor positivo (será lançado como negativo)
- * @param {string} desc - descrição (ex: "Salários", "Multa rescisão")
- * @param {object} extra - opcional (pista, gpIndex, etc.)
- */
-function registrarDespesa(valor, desc, extra = {}) {
-    if (!gameState.finances) {
-        gameState.finances = { balance: 0, history: [] };
-    }
+  // ==========================
+  //   API EXPOSTA
+  // ==========================
 
-    const numVal = Number(valor) || 0;
+  return {
+    init,
+    getSaldo,
+    registrarReceita,
+    registrarDespesa,
+    calcularCustoSalariosPorCorrida,
+    custoFixoDeFimDeSemana,
+    calcularReceitaPatrocinio,
+    calcularPremioResultadoGP,
+    processarCustosInicioFimDeSemana,
+    processarReceitasPosCorrida,
+    processarFimDeSemanaCompleto,
+    atualizarHUD,
+    atualizarTabelaHistorico,
+    getResumoFinanceiro
+  };
+})();
 
-    gameState.finances.balance -= numVal;
-    gameState.finances.history.push({
-        tipo: "despesa",
-        valor: -numVal,
-        desc: desc || "",
-        pista: extra.pista || null,
-        gpIndex: typeof extra.gpIndex === "number" ? extra.gpIndex : null
-    });
-
-    if (typeof salvarGame === "function") {
-        salvarGame();
-    }
-
-    atualizarCabecalhoFinancas();
-    renderHistoricoFinanceiro();
-    renderResumoFinanceiro();
-    renderProjecaoFinanceira();
-          }
+/* Inicialização automática quando o DOM estiver pronto */
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof FinanceSystem !== "undefined") {
+    FinanceSystem.init();
+  }
+});
