@@ -2,72 +2,209 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>F1 Manager</title>
+<title>F1 Manager 2025</title>
+
+<!-- ESTILOS -->
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="ui.css">
+
+<style>
+body { background:black; }
+</style>
+
 </head>
 
 <body>
 
-<!-- =============================== -->
-<!--  TELAS                          -->
-<!-- =============================== -->
+<!-- HUD GLOBAL (DINHEIRO / INFO) -->
+<div id="hudBar" style="padding:10px; background:#111; color:white; display:flex; justify-content:space-between;">
+  <div>💰 Caixa: <span id="hud-saldo">R$ 0,00</span></div>
+  <div>🏁 Etapa: <span id="hud-etapa">1</span></div>
+</div>
 
-<!-- =============================== -->
-<!--  TELA INICIAL                   -->
-<!-- =============================== -->
-<div id="tela-inicial" class="tela active">
-    <div class="menu-container">
-        <h1>F1 Manager</h1>
-        <button id="btn-novo-jogo">Novo Jogo</button>
-        <button id="btn-continuar">Continuar</button>
+<!-- MENSAGEM SAVE -->
+<div id="msgSave" style="
+  position:fixed; bottom:20px; right:20px;
+  background:#111; padding:10px; border-radius:6px;
+  opacity:0; transition:0.4s; z-index:99;
+"></div>
+
+<!-- ===================================================================
+     TELAS
+==================================================================== -->
+
+<!-- =========================================
+     TELA MENU INICIAL
+========================================= -->
+<div id="telaMenuInicial" class="tela">
+  <h1 style="text-align:center;margin-top:60px;">F1 MANAGER 2025</h1>
+
+  <div style="text-align:center; margin-top:40px;">
+    <button onclick="MenuSystem.iniciarNovoJogo()">Novo Jogo</button>
+    <button id="btnContinuar" onclick="MenuSystem.continuarJogo()">Continuar</button>
+  </div>
+</div>
+
+<!-- =========================================
+     TELA ESCOLHA MANAGER
+========================================= -->
+<div id="telaEscolhaManager" class="tela container">
+  <h2>Escolha o Manager</h2>
+
+  <div class="flex-row">
+
+    <!-- Criar Manager -->
+    <div class="card" onclick="MenuSystem.criarManagerCustom()">
+      <h3>Criar Novo Manager</h3>
     </div>
-</div>
 
-<!-- =============================== -->
-<!--  TELA GERENTE                   -->
-<!-- =============================== -->
-<div id="tela-gerente" class="tela">
-    <h2>Selecione o modo</h2>
-    <div class="menu-grid">
-        <button id="btn-gerente-real">Usar Gerente Real</button>
-        <button id="btn-gerente-novo">Criar Novo Gerente</button>
-        <button class="btn-voltar" data-back="tela-inicial">Voltar</button>
+    <!-- Exemplos de Managers Reais -->
+    <div class="card" onclick="MenuSystem.escolherManagerReal('wolff')">
+      <h3>Toto Wolff</h3>
     </div>
-</div>
 
-<!-- =============================== -->
-<!--  TELA EQUIPES                   -->
-<!-- =============================== -->
-<div id="tela-equipes" class="tela">
-    <h2>Escolha sua Equipe</h2>
-    <div id="lista-equipes" class="menu-scroll"></div>
-    <button class="btn-voltar" data-back="tela-gerente">Voltar</button>
-</div>
-
-<!-- =============================== -->
-<!--  TELA LOBBY                     -->
-<!-- =============================== -->
-<div id="tela-lobby" class="tela">
-
-    <h2 id="lobby-equipe-nome"></h2>
-
-    <div class="menu-grid">
-        <button id="btn-oficina">Oficina</button>
-        <button id="btn-funcionarios">Funcionários</button>
-        <button id="btn-classificacao">Classificação</button>
-        <button id="btn-calendario">Calendário</button>
-        <button id="btn-patrocinio">Patrocínio</button>
-        <button id="btn-correr">Ir para Corrida</button>
-        <button id="btn-salvar">Salvar Jogo</button>
-        <button class="btn-voltar" data-back="tela-equipes">Sair</button>
+    <div class="card" onclick="MenuSystem.escolherManagerReal('horner')">
+      <h3>Christian Horner</h3>
     </div>
+
+  </div>
 </div>
 
-<!-- =============================== -->
-<!--  SCRIPTS                        -->
-<!-- =============================== -->
+<!-- =========================================
+     TELA ESCOLHA DE EQUIPE
+========================================= -->
+<div id="telaEscolherEquipe" class="tela container">
+  <h2>Escolha a Equipe</h2>
+  <div id="listaEquipes" class="flex-row"></div>
+</div>
 
-<script src="main.js"></script>
+<!-- =========================================
+     TELA LOBBY PRINCIPAL
+========================================= -->
+<div id="telaLobby" class="tela container">
+  <h2>Manager: <span id="lobbyNomeManager"></span></h2>
+  <h3>Equipe: <span id="lobbyEquipe"></span></h3>
+
+  <button onclick="mostrarTela('telaCalendario')">Calendário</button>
+  <button onclick="mostrarTela('telaCorrida')">Corrida</button>
+  <button onclick="mostrarTela('telaFinancas')">Finanças</button>
+  <button onclick="mostrarTela('telaStaff')">Funcionários</button>
+  <button onclick="mostrarTela('telaPatrocinios')">Patrocínios</button>
+  <button onclick="mostrarTela('telaContratos')">Contratos</button>
+
+  <br><br>
+
+  <button onclick="SaveSystem.salvarJogo()">Salvar</button>
+  <button onclick="MenuSystem.sairParaMenu()">Sair para o Menu</button>
+</div>
+
+<!-- =========================================
+     TELA CALENDÁRIO
+========================================= -->
+<div id="telaCalendario" class="tela container">
+  <h2>Calendário 2025</h2>
+  <div id="calendarioLista" class="flex-row"></div>
+
+  <br>
+  <button onclick="mostrarTela('telaLobby')">Voltar</button>
+</div>
+
+<!-- =========================================
+     TELA CORRIDA
+========================================= -->
+<div id="telaCorrida" class="tela container">
+
+  <h2>Corrida</h2>
+
+  <div id="raceTrack"></div>
+
+  <h3>Info:</h3>
+  <div id="raceHUD"></div>
+
+  <br>
+  <button onclick="RaceSystem.iniciarCorrida()">Iniciar Corrida</button>
+  <button onclick="mostrarTela('telaLobby')">Voltar</button>
+
+</div>
+
+<!-- =========================================
+     TELA FINANÇAS
+========================================= -->
+<div id="telaFinancas" class="tela container">
+  <h2>Finanças</h2>
+  
+  <h3>Saldo Atual:</h3>
+  <div id="financeSaldo"></div>
+
+  <h3>Histórico:</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Tipo</th>
+        <th>Descrição</th>
+        <th>Valor</th>
+      </tr>
+    </thead>
+    <tbody id="financeHistorico"></tbody>
+  </table>
+
+  <h3>Resumo:</h3>
+  <div id="financeResumo"></div>
+
+  <h3>Projeção:</h3>
+  <div id="financeProjecao"></div>
+
+  <br>
+  <button onclick="mostrarTela('telaLobby')">Voltar</button>
+</div>
+
+<!-- =========================================
+     TELA STAFF
+========================================= -->
+<div id="telaStaff" class="tela container">
+  <h2>Funcionários</h2>
+  <div id="listaStaff" class="flex-row"></div>
+
+  <button onclick="mostrarTela('telaLobby')">Voltar</button>
+</div>
+
+<!-- =========================================
+     TELA PATROCÍNIOS
+========================================= -->
+<div id="telaPatrocinios" class="tela container">
+  <h2>Patrocínios</h2>
+  <div id="listaPatrocinadores" class="flex-row"></div>
+
+  <button onclick="mostrarTela('telaLobby')">Voltar</button>
+</div>
+
+<!-- =========================================
+     TELA CONTRATOS
+========================================= -->
+<div id="telaContratos" class="tela container">
+  <h2>Contratos</h2>
+
+  <h3>Pilotos da Equipe</h3>
+  <div id="contratosPilotos" class="flex-row"></div>
+
+  <h3>Mercado de Pilotos</h3>
+  <div id="mercadoPilotos" class="flex-row"></div>
+
+  <h3>Ofertas para o Manager</h3>
+  <div id="ofertasManager" class="flex-row"></div>
+
+  <button onclick="mostrarTela('telaLobby')">Voltar</button>
+</div>
+
+<!-- ===================================================================
+     SCRIPTS
+==================================================================== -->
+<script src="data.js"></script>
+<script src="script.js"></script>
+<script src="raceSystem.js"></script>
+<script src="financeSystem.js"></script>
+<script src="saveSystem.js"></script>
+<script src="menuSystem.js"></script>
 
 </body>
 </html>
