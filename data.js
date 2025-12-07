@@ -264,3 +264,98 @@ const GAME_DATA = {
                 suspension: [7, 8]
             }
         },
+{
+            id: "spa",
+            name: "Belgian Grand Prix",
+            country: "Belgium",
+            flag: "assets/flags/belgium.png",
+            date: "27 JUL 2025",
+            svg: "assets/tracks/spa.svg.svg",
+            laps: 44,
+            lengthKm: 7.004,
+            tyreWear: "very_high",
+            fuelUse: "high",
+            rainChance: 0.65,
+            setupWindow: {
+                frontWing: [6, 8],
+                rearWing: [4, 6],
+                rideHeight: [4, 6],
+                suspension: [5, 6]
+            }
+        },
+        {
+            id: "zandvoort",
+            name: "Dutch Grand Prix",
+            country: "Netherlands",
+            flag: "assets/flags/netherlands.png",
+            date: "31 AUG 2025",
+            svg: "assets/tracks/zandvoort.svg.svg",
+            laps: 72,
+            lengthKm: 4.259,
+            tyreWear: "high",
+            fuelUse: "medium",
+            rainChance: 0.38,
+            setupWindow: {
+                frontWing: [7, 9],
+                rearWing: [7, 9],
+                rideHeight: [5, 7],
+                suspension: [6, 7]
+            }
+        },
+        {
+            id: "monza",
+            name: "Italian Grand Prix",
+            country: "Italy",
+            flag: "assets/flags/italy.png",
+            date: "07 SEP 2025",
+            svg: "assets/tracks/monza.svg.svg",
+            laps: 53,
+            lengthKm: 5.793,
+            tyreWear: "low",
+            fuelUse: "low",
+            rainChance: 0.27,
+            setupWindow: {
+                frontWing: [4, 6],
+                rearWing: [3, 5],
+                rideHeight: [3, 5],
+                suspension: [4, 5]
+            }
+        },
+        {
+            id: "baku",
+            name: "Azerbaijan Grand Prix",
+            country: "Azerbaijan",
+            flag: "assets/flags/azerbaijan.png",
+            date: "21 SEP 2025",
+            svg: "assets/tracks/baku.svg.svg",
+            laps: 51,
+            lengthKm: 6.003,
+            tyreWear: "medium",
+            fuelUse: "high",
+            rainChance: 0.22,
+            setupWindow: {
+                frontWing: [5, 7],
+                rearWing: [4, 6],
+                rideHeight: [4, 6],
+                suspension: [5, 6]
+            }
+        },
+        {
+            id: "singapore",
+            name: "Singapore Grand Prix",
+            country: "Singapore",
+            flag: "assets/flags/singapore.png",
+            date: "05 OCT 2025",
+            svg: "assets/tracks/singapore.svg.svg",
+            laps: 62,
+            lengthKm: 4.928,
+            tyreWear: "high",
+            fuelUse: "high",
+            rainChance: 0.60,
+            setupWindow: {
+                frontWing: [8, 10],
+                rearWing: [8, 10],
+                rideHeight: [6, 8],
+                suspension: [7, 8]
+            }
+        },
