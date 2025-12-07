@@ -1,475 +1,501 @@
-// ============================================================
-// F1 MANAGER 2025 - MAIN.JS
-// Controle de telas, estado do jogo e save/load
-// ============================================================
+// =======================================
+// F1 MANAGER 2025 - MAIN GAME CONTROLLER
+// =======================================
 
-const SAVE_KEY = "f1_manager_2025_save";
+console.log("main.js carregado com sucesso");
 
-// -----------------------------
+// ------------------------
 // ESTADO GLOBAL DO JOGO
-// -----------------------------
-let gameState = {
-    manager: null,
-    team: null,
-    cash: 5000000,
-    currentRound: 1,
-    season: 2025,
-    calendar: [],
-    results: [],
-    createdAt: null
+// ------------------------
+
+const SAVE_KEY = "f1manager2025_save";
+
+// tenta usar dados do data.js, caso exista
+const DEFAULT_CALENDAR =
+  window.F1_CALENDAR_2025 ||
+  window.CALENDAR_2025 ||
+  window.CALENDARIO_2025 ||
+  [];
+
+const DEFAULT_DRIVERS =
+  window.F1_DRIVERS_2025 ||
+  window.DRIVERS_2025 ||
+  window.PILOTOS_2025 ||
+  [];
+
+const GAME_STATE = {
+  manager: null,
+  caixa: 5000000,
+  etapaAtual: 0,
+  calendario: DEFAULT_CALENDAR,
+  pilotos: DEFAULT_DRIVERS,
+  historicoResultados: [],
+  equipes: window.F1_TEAMS_2025 || window.EQUIPES_2025 || []
 };
 
-// -----------------------------
-// UTILITÁRIOS DE TELA
-// -----------------------------
+window.GAME_STATE = GAME_STATE; // expõe para outros arquivos
 
-function getTela(id) {
-    return document.getElementById(id);
+// ------------------------
+// FUNÇÕES DE DINHEIRO
+// ------------------------
+
+function formatMoney(value) {
+  try {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      maximumFractionDigits: 2
+    }).format(value);
+  } catch (e) {
+    return "R$ " + value.toFixed(2);
+  }
 }
 
-function mostrarTela(idTela) {
-    const telas = document.querySelectorAll(".tela");
-    telas.forEach(t => t.classList.remove("ativa"));
-    const alvo = getTela(idTela);
-    if (alvo) {
-        alvo.classList.add("ativa");
-        window.scrollTo(0, 0);
-    }
+function addMoney(amount) {
+  GAME_STATE.caixa += amount;
+  refreshHUD();
 }
 
-// Atualiza barra superior (Caixa / Etapa)
-function atualizarTopBar() {
-    const elCaixa = document.getElementById("topCaixa");
-    const elEtapa = document.getElementById("topEtapa");
-
-    if (elCaixa) {
-        elCaixa.textContent =
-            "Caixa: R$ " + Number(gameState.cash || 0).toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-    }
-
-    if (elEtapa) {
-        elEtapa.textContent = "Etapa: " + (gameState.currentRound || 1);
-    }
+function spendMoney(amount) {
+  if (GAME_STATE.caixa >= amount) {
+    GAME_STATE.caixa -= amount;
+    refreshHUD();
+    return true;
+  }
+  return false;
 }
 
-// -----------------------------
+window.addMoney = addMoney;
+window.spendMoney = spendMoney;
+
+// ------------------------
+// HUD (TOPO DA TELA)
+// ------------------------
+
+function refreshHUD() {
+  const cashEl = document.getElementById("hud-cash");
+  const stageEl = document.getElementById("hud-stage");
+
+  if (cashEl) cashEl.textContent = formatMoney(GAME_STATE.caixa);
+  if (stageEl) stageEl.textContent = GAME_STATE.etapaAtual + 1;
+}
+
+// ------------------------
+// NAVEGAÇÃO ENTRE TELAS
+// ------------------------
+
+function showScreen(id) {
+  const screens = document.querySelectorAll(".screen");
+  screens.forEach((s) => s.classList.remove("active"));
+
+  const target = document.getElementById(id);
+  if (target) target.classList.add("active");
+}
+
+// ------------------------
 // SAVE / LOAD
-// -----------------------------
+// ------------------------
 
-function salvarJogo() {
-    try {
-        const payload = {
-            ...gameState,
-            savedAt: new Date().toISOString()
-        };
-        localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
-    } catch (e) {
-        console.error("Erro ao salvar jogo:", e);
-    }
+function saveGame() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(GAME_STATE));
+    alert("Jogo salvo com sucesso!");
+  } catch (e) {
+    console.error("Erro ao salvar jogo:", e);
+    alert("Erro ao salvar o jogo.");
+  }
 }
 
-function carregarJogo() {
-    try {
-        const raw = localStorage.getItem(SAVE_KEY);
-        if (!raw) return null;
-        const data = JSON.parse(raw);
-        // validações básicas
-        if (!data || !data.manager || !data.team) return null;
-        gameState = data;
-        return data;
-    } catch (e) {
-        console.error("Erro ao carregar save:", e);
-        return null;
-    }
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+
+    const data = JSON.parse(raw);
+
+    // mescla no GAME_STATE para manter referências
+    Object.assign(GAME_STATE, data);
+
+    return true;
+  } catch (e) {
+    console.error("Erro ao carregar jogo:", e);
+    return false;
+  }
 }
 
-function limparSave() {
-    localStorage.removeItem(SAVE_KEY);
+// ------------------------
+// FLUXO MENU INICIAL
+// ------------------------
+
+function handleNewGame() {
+  GAME_STATE.manager = null;
+  GAME_STATE.caixa = 5000000;
+  GAME_STATE.etapaAtual = 0;
+  GAME_STATE.historicoResultados = [];
+
+  refreshHUD();
+  showScreen("screen-manager-select");
 }
 
-// -----------------------------
-// DADOS (CALENDÁRIO FALLBACK)
-// -----------------------------
-
-// Se data.js já tiver GAME_DATA, usamos. Se não, criamos um calendário simples.
-function obterCalendarioBase() {
-    if (window.GAME_DATA && Array.isArray(window.GAME_DATA.calendar)) {
-        return window.GAME_DATA.calendar;
-    }
-
-    // Calendário fallback (24 etapas fictícias ou ajustadas)
-    return [
-        { round: 1,  name: "GP do Bahrein",   country: "Bahrein" },
-        { round: 2,  name: "GP da Arábia Saudita", country: "Arábia Saudita" },
-        { round: 3,  name: "GP da Austrália", country: "Austrália" },
-        { round: 4,  name: "GP do Japão",     country: "Japão" },
-        { round: 5,  name: "GP da China",     country: "China" },
-        { round: 6,  name: "GP de Miami",     country: "EUA" },
-        { round: 7,  name: "GP da Emilia-Romagna", country: "Itália" },
-        { round: 8,  name: "GP de Mônaco",    country: "Mônaco" },
-        { round: 9,  name: "GP do Canadá",    country: "Canadá" },
-        { round: 10, name: "GP da Espanha",   country: "Espanha" },
-        { round: 11, name: "GP da Áustria",   country: "Áustria" },
-        { round: 12, name: "GP da Inglaterra",country: "Reino Unido" },
-        { round: 13, name: "GP da Hungria",   country: "Hungria" },
-        { round: 14, name: "GP da Bélgica",   country: "Bélgica" },
-        { round: 15, name: "GP da Holanda",   country: "Holanda" },
-        { round: 16, name: "GP da Itália",    country: "Itália (Monza)" },
-        { round: 17, name: "GP do Azerbaijão",country: "Azerbaijão" },
-        { round: 18, name: "GP de Singapura", country: "Singapura" },
-        { round: 19, name: "GP dos EUA",      country: "Austin" },
-        { round: 20, name: "GP do México",    country: "México" },
-        { round: 21, name: "GP de São Paulo", country: "Brasil" },
-        { round: 22, name: "GP de Las Vegas", country: "EUA (Vegas)" },
-        { round: 23, name: "GP do Catar",     country: "Catar" },
-        { round: 24, name: "GP de Abu Dhabi", country: "Emirados Árabes" }
-    ];
+function handleContinueGame() {
+  if (loadGame()) {
+    updateManagerHeader();
+    refreshHUD();
+    showScreen("screen-manager-hub");
+  } else {
+    alert("Nenhum save encontrado. Criando novo jogo.");
+    handleNewGame();
+  }
 }
 
-// -----------------------------
-// CALENDÁRIO – UI
-// -----------------------------
+// ------------------------
+// GERÊNCIA DO MANAGER
+// ------------------------
 
-function montarCalendarioUI() {
-    const calendarioContainer = document.getElementById("calendarioLista");
-    if (!calendarioContainer) return;
+function createManager(name, tipo = "Personalizado") {
+  GAME_STATE.manager = {
+    nome: name || "Manager",
+    tipo,
+    experiencia: 1,
+    reputacao: 50,
+    equipeId: null
+  };
 
-    calendarioContainer.innerHTML = "";
+  updateManagerHeader();
+  refreshHUD();
+  showScreen("screen-manager-hub");
+}
 
-    const cal = gameState.calendar || [];
-    const rodadaAtual = gameState.currentRound || 1;
+function updateManagerHeader() {
+  const nameEl = document.getElementById("manager-name");
+  const teamEl = document.getElementById("manager-team");
 
-    cal.forEach(gp => {
-        const card = document.createElement("div");
-        card.classList.add("gp-card");
+  if (nameEl) {
+    nameEl.textContent =
+      GAME_STATE.manager?.nome ? GAME_STATE.manager.nome : "Sem nome";
+  }
 
-        if (gp.round < rodadaAtual) {
-            card.classList.add("gp-concluido");
-        } else if (gp.round === rodadaAtual) {
-            card.classList.add("gp-proximo");
-        } else {
-            card.classList.add("gp-futuro");
-        }
+  let teamText = "Sem equipe";
+  if (GAME_STATE.manager && GAME_STATE.manager.equipeId != null) {
+    const team = GAME_STATE.equipes.find(
+      (t) => t.id === GAME_STATE.manager.equipeId
+    );
+    if (team) teamText = team.nome;
+  }
 
-        card.dataset.round = gp.round;
+  if (teamEl) {
+    teamEl.textContent = "Equipe: " + teamText;
+  }
+}
 
-        card.innerHTML = `
-            <h3>${gp.round}. ${gp.name}</h3>
-            <p style="opacity:0.7;font-size:11px;">${gp.country || ""}</p>
-        `;
+// ------------------------
+// TELA DE CORRIDA
+// ------------------------
 
-        card.addEventListener("click", () => {
-            selecionarGP(gp.round);
-        });
+let raceInProgress = false;
 
-        calendarioContainer.appendChild(card);
+function bindRaceUI() {
+  const startBtn = document.getElementById("btn-start-race");
+  const backBtn = document.getElementById("btn-race-back");
+  const speed1 = document.getElementById("btn-race-speed-1");
+  const speed2 = document.getElementById("btn-race-speed-2");
+  const speed4 = document.getElementById("btn-race-speed-4");
+
+  if (startBtn) {
+    startBtn.onclick = () => {
+      if (raceInProgress) return;
+      if (!GAME_STATE.calendario || GAME_STATE.calendario.length === 0) {
+        alert("Calendário vazio. Verifique o data.js.");
+        return;
+      }
+
+      const etapa = GAME_STATE.etapaAtual;
+      if (etapa >= GAME_STATE.calendario.length) {
+        alert("Temporada encerrada!");
+        return;
+      }
+
+      raceInProgress = true;
+      clearRaceUI();
+      showScreen("screen-race");
+
+      // inicia corrida
+      startRace(etapa, handleRaceFinished);
+    };
+  }
+
+  if (backBtn) {
+    backBtn.onclick = () => {
+      if (raceInProgress) {
+        alert("Aguarde a corrida terminar.");
+        return;
+      }
+      showScreen("screen-manager-hub");
+    };
+  }
+
+  if (speed1) speed1.onclick = () => setRaceSpeed(1);
+  if (speed2) speed2.onclick = () => setRaceSpeed(2);
+  if (speed4) speed4.onclick = () => setRaceSpeed(4);
+
+  // callback global chamada pelo raceSystem.js a cada volta
+  window.onRaceUpdate = updateRaceUI;
+}
+
+function clearRaceUI() {
+  const statusEl = document.getElementById("race-status");
+  const tbody = document.querySelector("#race-table tbody");
+  const resultEl = document.getElementById("race-result");
+
+  if (statusEl) statusEl.textContent = "Corrida iniciando...";
+  if (tbody) tbody.innerHTML = "";
+  if (resultEl) resultEl.innerHTML = "";
+}
+
+function updateRaceUI(data) {
+  const { volta, total, grid } = data;
+
+  const statusEl = document.getElementById("race-status");
+  const tbody = document.querySelector("#race-table tbody");
+
+  if (statusEl) {
+    statusEl.textContent = `Volta ${volta}/${total}`;
+  }
+
+  if (tbody) {
+    tbody.innerHTML = "";
+    grid.forEach((p) => {
+      const tr = document.createElement("tr");
+      const pos = document.createElement("td");
+      const name = document.createElement("td");
+      const time = document.createElement("td");
+      const tyre = document.createElement("td");
+      const wear = document.createElement("td");
+
+      pos.textContent = p.pos;
+      name.textContent = p.nome || p.name || "Piloto";
+      time.textContent = p.tempoTotal.toFixed(3) + "s";
+      tyre.textContent = p.pneus || "-";
+      wear.textContent = p.desgaste.toFixed(1) + "%";
+
+      tr.appendChild(pos);
+      tr.appendChild(name);
+      tr.appendChild(time);
+      tr.appendChild(tyre);
+      tr.appendChild(wear);
+
+      tbody.appendChild(tr);
     });
+  }
 }
 
-function selecionarGP(round) {
-    if (!round) return;
-    gameState.currentRound = round;
-    atualizarTopBar();
-    montarCalendarioUI();
-}
+function handleRaceFinished(resultado) {
+  raceInProgress = false;
 
-// -----------------------------
-// MANAGER / NOVO JOGO
-// -----------------------------
+  // salva no histórico
+  GAME_STATE.historicoResultados.push(resultado);
 
-function iniciarNovoJogo(managerInfo) {
-    gameState = {
-        manager: managerInfo,
-        team: null,
-        cash: 5000000,
-        currentRound: 1,
-        season: 2025,
-        calendar: obterCalendarioBase(),
-        results: [],
-        createdAt: new Date().toISOString()
-    };
+  // premiação simples para o manager se ele tiver equipe
+  if (GAME_STATE.manager && GAME_STATE.manager.equipeId != null) {
+    const podium = resultado.classificacao;
 
-    salvarJogo();
-    atualizarTopBar();
-    montarCalendarioUI();
-    atualizarLobbyUI();
-
-    mostrarTela("telaLobby");
-}
-
-// Cria manager por input de texto
-function criarManagerCustom() {
-    const inputNome = document.getElementById("inputNomeManager");
-    let nome = inputNome ? inputNome.value.trim() : "";
-
-    if (!nome) {
-        nome = prompt("Digite o nome do Manager:") || "";
-        nome = nome.trim();
-    }
-
-    if (!nome) {
-        alert("Nome do manager não pode ficar vazio.");
-        return;
-    }
-
-    const manager = {
-        id: "custom",
-        name: nome,
-        reputacao: 0.5
-    };
-
-    iniciarNovoJogo(manager);
-}
-
-function escolherManagerPredefinido(id) {
-    let nome = "";
-    switch (id) {
-        case "toto":
-            nome = "Toto Wolff";
+    // encontra pilotos da equipe do manager e soma bônus
+    let bonus = 0;
+    podium.forEach((p, index) => {
+      if (p.equipeId === GAME_STATE.manager.equipeId) {
+        const pos = index + 1;
+        switch (pos) {
+          case 1:
+            bonus += 500000;
             break;
-        case "horner":
-            nome = "Christian Horner";
+          case 2:
+            bonus += 300000;
             break;
-        default:
-            nome = "Manager";
-    }
+          case 3:
+            bonus += 200000;
+            break;
+          default:
+            bonus += 50000;
+        }
+      }
+    });
 
-    const manager = {
-        id,
-        name: nome,
-        reputacao: 0.8
+    if (bonus > 0) {
+      addMoney(bonus);
+    }
+  }
+
+  // avança etapa
+  GAME_STATE.etapaAtual++;
+  refreshHUD();
+
+  // mostra resultado
+  const resultEl = document.getElementById("race-result");
+  if (resultEl) {
+    const pistaNome = resultado.pista || "Pista";
+    const p1 = resultado.podium?.[0] || "-";
+    const p2 = resultado.podium?.[1] || "-";
+    const p3 = resultado.podium?.[2] || "-";
+
+    resultEl.innerHTML = `
+      <h3>Resultado - ${pistaNome}</h3>
+      <p><strong>Pódio:</strong></p>
+      <ol>
+        <li>${p1}</li>
+        <li>${p2}</li>
+        <li>${p3}</li>
+      </ol>
+    `;
+  }
+}
+
+// ------------------------
+// TELA DE CALENDÁRIO
+// ------------------------
+
+function renderCalendar() {
+  const listEl = document.getElementById("calendar-list");
+  if (!listEl) return;
+
+  listEl.innerHTML = "";
+
+  if (!GAME_STATE.calendario || GAME_STATE.calendario.length === 0) {
+    listEl.innerHTML = "<p>Calendário não configurado.</p>";
+    return;
+  }
+
+  GAME_STATE.calendario.forEach((pista, index) => {
+    const item = document.createElement("div");
+    item.className = "calendar-item";
+
+    const status =
+      index < GAME_STATE.etapaAtual
+        ? "Concluída"
+        : index === GAME_STATE.etapaAtual
+        ? "Próxima"
+        : "Futura";
+
+    item.innerHTML = `
+      <span>${index + 1}. ${pista.nome || "Pista"}</span>
+      <span>${pista.pais || ""}</span>
+      <span class="calendar-status">${status}</span>
+    `;
+
+    listEl.appendChild(item);
+  });
+}
+
+// ------------------------
+// INICIALIZAÇÃO BÁSICA
+// ------------------------
+
+function initEvents() {
+  // menu
+  const btnNew = document.getElementById("btn-new-game");
+  const btnCont = document.getElementById("btn-continue");
+
+  if (btnNew) btnNew.onclick = handleNewGame;
+  if (btnCont) btnCont.onclick = handleContinueGame;
+
+  // seleção de manager
+  const btnCreateManager = document.getElementById("btn-manager-create");
+  if (btnCreateManager) {
+    btnCreateManager.onclick = () => {
+      const name = prompt("Nome do novo manager:", "Manager");
+      createManager(name, "Custom");
     };
+  }
 
-    iniciarNovoJogo(manager);
+  const presetButtons = document.querySelectorAll(".btn-manager-preset");
+  presetButtons.forEach((btn) => {
+    btn.onclick = () => {
+      const name = btn.dataset.name || btn.textContent.trim();
+      createManager(name, "Real");
+    };
+  });
+
+  // hub manager
+  const btnCalendar = document.getElementById("btn-open-calendar");
+  const btnRace = document.getElementById("btn-open-race");
+  const btnFinance = document.getElementById("btn-open-finance");
+  const btnStaff = document.getElementById("btn-open-staff");
+  const btnSponsors = document.getElementById("btn-open-sponsors");
+  const btnContracts = document.getElementById("btn-open-contracts");
+  const btnSave = document.getElementById("btn-save-game");
+  const btnBackMenu = document.getElementById("btn-back-menu");
+
+  if (btnCalendar) {
+    btnCalendar.onclick = () => {
+      renderCalendar();
+      showScreen("screen-calendar");
+    };
+  }
+
+  if (btnRace) {
+    btnRace.onclick = () => {
+      showScreen("screen-race");
+    };
+  }
+
+  if (btnFinance) {
+    btnFinance.onclick = () => {
+      showScreen("screen-finance");
+      if (window.renderFinanceScreen) {
+        window.renderFinanceScreen();
+      }
+    };
+  }
+
+  if (btnStaff) {
+    btnStaff.onclick = () => {
+      showScreen("screen-staff");
+      if (window.renderStaffScreen) {
+        window.renderStaffScreen();
+      }
+    };
+  }
+
+  if (btnSponsors) {
+    btnSponsors.onclick = () => {
+      showScreen("screen-sponsors");
+      if (window.renderSponsorsScreen) {
+        window.renderSponsorsScreen();
+      }
+    };
+  }
+
+  if (btnContracts) {
+    btnContracts.onclick = () => {
+      showScreen("screen-contracts");
+      if (window.renderContractsScreen) {
+        window.renderContractsScreen();
+      }
+    };
+  }
+
+  if (btnSave) btnSave.onclick = saveGame;
+  if (btnBackMenu) {
+    btnBackMenu.onclick = () => {
+      showScreen("screen-menu");
+    };
+  }
+
+  // tela calendário botão voltar
+  const btnCalendarBack = document.getElementById("btn-calendar-back");
+  if (btnCalendarBack) {
+    btnCalendarBack.onclick = () => {
+      showScreen("screen-manager-hub");
+    };
+  }
 }
 
-// -----------------------------
-// LOBBY / HUD DO GERENTE
-// -----------------------------
+function initGame() {
+  refreshHUD();
+  initEvents();
+  bindRaceUI();
 
-function atualizarLobbyUI() {
-    // Nome do manager / equipe, etc.
-    const elResumoManager = document.getElementById("lobbyResumoManager");
-    if (elResumoManager && gameState.manager) {
-        elResumoManager.textContent =
-            `${gameState.manager.name} – Temporada ${gameState.season}`;
-    }
-
-    const elResumoEquipe = document.getElementById("lobbyResumoEquipe");
-    if (elResumoEquipe) {
-        elResumoEquipe.textContent = gameState.team
-            ? `Equipe atual: ${gameState.team.name || gameState.team}`
-            : "Sem equipe definida (usar tela de Contratos/Equipes)";
-    }
-
-    // Atualiza calendário e top bar caso lobby seja aberto diretamente
-    montarCalendarioUI();
-    atualizarTopBar();
+  // ao abrir, sempre começa no menu
+  showScreen("screen-menu");
 }
 
-// -----------------------------
-// CORRIDA / FIM DE SEMANA
-// -----------------------------
-
-function iniciarCorridaAtual() {
-    const round = gameState.currentRound || 1;
-    const gp = (gameState.calendar || []).find(g => g.round === round);
-
-    if (!gp) {
-        alert("GP não encontrado para esta etapa.");
-        return;
-    }
-
-    // Troca para tela da corrida
-    mostrarTela("telaCorrida");
-
-    // Se o módulo RaceSystem existir, chamamos ele
-    if (window.RaceSystem && typeof window.RaceSystem.iniciarCorrida === "function") {
-        try {
-            window.RaceSystem.iniciarCorrida(gameState, gp, onCorridaFinalizada);
-        } catch (e) {
-            console.error("Erro ao iniciar corrida:", e);
-        }
-    } else {
-        // Placeholder simples caso RaceSystem ainda não esteja pronto
-        const raceInfo = document.getElementById("raceInfoDebug");
-        if (raceInfo) {
-            raceInfo.textContent =
-                `Corrida simulada: ${gp.name} (round ${gp.round}). ` +
-                `Implemente RaceSystem.iniciarCorrida para simulação completa.`;
-        }
-        console.warn("RaceSystem.iniciarCorrida não encontrado.");
-    }
-}
-
-// Callback quando a corrida termina
-function onCorridaFinalizada(resultadoGP) {
-    // resultadoGP pode conter:
-    // { round, classificacaoPilotos: [...], classificacaoEquipes: [...], cashDelta }
-    if (resultadoGP) {
-        gameState.results = gameState.results || [];
-        gameState.results.push(resultadoGP);
-
-        if (typeof resultadoGP.cashDelta === "number") {
-            gameState.cash += resultadoGP.cashDelta;
-        }
-    }
-
-    // Avança etapa (se não for último GP)
-    if (gameState.currentRound < (gameState.calendar || []).length) {
-        gameState.currentRound += 1;
-    }
-
-    salvarJogo();
-    atualizarTopBar();
-    montarCalendarioUI();
-    atualizarTelaPodio(resultadoGP);
-}
-
-// -----------------------------
-// PÓDIO / RESULTADO
-// -----------------------------
-
-function atualizarTelaPodio(resultadoGP) {
-    mostrarTela("telaPodio");
-
-    const elTitulo = document.getElementById("podioTitulo");
-    const podium1 = document.getElementById("podioP1");
-    const podium2 = document.getElementById("podioP2");
-    const podium3 = document.getElementById("podioP3");
-
-    if (elTitulo) {
-        const round = resultadoGP?.round || gameState.currentRound - 1;
-        const gp = (gameState.calendar || []).find(g => g.round === round);
-        elTitulo.textContent = gp ? `Pódio – ${gp.name}` : "Pódio da Corrida";
-    }
-
-    const classificacao = resultadoGP?.classificacaoPilotos || [];
-    const p1 = classificacao[0] || null;
-    const p2 = classificacao[1] || null;
-    const p3 = classificacao[2] || null;
-
-    if (podium1) {
-        podium1.innerHTML = p1
-            ? `<h4>${p1.nome}</h4><span>${p1.equipe || ""}</span>`
-            : `<h4>—</h4><span></span>`;
-    }
-    if (podium2) {
-        podium2.innerHTML = p2
-            ? `<h4>${p2.nome}</h4><span>${p2.equipe || ""}</span>`
-            : `<h4>—</h4><span></span>`;
-    }
-    if (podium3) {
-        podium3.innerHTML = p3
-            ? `<h4>${p3.nome}</h4><span>${p3.equipe || ""}</span>`
-            : `<h4>—</h4><span></span>`;
-    }
-}
-
-// -----------------------------
-// INICIALIZAÇÃO E EVENTOS
-// -----------------------------
-
-function registrarEventos() {
-    // BOTÕES MENU PRINCIPAL
-    const btnNovoJogo = document.getElementById("btnNovoJogo");
-    const btnContinuar = document.getElementById("btnContinuar");
-
-    if (btnNovoJogo) {
-        btnNovoJogo.addEventListener("click", () => {
-            limparSave();
-            mostrarTela("telaEscolhaManager");
-        });
-    }
-
-    if (btnContinuar) {
-        btnContinuar.addEventListener("click", () => {
-            const save = carregarJogo();
-            if (!save) {
-                alert("Nenhum jogo salvo encontrado. Inicie um novo jogo.");
-                mostrarTela("telaEscolhaManager");
-                return;
-            }
-            atualizarTopBar();
-            montarCalendarioUI();
-            atualizarLobbyUI();
-            mostrarTela("telaLobby");
-        });
-    }
-
-    // ESCOLHA DE MANAGER
-    const btnCriarManager = document.getElementById("btnCriarManager");
-    const btnToto = document.getElementById("btnTotoWolff");
-    const btnHorner = document.getElementById("btnChristianHorner");
-
-    if (btnCriarManager) {
-        btnCriarManager.addEventListener("click", criarManagerCustom);
-    }
-    if (btnToto) {
-        btnToto.addEventListener("click", () => escolherManagerPredefinido("toto"));
-    }
-    if (btnHorner) {
-        btnHorner.addEventListener("click", () =>
-            escolherManagerPredefinido("horner")
-        );
-    }
-
-    // BOTÕES DO LOBBY
-    const btnIrCalendario = document.getElementById("btnIrCalendario");
-    if (btnIrCalendario) {
-        btnIrCalendario.addEventListener("click", () => {
-            montarCalendarioUI();
-            mostrarTela("telaCalendario");
-        });
-    }
-
-    const btnVoltarLobbyDoCalendario =
-        document.getElementById("btnVoltarLobbyCalendario");
-    if (btnVoltarLobbyDoCalendario) {
-        btnVoltarLobbyDoCalendario.addEventListener("click", () => {
-            mostrarTela("telaLobby");
-        });
-    }
-
-    // BOTÃO INICIAR CORRIDA (pode estar no lobby ou no calendário)
-    const btnIniciarCorrida = document.getElementById("btnIniciarCorrida");
-    if (btnIniciarCorrida) {
-        btnIniciarCorrida.addEventListener("click", iniciarCorridaAtual);
-    }
-
-    // BOTÃO VOLTAR AO LOBBY A PARTIR DO PÓDIO
-    const btnVoltarLobbyPodio = document.getElementById("btnVoltarLobbyPodio");
-    if (btnVoltarLobbyPodio) {
-        btnVoltarLobbyPodio.addEventListener("click", () => {
-            atualizarLobbyUI();
-            mostrarTela("telaLobby");
-        });
-    }
-}
-
-// Inicializa aplicação
-document.addEventListener("DOMContentLoaded", () => {
-    // Se existir save, tenta carregar automaticamente
-    const save = carregarJogo();
-    if (save) {
-        // Garante calendário populado
-        if (!Array.isArray(gameState.calendar) || gameState.calendar.length === 0) {
-            gameState.calendar = obterCalendarioBase();
-        }
-        atualizarTopBar();
-        montarCalendarioUI();
-        atualizarLobbyUI();
-        mostrarTela("telaLobby");
-    } else {
-        // Sem save: começa pelo menu principal
-        gameState.calendar = obterCalendarioBase();
-        atualizarTopBar();
-        montarCalendarioUI();
-        mostrarTela("telaMenu");
-    }
-
-    registrarEventos();
-});
+document.addEventListener("DOMContentLoaded", initGame);
