@@ -49,7 +49,7 @@ body {
   height: 100%;
 }
 
-/* Carros na pista */
+/* Carros */
 .car {
   stroke: #ffffff;
   stroke-width: 2;
@@ -127,7 +127,7 @@ body {
   color: rgba(255, 255, 255, 0.85);
 }
 
-/* Controles */
+/* Controles de velocidade */
 .controls {
   margin-top: auto;
   display: flex;
@@ -139,7 +139,6 @@ body {
 .controls-label {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.7);
-  margin-right: 4px;
 }
 
 .speed-btn {
