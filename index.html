@@ -1,91 +1,198 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 Manager 2025 - Vale Edition</title>
+  <meta charset="UTF-8" />
+  <title>F1 Manager 2025 - Vale Edition</title>
 
-    <link rel="stylesheet" href="ui.css">
-    <script src="main.js" defer></script>
+  <!-- Ajuste básico para mobile -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+  <!-- Estilos globais antigos (se você tiver) -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Novo visual das telas de UI -->
+  <link rel="stylesheet" href="ui.css" />
 </head>
-
 <body>
-
-<!-- =======================
-     TELA DE CAPA
-======================= -->
-<div id="screen-splash" class="screen screen-active">
-
-    <div class="splash-bg"></div>
-
-    <div class="splash-touch-hint">
-        Toque em qualquer lugar para começar
+  <!-- Aviso para girar o celular (não força, mas orienta) -->
+  <div id="rotate-warning" class="rotate-warning">
+    <div class="rotate-card">
+      <p>Para uma melhor experiência, gire o celular para o modo paisagem.</p>
     </div>
+  </div>
 
-    <div id="touch-catcher"></div>
-</div>
+  <!-- Raiz do jogo (esconde quando o aparelho estiver em pé) -->
+  <div id="game-root" class="game-root">
+    <!-- HUD superior (caixa / etapa). Depois ligamos ao sistema real -->
+    <header class="top-hud">
+      <div class="hud-left">
+        Caixa: <span id="hud-cash">R$ 5.000.000</span>
+      </div>
+      <div class="hud-right">
+        Etapa: <span id="hud-stage">1</span>
+      </div>
+    </header>
 
+    <main class="main-wrapper">
+      <!-- ===================================================================== -->
+      <!--  TELA 1 – CAPA (SPLASH)                                              -->
+      <!-- ===================================================================== -->
+      <section
+        id="screen-splash"
+        class="screen screen-active screen-splash"
+      >
+        <!-- Fundo da capa -->
+        <div class="screen-bg bg-capa"></div>
 
-<!-- =======================
-     MENU PRINCIPAL
-======================= -->
-<div id="screen-main-menu" class="screen">
+        <!-- Texto sobre a capa -->
+        <div class="screen-content center">
+          <!-- Você disse que o título não é obrigatório,
+               pois já está na capa. Mantive só a frase de toque. -->
+          <p class="splash-subtitle">
+            Toque em qualquer lugar para começar
+          </p>
+        </div>
 
-    <div class="menu-container">
-        <button class="main-btn" onclick="startNewGame()">NOVO JOGO</button>
-        <button class="main-btn" onclick="continueGame()">CONTINUAR CARREIRA</button>
-    </div>
+        <!-- Camada invisível que pega o clique/toque na tela toda -->
+        <div id="touch-catcher" class="touch-catcher"></div>
+      </section>
 
-</div>
+      <!-- ===================================================================== -->
+      <!--  TELA 2 – MENU PRINCIPAL                                             -->
+      <!-- ===================================================================== -->
+      <section
+        id="screen-main-menu"
+        class="screen screen-lobby"
+      >
+        <div class="screen-bg bg-lobby"></div>
 
+        <div class="screen-content center">
+          <h1 class="title-main">F1 MANAGER 2025</h1>
 
-<!-- =======================
-     SELEÇÃO DE MANAGER
-======================= -->
-<div id="screen-select-manager" class="screen">
+          <div class="button-row">
+            <button id="btn-new-career" class="main-btn">
+              NOVO JOGO
+            </button>
 
-    <h2 class="title">ESCOLHA O MANAGER</h2>
+            <button id="btn-continue-career" class="main-btn secondary">
+              CONTINUAR CARREIRA
+            </button>
+          </div>
+        </div>
+      </section>
 
-    <div class="manager-buttons">
-        <button class="main-btn" onclick="showRealManagers()">USAR MANAGER REAL</button>
-        <button class="main-btn" onclick="showCreateManager()">CRIAR MANAGER</button>
-        <button class="main-btn" onclick="showScreen('screen-main-menu')">VOLTAR</button>
-    </div>
+      <!-- ===================================================================== -->
+      <!--  TELA 3 – ESCOLHA DO TIPO DE MANAGER                                 -->
+      <!-- ===================================================================== -->
+      <section
+        id="screen-manager-choice"
+        class="screen screen-lobby"
+      >
+        <div class="screen-bg bg-lobby"></div>
 
-</div>
+        <div class="screen-content center">
+          <h2 class="title">ESCOLHA O TIPO DE MANAGER</h2>
 
+          <div class="button-column">
+            <button id="btn-use-real-manager" class="main-btn">
+              USAR MANAGER REAL
+            </button>
 
-<!-- =======================
-     LISTA DE MANAGERS REAIS
-======================= -->
-<div id="screen-real-managers" class="screen">
+            <button id="btn-create-manager" class="main-btn secondary">
+              CRIAR MEU MANAGER
+            </button>
+          </div>
 
-    <h2 class="title">MANAGERS REAIS</h2>
+          <button
+            id="btn-back-main-from-choice"
+            class="main-btn outlined small"
+          >
+            VOLTAR
+          </button>
+        </div>
+      </section>
 
-    <div id="real-manager-list"></div>
+      <!-- ===================================================================== -->
+      <!--  TELA 4 – LISTA DE MANAGERS REAIS                                    -->
+      <!-- ===================================================================== -->
+      <section
+        id="screen-manager-real"
+        class="screen screen-lobby"
+      >
+        <div class="screen-bg bg-lobby"></div>
 
-    <button class="main-btn" onclick="showScreen('screen-select-manager')">VOLTAR</button>
+        <div class="screen-content">
+          <h2 class="title">ESCOLHA UM MANAGER REAL</h2>
 
-</div>
+          <!-- Aqui o main.js monta os botões automaticamente -->
+          <div id="real-manager-list" class="manager-list"></div>
 
+          <button
+            id="btn-back-manager-choice-from-real"
+            class="main-btn outlined small"
+          >
+            VOLTAR
+          </button>
+        </div>
+      </section>
 
-<!-- =======================
-     CRIAÇÃO DE MANAGER
-======================= -->
-<div id="screen-create-manager" class="screen">
+      <!-- ===================================================================== -->
+      <!--  TELA 5 – CRIAR MANAGER PERSONALIZADO                                -->
+      <!-- ===================================================================== -->
+      <section
+        id="screen-manager-create"
+        class="screen screen-lobby"
+      >
+        <div class="screen-bg bg-lobby"></div>
 
-    <h2 class="title">CRIAR NOVO MANAGER</h2>
+        <div class="screen-content">
+          <h2 class="title">CRIAR MEU MANAGER</h2>
 
-    <label>Nome:</label>
-    <input type="text" id="newManagerName">
+          <div class="form-group">
+            <label class="form-label" for="input-manager-name">
+              Nome do manager
+            </label>
+            <input
+              id="input-manager-name"
+              type="text"
+              maxlength="30"
+              placeholder="Digite o nome do manager"
+            />
+          </div>
 
-    <label>País:</label>
-    <input type="text" id="newManagerCountry">
+          <div class="form-group">
+            <label class="form-label" for="input-manager-country">
+              País (opcional)
+            </label>
+            <input
+              id="input-manager-country"
+              type="text"
+              placeholder="Brasil, EUA, Itália..."
+            />
+          </div>
 
-    <button class="main-btn" onclick="confirmCreateManager()">CONFIRMAR</button>
-    <button class="main-btn" onclick="showScreen('screen-select-manager')">VOLTAR</button>
+          <div class="button-row">
+            <button
+              id="btn-confirm-custom-manager"
+              class="main-btn"
+            >
+              CONFIRMAR
+            </button>
 
-</div>
+            <button
+              id="btn-back-manager-choice-from-create"
+              class="main-btn outlined"
+            >
+              VOLTAR
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
 
+  <!-- Lógica de navegação da UI -->
+  <script src="main.js"></script>
 </body>
 </html>
