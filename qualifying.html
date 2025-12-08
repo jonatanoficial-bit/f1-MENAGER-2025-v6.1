@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>F1 Manager 2025 – Classificação</title>
+
+    <!-- Reaproveita o mesmo visual da corrida -->
+    <link rel="stylesheet" href="race.css" />
+  </head>
+
+  <body>
+    <div class="race-layout">
+      <!-- ESQUERDA: PISTA -->
+      <div class="race-left">
+        <div id="track-container" class="track-container"></div>
+      </div>
+
+      <!-- DIREITA: HUD -->
+      <div class="race-right">
+        <div class="hud-panel">
+          <div class="hud-header">
+            <div>
+              <h1 class="hud-title" id="gp-title">Classificação</h1>
+              <p class="hud-subtitle">Sessão de qualificação – F1 2025</p>
+            </div>
+            <div class="hud-meta">
+              <span id="qualy-lap-label" class="hud-lap">
+                Volta 1 / 6
+              </span>
+            </div>
+          </div>
+
+          <!-- LISTA DE PILOTOS (com rolagem) -->
+          <div id="drivers-list" class="drivers-list">
+            <!-- Cards criados via JS -->
+          </div>
+
+          <!-- PAINEL DO USUÁRIO (mesma ideia da corrida) -->
+          <div class="user-panel">
+            <div class="user-panel-title">Pilotos da sua equipe</div>
+            <div class="user-driver-row">
+              <div
+                class="user-driver-card"
+                id="user-driver-card-0"
+                data-index="0"
+              >
+                <div class="user-driver-main">
+                  <img class="user-face" id="user-face-0" src="" alt="" />
+                  <div class="user-info">
+                    <div class="user-name" id="user-name-0">---</div>
+                    <div class="user-team" id="user-team-0">---</div>
+                    <div class="user-status-line">
+                      Voltas: <span id="user-laps-0">0</span>
+                    </div>
+                    <div class="user-status-line">
+                      Melhor: <span id="user-best-0">--:--</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="user-driver-actions">
+                  <button
+                    class="user-btn mode"
+                    data-action="push"
+                    data-index="0"
+                  >
+                    ATAQUE
+                  </button>
+                  <button
+                    class="user-btn mode"
+                    data-action="save"
+                    data-index="0"
+                  >
+                    ECONOMIZAR
+                  </button>
+                </div>
+              </div>
+
+              <div
+                class="user-driver-card"
+                id="user-driver-card-1"
+                data-index="1"
+              >
+                <div class="user-driver-main">
+                  <img class="user-face" id="user-face-1" src="" alt="" />
+                  <div class="user-info">
+                    <div class="user-name" id="user-name-1">---</div>
+                    <div class="user-team" id="user-team-1">---</div>
+                    <div class="user-status-line">
+                      Voltas: <span id="user-laps-1">0</span>
+                    </div>
+                    <div class="user-status-line">
+                      Melhor: <span id="user-best-1">--:--</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="user-driver-actions">
+                  <button
+                    class="user-btn mode"
+                    data-action="push"
+                    data-index="1"
+                  >
+                    ATAQUE
+                  </button>
+                  <button
+                    class="user-btn mode"
+                    data-action="save"
+                    data-index="1"
+                  >
+                    ECONOMIZAR
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONTROLES GERAIS -->
+          <div class="controls-row">
+            <div class="controls">
+              <span class="controls-label">Velocidade:</span>
+              <button class="speed-btn active" data-speed="1">1x</button>
+              <button class="speed-btn" data-speed="2">2x</button>
+              <button class="speed-btn" data-speed="4">4x</button>
+            </div>
+          </div>
+
+          <div class="bottom-actions">
+            <button class="back-btn" onclick="window.history.back()">
+              Voltar ao calendário
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL RESULTADO DA CLASSIFICAÇÃO -->
+    <div id="qualy-modal" class="podium-modal hidden">
+      <div class="podium-content">
+        <h2>Resultado da Classificação</h2>
+        <p style="font-size: 11px; margin-top: 0; margin-bottom: 8px;">
+          Este resultado será usado como grid de largada da corrida.
+        </p>
+
+        <div id="qualy-results" class="drivers-list" style="max-height: 260px;">
+          <!-- Linhas de resultado criadas via JS -->
+        </div>
+
+        <button class="podium-close" onclick="closeQualyModal()">
+          Fechar
+        </button>
+      </div>
+    </div>
+
+    <script src="qualifying.js"></script>
+  </body>
+</html>
