@@ -1,432 +1,91 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <title>F1 Manager 2025</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Manager 2025 - Vale Edition</title>
 
-    <!-- CSS principal + UI + corrida -->
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="ui.css" />
-    <link rel="stylesheet" href="race.css" />
+    <link rel="stylesheet" href="ui.css">
+    <script src="main.js" defer></script>
 </head>
+
 <body>
-    <!-- HUD GLOBAL (topo) -->
-    <header id="global-hud">
-        <div id="hud-cash">Caixa: R$ 5.000.000</div>
-        <div id="hud-stage">Etapa: 1</div>
-    </header>
 
-    <main id="game-root">
-        <!-- =========================
-             1) CAPA / SPLASH SCREEN
-           ========================== -->
-        <section id="screen-splash" class="screen screen-active" data-screen="splash">
-            <div class="screen-bg screen-bg-capa"></div>
-            <div class="screen-overlay center-column">
-                <h1 class="game-title">F1 MANAGER 2025</h1>
-                <p class="subtitle">Toque em qualquer lugar para começar</p>
-            </div>
-        </section>
+<!-- =======================
+     TELA DE CAPA
+======================= -->
+<div id="screen-splash" class="screen screen-active">
 
-        <!-- =========================
-             2) MENU PRINCIPAL
-           ========================== -->
-        <section id="screen-main-menu" class="screen" data-screen="main-menu">
-            <div class="screen-bg screen-bg-lobby"></div>
-            <div class="screen-overlay center-column">
-                <h1 class="game-title">F1 MANAGER 2025</h1>
+    <div class="splash-bg"></div>
 
-                <div class="button-row">
-                    <button class="btn primary" data-action="new-game">Novo Jogo</button>
-                    <button class="btn primary" data-action="continue-game">Continuar Carreira</button>
-                </div>
-            </div>
-        </section>
+    <div class="splash-touch-hint">
+        Toque em qualquer lugar para começar
+    </div>
 
-        <!-- =========================
-             3) ESCOLHA TIPO DE MANAGER
-           ========================== -->
-        <section id="screen-manager-mode" class="screen" data-screen="manager-mode">
-            <div class="screen-bg screen-bg-lobby"></div>
-            <div class="screen-overlay center-column">
-                <h2 class="screen-title">ESCOLHA O TIPO DE MANAGER</h2>
+    <div id="touch-catcher"></div>
+</div>
 
-                <div class="button-column">
-                    <button class="btn primary" data-action="create-manager">
-                        Criar Manager
-                    </button>
-                    <button class="btn primary" data-action="use-real-manager">
-                        Usar Manager Real
-                    </button>
-                    <button class="btn secondary" data-action="back-to-main-menu">
-                        Voltar ao Menu
-                    </button>
-                </div>
-            </div>
-        </section>
 
-        <!-- =========================
-             4) LISTA DE MANAGERS REAIS
-           ========================== -->
-        <section id="screen-real-managers" class="screen" data-screen="real-managers">
-            <div class="screen-bg screen-bg-lobby"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title">ESCOLHA O MANAGER REAL</h2>
+<!-- =======================
+     MENU PRINCIPAL
+======================= -->
+<div id="screen-main-menu" class="screen">
 
-                <!-- Aqui o JS vai montar a lista baseada em REAL_MANAGERS_2025 (data.js) -->
-                <div id="real-manager-list" class="card-list">
-                    <!-- preenchido dinamicamente -->
-                </div>
+    <div class="menu-container">
+        <button class="main-btn" onclick="startNewGame()">NOVO JOGO</button>
+        <button class="main-btn" onclick="continueGame()">CONTINUAR CARREIRA</button>
+    </div>
 
-                <div class="footer-actions">
-                    <button class="btn secondary" data-action="back-to-manager-mode">
-                        Voltar
-                    </button>
-                </div>
-            </div>
-        </section>
+</div>
 
-        <!-- =========================
-             5) CRIAÇÃO DE MANAGER
-           ========================== -->
-        <section id="screen-create-manager" class="screen" data-screen="create-manager">
-            <div class="screen-bg screen-bg-lobby"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title">CRIAR NOVO MANAGER</h2>
 
-                <form id="create-manager-form" class="form-card">
-                    <label class="form-field">
-                        <span>Nome do Manager</span>
-                        <input type="text" id="manager-name-input" maxlength="24" required />
-                    </label>
+<!-- =======================
+     SELEÇÃO DE MANAGER
+======================= -->
+<div id="screen-select-manager" class="screen">
 
-                    <label class="form-field">
-                        <span>País</span>
-                        <select id="manager-country-select"></select>
-                        <!-- preenchido com COUNTRIES (data.js) -->
-                    </label>
+    <h2 class="title">ESCOLHA O MANAGER</h2>
 
-                    <label class="form-field">
-                        <span>Escuderia Inicial</span>
-                        <select id="manager-team-select"></select>
-                        <!-- preenchido com TEAMS_2025 (data.js) -->
-                    </label>
+    <div class="manager-buttons">
+        <button class="main-btn" onclick="showRealManagers()">USAR MANAGER REAL</button>
+        <button class="main-btn" onclick="showCreateManager()">CRIAR MANAGER</button>
+        <button class="main-btn" onclick="showScreen('screen-main-menu')">VOLTAR</button>
+    </div>
 
-                    <label class="form-field">
-                        <span>Avatar</span>
-                        <select id="manager-avatar-select"></select>
-                        <!-- pode ser preenchido com assets/managers/... -->
-                    </label>
+</div>
 
-                    <div class="preview-row">
-                        <div class="avatar-preview">
-                            <span>Pré-visualização</span>
-                            <img id="manager-avatar-preview" src="" alt="Avatar do manager" />
-                        </div>
-                    </div>
 
-                    <div class="footer-actions">
-                        <button type="button" class="btn secondary" data-action="back-to-manager-mode">
-                            Voltar
-                        </button>
-                        <button type="submit" class="btn primary" data-action="confirm-create-manager">
-                            Confirmar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </section>
+<!-- =======================
+     LISTA DE MANAGERS REAIS
+======================= -->
+<div id="screen-real-managers" class="screen">
 
-        <!-- =========================
-             6) LOBBY / HUB DO MANAGER
-           ========================== -->
-        <section id="screen-lobby" class="screen" data-screen="lobby">
-            <div class="screen-bg screen-bg-lobby"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title" id="lobby-manager-title">
-                    MANAGER:
-                    <span id="lobby-manager-name">Manager</span>
-                </h2>
-                <p class="subtitle" id="lobby-team-label">
-                    Equipe: <span id="lobby-team-name">Sem equipe</span>
-                </p>
+    <h2 class="title">MANAGERS REAIS</h2>
 
-                <div class="button-grid">
-                    <button class="btn primary" data-action="open-calendar">Calendário</button>
-                    <button class="btn primary" data-action="open-race">Corrida</button>
-                    <button class="btn primary" data-action="open-finance">Finanças</button>
-                    <button class="btn primary" data-action="open-staff">Funcionários</button>
-                    <button class="btn primary" data-action="open-sponsors">Patrocínios</button>
-                    <button class="btn primary" data-action="open-contracts">Contratos</button>
-                    <button class="btn primary" data-action="open-garage">Oficina / Setup</button>
-                    <button class="btn primary" data-action="open-market">Mercado de Pilotos</button>
-                </div>
+    <div id="real-manager-list"></div>
 
-                <div class="footer-actions">
-                    <button class="btn secondary" data-action="save-game">Salvar</button>
-                    <button class="btn secondary" data-action="back-to-main-menu">
-                        Sair para o Menu
-                    </button>
-                </div>
-            </div>
-        </section>
+    <button class="main-btn" onclick="showScreen('screen-select-manager')">VOLTAR</button>
 
-        <!-- =========================
-             7) CALENDÁRIO
-           ========================== -->
-        <section id="screen-calendar" class="screen" data-screen="calendar">
-            <div class="screen-bg screen-bg-lobby"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title">CALENDÁRIO 2025</h2>
+</div>
 
-                <div id="calendar-list" class="card-list">
-                    <!-- cada etapa montada via TRACKS_2025 (data.js) -->
-                </div>
 
-                <div class="footer-actions">
-                    <button class="btn secondary" data-action="back-to-lobby">Voltar</button>
-                </div>
-            </div>
-        </section>
+<!-- =======================
+     CRIAÇÃO DE MANAGER
+======================= -->
+<div id="screen-create-manager" class="screen">
 
-        <!-- =========================
-             8) TELA DE CORRIDA
-           ========================== -->
-        <section id="screen-race" class="screen" data-screen="race">
-            <div class="screen-bg screen-bg-track"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title">CORRIDA</h2>
-                <p class="subtitle" id="race-status-label">Pronto</p>
+    <h2 class="title">CRIAR NOVO MANAGER</h2>
 
-                <div id="race-table-wrapper">
-                    <table id="race-table">
-                        <thead>
-                            <tr>
-                                <th>Pos</th>
-                                <th>Piloto</th>
-                                <th>Tempo</th>
-                                <th>Pneu</th>
-                                <th>Desgaste</th>
-                                <th>Box</th>
-                            </tr>
-                        </thead>
-                        <tbody id="race-table-body">
-                            <!-- preenchido pela raceSystem.js -->
-                        </tbody>
-                    </table>
-                </div>
+    <label>Nome:</label>
+    <input type="text" id="newManagerName">
 
-                <div class="race-controls">
-                    <button class="btn primary" data-action="start-race">Iniciar Corrida</button>
-                    <button class="btn secondary" data-action="back-to-lobby">Voltar</button>
-                </div>
+    <label>País:</label>
+    <input type="text" id="newManagerCountry">
 
-                <div class="race-speed-controls">
-                    <button class="btn small" data-action="speed-1x">1x</button>
-                    <button class="btn small" data-action="speed-2x">2x</button>
-                    <button class="btn small" data-action="speed-4x">4x</button>
-                </div>
-            </div>
-        </section>
+    <button class="main-btn" onclick="confirmCreateManager()">CONFIRMAR</button>
+    <button class="main-btn" onclick="showScreen('screen-select-manager')">VOLTAR</button>
 
-        <!-- =========================
-             9) FINANÇAS
-           ========================== -->
-        <section id="screen-finance" class="screen" data-screen="finance">
-            <div class="screen-bg screen-bg-mercado"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title">FINANÇAS</h2>
+</div>
 
-                <p class="subtitle">
-                    Saldo atual:
-                    <span id="finance-balance" class="highlight">R$ 5.000.000</span>
-                </p>
-
-                <div class="finance-layout">
-                    <div class="finance-panel">
-                        <h3>Evolução do Saldo</h3>
-                        <div id="finance-chart-balance" class="placeholder-chart"></div>
-                    </div>
-
-                    <div class="finance-panel">
-                        <h3>Distribuição por Categoria</h3>
-                        <div id="finance-chart-category" class="placeholder-chart"></div>
-                    </div>
-
-                    <div class="finance-panel">
-                        <h3>Histórico</h3>
-                        <div id="finance-history" class="history-list"></div>
-                    </div>
-                </div>
-
-                <div class="footer-actions">
-                    <button class="btn secondary" data-action="back-to-lobby">Voltar</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- =========================
-             10) FUNCIONÁRIOS
-           ========================== -->
-        <section id="screen-staff" class="screen" data-screen="staff">
-            <div class="screen-bg screen-bg-funcionarios"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title">FUNCIONÁRIOS</h2>
-
-                <div id="staff-list" class="card-list">
-                    <!-- montado pelo JS -->
-                </div>
-
-                <div class="footer-actions">
-                    <button class="btn primary" data-action="hire-staff">Contratar</button>
-                    <button class="btn secondary" data-action="back-to-lobby">Voltar</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- =========================
-             11) PATROCÍNIOS
-           ========================== -->
-        <section id="screen-sponsors" class="screen" data-screen="sponsors">
-            <div class="screen-bg screen-bg-patrocinio"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title">PATROCÍNIOS</h2>
-
-                <div id="sponsor-active-list" class="card-list">
-                    <!-- patrocínios atuais -->
-                </div>
-
-                <h3 class="section-subtitle">Ofertas de Patrocínio</h3>
-                <div id="sponsor-offers-list" class="card-list">
-                    <!-- ofertas disponíveis -->
-                </div>
-
-                <div class="footer-actions">
-                    <button class="btn secondary" data-action="back-to-lobby">Voltar</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- =========================
-             12) CONTRATOS
-           ========================== -->
-        <section id="screen-contracts" class="screen" data-screen="contracts">
-            <div class="screen-bg screen-bg-mercado"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title">CONTRATOS E METAS</h2>
-
-                <div id="contract-summary" class="card-list">
-                    <!-- contrato da equipe atual, metas, prazo, risco de demissão -->
-                </div>
-
-                <h3 class="section-subtitle">Ofertas Futuras</h3>
-                <div id="contract-offers" class="card-list">
-                    <!-- ofertas de outras equipes (após desempenho) -->
-                </div>
-
-                <div class="footer-actions">
-                    <button class="btn secondary" data-action="back-to-lobby">Voltar</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- =========================
-             13) OFICINA / SETUP
-           ========================== -->
-        <section id="screen-garage" class="screen" data-screen="garage">
-            <div class="screen-bg screen-bg-oficina"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title">OFICINA / SETUP DO CARRO</h2>
-
-                <div class="garage-layout">
-                    <div class="garage-panel">
-                        <h3>Aerodinâmica</h3>
-                        <label class="slider-field">
-                            Asa dianteira
-                            <input type="range" id="setup-front-wing" min="0" max="100" />
-                        </label>
-                        <label class="slider-field">
-                            Asa traseira
-                            <input type="range" id="setup-rear-wing" min="0" max="100" />
-                        </label>
-                    </div>
-
-                    <div class="garage-panel">
-                        <h3>Suspensão</h3>
-                        <label class="slider-field">
-                            Rigidez
-                            <input type="range" id="setup-suspension" min="0" max="100" />
-                        </label>
-                        <label class="slider-field">
-                            Altura do carro
-                            <input type="range" id="setup-ride-height" min="0" max="100" />
-                        </label>
-                    </div>
-
-                    <div class="garage-panel">
-                        <h3>Motor &amp; Bateria</h3>
-                        <label class="slider-field">
-                            Potência do motor
-                            <input type="range" id="setup-engine" min="0" max="100" />
-                        </label>
-                        <label class="slider-field">
-                            Gestão de bateria
-                            <input type="range" id="setup-battery" min="0" max="100" />
-                        </label>
-                    </div>
-                </div>
-
-                <div class="footer-actions">
-                    <button class="btn primary" data-action="save-setup">Salvar Setup</button>
-                    <button class="btn secondary" data-action="back-to-lobby">Voltar</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- =========================
-             14) MERCADO DE PILOTOS
-           ========================== -->
-        <section id="screen-market" class="screen" data-screen="market">
-            <div class="screen-bg screen-bg-mercado"></div>
-            <div class="screen-overlay">
-                <h2 class="screen-title">MERCADO DE PILOTOS</h2>
-
-                <div id="market-driver-list" class="card-list">
-                    <!-- pilotos disponíveis / contratos -->
-                </div>
-
-                <div class="footer-actions">
-                    <button class="btn secondary" data-action="back-to-lobby">Voltar</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- =========================
-             15) PÓDIO / RESULTADOS
-           ========================== -->
-        <section id="screen-podium" class="screen" data-screen="podium">
-            <div class="screen-bg screen-bg-podio"></div>
-            <div class="screen-overlay center-column">
-                <h2 class="screen-title">PÓDIO</h2>
-
-                <div id="podium-layout">
-                    <!-- 1º, 2º, 3º com avatars e bandeiras -->
-                </div>
-
-                <div class="footer-actions">
-                    <button class="btn primary" data-action="back-to-lobby">Continuar</button>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- JS: dados primeiro, depois lógica -->
-    <script src="data.js"></script>
-    <script src="main.js"></script>
-    <script src="raceSystem.js"></script>
-    <script src="tyreSystem.js"></script>
-    <script src="financesystem.js"></script>
-    <script src="script.js"></script>
 </body>
-                                </html>
+</html>
