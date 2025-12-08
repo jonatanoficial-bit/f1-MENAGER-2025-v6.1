@@ -17,42 +17,29 @@
       <!-- DIREITA: HUD -->
       <div class="race-right">
         <div class="hud-panel">
-          <h1 class="hud-title" id="gp-title">Corrida</h1>
-          <p class="hud-subtitle" id="gp-subtitle">
-            Temporada oficial F1 2025
-          </p>
-
-          <div class="driver-row">
-            <div class="driver-card">
-              <div class="driver-name" id="driver1-name">Piloto 1</div>
-              <div class="metric">
-                <span>Posição</span>
-                <span id="driver1-pos">1º</span>
-              </div>
-              <div class="metric">
-                <span>Velocidade</span>
-                <span id="driver1-speed">0 km/h</span>
-              </div>
+          <div class="hud-header">
+            <div>
+              <h1 class="hud-title" id="gp-title">Corrida</h1>
+              <p class="hud-subtitle">Temporada oficial F1 2025</p>
             </div>
-
-            <div class="driver-card">
-              <div class="driver-name" id="driver2-name">Piloto 2</div>
-              <div class="metric">
-                <span>Posição</span>
-                <span id="driver2-pos">2º</span>
-              </div>
-              <div class="metric">
-                <span>Velocidade</span>
-                <span id="driver2-speed">0 km/h</span>
-              </div>
+            <div class="hud-meta">
+              <span id="race-lap-label" class="hud-lap">Volta 1 / 10</span>
             </div>
           </div>
 
-          <div class="controls">
-            <span class="controls-label">Velocidade:</span>
-            <button class="speed-btn active" data-speed="1">1x</button>
-            <button class="speed-btn" data-speed="2">2x</button>
-            <button class="speed-btn" data-speed="4">4x</button>
+          <!-- LISTA DE TODOS OS PILOTOS -->
+          <div id="drivers-list" class="drivers-list">
+            <!-- Os cards são criados via JS -->
+          </div>
+
+          <!-- CONTROLES -->
+          <div class="controls-row">
+            <div class="controls">
+              <span class="controls-label">Velocidade:</span>
+              <button class="speed-btn active" data-speed="1">1x</button>
+              <button class="speed-btn" data-speed="2">2x</button>
+              <button class="speed-btn" data-speed="4">4x</button>
+            </div>
           </div>
 
           <div class="bottom-actions">
@@ -61,6 +48,34 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- MODAL DO PÓDIO -->
+    <div id="podium-modal" class="podium-modal hidden">
+      <div class="podium-content">
+        <h2>Pódio – Resultado Final</h2>
+        <div class="podium-cards">
+          <div class="podium-card first">
+            <div class="podium-pos">1º</div>
+            <img id="podium1-face" class="podium-face" src="" alt="1º lugar" />
+            <div class="podium-name" id="podium1-name"></div>
+            <div class="podium-team" id="podium1-team"></div>
+          </div>
+          <div class="podium-card second">
+            <div class="podium-pos">2º</div>
+            <img id="podium2-face" class="podium-face" src="" alt="2º lugar" />
+            <div class="podium-name" id="podium2-name"></div>
+            <div class="podium-team" id="podium2-team"></div>
+          </div>
+          <div class="podium-card third">
+            <div class="podium-pos">3º</div>
+            <img id="podium3-face" class="podium-face" src="" alt="3º lugar" />
+            <div class="podium-name" id="podium3-name"></div>
+            <div class="podium-team" id="podium3-team"></div>
+          </div>
+        </div>
+        <button class="podium-close" onclick="closePodium()">Fechar</button>
       </div>
     </div>
 
