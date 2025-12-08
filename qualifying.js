@@ -9,28 +9,28 @@ const QUALY_PHASES = [
   { name: "Q3", laps: 4, cut: 0 }  // 10 -> grid final
 ];
 
-// Grid 2025 (com Bortoleto)
+// Grid 2025 (com Bortoleto na Sauber/Audi)
 const DRIVERS_2025 = [
-  { code: "VER", name: "Max Verstappen", team: "Red Bull Racing",   teamKey: "redbull",  color: "#1e88e5", baseLapTime: 84,   tyreWearRate: 10,   engineWearRate: 2.5 },
-  { code: "TSU", name: "Yuki Tsunoda",   team: "Red Bull Racing",   teamKey: "redbull",  color: "#42a5f5", baseLapTime: 85.5, tyreWearRate: 10,   engineWearRate: 2.5 },
-  { code: "HAM", name: "Lewis Hamilton", team: "Ferrari",           teamKey: "ferrari",  color: "#e53935", baseLapTime: 85,   tyreWearRate: 9.5, engineWearRate: 2.5 },
-  { code: "LEC", name: "Charles Leclerc",team: "Ferrari",           teamKey: "ferrari",  color: "#ef5350", baseLapTime: 85,   tyreWearRate: 9.5, engineWearRate: 2.5 },
-  { code: "RUS", name: "George Russell", team: "Mercedes",          teamKey: "mercedes", color: "#00bcd4", baseLapTime: 85.2, tyreWearRate: 9.5, engineWearRate: 2.5 },
-  { code: "ANT", name: "Kimi Antonelli", team: "Mercedes",          teamKey: "mercedes", color: "#26c6da", baseLapTime: 85.8, tyreWearRate: 9.5, engineWearRate: 2.5 },
-  { code: "NOR", name: "Lando Norris",   team: "McLaren",           teamKey: "mclaren",  color: "#ff9800", baseLapTime: 85.1, tyreWearRate: 9.5, engineWearRate: 2.5 },
-  { code: "PIA", name: "Oscar Piastri",  team: "McLaren",           teamKey: "mclaren",  color: "#ffa726", baseLapTime: 85.3, tyreWearRate: 9.5, engineWearRate: 2.5 },
-  { code: "ALO", name: "Fernando Alonso",team: "Aston Martin",      teamKey: "aston",    color: "#26a69a", baseLapTime: 86,   tyreWearRate: 10,  engineWearRate: 2.6 },
-  { code: "STR", name: "Lance Stroll",   team: "Aston Martin",      teamKey: "aston",    color: "#4db6ac", baseLapTime: 86.5, tyreWearRate: 10,  engineWearRate: 2.6 },
-  { code: "GAS", name: "Pierre Gasly",   team: "Alpine",            teamKey: "alpine",   color: "#ab47bc", baseLapTime: 86.3, tyreWearRate: 10.5,engineWearRate: 2.7 },
-  { code: "DOO", name: "Jack Doohan",    team: "Alpine",            teamKey: "alpine",   color: "#ba68c8", baseLapTime: 86.7, tyreWearRate: 10.5,engineWearRate: 2.7 },
-  { code: "ALB", name: "Alex Albon",     team: "Williams",          teamKey: "williams", color: "#1976d2", baseLapTime: 86.4, tyreWearRate: 10.5,engineWearRate: 2.7 },
-  { code: "SAI", name: "Carlos Sainz",   team: "Williams",          teamKey: "williams", color: "#42a5f5", baseLapTime: 86.2, tyreWearRate: 10.5,engineWearRate: 2.7 },
-  { code: "LAW", name: "Liam Lawson",    team: "Racing Bulls",      teamKey: "racingbulls",color:"#5c6bc0", baseLapTime: 86.8, tyreWearRate: 11,  engineWearRate: 2.8 },
-  { code: "HAD", name: "Isack Hadjar",   team: "Racing Bulls",      teamKey: "racingbulls",color:"#7986cb", baseLapTime: 87,   tyreWearRate: 11,  engineWearRate: 2.8 },
-  { code: "HUL", name: "Nico Hülkenberg",team: "Sauber / Audi",     teamKey: "sauber",   color: "#8d6e63", baseLapTime: 87,   tyreWearRate: 11.2,engineWearRate: 3 },
-  { code: "BOR", name: "Gabriel Bortoleto",team:"Sauber / Audi",    teamKey: "sauber",   color: "#a1887f", baseLapTime: 87.4, tyreWearRate: 11.2,engineWearRate: 3 },
-  { code: "BEA", name: "Oliver Bearman", team: "Haas",              teamKey: "haas",     color: "#cfd8dc", baseLapTime: 87.2, tyreWearRate: 11.4,engineWearRate: 3.1 },
-  { code: "OCO", name: "Esteban Ocon",   team: "Haas",              teamKey: "haas",     color: "#eceff1", baseLapTime: 87.3, tyreWearRate: 11.4,engineWearRate: 3.1 }
+  { code: "VER", name: "Max Verstappen",   team: "Red Bull Racing", teamKey: "redbull",    color: "#1e88e5", baseLapTime: 84,   tyreWearRate: 10,   engineWearRate: 2.5 },
+  { code: "TSU", name: "Yuki Tsunoda",     team: "Red Bull Racing", teamKey: "redbull",    color: "#42a5f5", baseLapTime: 85.5, tyreWearRate: 10,   engineWearRate: 2.5 },
+  { code: "HAM", name: "Lewis Hamilton",   team: "Ferrari",         teamKey: "ferrari",    color: "#e53935", baseLapTime: 85,   tyreWearRate: 9.5,  engineWearRate: 2.5 },
+  { code: "LEC", name: "Charles Leclerc",  team: "Ferrari",         teamKey: "ferrari",    color: "#ef5350", baseLapTime: 85,   tyreWearRate: 9.5,  engineWearRate: 2.5 },
+  { code: "RUS", name: "George Russell",   team: "Mercedes",        teamKey: "mercedes",   color: "#00bcd4", baseLapTime: 85.2, tyreWearRate: 9.5,  engineWearRate: 2.5 },
+  { code: "ANT", name: "Kimi Antonelli",   team: "Mercedes",        teamKey: "mercedes",   color: "#26c6da", baseLapTime: 85.8, tyreWearRate: 9.5,  engineWearRate: 2.5 },
+  { code: "NOR", name: "Lando Norris",     team: "McLaren",         teamKey: "mclaren",    color: "#ff9800", baseLapTime: 85.1, tyreWearRate: 9.5,  engineWearRate: 2.5 },
+  { code: "PIA", name: "Oscar Piastri",    team: "McLaren",         teamKey: "mclaren",    color: "#ffa726", baseLapTime: 85.3, tyreWearRate: 9.5,  engineWearRate: 2.5 },
+  { code: "ALO", name: "Fernando Alonso",  team: "Aston Martin",    teamKey: "aston",      color: "#26a69a", baseLapTime: 86,   tyreWearRate: 10,   engineWearRate: 2.6 },
+  { code: "STR", name: "Lance Stroll",     team: "Aston Martin",    teamKey: "aston",      color: "#4db6ac", baseLapTime: 86.5, tyreWearRate: 10,   engineWearRate: 2.6 },
+  { code: "GAS", name: "Pierre Gasly",     team: "Alpine",          teamKey: "alpine",     color: "#ab47bc", baseLapTime: 86.3, tyreWearRate: 10.5, engineWearRate: 2.7 },
+  { code: "DOO", name: "Jack Doohan",      team: "Alpine",          teamKey: "alpine",     color: "#ba68c8", baseLapTime: 86.7, tyreWearRate: 10.5, engineWearRate: 2.7 },
+  { code: "ALB", name: "Alex Albon",       team: "Williams",        teamKey: "williams",   color: "#1976d2", baseLapTime: 86.4, tyreWearRate: 10.5, engineWearRate: 2.7 },
+  { code: "SAI", name: "Carlos Sainz",     team: "Williams",        teamKey: "williams",   color: "#42a5f5", baseLapTime: 86.2, tyreWearRate: 10.5, engineWearRate: 2.7 },
+  { code: "LAW", name: "Liam Lawson",      team: "Racing Bulls",    teamKey: "racingbulls",color: "#5c6bc0", baseLapTime: 86.8, tyreWearRate: 11,   engineWearRate: 2.8 },
+  { code: "HAD", name: "Isack Hadjar",     team: "Racing Bulls",    teamKey: "racingbulls",color: "#7986cb", baseLapTime: 87,   tyreWearRate: 11,   engineWearRate: 2.8 },
+  { code: "HUL", name: "Nico Hülkenberg",  team: "Sauber / Audi",   teamKey: "sauber",     color: "#8d6e63", baseLapTime: 87,   tyreWearRate: 11.2, engineWearRate: 3 },
+  { code: "BOR", name: "Gabriel Bortoleto",team:"Sauber / Audi",    teamKey: "sauber",     color: "#a1887f", baseLapTime: 87.4, tyreWearRate: 11.2, engineWearRate: 3 },
+  { code: "BEA", name: "Oliver Bearman",   team: "Haas",            teamKey: "haas",       color: "#cfd8dc", baseLapTime: 87.2, tyreWearRate: 11.4, engineWearRate: 3.1 },
+  { code: "OCO", name: "Esteban Ocon",     team: "Haas",            teamKey: "haas",       color: "#eceff1", baseLapTime: 87.3, tyreWearRate: 11.4, engineWearRate: 3.1 }
 ];
 
 // ===========================
@@ -92,6 +92,27 @@ function updatePhaseHeader() {
   }
 }
 
+// Resolve equipe do usuário (URL → localStorage → padrão ferrari)
+function resolveUserTeamKey(params) {
+  let userTeam = params.get("userTeam");
+
+  if (!userTeam) {
+    try {
+      const stored = localStorage.getItem("f1m2025_user_team");
+      if (stored) userTeam = stored;
+    } catch (e) {}
+  }
+
+  if (!userTeam) userTeam = "ferrari";
+
+  // salva/atualiza no storage para corrida usar depois
+  try {
+    localStorage.setItem("f1m2025_user_team", userTeam);
+  } catch (e) {}
+
+  return userTeam;
+}
+
 // ===========================
 // INICIALIZAÇÃO
 // ===========================
@@ -100,9 +121,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const params = new URLSearchParams(window.location.search);
   const trackName = params.get("track") || "australia";
-  const gpName = params.get("gp") || "GP da Austrália 2025";
-  qualyState.userTeamKey = params.get("userTeam") || "ferrari";
-  qualyState.trackName = trackName;
+  const gpName   = params.get("gp")    || "GP da Austrália 2025";
+
+  qualyState.userTeamKey = resolveUserTeamKey(params);
+  qualyState.trackName   = trackName;
 
   const titleEl = document.getElementById("gp-title");
   if (titleEl) titleEl.textContent = `Classificação – ${gpName}`;
@@ -172,7 +194,7 @@ function loadTrackQualy(trackName) {
         return;
       }
 
-      // linha branca
+      // linha branca da pista
       trackPath.setAttribute("fill", "none");
       trackPath.setAttribute("stroke", "#ffffff");
       trackPath.setAttribute("stroke-opacity", "0.35");
@@ -197,7 +219,7 @@ function loadTrackQualy(trackName) {
 }
 
 // ===========================
-// INICIAR FASE COM DRIVERS ATUAIS
+// COMEÇAR FASE (Q1/Q2/Q3)
 // ===========================
 function startPhaseFromDrivers() {
   const svg = qualyState.svg;
@@ -217,7 +239,6 @@ function startPhaseFromDrivers() {
 // INICIALIZA CARROS
 // ===========================
 function initCarsQualy(svg, trackPath) {
-  // remove carros antigos
   const oldCars = svg.querySelectorAll(".car");
   oldCars.forEach((c) => c.remove());
 
@@ -262,11 +283,14 @@ function initCarsQualy(svg, trackPath) {
     qualyState.cars.push(carObj);
   });
 
+  // define pilotos da equipe do usuário (dinâmico)
   const teamCars = qualyState.cars.filter(
     (c) => c.driver.teamKey === qualyState.userTeamKey
   );
   if (teamCars.length >= 2) {
     qualyState.userCars = [teamCars[0], teamCars[1]];
+  } else if (teamCars.length === 1) {
+    qualyState.userCars = [teamCars[0], qualyState.cars[0]];
   } else {
     qualyState.userCars = [qualyState.cars[0], qualyState.cars[1]];
   }
@@ -545,24 +569,11 @@ function updateUserPanelQualy() {
 
     if (els.lapsEl) els.lapsEl.textContent = String(car.lap);
     if (els.bestEl) els.bestEl.textContent = formatLapTime(car.bestLapTime);
-
-    if (els.buttons) {
-      els.buttons.forEach((b) => {
-        const action = b.getAttribute("data-action");
-        const isPush = action === "push" && car.engineMode === "push";
-        const isSave = action === "save" && car.engineMode === "save";
-        if (isPush || isSave) {
-          b.classList.add("active");
-        } else {
-          b.classList.remove("active");
-        }
-      });
-    }
   });
 }
 
 // ===========================
-// FIM DA FASE / AVANÇO Q1 -> Q2 -> Q3
+// FIM DA FASE / Q1 → Q2 → Q3
 // ===========================
 function handleSessionEnd() {
   const phase = currentPhase();
@@ -576,7 +587,6 @@ function handleSessionEnd() {
   const isLastPhase = qualyState.phaseIndex === QUALY_PHASES.length - 1;
 
   if (isLastPhase) {
-    // Grid final
     const grid = ordered.map((car, index) => ({
       position: index + 1,
       code: car.driver.code,
@@ -629,9 +639,7 @@ function showPhaseModal(phaseName, ordered, eliminated) {
   ordered.forEach((car) => {
     const row = document.createElement("div");
     row.className = "driver-card";
-    if (eliminated.includes(car)) {
-      row.classList.add("eliminated");
-    }
+    if (eliminated.includes(car)) row.classList.add("eliminated");
 
     const faceSrc = `assets/faces/${car.driver.code}.png`;
     const teamLogoSrc = `assets/teams/${car.driver.teamKey}.png`;
@@ -706,22 +714,18 @@ function showFinalQualyModal(grid) {
   modal.classList.remove("hidden");
 }
 
-// chamado pelo botão do modal
 function onQualyModalAction() {
   const modal = document.getElementById("qualy-modal");
   if (!modal) return;
 
   if (qualyState.modalMode === "phase") {
-    // avançar para Q2 ou Q3
     modal.classList.add("hidden");
-
     qualyState.phaseIndex++;
     qualyState.currentDrivers = qualyState.nextPhaseDrivers || [];
     qualyState.nextPhaseDrivers = null;
-
     startPhaseFromDrivers();
   } else if (qualyState.modalMode === "final") {
-    // por enquanto só fecha; depois podemos redirecionar pra corrida
     modal.classList.add("hidden");
+    // depois podemos redirecionar direto para a corrida se você quiser
   }
 }
