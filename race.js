@@ -7,15 +7,21 @@ const raceState = {
   running: false,
   lastTimestamp: null,
   trackPath: null,
-  pitPath: null // já deixamos preparado para usar BOX depois
+  pitPath: null
 };
 
-// Início
 document.addEventListener("DOMContentLoaded", () => {
   setupSpeedButtons();
 
-  // Primeira pista: Austrália (usando australia.svg)
-  loadTrack("australia");
+  // Lê parâmetros da URL: ?track=australia&gp=GP+da+Austrália
+  const params = new URLSearchParams(window.location.search);
+  const trackName = params.get("track") || "australia";
+  const gpName = params.get("gp") || "GP da Austrália 2025";
+
+  const titleEl = document.getElementById("gp-title");
+  if (titleEl) titleEl.textContent = gpName;
+
+  loadTrack(trackName);
 });
 
 // ===========================
@@ -35,23 +41,18 @@ function setupSpeedButtons() {
 }
 
 // ===========================
-// CARREGAR PISTA (SVG EXTERNO)
+// CARREGAR PISTA SVG
 // ===========================
 function loadTrack(trackName) {
   const container = document.getElementById("track-container");
-  if (!container) {
-    console.error("track-container não encontrado");
-    return;
-  }
+  if (!container) return;
 
-  // Ex: assets/tracks/australia.svg
   fetch(`assets/tracks/${trackName}.svg`)
-    .then((response) => {
-      if (!response.ok) throw new Error("Erro ao carregar SVG da pista");
-      return response.text();
+    .then((resp) => {
+      if (!resp.ok) throw new Error("Erro ao carregar pista SVG");
+      return resp.text();
     })
     .then((svgText) => {
-      // Injetar o SVG direto no DOM (inline) para poder acessar os <path>
       container.innerHTML = svgText;
 
       const svg = container.querySelector("svg");
@@ -62,28 +63,24 @@ function loadTrack(trackName) {
 
       svg.classList.add("track-svg");
 
-      // Aqui usamos a sua estrutura original:
-      // path com stroke-width="10" = traçado principal
-      // path com stroke-width="5.5" = pit lane (BOX)
+      // path principal (traçado) e pit lane (BOX)
       const trackPath = svg.querySelector('path[stroke-width="10"]');
       const pitPath = svg.querySelector('path[stroke-width="5.5"]');
 
       if (!trackPath) {
         console.error(
-          "Path principal da pista não encontrado (stroke-width=\"10\")."
+          'Path principal da pista não encontrado (stroke-width="10")'
         );
         return;
       }
 
       raceState.trackPath = trackPath;
-      raceState.pitPath = pitPath || null;
+      raceState.pitPath = pitPath || null; // guardado para próxima etapa (pit stop)
 
       initCars(svg, trackPath);
       startRaceLoop();
     })
-    .catch((err) => {
-      console.error(err);
-    });
+    .catch((err) => console.error(err));
 }
 
 // ===========================
@@ -95,7 +92,6 @@ function initCars(svg, trackPath) {
 
   const trackLength = trackPath.getTotalLength();
 
-  // Carro 1
   const car1 = document.createElementNS(
     "http://www.w3.org/2000/svg",
     "circle"
@@ -104,7 +100,6 @@ function initCars(svg, trackPath) {
   car1.setAttribute("class", "car car-1");
   svg.appendChild(car1);
 
-  // Carro 2
   const car2 = document.createElementNS(
     "http://www.w3.org/2000/svg",
     "circle"
@@ -113,14 +108,13 @@ function initCars(svg, trackPath) {
   car2.setAttribute("class", "car car-2");
   svg.appendChild(car2);
 
-  // Definimos dois "pilotos" com tempos de volta ligeiramente diferentes
   raceState.cars.push({
     id: 1,
     element: car1,
     path: trackPath,
     pathLength: trackLength,
     progress: 0,
-    baseLapTime: 85, // segundos para 1 volta em 1x
+    baseLapTime: 85,
     speedKmh: 260
   });
 
@@ -129,7 +123,7 @@ function initCars(svg, trackPath) {
     element: car2,
     path: trackPath,
     pathLength: trackLength,
-    progress: 0.48, // larga em posição diferente
+    progress: 0.48,
     baseLapTime: 87,
     speedKmh: 255
   });
@@ -155,11 +149,11 @@ function raceStep(timestamp) {
   }
 
   const deltaMs = timestamp - raceState.lastTimestamp;
-  const deltaSeconds = deltaMs / 1000;
+  const dt = deltaMs / 1000;
 
   raceState.lastTimestamp = timestamp;
 
-  updateCars(deltaSeconds);
+  updateCars(dt);
   updateHudDynamic(timestamp);
 
   requestAnimationFrame(raceStep);
@@ -175,56 +169,48 @@ function updateCars(dt) {
     const effectiveLapTime = car.baseLapTime / multiplier;
     const deltaProgress = dt / effectiveLapTime;
 
-    // 0–1 (cada ciclo é uma volta completa)
     car.progress = (car.progress + deltaProgress) % 1;
 
     const distance = car.pathLength * car.progress;
     const point = car.path.getPointAtLength(distance);
 
-    // Move o círculo exatamente em cima do traçado
     car.element.setAttribute("cx", String(point.x));
     car.element.setAttribute("cy", String(point.y));
   });
 }
 
 // ===========================
-// HUD – PARTE ESTÁTICA
+// HUD
 // ===========================
 function updateHudStatic() {
-  const driver1NameEl = document.querySelector("#driver1-name");
-  const driver2NameEl = document.querySelector("#driver2-name");
+  const d1 = document.getElementById("driver1-name");
+  const d2 = document.getElementById("driver2-name");
 
-  // Aqui depois podemos puxar o nome real do piloto da equipe escolhida
-  if (driver1NameEl) driver1NameEl.textContent = "Piloto 1";
-  if (driver2NameEl) driver2NameEl.textContent = "Piloto 2";
+  if (d1) d1.textContent = "Piloto 1";
+  if (d2) d2.textContent = "Piloto 2";
 }
 
-// ===========================
-// HUD – PARTE DINÂMICA
-// ===========================
 function updateHudDynamic(timestamp) {
   const car1 = raceState.cars[0];
   const car2 = raceState.cars[1];
   if (!car1 || !car2) return;
 
-  const pos1El = document.querySelector("#driver1-pos");
-  const pos2El = document.querySelector("#driver2-pos");
-  const speed1El = document.querySelector("#driver1-speed");
-  const speed2El = document.querySelector("#driver2-speed");
+  const pos1El = document.getElementById("driver1-pos");
+  const pos2El = document.getElementById("driver2-pos");
+  const speed1El = document.getElementById("driver1-speed");
+  const speed2El = document.getElementById("driver2-speed");
 
-  const multiplier = raceState.speedMultiplier || 1;
+  const mult = raceState.speedMultiplier || 1;
 
-  // Só para dar uma "respirada" na velocidade (jitter leve)
   const jitter1 = 8 * Math.sin(timestamp / 400 + 0.5);
   const jitter2 = 8 * Math.sin(timestamp / 450 + 1.2);
 
-  const speed1 = Math.max(80, car1.speedKmh * multiplier + jitter1);
-  const speed2 = Math.max(80, car2.speedKmh * multiplier + jitter2);
+  const speed1 = Math.max(80, car1.speedKmh * mult + jitter1);
+  const speed2 = Math.max(80, car2.speedKmh * mult + jitter2);
 
   if (speed1El) speed1El.textContent = speed1.toFixed(0) + " km/h";
   if (speed2El) speed2El.textContent = speed2.toFixed(0) + " km/h";
 
-  // Define posições pela porcentagem de volta (maior progresso = melhor posição)
   let pos1 = 1;
   let pos2 = 2;
   if (car2.progress > car1.progress) {
