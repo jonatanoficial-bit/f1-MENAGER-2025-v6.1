@@ -27,12 +27,104 @@
             </div>
           </div>
 
-          <!-- LISTA DE TODOS OS PILOTOS -->
+          <!-- LISTA DE PILOTOS (com rolagem) -->
           <div id="drivers-list" class="drivers-list">
-            <!-- Os cards são criados via JS -->
+            <!-- Cards criados via JS -->
           </div>
 
-          <!-- CONTROLES -->
+          <!-- PAINEL DO USUÁRIO (2 pilotos da equipe escolhida) -->
+          <div class="user-panel">
+            <div class="user-panel-title">Pilotos da sua equipe</div>
+            <div class="user-driver-row">
+              <div
+                class="user-driver-card"
+                id="user-driver-card-0"
+                data-index="0"
+              >
+                <div class="user-driver-main">
+                  <img class="user-face" id="user-face-0" src="" alt="" />
+                  <div class="user-info">
+                    <div class="user-name" id="user-name-0">---</div>
+                    <div class="user-team" id="user-team-0">---</div>
+                    <div class="user-status-line">
+                      Carro: <span id="user-car-0">100%</span>
+                    </div>
+                    <div class="user-status-line">
+                      Pneus: <span id="user-tyre-0">0%</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="user-driver-actions">
+                  <button
+                    class="user-btn pit"
+                    data-action="pit"
+                    data-index="0"
+                  >
+                    PIT STOP
+                  </button>
+                  <button
+                    class="user-btn mode"
+                    data-action="save"
+                    data-index="0"
+                  >
+                    ECONOMIZAR
+                  </button>
+                  <button
+                    class="user-btn mode"
+                    data-action="push"
+                    data-index="0"
+                  >
+                    ATAQUE
+                  </button>
+                </div>
+              </div>
+
+              <div
+                class="user-driver-card"
+                id="user-driver-card-1"
+                data-index="1"
+              >
+                <div class="user-driver-main">
+                  <img class="user-face" id="user-face-1" src="" alt="" />
+                  <div class="user-info">
+                    <div class="user-name" id="user-name-1">---</div>
+                    <div class="user-team" id="user-team-1">---</div>
+                    <div class="user-status-line">
+                      Carro: <span id="user-car-1">100%</span>
+                    </div>
+                    <div class="user-status-line">
+                      Pneus: <span id="user-tyre-1">0%</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="user-driver-actions">
+                  <button
+                    class="user-btn pit"
+                    data-action="pit"
+                    data-index="1"
+                  >
+                    PIT STOP
+                  </button>
+                  <button
+                    class="user-btn mode"
+                    data-action="save"
+                    data-index="1"
+                  >
+                    ECONOMIZAR
+                  </button>
+                  <button
+                    class="user-btn mode"
+                    data-action="push"
+                    data-index="1"
+                  >
+                    ATAQUE
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONTROLES GERAIS -->
           <div class="controls-row">
             <div class="controls">
               <span class="controls-label">Velocidade:</span>
