@@ -1,335 +1,531 @@
-/* ============================================================
-   UI GLOBAL — F1 MANAGER 2025
-   Estilo: Preto + Vermelho F1, forte contraste, minimalista
-   ============================================================ */
+/* ============================
+   LAYOUT GERAL DAS TELAS
+   ============================ */
 
-/* RESET */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* BODY & APP ROOT */
-html, body {
+/* Cada "screen" é uma página do jogo (menu, lobby, corrida etc.) */
+.screen {
+    position: relative;
+    display: none;                  /* começa escondido, o JS ativa com .screen-active */
     width: 100%;
-    height: 100%;
-    background: #000;
-    color: #f5f5f5;
-    font-family: system-ui, sans-serif;
+    min-height: calc(100vh - 30px); /* desconta a barrinha do HUD superior */
+    overflow: hidden;
 }
 
-.app-root {
-    min-height: 100vh;
-    background: radial-gradient(circle at top, #111 0, #000 55%);
-}
-
-/* ============================================================
-   TOP BAR (HUD)
-   ============================================================ */
-
-.top-bar {
-    width: 100%;
-    height: 36px;
-    background: #000;
-    color: #fff;
+/* Tela visível */
+.screen-active {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 14px;
-    border-bottom: 1px solid #222;
-    font-size: 12px;
 }
 
-.top-label {
-    opacity: 0.7;
+/* Fundo com imagem + overlay escuro */
+.screen-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.45); /* deixa mais escuro para o texto ter contraste */
+    z-index: 0;
+}
+
+/* Imagens de fundo (colocar os arquivos em assets/ui/...) */
+.screen-bg-capa {
+    background-image: url("assets/ui/capa_bg.png");
+}
+
+.screen-bg-lobby {
+    background-image: url("assets/ui/lobby_bg.png");
+}
+
+.screen-bg-mercado {
+    background-image: url("assets/ui/mercado_bg.png");
+}
+
+.screen-bg-oficina {
+    background-image: url("assets/ui/oficina_bg.png");
+}
+
+.screen-bg-patrocinio {
+    background-image: url("assets/ui/patrocinio_bg.png");
+}
+
+.screen-bg-funcionarios {
+    background-image: url("assets/ui/funcionarios_bg.png");
+}
+
+.screen-bg-podio {
+    background-image: url("assets/ui/podio_bg.png");
+}
+
+/* Caso ainda não tenha um fundo específico de pista,
+   deixamos um degrade escuro (pode trocar depois por assets/ui/race_bg.png) */
+.screen-bg-track {
+    background: radial-gradient(circle at top, #333 0%, #000 60%, #000 100%);
+}
+
+/* Conteúdo em cima do fundo */
+.screen-overlay {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 80px 16px 32px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Centralização vertical + horizontal (usado na capa e pódio) */
+.center-column {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* ============================
+   HUD SUPERIOR GLOBAL
+   ============================ */
+
+#global-hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: #050505;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    font-size: 12px;
+    z-index: 999;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 #hud-cash {
+    color: #00ff4c; /* verde para saldo */
     font-weight: 600;
-    color: #2aff2a;
 }
 
-/* ============================================================
-   SCREENS
-   ============================================================ */
-
-.screen {
-    display: none;
-    padding: 20px 16px 50px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.screen.active {
-    display: block;
-}
-
-.screen h1, .screen h2 {
-    text-align: center;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 22px;
-}
-
-/* Containers */
-.lobby-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 14px;
-}
-
-/* ============================================================
-   BUTTONS
-   ============================================================ */
-
-button {
-    cursor: pointer;
-    border: none;
-    border-radius: 4px;
-    padding: 10px 18px;
-    font-size: 13px;
-    text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    background: #e50914;
-    color: white;
-    transition: 0.2s;
-}
-
-button:hover {
-    background: #ff1b25;
-    transform: translateY(-2px);
-    box-shadow: 0 3px 14px rgba(229,9,20,0.6);
-}
-
-button:active {
-    transform: scale(0.96);
-    box-shadow: none;
-}
-
-.menu-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-}
-
-/* Secondary Button */
-.btn-secondary {
-    background: transparent;
-    border: 1px solid #666;
-}
-
-.btn-secondary:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: #fff;
-}
-
-/* ============================================================
-   CARDS
-   ============================================================ */
-
-.lobby-card {
-    background: radial-gradient(circle at top, #171717 0, #050505 60%);
-    border: 1px solid #292929;
-    border-radius: 10px;
-    padding: 14px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.6);
-}
-
-.lobby-card-title {
-    font-size: 13px;
-    text-transform: uppercase;
+#hud-stage {
     opacity: 0.9;
-    margin-bottom: 8px;
 }
 
-.card-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 6px;
+/* Empurra o conteúdo principal para baixo do HUD */
+#game-root {
+    margin-top: 30px;
 }
 
-/* ============================================================
-   CALENDÁRIO
-   ============================================================ */
+/* ============================
+   TÍTULOS E TEXTOS
+   ============================ */
 
-#calendar-list {
+.game-title {
+    font-size: clamp(28px, 6vw, 40px);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.screen-title {
+    font-size: clamp(22px, 4.4vw, 32px);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #f0f0f0;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.section-subtitle {
+    font-size: 16px;
+    margin: 16px 0 8px;
+    color: #f5f5f5;
+}
+
+.highlight {
+    color: #00ff4c;
+    font-weight: 700;
+}
+
+/* ============================
+   BOTÕES
+   ============================ */
+
+.btn {
+    border: none;
+    cursor: pointer;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.65);
+    white-space: nowrap;
+}
+
+.btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+.btn.primary {
+    background: #e10600;
+    color: #ffffff;
+}
+
+.btn.primary:hover {
+    background: #ff1609;
+}
+
+.btn.secondary {
+    background: transparent;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+}
+
+.btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn.small {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+/* Linhas e colunas de botões */
+
+.button-row {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     justify-content: center;
 }
 
-.calendar-item, .gp-card {
-    width: 200px;
-    padding: 10px;
-    border-radius: 8px;
-    text-align: center;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    transition: 0.2s;
-    cursor: pointer;
+.button-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
-.calendar-item:hover,
-.gp-card:hover {
-    transform: translateY(-3px);
-    background: rgba(255,255,255,0.16);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.7);
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 24px 0;
 }
 
-.calendar-status {
-    font-size: 11px;
-    opacity: 0.75;
+/* Rodapés de telas (voltar, salvar, etc.) */
+.footer-actions {
+    margin-top: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
 }
 
-/* ============================================================
-   CORRIDA
-   ============================================================ */
+/* ============================
+   LISTAS E CARDS
+   ============================ */
 
-#race-status {
-    text-align: center;
+.card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.card-list::-webkit-scrollbar {
+    width: 6px;
+}
+.card-list::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 6px;
+}
+
+.card {
+    background: rgba(10, 10, 10, 0.85);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-title {
     font-size: 14px;
-    margin-bottom: 14px;
+    color: #ffffff;
+    font-weight: 600;
 }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
+.card-subtitle {
     font-size: 12px;
+    color: #c0c0c0;
 }
 
-.table th {
-    text-transform: uppercase;
+.card-tag {
     font-size: 11px;
-    border-bottom: 1px solid #333;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid #888;
+    color: #dddddd;
 }
 
-.table td {
-    padding: 6px;
-    border-bottom: 1px solid #222;
+/* ============================
+   FORMULÁRIOS (CRIAR MANAGER)
+   ============================ */
+
+.form-card {
+    background: rgba(0, 0, 0, 0.82);
+    border-radius: 12px;
+    padding: 16px;
+    max-width: 520px;
+    margin: 0 auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
 }
 
-.table tbody tr:nth-child(even) {
-    background: rgba(255,255,255,0.03);
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #f2f2f2;
 }
 
-/* ============================================================
-   PODIUM
-   ============================================================ */
-
-#screen-podio {
-    text-align: center;
+.form-field span {
+    opacity: 0.9;
 }
 
-.podium-step {
-    display: inline-block;
-    width: 120px;
-    border-radius: 6px 6px 0 0;
-    color: #000;
+.form-card input[type="text"],
+.form-card select {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #050505;
+    color: #ffffff;
+    font-size: 14px;
+    outline: none;
+}
+
+.form-card input[type="text"]:focus,
+.form-card select:focus {
+    border-color: #e10600;
+}
+
+/* Preview de avatar */
+
+.preview-row {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0 6px;
+}
+
+.avatar-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
     font-size: 12px;
-    margin: 4px;
-    background: linear-gradient(180deg, #fff, #ccc);
+    color: #f2f2f2;
 }
 
-.podium-1 { height: 130px; }
-.podium-2 { height: 100px; }
-.podium-3 { height: 80px; }
+.avatar-preview img {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #e10600;
+    background: #111;
+}
 
-/* ============================================================
+/* ============================
    FINANÇAS
-   ============================================================ */
+   ============================ */
+
+.finance-layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1.1fr;
+    gap: 16px;
+    margin-top: 16px;
+}
 
 .finance-panel {
-    padding: 22px;
+    background: rgba(0, 0, 0, 0.86);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.9);
 }
 
-.finance-balance {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 18px;
+.finance-panel h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #ffffff;
 }
 
-.finance-balance span {
-    color: #2aff2a;
-    font-weight: bold;
-    font-size: 22px;
-}
-
-.finance-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
-}
-
-.finance-box {
-    background: #0a0a0a;
-    border: 1px solid #333;
+.placeholder-chart {
+    height: 140px;
     border-radius: 8px;
-    padding: 14px;
+    border: 1px dashed #444;
+    background: radial-gradient(circle at top, #111 0%, #000 60%);
 }
 
-.finance-box h3 {
-    text-align: center;
-    margin-bottom: 10px;
-}
-
-.finance-history {
-    background: #0a0a0a;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 14px;
-    height: 220px;
+/* lista simples para histórico */
+.history-list {
+    max-height: 140px;
     overflow-y: auto;
     font-size: 12px;
 }
 
-.finance-history ul {
-    list-style-type: none;
-}
-
-.finance-history li {
-    padding: 6px 4px;
-    border-bottom: 1px solid #222;
-}
-
-.finance-actions {
+.history-item {
     display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 12px;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-/* ============================================================
+/* ============================
+   OFICINA / SETUP
+   ============================ */
+
+.garage-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.garage-panel {
+    background: rgba(0, 0, 0, 0.86);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.9);
+}
+
+.garage-panel h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: #ffffff;
+}
+
+.slider-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: #e0e0e0;
+    margin-bottom: 8px;
+}
+
+.slider-field input[type="range"] {
+    accent-color: #e10600;
+}
+
+/* ============================
+   CORRIDA
+   ============================ */
+
+#race-table-wrapper {
+    margin-top: 16px;
+    background: rgba(0, 0, 0, 0.88);
+    border-radius: 12px;
+    padding: 10px;
+    overflow-x: auto;
+}
+
+#race-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    color: #ffffff;
+}
+
+#race-table th,
+#race-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    text-align: left;
+}
+
+#race-table th {
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    opacity: 0.9;
+}
+
+.race-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 14px;
+    justify-content: center;
+}
+
+.race-speed-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: center;
+}
+
+/* Piloto em destaque (ex: seu piloto) */
+.race-row-player {
+    background: rgba(225, 6, 0, 0.18);
+}
+
+/* ============================
    RESPONSIVIDADE
-   ============================================================ */
+   ============================ */
 
 @media (max-width: 768px) {
+    .screen-overlay {
+        padding-top: 64px;
+    }
 
-    .finance-grid {
+    .finance-layout {
         grid-template-columns: 1fr;
     }
 
-    .lobby-grid {
-        grid-template-columns: 1fr;
+    .game-title {
+        letter-spacing: 0.12em;
     }
 
-    .calendar-item, .gp-card {
-        width: 46%;
-        max-width: 200px;
+    .screen-title {
+        letter-spacing: 0.10em;
     }
 }
 
-@media (max-width: 480px) {
-
-    .calendar-item, .gp-card {
-        width: 100%;
+@media (min-width: 1100px) {
+    #game-root {
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
     }
 
-    .top-bar {
-        font-size: 10px;
-        padding: 0 8px;
+    .screen-overlay {
+        padding-left: 32px;
+        padding-right: 32px;
     }
 }
