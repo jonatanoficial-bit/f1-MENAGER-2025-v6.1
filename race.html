@@ -7,18 +7,20 @@
   </head>
   <body>
     <div class="race-layout">
-      <!-- Lado esquerdo: pista SVG -->
+      <!-- ESQUERDA: PISTA -->
       <div class="race-left">
         <div id="track-container" class="track-container">
-          <!-- O SVG da pista australia.svg será injetado aqui via JS -->
+          <!-- O SVG da pista será carregado aqui via JS -->
         </div>
       </div>
 
-      <!-- Lado direito: HUD -->
+      <!-- DIREITA: HUD -->
       <div class="race-right">
         <div class="hud-panel">
-          <h1 class="hud-title">GP da Austrália 2025</h1>
-          <p class="hud-subtitle">Temporada oficial – F1 2025</p>
+          <h1 class="hud-title" id="gp-title">Corrida</h1>
+          <p class="hud-subtitle" id="gp-subtitle">
+            Temporada oficial F1 2025
+          </p>
 
           <div class="driver-row">
             <div class="driver-card">
@@ -51,6 +53,12 @@
             <button class="speed-btn active" data-speed="1">1x</button>
             <button class="speed-btn" data-speed="2">2x</button>
             <button class="speed-btn" data-speed="4">4x</button>
+          </div>
+
+          <div class="bottom-actions">
+            <button class="back-btn" onclick="window.history.back()">
+              Voltar ao calendário
+            </button>
           </div>
         </div>
       </div>
