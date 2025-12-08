@@ -5,11 +5,13 @@
     <title>F1 Manager 2025 – Calendário</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Mantém seus CSS atuais -->
+    <!-- Mantém seus CSS globais -->
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="ui.css" />
 
+    <!-- Estilo específico do calendário -->
     <style>
+      html,
       body {
         margin: 0;
         padding: 0;
@@ -23,7 +25,7 @@
         align-items: center;
         padding-top: 30px;
         padding-bottom: 40px;
-        /* background vem da capa do ui.css */
+        /* Fundo continua vindo do ui.css (capa_bg.png) */
       }
 
       .calendar-title {
@@ -32,14 +34,14 @@
         letter-spacing: 0.16em;
         font-size: 18px;
         font-weight: 700;
-        margin-bottom: 16px;
+        margin-bottom: 6px;
         text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
       }
 
       .calendar-subtitle {
         color: #ffffff;
         font-size: 13px;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
         text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
       }
 
@@ -65,6 +67,7 @@
         letter-spacing: 0.03em;
         transition: transform 0.08s ease, box-shadow 0.08s ease,
           background 0.12s ease;
+        white-space: nowrap;
       }
 
       .gp-btn:hover {
@@ -99,7 +102,7 @@
     <div class="calendar-wrapper">
       <div class="calendar-title">CALENDÁRIO 2025</div>
       <div class="calendar-subtitle">
-        Clique no GP para iniciar a <strong>CLASSIFICAÇÃO</strong>.
+        Selecione um Grande Prêmio para iniciar a <strong>classificação</strong>
       </div>
 
       <div class="gp-grid">
@@ -151,7 +154,7 @@
           6. MIAMI
         </button>
 
-        <!-- 7. Imola -->
+        <!-- 7. Imola (Emilia-Romagna) -->
         <button
           class="gp-btn"
           onclick="openQualifying('imola','GP da Emilia-Romagna 2025')"
@@ -191,7 +194,7 @@
           11. ÁUSTRIA
         </button>
 
-        <!-- 12. Inglaterra -->
+        <!-- 12. Inglaterra (Silverstone) -->
         <button
           class="gp-btn"
           onclick="openQualifying('inglaterra','GP da Inglaterra 2025')"
@@ -239,7 +242,7 @@
           17. SINGAPURA
         </button>
 
-        <!-- 18. Estados Unidos -->
+        <!-- 18. Estados Unidos (Austin) -->
         <button
           class="gp-btn"
           onclick="openQualifying('estados_unidos','GP dos Estados Unidos 2025')"
@@ -255,7 +258,7 @@
           19. MÉXICO
         </button>
 
-        <!-- 20. São Paulo -->
+        <!-- 20. São Paulo (Interlagos) -->
         <button
           class="gp-btn"
           onclick="openQualifying('sao_paulo','GP de São Paulo 2025')"
@@ -296,27 +299,33 @@
     </div>
 
     <script>
-      // pega equipe do usuário (manager) do localStorage, ou usa ferrari
+      // Lê a equipe do usuário do localStorage.
+      // Se não tiver nada salvo ainda, usa "ferrari" como default.
       function getUserTeamKey() {
         let userTeam = null;
         try {
           const stored = localStorage.getItem("f1m2025_user_team");
           if (stored) userTeam = stored;
-        } catch (e) {}
+        } catch (e) {
+          console.warn("Não foi possível ler f1m2025_user_team:", e);
+        }
         if (!userTeam) userTeam = "ferrari";
         return userTeam;
       }
 
-      // abre SEMPRE a CLASSIFICAÇÃO primeiro
+      // Abre a tela de classificação (Q1/Q2/Q3) ANTES da corrida
       function openQualifying(track, gpName) {
         const userTeam = getUserTeamKey();
+
         const params = new URLSearchParams();
         params.set("track", track);
         params.set("gp", gpName);
         params.set("userTeam", userTeam);
+
         window.location.href = "qualifying.html?" + params.toString();
       }
 
+      // Volta para o lobby principal
       function voltarLobby() {
         window.location.href = "index.html";
       }
