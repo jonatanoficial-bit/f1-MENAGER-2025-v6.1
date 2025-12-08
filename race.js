@@ -1,6 +1,3 @@
-// ===========================
-// ESTADO GLOBAL DA CORRIDA
-// ===========================
 const raceState = {
   speedMultiplier: 1,
   cars: [],
@@ -13,7 +10,6 @@ const raceState = {
 document.addEventListener("DOMContentLoaded", () => {
   setupSpeedButtons();
 
-  // Lê parâmetros da URL: ?track=australia&gp=GP+da+Austrália
   const params = new URLSearchParams(window.location.search);
   const trackName = params.get("track") || "australia";
   const gpName = params.get("gp") || "GP da Austrália 2025";
@@ -24,9 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadTrack(trackName);
 });
 
-// ===========================
-// CONTROLES DE VELOCIDADE
-// ===========================
+// controles 1x / 2x / 4x
 function setupSpeedButtons() {
   const buttons = document.querySelectorAll("[data-speed]");
   buttons.forEach((btn) => {
@@ -40,9 +34,7 @@ function setupSpeedButtons() {
   });
 }
 
-// ===========================
-// CARREGAR PISTA SVG
-// ===========================
+// carrega SVG da pista
 function loadTrack(trackName) {
   const container = document.getElementById("track-container");
   if (!container) return;
@@ -61,9 +53,6 @@ function loadTrack(trackName) {
         return;
       }
 
-      svg.classList.add("track-svg");
-
-      // path principal (traçado) e pit lane (BOX)
       const trackPath = svg.querySelector('path[stroke-width="10"]');
       const pitPath = svg.querySelector('path[stroke-width="5.5"]');
 
@@ -75,7 +64,7 @@ function loadTrack(trackName) {
       }
 
       raceState.trackPath = trackPath;
-      raceState.pitPath = pitPath || null; // guardado para próxima etapa (pit stop)
+      raceState.pitPath = pitPath || null; // guardamos pro pit stop depois
 
       initCars(svg, trackPath);
       startRaceLoop();
@@ -83,9 +72,7 @@ function loadTrack(trackName) {
     .catch((err) => console.error(err));
 }
 
-// ===========================
-// INICIALIZAÇÃO DOS CARROS
-// ===========================
+// cria 2 carros e coloca no traçado
 function initCars(svg, trackPath) {
   raceState.cars = [];
   raceState.lastTimestamp = null;
@@ -131,9 +118,6 @@ function initCars(svg, trackPath) {
   updateHudStatic();
 }
 
-// ===========================
-// LOOP DA CORRIDA
-// ===========================
 function startRaceLoop() {
   if (!raceState.running) {
     raceState.running = true;
@@ -159,9 +143,6 @@ function raceStep(timestamp) {
   requestAnimationFrame(raceStep);
 }
 
-// ===========================
-// ATUALIZAÇÃO DOS CARROS
-// ===========================
 function updateCars(dt) {
   const multiplier = raceState.speedMultiplier || 1;
 
@@ -179,9 +160,6 @@ function updateCars(dt) {
   });
 }
 
-// ===========================
-// HUD
-// ===========================
 function updateHudStatic() {
   const d1 = document.getElementById("driver1-name");
   const d2 = document.getElementById("driver2-name");
