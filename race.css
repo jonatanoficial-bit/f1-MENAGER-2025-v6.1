@@ -31,6 +31,7 @@ body {
   padding: 10px;
   display: flex;
   align-items: stretch;
+  min-height: 0;
 }
 
 .track-container {
@@ -61,6 +62,8 @@ body {
   padding: 16px;
   display: flex;
   flex-direction: column;
+  min-width: 320px;
+  min-height: 0;
 }
 
 .hud-panel {
@@ -71,13 +74,14 @@ body {
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* importante pro scroll interno funcionar */
 }
 
 .hud-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .hud-title {
@@ -108,10 +112,12 @@ body {
 
 /* LISTA DE PILOTOS */
 .drivers-list {
-  flex: 1;
+  flex: 1 1 auto;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding-right: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  min-height: 0;
 }
 
 .driver-card {
@@ -177,9 +183,107 @@ body {
   gap: 4px;
 }
 
+/* PAINEL DO USUÁRIO */
+.user-panel {
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.user-panel-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 4px;
+}
+
+.user-driver-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.user-driver-card {
+  flex: 1;
+  min-width: 150px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #101526, #080b16);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 8px 8px 6px;
+  font-size: 11px;
+}
+
+.user-driver-main {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.user-face {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.user-team {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 2px;
+}
+
+.user-status-line {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.user-driver-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.user-btn {
+  flex: 1;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #ffffff;
+  padding: 4px 6px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.user-btn.pit {
+  border-color: #8bc34a;
+}
+
+.user-btn.mode[data-mode="push"].active,
+.user-btn.mode[data-action="push"].active {
+  background: #e53935;
+  border-color: #e53935;
+}
+
+.user-btn.mode[data-mode="save"].active,
+.user-btn.mode[data-action="save"].active {
+  background: #43a047;
+  border-color: #43a047;
+}
+
 /* CONTROLES */
 .controls-row {
-  margin-top: 8px;
+  margin-top: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -220,7 +324,7 @@ body {
 }
 
 .bottom-actions {
-  margin-top: 10px;
+  margin-top: 8px;
   display: flex;
   justify-content: flex-start;
 }
