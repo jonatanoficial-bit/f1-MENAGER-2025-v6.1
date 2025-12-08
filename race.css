@@ -1,376 +1,197 @@
-/* ============================================================
-   RACE.CSS  – Estilos da corrida 2D, HUD e Pódio
-   ============================================================ */
-
-/* Container geral da tela de corrida */
-.overlay-corrida {
-  position: relative;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 16px;
-  color: #fff;
-  text-align: center;
+/* ===========================
+   RESET BÁSICO
+   =========================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-/* Título da corrida */
-#corrida-gp-nome {
-  font-size: 1.4rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
 
-/* Indicador de voltas (ex: Volta 3/10) */
-.lap-indicator {
-  font-size: 0.9rem;
-  opacity: 0.8;
-  margin-bottom: 8px;
+/* ===========================
+   LAYOUT GERAL
+   =========================== */
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: radial-gradient(circle at top, #11172a 0, #050711 60%);
+  color: #ffffff;
 }
 
-/* ============================================================
-   PISTA / CARROS
-   ============================================================ */
+/* Container principal: pista + HUD */
+.race-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* ===========================
+   LADO ESQUERDO – PISTA
+   =========================== */
+
+.race-left {
+  flex: 3;
+  padding: 10px;
+  display: flex;
+  align-items: stretch;
+}
 
 .track-container {
-  position: relative;
-  width: 100%;
-  max-width: 1200px;
-  height: 700px;
-  margin: 0 auto 16px auto;
-  background: radial-gradient(circle at top, #181818 0%, #050505 60%, #000 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+  flex: 1;
+  background-color: #000000;
+  border-radius: 18px;
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.85);
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Imagem SVG da pista */
-#track-image {
-  position: absolute;
-  inset: 0;
+/* O SVG carregado da pista */
+.track-container svg {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  opacity: 0.35;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.2));
-  pointer-events: none;
 }
 
-/* Camada onde os carros são desenhados */
-.cars-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+/* Carros desenhados como círculos dentro do SVG */
+.car {
+  stroke: #ffffff;
+  stroke-width: 2;
 }
 
-/* Ícone dos carros */
-.car-icon {
-  position: absolute;
-  width: 38px;
-  height: auto;
-  transform-origin: center center;
-  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
+.car-1 {
+  fill: #e53935; /* vermelho */
 }
 
-/* ============================================================
-   LAYOUT: STANDINGS + HUD
-   ============================================================ */
-
-.race-layout {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 16px;
-  align-items: flex-start;
-  margin-top: 12px;
+.car-2 {
+  fill: #fdd835; /* amarelo */
 }
 
-/* Tabela de posições ao lado direito/esquerdo */
-.standings {
-  background: linear-gradient(145deg, #111, #050505);
-  border-radius: 16px;
-  padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
-  text-align: left;
-  font-size: 0.85rem;
-}
+/* ===========================
+   LADO DIREITO – HUD
+   =========================== */
 
-.standings h3 {
-  font-size: 0.95rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 8px;
-  color: #f5f5f5;
-}
-
-.standings-row {
-  display: grid;
-  grid-template-columns: 26px 1fr 50px 40px;
-  gap: 4px;
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.standings-row:last-child {
-  border-bottom: none;
-}
-
-.standings-pos {
-  font-weight: 600;
-  color: #f5f5f5;
-}
-
-.standings-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.standings-gap {
-  text-align: right;
-  opacity: 0.8;
-}
-
-/* HUD principal */
-.race-hud {
-  background: radial-gradient(circle at top, #171717 0%, #050505 50%, #000 100%);
-  border-radius: 16px;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
-  text-align: left;
-  font-size: 0.9rem;
+.race-right {
+  flex: 2;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
-.race-hud div {
+.hud-panel {
+  flex: 1;
+  border-radius: 18px;
+  background: radial-gradient(circle at top left, #1b2442 0, #050713 55%);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.85);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Títulos */
+.hud-title {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.hud-subtitle {
+  margin: 0 0 18px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Cards dos pilotos */
+.driver-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.driver-card {
+  flex: 1;
+  min-width: 150px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #141a2f, #090d1c);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.driver-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.metric {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-/* Botão BOX THIS LAP */
-#btn-box {
-  margin-top: 10px;
-  align-self: flex-end;
-  background: linear-gradient(90deg, #e10600, #ff3b30);
-  border: none;
-  color: #fff;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 0 0 12px rgba(225, 6, 0, 0.6);
-}
-
-/* ============================================================
-   CONTROLE DE VELOCIDADE
-   ============================================================ */
-
-.race-speed-controls {
-  display: inline-flex;
-  gap: 10px;
-  margin: 8px 0 4px 0;
-}
-
-.race-speed-controls button {
-  padding: 6px 12px;
-  background: #222;
-  color: #fff;
-  border: 1px solid #555;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.race-speed-controls button.active,
-.race-speed-controls button:hover {
-  background: #e10600;
-  border-color: #e10600;
-}
-
-/* ============================================================
-   PIT STOP POPUP
-   ============================================================ */
-
-.pit-popup {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+/* Controles de velocidade */
+.controls {
+  margin-top: auto;
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.pit-popup.hidden {
-  display: none;
-}
-
-.pit-inner {
-  background: #111;
-  border-radius: 16px;
-  padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.9);
-  max-width: 420px;
-  width: 100%;
-  text-align: center;
-}
-
-.pit-inner h3 {
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.pit-inner .small-text {
-  font-size: 0.8rem;
-  opacity: 0.85;
-  margin-bottom: 12px;
-}
-
-.pit-options {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
   gap: 8px;
-  margin-bottom: 10px;
-}
-
-.pit-options button {
-  min-width: 80px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #444;
-  background: #1a1a1a;
-  color: #fff;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.pit-options button:hover {
-  border-color: #e10600;
-  background: #2a2a2a;
-}
-
-.pit-popup-actions {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-.pit-popup-actions button {
-  padding: 5px 12px;
-  font-size: 0.8rem;
-  border-radius: 999px;
-  border: 1px solid #555;
-  background: #222;
-  color: #fff;
-  cursor: pointer;
-}
-
-/* ============================================================
-   PÓDIO (caso queira separar do style.css)
-   ============================================================ */
-
-#tela-podio {
-  text-align: center;
-}
-
-#podio-top3 {
-  display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px;
-  margin: 16px auto;
-  max-width: 900px;
 }
 
-.podio-card {
-  background: radial-gradient(circle at top, #1c1c1c 0%, #050505 60%, #000 100%);
-  border-radius: 18px;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  width: 220px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.9);
+.controls-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 4px;
 }
 
-.podio-card h3 {
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 8px;
+.speed-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #ffffff;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease,
+    transform 0.08s ease;
 }
 
-.podio-imagens {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
+.speed-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
-.podio-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.8);
+.speed-btn.active {
+  background: #e53935;
+  border-color: #e53935;
 }
 
-.podio-flag {
-  width: 34px;
-  height: auto;
-  border-radius: 4px;
-}
-
-.podio-logo {
-  width: 40px;
-  height: auto;
-}
-
-.podio-piloto {
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.podio-equipe {
-  font-size: 0.8rem;
-  opacity: 0.85;
-}
-
-/* ============================================================
+/* ===========================
    RESPONSIVO
-   ============================================================ */
+   =========================== */
 
-@media (max-width: 1024px) {
-  .track-container {
-    height: 520px;
-  }
-
+@media (max-width: 900px) {
   .race-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .track-container {
-    height: 420px;
+    flex-direction: column;
   }
 
-  .car-icon {
-    width: 30px;
-  }
-
-  .race-hud {
-    font-size: 0.8rem;
+  .race-left,
+  .race-right {
+    flex: auto;
+    height: 50vh;
   }
 }
