@@ -49,18 +49,10 @@ body {
   height: 100%;
 }
 
-/* Carros */
+/* Carros na pista */
 .car {
   stroke: #ffffff;
-  stroke-width: 2;
-}
-
-.car-1 {
-  fill: #e53935;
-}
-
-.car-2 {
-  fill: #fdd835;
+  stroke-width: 1.5;
 }
 
 /* DIREITA: HUD */
@@ -81,55 +73,119 @@ body {
   flex-direction: column;
 }
 
+.hud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
 .hud-title {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
 .hud-subtitle {
-  margin: 0 0 18px;
+  margin: 0;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: rgba(255, 255, 255, 0.6);
 }
 
-/* Cards dos pilotos */
-.driver-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
+.hud-meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.hud-lap {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* LISTA DE PILOTOS */
+.drivers-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-bottom: 10px;
 }
 
 .driver-card {
-  flex: 1;
-  min-width: 150px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #141a2f, #090d1c);
+  display: grid;
+  grid-template-columns: 32px 22px 32px 1fr auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #151a30, #0b0f1f);
   border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
 }
 
-.driver-name {
-  font-size: 14px;
+.driver-card.leader {
+  border-color: #ffd54f;
+  box-shadow: 0 0 10px rgba(255, 213, 79, 0.3);
+}
+
+.driver-pos {
+  font-weight: 700;
+  text-align: center;
+}
+
+.driver-team-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.driver-face {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.driver-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.driver-name-text {
+  font-size: 12px;
   font-weight: 600;
-  margin-bottom: 6px;
 }
 
-.metric {
+.driver-team-text {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.driver-stats {
+  text-align: right;
+  font-size: 10px;
+}
+
+.stat-line {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
-  margin-bottom: 4px;
-  color: rgba(255, 255, 255, 0.85);
+  gap: 4px;
 }
 
-/* Controles de velocidade */
+/* CONTROLES */
+.controls-row {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .controls {
-  margin-top: auto;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -164,7 +220,7 @@ body {
 }
 
 .bottom-actions {
-  margin-top: 14px;
+  margin-top: 10px;
   display: flex;
   justify-content: flex-start;
 }
@@ -180,6 +236,103 @@ body {
 }
 
 .back-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* MODAL PÓDIO */
+.podium-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.podium-modal.hidden {
+  display: none;
+}
+
+.podium-content {
+  background: #050713;
+  border-radius: 18px;
+  padding: 18px 20px;
+  width: 420px;
+  max-width: 95vw;
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.9);
+}
+
+.podium-content h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.podium-cards {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.podium-card {
+  flex: 1;
+  border-radius: 14px;
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 11px;
+  background: linear-gradient(135deg, #141a2f, #090d1c);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.podium-card.first {
+  border-color: #ffd54f;
+}
+
+.podium-card.second {
+  border-color: #b0bec5;
+}
+
+.podium-card.third {
+  border-color: #ffb74d;
+}
+
+.podium-pos {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.podium-face {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  margin-bottom: 4px;
+}
+
+.podium-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.podium-team {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.podium-close {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #ffffff;
+  padding: 6px 18px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.podium-close:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
