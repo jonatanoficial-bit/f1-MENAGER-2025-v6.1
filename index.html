@@ -2,197 +2,279 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>F1 Manager 2025 - Vale Edition</title>
-
-  <!-- Ajuste básico para mobile -->
   <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>F1 Manager 2025 – Vale Edition</title>
 
-  <!-- Estilos globais antigos (se você tiver) -->
+  <!-- Estilos base e de interface -->
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Novo visual das telas de UI -->
   <link rel="stylesheet" href="ui.css" />
 </head>
 <body>
-  <!-- Aviso para girar o celular (não força, mas orienta) -->
-  <div id="rotate-warning" class="rotate-warning">
-    <div class="rotate-card">
-      <p>Para uma melhor experiência, gire o celular para o modo paisagem.</p>
-    </div>
+  <!-- HUD fixo no topo (caixa e etapa) -->
+  <div id="hud">
+    <span id="hud-money-label">
+      Caixa: <span id="hud-money-value">R$ 5.000.000</span>
+    </span>
+    <span id="hud-stage-label">
+      Etapa: <span id="hud-stage-value">1</span>
+    </span>
   </div>
 
-  <!-- Raiz do jogo (esconde quando o aparelho estiver em pé) -->
-  <div id="game-root" class="game-root">
-    <!-- HUD superior (caixa / etapa). Depois ligamos ao sistema real -->
-    <header class="top-hud">
-      <div class="hud-left">
-        Caixa: <span id="hud-cash">R$ 5.000.000</span>
-      </div>
-      <div class="hud-right">
-        Etapa: <span id="hud-stage">1</span>
-      </div>
-    </header>
+  <main id="game-root">
+    <!-- 1) CAPA – TOCAR PRA COMEÇAR -->
+    <section id="screen-cover" class="screen active">
+      <div class="cover-bg"></div>
 
-    <main class="main-wrapper">
-      <!-- ===================================================================== -->
-      <!--  TELA 1 – CAPA (SPLASH)                                              -->
-      <!-- ===================================================================== -->
-      <section
-        id="screen-splash"
-        class="screen screen-active screen-splash"
-      >
-        <!-- Fundo da capa -->
-        <div class="screen-bg bg-capa"></div>
+      <div class="cover-overlay">
+        <p class="cover-tip">
+          Para uma melhor experiência, gire o celular para o modo paisagem.
+        </p>
+        <p class="cover-action">
+          Toque em qualquer lugar para começar
+        </p>
+      </div>
+    </section>
 
-        <!-- Texto sobre a capa -->
-        <div class="screen-content center">
-          <!-- Você disse que o título não é obrigatório,
-               pois já está na capa. Mantive só a frase de toque. -->
-          <p class="splash-subtitle">
-            Toque em qualquer lugar para começar
+    <!-- 2) MENU PRINCIPAL -->
+    <section id="screen-main-menu" class="screen">
+      <h1 class="title">F1 MANAGER 2025</h1>
+
+      <div class="menu-buttons">
+        <button id="btn-new-game" class="btn btn-primary">
+          NOVO JOGO
+        </button>
+        <button id="btn-continue-game" class="btn btn-primary">
+          CONTINUAR CARREIRA
+        </button>
+      </div>
+    </section>
+
+    <!-- 3) TIPO DE MANAGER -->
+    <section id="screen-manager-type" class="screen">
+      <h2 class="title">ESCOLHA O TIPO DE MANAGER</h2>
+
+      <div class="menu-buttons">
+        <button id="btn-use-real-manager" class="btn btn-primary">
+          USAR MANAGER REAL
+        </button>
+        <button id="btn-create-manager" class="btn btn-primary">
+          CRIAR MEU MANAGER
+        </button>
+      </div>
+
+      <button id="btn-back-to-menu" class="btn btn-secondary">
+        VOLTAR
+      </button>
+    </section>
+
+    <!-- 4) LISTA DE MANAGERS REAIS -->
+    <section id="screen-manager-real" class="screen">
+      <h2 class="title">ESCOLHA O MANAGER REAL</h2>
+
+      <div id="real-manager-list" class="list">
+        <!-- A lista será preenchida pelo main.js -->
+      </div>
+
+      <button id="btn-back-manager-type-from-real" class="btn btn-secondary">
+        VOLTAR
+      </button>
+    </section>
+
+    <!-- 5) CRIAR MANAGER -->
+    <section id="screen-manager-create" class="screen">
+      <h2 class="title">CRIAR MEU MANAGER</h2>
+
+      <form id="create-manager-form" class="form">
+        <label>
+          Nome do manager
+          <input type="text" id="input-manager-name"
+                 maxlength="20" required />
+        </label>
+
+        <label>
+          País
+          <select id="select-manager-country"></select>
+        </label>
+
+        <label>
+          Avatar
+          <p class="hint">
+            Nesta versão, o avatar será definido automaticamente
+            de acordo com o país (futuramente usaremos as imagens da pasta
+            <strong>assets/managers</strong>).
           </p>
+        </label>
+
+        <button type="submit" class="btn btn-primary">
+          CONFIRMAR
+        </button>
+      </form>
+
+      <button id="btn-back-manager-type-from-create" class="btn btn-secondary">
+        VOLTAR
+      </button>
+    </section>
+
+    <!-- 6) ESCOLHA DE EQUIPE / ESCUDERIA -->
+    <section id="screen-team-select" class="screen">
+      <h2 class="title">ESCOLHA A EQUIPE / ESCUDERIA</h2>
+
+      <div id="team-list" class="list">
+        <!-- Preenchido via main.js -->
+      </div>
+
+      <button id="btn-back-from-team-select" class="btn btn-secondary">
+        VOLTAR
+      </button>
+    </section>
+
+    <!-- 7) LOBBY PRINCIPAL -->
+    <section id="screen-lobby" class="screen">
+      <header class="lobby-header">
+        <div>
+          MANAGER:
+          <span id="lobby-manager-name">---</span>
         </div>
-
-        <!-- Camada invisível que pega o clique/toque na tela toda -->
-        <div id="touch-catcher" class="touch-catcher"></div>
-      </section>
-
-      <!-- ===================================================================== -->
-      <!--  TELA 2 – MENU PRINCIPAL                                             -->
-      <!-- ===================================================================== -->
-      <section
-        id="screen-main-menu"
-        class="screen screen-lobby"
-      >
-        <div class="screen-bg bg-lobby"></div>
-
-        <div class="screen-content center">
-          <h1 class="title-main">F1 MANAGER 2025</h1>
-
-          <div class="button-row">
-            <button id="btn-new-career" class="main-btn">
-              NOVO JOGO
-            </button>
-
-            <button id="btn-continue-career" class="main-btn secondary">
-              CONTINUAR CARREIRA
-            </button>
-          </div>
+        <div>
+          Equipe:
+          <span id="lobby-team-name">Sem equipe</span>
         </div>
-      </section>
+      </header>
 
-      <!-- ===================================================================== -->
-      <!--  TELA 3 – ESCOLHA DO TIPO DE MANAGER                                 -->
-      <!-- ===================================================================== -->
-      <section
-        id="screen-manager-choice"
-        class="screen screen-lobby"
-      >
-        <div class="screen-bg bg-lobby"></div>
+      <div class="lobby-buttons">
+        <button id="btn-open-calendar" class="btn btn-primary">
+          CALENDÁRIO
+        </button>
+        <button id="btn-open-race" class="btn btn-primary">
+          CORRIDA
+        </button>
+        <button id="btn-open-finance" class="btn btn-primary">
+          FINANÇAS
+        </button>
+        <button id="btn-open-staff" class="btn btn-primary">
+          FUNCIONÁRIOS
+        </button>
+        <button id="btn-open-sponsors" class="btn btn-primary">
+          PATROCÍNIOS
+        </button>
+        <button id="btn-open-contracts" class="btn btn-primary">
+          CONTRATOS
+        </button>
+      </div>
 
-        <div class="screen-content center">
-          <h2 class="title">ESCOLHA O TIPO DE MANAGER</h2>
+      <div class="lobby-bottom-buttons">
+        <button id="btn-save-game" class="btn btn-secondary">
+          SALVAR
+        </button>
+        <button id="btn-exit-to-menu" class="btn btn-secondary">
+          SAIR PARA O MENU
+        </button>
+      </div>
+    </section>
 
-          <div class="button-column">
-            <button id="btn-use-real-manager" class="main-btn">
-              USAR MANAGER REAL
-            </button>
+    <!-- 8) CALENDÁRIO -->
+    <section id="screen-calendar" class="screen">
+      <h2 class="title">CALENDÁRIO 2025</h2>
 
-            <button id="btn-create-manager" class="main-btn secondary">
-              CRIAR MEU MANAGER
-            </button>
-          </div>
+      <div id="calendar-list" class="list">
+        <!-- Preenchido via main.js -->
+      </div>
 
-          <button
-            id="btn-back-main-from-choice"
-            class="main-btn outlined small"
-          >
-            VOLTAR
-          </button>
+      <button class="btn btn-secondary btn-back-lobby">
+        VOLTAR
+      </button>
+    </section>
+
+    <!-- 9) CORRIDA (VERSÃO INICIAL / PLACEHOLDER) -->
+    <section id="screen-race" class="screen">
+      <h2 class="title">CORRIDA</h2>
+
+      <p class="hint">
+        Versão inicial da tela de corrida. Em breve vamos evoluir com
+        mapa da pista, lista de pilotos, condição do carro, pneus, etc.
+      </p>
+
+      <div class="race-controls">
+        <button id="btn-start-race" class="btn btn-primary">
+          INICIAR CORRIDA
+        </button>
+
+        <div class="race-speed">
+          <button data-speed="1"
+                  class="btn btn-secondary race-speed-btn">1x</button>
+          <button data-speed="2"
+                  class="btn btn-secondary race-speed-btn">2x</button>
+          <button data-speed="4"
+                  class="btn btn-secondary race-speed-btn">4x</button>
         </div>
-      </section>
+      </div>
 
-      <!-- ===================================================================== -->
-      <!--  TELA 4 – LISTA DE MANAGERS REAIS                                    -->
-      <!-- ===================================================================== -->
-      <section
-        id="screen-manager-real"
-        class="screen screen-lobby"
-      >
-        <div class="screen-bg bg-lobby"></div>
+      <button class="btn btn-secondary btn-back-lobby">
+        VOLTAR
+      </button>
+    </section>
 
-        <div class="screen-content">
-          <h2 class="title">ESCOLHA UM MANAGER REAL</h2>
+    <!-- 10) FINANÇAS -->
+    <section id="screen-finance" class="screen">
+      <h2 class="title">FINANÇAS</h2>
 
-          <!-- Aqui o main.js monta os botões automaticamente -->
-          <div id="real-manager-list" class="manager-list"></div>
+      <p class="hint">
+        Aqui teremos gráficos com evolução do saldo, receitas, despesas
+        e relatórios por categoria (similar ao que você já viu nos
+        placeholders anteriores).
+      </p>
 
-          <button
-            id="btn-back-manager-choice-from-real"
-            class="main-btn outlined small"
-          >
-            VOLTAR
-          </button>
-        </div>
-      </section>
+      <button class="btn btn-secondary btn-back-lobby">
+        VOLTAR
+      </button>
+    </section>
 
-      <!-- ===================================================================== -->
-      <!--  TELA 5 – CRIAR MANAGER PERSONALIZADO                                -->
-      <!-- ===================================================================== -->
-      <section
-        id="screen-manager-create"
-        class="screen screen-lobby"
-      >
-        <div class="screen-bg bg-lobby"></div>
+    <!-- 11) FUNCIONÁRIOS -->
+    <section id="screen-staff" class="screen">
+      <h2 class="title">FUNCIONÁRIOS</h2>
 
-        <div class="screen-content">
-          <h2 class="title">CRIAR MEU MANAGER</h2>
+      <p class="hint">
+        Tela para contratação, demissão e melhoria de staff
+        (engenheiros, estrategistas, mecânicos, etc.).
+      </p>
 
-          <div class="form-group">
-            <label class="form-label" for="input-manager-name">
-              Nome do manager
-            </label>
-            <input
-              id="input-manager-name"
-              type="text"
-              maxlength="30"
-              placeholder="Digite o nome do manager"
-            />
-          </div>
+      <button class="btn btn-secondary btn-back-lobby">
+        VOLTAR
+      </button>
+    </section>
 
-          <div class="form-group">
-            <label class="form-label" for="input-manager-country">
-              País (opcional)
-            </label>
-            <input
-              id="input-manager-country"
-              type="text"
-              placeholder="Brasil, EUA, Itália..."
-            />
-          </div>
+    <!-- 12) PATROCÍNIOS -->
+    <section id="screen-sponsors" class="screen">
+      <h2 class="title">PATROCÍNIOS</h2>
 
-          <div class="button-row">
-            <button
-              id="btn-confirm-custom-manager"
-              class="main-btn"
-            >
-              CONFIRMAR
-            </button>
+      <p class="hint">
+        Aqui ficará o sistema de contratos de patrocínio, metas de
+        exposição, bônus por resultado e multas de rescisão.
+      </p>
 
-            <button
-              id="btn-back-manager-choice-from-create"
-              class="main-btn outlined"
-            >
-              VOLTAR
-            </button>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+      <button class="btn btn-secondary btn-back-lobby">
+        VOLTAR
+      </button>
+    </section>
 
-  <!-- Lógica de navegação da UI -->
+    <!-- 13) CONTRATOS -->
+    <section id="screen-contracts" class="screen">
+      <h2 class="title">CONTRATOS</h2>
+
+      <p class="hint">
+        Tela para metas de performance do manager, risco de demissão,
+        renovação e propostas de outras equipes conforme o desempenho
+        da temporada.
+      </p>
+
+      <button class="btn btn-secondary btn-back-lobby">
+        VOLTAR
+      </button>
+    </section>
+  </main>
+
+  <!-- Lógica principal do jogo -->
   <script src="main.js"></script>
 </body>
 </html>
