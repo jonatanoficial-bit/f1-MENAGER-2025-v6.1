@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>F1 Manager 2025 – Corrida</title>
+    <link rel="stylesheet" href="race.css" />
+  </head>
+  <body>
+    <div class="race-layout">
+      <!-- Lado esquerdo: pista SVG -->
+      <div class="race-left">
+        <div id="track-container" class="track-container">
+          <!-- O SVG da pista australia.svg será injetado aqui via JS -->
+        </div>
+      </div>
+
+      <!-- Lado direito: HUD -->
+      <div class="race-right">
+        <div class="hud-panel">
+          <h1 class="hud-title">GP da Austrália 2025</h1>
+          <p class="hud-subtitle">Temporada oficial – F1 2025</p>
+
+          <div class="driver-row">
+            <div class="driver-card">
+              <div class="driver-name" id="driver1-name">Piloto 1</div>
+              <div class="metric">
+                <span>Posição</span>
+                <span id="driver1-pos">1º</span>
+              </div>
+              <div class="metric">
+                <span>Velocidade</span>
+                <span id="driver1-speed">0 km/h</span>
+              </div>
+            </div>
+
+            <div class="driver-card">
+              <div class="driver-name" id="driver2-name">Piloto 2</div>
+              <div class="metric">
+                <span>Posição</span>
+                <span id="driver2-pos">2º</span>
+              </div>
+              <div class="metric">
+                <span>Velocidade</span>
+                <span id="driver2-speed">0 km/h</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <span class="controls-label">Velocidade da simulação:</span>
+            <button class="speed-btn active" data-speed="1">1x</button>
+            <button class="speed-btn" data-speed="2">2x</button>
+            <button class="speed-btn" data-speed="4">4x</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="race.js"></script>
+  </body>
+</html>
