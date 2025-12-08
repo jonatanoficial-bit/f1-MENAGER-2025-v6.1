@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>F1 Manager 2025 – Classificação</title>
 
-    <!-- Reaproveita o mesmo visual da corrida -->
+    <!-- Mesmo visual da corrida -->
     <link rel="stylesheet" href="race.css" />
   </head>
 
@@ -22,7 +22,9 @@
           <div class="hud-header">
             <div>
               <h1 class="hud-title" id="gp-title">Classificação</h1>
-              <p class="hud-subtitle">Sessão de qualificação – F1 2025</p>
+              <p class="hud-subtitle" id="qualy-phase-label">
+                Q1 • eliminados ao final: 5 pilotos
+              </p>
             </div>
             <div class="hud-meta">
               <span id="qualy-lap-label" class="hud-lap">
@@ -36,7 +38,7 @@
             <!-- Cards criados via JS -->
           </div>
 
-          <!-- PAINEL DO USUÁRIO (mesma ideia da corrida) -->
+          <!-- PAINEL DO USUÁRIO -->
           <div class="user-panel">
             <div class="user-panel-title">Pilotos da sua equipe</div>
             <div class="user-driver-row">
@@ -133,20 +135,31 @@
       </div>
     </div>
 
-    <!-- MODAL RESULTADO DA CLASSIFICAÇÃO -->
+    <!-- MODAL RESULTADOS / FASES -->
     <div id="qualy-modal" class="podium-modal hidden">
       <div class="podium-content">
-        <h2>Resultado da Classificação</h2>
-        <p style="font-size: 11px; margin-top: 0; margin-bottom: 8px;">
-          Este resultado será usado como grid de largada da corrida.
+        <h2 id="qualy-modal-title">Resultado da Classificação</h2>
+        <p
+          id="qualy-modal-subtitle"
+          style="font-size: 11px; margin-top: 0; margin-bottom: 8px;"
+        >
+          <!-- texto definido via JS -->
         </p>
 
-        <div id="qualy-results" class="drivers-list" style="max-height: 260px;">
+        <div
+          id="qualy-results"
+          class="drivers-list"
+          style="max-height: 260px;"
+        >
           <!-- Linhas de resultado criadas via JS -->
         </div>
 
-        <button class="podium-close" onclick="closeQualyModal()">
-          Fechar
+        <button
+          id="qualy-modal-action"
+          class="podium-close"
+          onclick="onQualyModalAction()"
+        >
+          Continuar
         </button>
       </div>
     </div>
