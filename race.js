@@ -1,11 +1,13 @@
 // ===========================
-// CONFIGURAÇÃO DA CORRIDA
+// CONFIGURAÇÕES GERAIS
 // ===========================
 const TOTAL_LAPS = 10;
 const PIT_WEAR_THRESHOLD = 70; // % para pit automático
-const PIT_STOP_DURATION = 3.0; // segundos no box
+const PIT_STOP_DURATION = 3.0; // segundos parado no box
 
-// Grid 2025 (com Bortoleto na Sauber / Audi)
+// ===========================
+// GRID 2025 (com Bortoleto na Sauber/Audi)
+// ===========================
 const DRIVERS_2025 = [
   {
     code: "VER",
@@ -210,7 +212,7 @@ const DRIVERS_2025 = [
 ];
 
 // ===========================
-// ESTADO GLOBAL
+// ESTADO GLOBAL DA SESSÃO
 // ===========================
 const raceState = {
   speedMultiplier: 1,
@@ -220,17 +222,20 @@ const raceState = {
   trackPath: null,
   pitPath: null,
   finished: false,
-  userTeamKey: "ferrari",
+  userTeamKey: "ferrari", // padrão, pode vir pela URL depois
   userCars: []
 };
 
+// ===========================
+// INICIALIZAÇÃO
+// ===========================
 document.addEventListener("DOMContentLoaded", () => {
   setupSpeedButtons();
 
   const params = new URLSearchParams(window.location.search);
   const trackName = params.get("track") || "australia";
   const gpName = params.get("gp") || "GP da Austrália 2025";
-  raceState.userTeamKey = params.get("userTeam") || "ferrari"; // padrão
+  raceState.userTeamKey = params.get("userTeam") || "ferrari";
 
   const titleEl = document.getElementById("gp-title");
   if (titleEl) titleEl.textContent = gpName;
@@ -278,6 +283,7 @@ function loadTrack(trackName) {
         return;
       }
 
+      // traçado principal e pit lane (mesmo critério dos outros SVGs)
       const trackPath = svg.querySelector('path[stroke-width="10"]');
       const pitPath = svg.querySelector('path[stroke-width="5.5"]');
 
@@ -286,6 +292,22 @@ function loadTrack(trackName) {
           'Path principal da pista não encontrado (stroke-width="10")'
         );
         return;
+      }
+
+      // 🔹 transforma o path num traçado branco contínuo
+      trackPath.setAttribute("fill", "none");
+      trackPath.setAttribute("stroke", "#ffffff");
+      trackPath.setAttribute("stroke-opacity", "0.35");
+      trackPath.setAttribute("stroke-linecap", "round");
+      trackPath.setAttribute("stroke-linejoin", "round");
+
+      // 🔹 deixa o pit lane visível em cinza
+      if (pitPath) {
+        pitPath.setAttribute("fill", "none");
+        pitPath.setAttribute("stroke", "#cccccc");
+        pitPath.setAttribute("stroke-opacity", "0.5");
+        pitPath.setAttribute("stroke-linecap", "round");
+        pitPath.setAttribute("stroke-linejoin", "round");
       }
 
       raceState.trackPath = trackPath;
@@ -352,7 +374,7 @@ function initCars(svg, trackPath) {
   if (teamCars.length >= 2) {
     raceState.userCars = [teamCars[0], teamCars[1]];
   } else {
-    // fallback: primeiros dois do grid
+    // fallback se a equipe não existir por algum motivo
     raceState.userCars = [raceState.cars[0], raceState.cars[1]];
   }
 }
@@ -463,8 +485,7 @@ function handleUserAction(userIndex, action, btn, card) {
   } else if (action === "push" || action === "save") {
     car.engineMode = action === "push" ? "push" : "save";
 
-    // remove active dos outros modos
-    const buttons = card.querySelectorAll('.user-btn.mode');
+    const buttons = card.querySelectorAll(".user-btn.mode");
     buttons.forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
   }
@@ -507,23 +528,21 @@ function updateCars(dt) {
   const multiplier = raceState.speedMultiplier || 1;
 
   raceState.cars.forEach((car) => {
-    if (car.finished) {
-      return;
-    }
+    if (car.finished) return;
 
     car.totalTime += dt;
 
-    // Pit stop: parado no box
+    // no box
     if (car.inPit) {
       car.pitTimer -= dt;
       if (car.pitTimer <= 0) {
         car.inPit = false;
-        car.tyreWear = 10; // pneus "novos"
+        car.tyreWear = 10; // pneus "renovados"
       }
       return;
     }
 
-    // Modos de motor / pneu
+    // modos de motor
     let paceFactor = 1;
     let tyreFactor = 1;
     let engineFactor = 1;
@@ -539,24 +558,22 @@ function updateCars(dt) {
     }
 
     const effectiveLapTime =
-      car.driver.baseLapTime *
-      (1 + car.engineWear / 200) *
-      paceFactor /
+      (car.driver.baseLapTime *
+        (1 + car.engineWear / 200) *
+        paceFactor) /
       multiplier;
 
     const deltaProgress = dt / effectiveLapTime;
     let newProgress = car.progress + deltaProgress;
 
-    // desgaste contínuo
-    car.tyreWear +=
-      deltaProgress * car.driver.tyreWearRate * tyreFactor;
-    car.engineWear +=
-      deltaProgress * car.driver.engineWearRate * engineFactor;
+    // desgaste
+    car.tyreWear += deltaProgress * car.driver.tyreWearRate * tyreFactor;
+    car.engineWear += deltaProgress * car.driver.engineWearRate * engineFactor;
 
     if (car.tyreWear > 100) car.tyreWear = 100;
     if (car.engineWear > 100) car.engineWear = 100;
 
-    // completou volta?
+    // completou volta
     if (newProgress >= 1) {
       car.lap += 1;
       newProgress -= 1;
@@ -574,7 +591,7 @@ function updateCars(dt) {
 
     car.progress = newProgress;
 
-    // pit automático se desgaste alto
+    // pit automático
     if (
       car.lap > 0 &&
       !car.finished &&
@@ -592,7 +609,6 @@ function updateCars(dt) {
     car.element.setAttribute("cy", String(point.y));
   });
 
-  // fim de corrida
   const allFinished = raceState.cars.every((c) => c.finished);
   if (allFinished && !raceState.finished) {
     raceState.finished = true;
@@ -601,7 +617,7 @@ function updateCars(dt) {
 }
 
 // ===========================
-// HUD DINÂMICA (ordem, gaps, pneus)
+// HUD DINÂMICA (ordem, gaps, pneus, painel user)
 // ===========================
 function updateHudDynamic() {
   if (!raceState.cars.length) return;
@@ -609,7 +625,7 @@ function updateHudDynamic() {
   const list = document.getElementById("drivers-list");
   if (!list) return;
 
-  // Ordena líder -> último
+  // ordena: líder primeiro
   const ordered = [...raceState.cars].sort((a, b) => {
     if (a.lap !== b.lap) return b.lap - a.lap;
     if (a.progress !== b.progress) return b.progress - a.progress;
@@ -617,26 +633,25 @@ function updateHudDynamic() {
   });
 
   const leader = ordered[0];
-
   ordered.forEach((car, index) => {
     car.position = index + 1;
   });
 
-  // Atualiza label de volta (base líder)
+  // volta atual mostrando pela volta do líder
   const lapLabel = document.getElementById("race-lap-label");
-  if (lapLabel) {
+  if (lapLabel && leader) {
     const currentLap = Math.min(leader.lap + 1, TOTAL_LAPS);
     lapLabel.textContent = `Volta ${currentLap} / ${TOTAL_LAPS}`;
   }
 
-  // Reordena DOM para ficar 1º em cima
+  // reordena DOM para 1º ficar em cima
   ordered.forEach((car) => {
     const els = car.cardElements;
     if (!els) return;
     list.appendChild(els.card);
   });
 
-  // Atualiza infos dos cards
+  // atualiza infos dos cards
   ordered.forEach((car) => {
     const els = car.cardElements;
     if (!els) return;
@@ -681,11 +696,10 @@ function updateHudDynamic() {
     }
   });
 
-  // Atualiza painel do usuário
   updateUserPanel();
 }
 
-// atualiza textos de carro/pneus nos dois pilotos controlados
+// painel dos 2 pilotos da equipe
 function updateUserPanel() {
   raceState.userCars.forEach((car, index) => {
     const els = car.userPanelElements;
@@ -695,11 +709,11 @@ function updateUserPanel() {
     const tyre = Math.round(car.tyreWear);
 
     if (els.carEl) els.carEl.textContent = carCond + "%";
-    if (els.tyreEl)
+    if (els.tyreEl) {
       els.tyreEl.textContent =
         (car.inPit ? "No box / " : "") + tyre + "%";
+    }
 
-    // atualizar botões de modo
     if (els.buttons) {
       els.buttons.forEach((b) => {
         if (b.classList.contains("mode")) {
