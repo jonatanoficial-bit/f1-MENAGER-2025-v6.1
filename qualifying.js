@@ -3,7 +3,7 @@
 // ===========================
 const QUALY_LAPS = 6; // nº de voltas simuladas na sessão
 
-// Mesmo grid de 2025 da corrida (reutilizado)
+// Mesmo grid de 2025 da corrida (com Bortoleto na Sauber/Audi)
 const DRIVERS_2025 = [
   {
     code: "VER",
@@ -277,7 +277,7 @@ function setupSpeedButtons() {
 }
 
 // ===========================
-// CARREGAR PISTA SVG (igual corrida, com linha branca)
+// CARREGAR PISTA SVG (com fallback se não achar stroke-width="10")
 // ===========================
 function loadTrackQualy(trackName) {
   const container = document.getElementById("track-container");
@@ -297,11 +297,28 @@ function loadTrackQualy(trackName) {
         return;
       }
 
-      const trackPath = svg.querySelector('path[stroke-width="10"]');
-      const pitPath = svg.querySelector('path[stroke-width="5.5"]');
+      // tenta achar o path da pista de forma mais robusta
+      let trackPath =
+        svg.querySelector('path[stroke-width="10"]') ||
+        svg.querySelector('path[data-role="track"]');
 
       if (!trackPath) {
-        console.error('Path da pista não encontrado (stroke-width="10")');
+        const allPaths = svg.querySelectorAll("path");
+        if (allPaths.length > 0) {
+          trackPath = allPaths[0];
+          console.warn(
+            "Usando primeiro <path> do SVG como pista (fallback em qualifying.js)"
+          );
+        }
+      }
+
+      const pitPath =
+        svg.querySelector('path[stroke-width="5.5"]') ||
+        svg.querySelector('path[data-role="pitlane"]') ||
+        null;
+
+      if (!trackPath) {
+        console.error("Nenhum path da pista encontrado no SVG.");
         return;
       }
 
@@ -321,7 +338,7 @@ function loadTrackQualy(trackName) {
       }
 
       qualyState.trackPath = trackPath;
-      qualyState.pitPath = pitPath || null;
+      qualyState.pitPath = pitPath;
 
       initCarsQualy(svg, trackPath);
       buildDriverCardsQualy();
@@ -539,7 +556,7 @@ function updateCarsQualy(dt) {
     car.totalTime += dt;
     car.currentLapTime += dt;
 
-    // motor modos
+    // modos de motor
     let paceFactor = 1;
     let tyreFactor = 1;
     let engineFactor = 1;
@@ -563,7 +580,7 @@ function updateCarsQualy(dt) {
     const deltaProgress = dt / effectiveLapTime;
     let newProgress = car.progress + deltaProgress;
 
-    // desgaste leve (apenas para futuro)
+    // desgaste leve (para futuro)
     car.tyreWear += deltaProgress * car.driver.tyreWearRate * tyreFactor;
     car.engineWear += deltaProgress * car.driver.engineWearRate * engineFactor;
 
@@ -617,13 +634,11 @@ function updateHudQualy() {
   const list = document.getElementById("drivers-list");
   if (!list) return;
 
-  // ordena por melhor volta (menor primeiro)
+  // ordena por melhor volta
   const ordered = [...qualyState.cars].sort((a, b) => {
     const aBest = isFinite(a.bestLapTime) ? a.bestLapTime : 999999;
     const bBest = isFinite(b.bestLapTime) ? b.bestLapTime : 999999;
     if (aBest !== bBest) return aBest - bBest;
-
-    // se ninguém tem volta, ordena por tempo total (só pra não ficar bagunça)
     return a.totalTime - b.totalTime;
   });
 
@@ -631,7 +646,6 @@ function updateHudQualy() {
     car.position = index + 1;
   });
 
-  // volta atual (pela maior volta de alguém)
   const maxLap = ordered.reduce((max, car) => Math.max(max, car.lap), 0);
   const lapLabel = document.getElementById("qualy-lap-label");
   if (lapLabel) {
@@ -662,7 +676,6 @@ function updateHudQualy() {
       els.lastEl.textContent = formatLapTime(car.lastLapTime);
   });
 
-  // painel do usuário
   updateUserPanelQualy();
 }
 
@@ -700,7 +713,6 @@ function saveGridAndShowResults() {
     return a.totalTime - b.totalTime;
   });
 
-  // monta grid simples: P1..P20
   const grid = ordered.map((car, index) => ({
     position: index + 1,
     code: car.driver.code,
