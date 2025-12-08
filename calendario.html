@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>F1 Manager 2025 – Calendário</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Seus CSS atuais (mantém tudo igual) -->
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="ui.css" />
+
+    <!-- Estilo só do calendário (nomes únicos para não brigar com nada) -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      .calendar-wrapper {
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 30px;
+        padding-bottom: 40px;
+        /* o background continua vindo do ui.css (capa_bg.png) */
+      }
+
+      .calendar-title {
+        color: #ffffff;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+      }
+
+      .calendar-subtitle {
+        color: #ffffff;
+        font-size: 13px;
+        margin-bottom: 20px;
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+      }
+
+      .gp-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+        max-width: 980px;
+      }
+
+      .gp-btn {
+        background: #e40000;
+        color: #ffffff;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+        letter-spacing: 0.03em;
+        transition: transform 0.08s ease, box-shadow 0.08s ease,
+          background 0.12s ease;
+      }
+
+      .gp-btn:hover {
+        transform: translateY(-1px);
+        background: #ff1b1b;
+        box-shadow: 0 0 14px rgba(0, 0, 0, 0.8);
+      }
+
+      .calendar-footer {
+        margin-top: 18px;
+      }
+
+      .gp-btn.back {
+        background: #b30000;
+        padding: 8px 24px;
+      }
+
+      .gp-btn.back:hover {
+        background: #d30000;
+      }
+
+      @media (max-width: 600px) {
+        .gp-btn {
+          font-size: 11px;
+          padding: 5px 10px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="calendar-wrapper">
+      <div class="calendar-title">CALENDÁRIO 2025</div>
+      <div class="calendar-subtitle">Selecione o Grande Prêmio</div>
+
+      <div class="gp-grid">
+        <!-- 1. Bahrein -->
+        <button
+          class="gp-btn"
+          onclick="openRace('bahrein','GP do Bahrein 2025')"
+        >
+          1. BAHREIN
+        </button>
+
+        <!-- 2. Arábia Saudita -->
+        <button
+          class="gp-btn"
+          onclick="openRace('arabia_saudita','GP da Arábia Saudita 2025')"
+        >
+          2. ARÁBIA SAUDITA
+        </button>
+
+        <!-- 3. Austrália -->
+        <button
+          class="gp-btn"
+          onclick="openRace('australia','GP da Austrália 2025')"
+        >
+          3. AUSTRÁLIA – PRÓXIMA
+        </button>
+
+        <!-- 4. Japão -->
+        <button
+          class="gp-btn"
+          onclick="openRace('japao','GP do Japão 2025')"
+        >
+          4. JAPÃO
+        </button>
+
+        <!-- 5. China -->
+        <button
+          class="gp-btn"
+          onclick="openRace('china','GP da China 2025')"
+        >
+          5. CHINA
+        </button>
+
+        <!-- 6. Miami -->
+        <button
+          class="gp-btn"
+          onclick="openRace('miami','GP de Miami 2025')"
+        >
+          6. MIAMI
+        </button>
+
+        <!-- 7. Imola (Emilia-Romagna) -->
+        <button
+          class="gp-btn"
+          onclick="openRace('imola','GP da Emilia-Romagna 2025')"
+        >
+          7. IMOLA
+        </button>
+
+        <!-- 8. Mônaco -->
+        <button
+          class="gp-btn"
+          onclick="openRace('monaco','GP de Mônaco 2025')"
+        >
+          8. MÔNACO
+        </button>
+
+        <!-- 9. Canadá -->
+        <button
+          class="gp-btn"
+          onclick="openRace('canada','GP do Canadá 2025')"
+        >
+          9. CANADÁ
+        </button>
+
+        <!-- 10. Espanha -->
+        <button
+          class="gp-btn"
+          onclick="openRace('espanha','GP da Espanha 2025')"
+        >
+          10. ESPANHA
+        </button>
+
+        <!-- 11. Áustria -->
+        <button
+          class="gp-btn"
+          onclick="openRace('austria','GP da Áustria 2025')"
+        >
+          11. ÁUSTRIA
+        </button>
+
+        <!-- 12. Inglaterra (Silverstone) -->
+        <button
+          class="gp-btn"
+          onclick="openRace('inglaterra','GP da Inglaterra 2025')"
+        >
+          12. INGLATERRA
+        </button>
+
+        <!-- 13. Hungria -->
+        <button
+          class="gp-btn"
+          onclick="openRace('hungria','GP da Hungria 2025')"
+        >
+          13. HUNGRIA
+        </button>
+
+        <!-- 14. Bélgica -->
+        <button
+          class="gp-btn"
+          onclick="openRace('belgica','GP da Bélgica 2025')"
+        >
+          14. BÉLGICA
+        </button>
+
+        <!-- 15. Holanda -->
+        <button
+          class="gp-btn"
+          onclick="openRace('holanda','GP da Holanda 2025')"
+        >
+          15. HOLANDA
+        </button>
+
+        <!-- 16. Itália (Monza) -->
+        <button
+          class="gp-btn"
+          onclick="openRace('italia_monza','GP da Itália (Monza) 2025')"
+        >
+          16. ITÁLIA (MONZA)
+        </button>
+
+        <!-- 17. Singapura -->
+        <button
+          class="gp-btn"
+          onclick="openRace('singapura','GP de Singapura 2025')"
+        >
+          17. SINGAPURA
+        </button>
+
+        <!-- 18. Estados Unidos (Austin) -->
+        <button
+          class="gp-btn"
+          onclick="openRace('estados_unidos','GP dos Estados Unidos 2025')"
+        >
+          18. ESTADOS UNIDOS
+        </button>
+
+        <!-- 19. México -->
+        <button
+          class="gp-btn"
+          onclick="openRace('mexico','GP do México 2025')"
+        >
+          19. MÉXICO
+        </button>
+
+        <!-- 20. São Paulo (Interlagos) -->
+        <button
+          class="gp-btn"
+          onclick="openRace('sao_paulo','GP de São Paulo 2025')"
+        >
+          20. SÃO PAULO
+        </button>
+
+        <!-- 21. Las Vegas -->
+        <button
+          class="gp-btn"
+          onclick="openRace('las_vegas','GP de Las Vegas 2025')"
+        >
+          21. LAS VEGAS
+        </button>
+
+        <!-- 22. Catar -->
+        <button
+          class="gp-btn"
+          onclick="openRace('catar','GP do Catar 2025')"
+        >
+          22. CATAR
+        </button>
+
+        <!-- 23. Abu Dhabi -->
+        <button
+          class="gp-btn"
+          onclick="openRace('abu_dhabi','GP de Abu Dhabi 2025')"
+        >
+          23. ABU DHABI
+        </button>
+      </div>
+
+      <div class="calendar-footer">
+        <button class="gp-btn back" onclick="voltarLobby()">
+          VOLTAR AO LOBBY
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Abre a tela de corrida usando race.html com parâmetros
+      function openRace(track, gpName) {
+        const params = new URLSearchParams();
+        params.set("track", track); // ex: australia -> assets/tracks/australia.svg
+        params.set("gp", gpName); // título que aparece na HUD
+
+        window.location.href = "race.html?" + params.toString();
+      }
+
+      // Voltar ao lobby (ajuste o arquivo se o seu lobby for outro)
+      function voltarLobby() {
+        window.location.href = "index.html";
+      }
+    </script>
+  </body>
+</html>
