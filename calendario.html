@@ -5,11 +5,10 @@
     <title>F1 Manager 2025 – Calendário</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Seus CSS atuais (mantém tudo igual) -->
+    <!-- Mantém seus CSS atuais -->
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="ui.css" />
 
-    <!-- Estilo só do calendário (nomes únicos para não brigar com nada) -->
     <style>
       body {
         margin: 0;
@@ -24,7 +23,7 @@
         align-items: center;
         padding-top: 30px;
         padding-bottom: 40px;
-        /* o background continua vindo do ui.css (capa_bg.png) */
+        /* background vem da capa do ui.css */
       }
 
       .calendar-title {
@@ -99,13 +98,15 @@
   <body>
     <div class="calendar-wrapper">
       <div class="calendar-title">CALENDÁRIO 2025</div>
-      <div class="calendar-subtitle">Selecione o Grande Prêmio</div>
+      <div class="calendar-subtitle">
+        Clique no GP para iniciar a <strong>CLASSIFICAÇÃO</strong>.
+      </div>
 
       <div class="gp-grid">
         <!-- 1. Bahrein -->
         <button
           class="gp-btn"
-          onclick="openRace('bahrein','GP do Bahrein 2025')"
+          onclick="openQualifying('bahrein','GP do Bahrein 2025')"
         >
           1. BAHREIN
         </button>
@@ -113,7 +114,7 @@
         <!-- 2. Arábia Saudita -->
         <button
           class="gp-btn"
-          onclick="openRace('arabia_saudita','GP da Arábia Saudita 2025')"
+          onclick="openQualifying('arabia_saudita','GP da Arábia Saudita 2025')"
         >
           2. ARÁBIA SAUDITA
         </button>
@@ -121,7 +122,7 @@
         <!-- 3. Austrália -->
         <button
           class="gp-btn"
-          onclick="openRace('australia','GP da Austrália 2025')"
+          onclick="openQualifying('australia','GP da Austrália 2025')"
         >
           3. AUSTRÁLIA – PRÓXIMA
         </button>
@@ -129,7 +130,7 @@
         <!-- 4. Japão -->
         <button
           class="gp-btn"
-          onclick="openRace('japao','GP do Japão 2025')"
+          onclick="openQualifying('japao','GP do Japão 2025')"
         >
           4. JAPÃO
         </button>
@@ -137,7 +138,7 @@
         <!-- 5. China -->
         <button
           class="gp-btn"
-          onclick="openRace('china','GP da China 2025')"
+          onclick="openQualifying('china','GP da China 2025')"
         >
           5. CHINA
         </button>
@@ -145,15 +146,15 @@
         <!-- 6. Miami -->
         <button
           class="gp-btn"
-          onclick="openRace('miami','GP de Miami 2025')"
+          onclick="openQualifying('miami','GP de Miami 2025')"
         >
           6. MIAMI
         </button>
 
-        <!-- 7. Imola (Emilia-Romagna) -->
+        <!-- 7. Imola -->
         <button
           class="gp-btn"
-          onclick="openRace('imola','GP da Emilia-Romagna 2025')"
+          onclick="openQualifying('imola','GP da Emilia-Romagna 2025')"
         >
           7. IMOLA
         </button>
@@ -161,7 +162,7 @@
         <!-- 8. Mônaco -->
         <button
           class="gp-btn"
-          onclick="openRace('monaco','GP de Mônaco 2025')"
+          onclick="openQualifying('monaco','GP de Mônaco 2025')"
         >
           8. MÔNACO
         </button>
@@ -169,7 +170,7 @@
         <!-- 9. Canadá -->
         <button
           class="gp-btn"
-          onclick="openRace('canada','GP do Canadá 2025')"
+          onclick="openQualifying('canada','GP do Canadá 2025')"
         >
           9. CANADÁ
         </button>
@@ -177,7 +178,7 @@
         <!-- 10. Espanha -->
         <button
           class="gp-btn"
-          onclick="openRace('espanha','GP da Espanha 2025')"
+          onclick="openQualifying('espanha','GP da Espanha 2025')"
         >
           10. ESPANHA
         </button>
@@ -185,15 +186,15 @@
         <!-- 11. Áustria -->
         <button
           class="gp-btn"
-          onclick="openRace('austria','GP da Áustria 2025')"
+          onclick="openQualifying('austria','GP da Áustria 2025')"
         >
           11. ÁUSTRIA
         </button>
 
-        <!-- 12. Inglaterra (Silverstone) -->
+        <!-- 12. Inglaterra -->
         <button
           class="gp-btn"
-          onclick="openRace('inglaterra','GP da Inglaterra 2025')"
+          onclick="openQualifying('inglaterra','GP da Inglaterra 2025')"
         >
           12. INGLATERRA
         </button>
@@ -201,7 +202,7 @@
         <!-- 13. Hungria -->
         <button
           class="gp-btn"
-          onclick="openRace('hungria','GP da Hungria 2025')"
+          onclick="openQualifying('hungria','GP da Hungria 2025')"
         >
           13. HUNGRIA
         </button>
@@ -209,7 +210,7 @@
         <!-- 14. Bélgica -->
         <button
           class="gp-btn"
-          onclick="openRace('belgica','GP da Bélgica 2025')"
+          onclick="openQualifying('belgica','GP da Bélgica 2025')"
         >
           14. BÉLGICA
         </button>
@@ -217,7 +218,7 @@
         <!-- 15. Holanda -->
         <button
           class="gp-btn"
-          onclick="openRace('holanda','GP da Holanda 2025')"
+          onclick="openQualifying('holanda','GP da Holanda 2025')"
         >
           15. HOLANDA
         </button>
@@ -225,7 +226,7 @@
         <!-- 16. Itália (Monza) -->
         <button
           class="gp-btn"
-          onclick="openRace('italia_monza','GP da Itália (Monza) 2025')"
+          onclick="openQualifying('italia_monza','GP da Itália (Monza) 2025')"
         >
           16. ITÁLIA (MONZA)
         </button>
@@ -233,15 +234,15 @@
         <!-- 17. Singapura -->
         <button
           class="gp-btn"
-          onclick="openRace('singapura','GP de Singapura 2025')"
+          onclick="openQualifying('singapura','GP de Singapura 2025')"
         >
           17. SINGAPURA
         </button>
 
-        <!-- 18. Estados Unidos (Austin) -->
+        <!-- 18. Estados Unidos -->
         <button
           class="gp-btn"
-          onclick="openRace('estados_unidos','GP dos Estados Unidos 2025')"
+          onclick="openQualifying('estados_unidos','GP dos Estados Unidos 2025')"
         >
           18. ESTADOS UNIDOS
         </button>
@@ -249,15 +250,15 @@
         <!-- 19. México -->
         <button
           class="gp-btn"
-          onclick="openRace('mexico','GP do México 2025')"
+          onclick="openQualifying('mexico','GP do México 2025')"
         >
           19. MÉXICO
         </button>
 
-        <!-- 20. São Paulo (Interlagos) -->
+        <!-- 20. São Paulo -->
         <button
           class="gp-btn"
-          onclick="openRace('sao_paulo','GP de São Paulo 2025')"
+          onclick="openQualifying('sao_paulo','GP de São Paulo 2025')"
         >
           20. SÃO PAULO
         </button>
@@ -265,7 +266,7 @@
         <!-- 21. Las Vegas -->
         <button
           class="gp-btn"
-          onclick="openRace('las_vegas','GP de Las Vegas 2025')"
+          onclick="openQualifying('las_vegas','GP de Las Vegas 2025')"
         >
           21. LAS VEGAS
         </button>
@@ -273,7 +274,7 @@
         <!-- 22. Catar -->
         <button
           class="gp-btn"
-          onclick="openRace('catar','GP do Catar 2025')"
+          onclick="openQualifying('catar','GP do Catar 2025')"
         >
           22. CATAR
         </button>
@@ -281,7 +282,7 @@
         <!-- 23. Abu Dhabi -->
         <button
           class="gp-btn"
-          onclick="openRace('abu_dhabi','GP de Abu Dhabi 2025')"
+          onclick="openQualifying('abu_dhabi','GP de Abu Dhabi 2025')"
         >
           23. ABU DHABI
         </button>
@@ -295,16 +296,27 @@
     </div>
 
     <script>
-      // Abre a tela de corrida usando race.html com parâmetros
-      function openRace(track, gpName) {
-        const params = new URLSearchParams();
-        params.set("track", track); // ex: australia -> assets/tracks/australia.svg
-        params.set("gp", gpName); // título que aparece na HUD
-
-        window.location.href = "race.html?" + params.toString();
+      // pega equipe do usuário (manager) do localStorage, ou usa ferrari
+      function getUserTeamKey() {
+        let userTeam = null;
+        try {
+          const stored = localStorage.getItem("f1m2025_user_team");
+          if (stored) userTeam = stored;
+        } catch (e) {}
+        if (!userTeam) userTeam = "ferrari";
+        return userTeam;
       }
 
-      // Voltar ao lobby (ajuste o arquivo se o seu lobby for outro)
+      // abre SEMPRE a CLASSIFICAÇÃO primeiro
+      function openQualifying(track, gpName) {
+        const userTeam = getUserTeamKey();
+        const params = new URLSearchParams();
+        params.set("track", track);
+        params.set("gp", gpName);
+        params.set("userTeam", userTeam);
+        window.location.href = "qualifying.html?" + params.toString();
+      }
+
       function voltarLobby() {
         window.location.href = "index.html";
       }
