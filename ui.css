@@ -1,287 +1,237 @@
-/* ===================================================================== */
-/*  RESET BÁSICO / LAYOUT GERAL                                         */
-/* ===================================================================== */
+/* ===========================
+   CONFIGURAÇÃO GLOBAL
+   =========================== */
 
-html,
-body {
+html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: #000;
-  color: #fff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, sans-serif;
 }
 
+/* Aqui nós forçamos a CAPA como fundo do jogo todo.
+   O !important é pra ganhar da regra do style.css.  */
 body {
-  overflow: hidden;
-}
-
-.game-root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ===================================================================== */
-/*  HUD SUPERIOR                                                         */
-/* ===================================================================== */
-
-.top-hud {
-  height: 32px;
-  background: #000;
-  color: #00ff55;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  font-size: 12px;
-  box-sizing: border-box;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.hud-right {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #ffffff;
+  background-color: #000000;
+  background-image: url("assets/ui/capa_bg.png") !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
 }
 
-/* ===================================================================== */
-/*  TELAS (SECTIONS)                                                     */
-/* ===================================================================== */
-
-.main-wrapper {
-  flex: 1;
-  position: relative;
+/* Container geral do jogo (se existir) */
+#game-root {
+  min-height: 100vh;
 }
+
+/* ===========================
+   BARRA SUPERIOR (Caixa / Etapa)
+   =========================== */
+
+.hud-top {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.hud-top span {
+  white-space: nowrap;
+}
+
+/* texto do caixa em verde */
+.hud-cash {
+  color: #00ff4c;
+}
+
+/* ===========================
+   TELAS / SCREENS
+   =========================== */
 
 .screen {
-  position: absolute;
-  inset: 0;
   display: none;
-  overflow: hidden;
-}
-
-.screen-active {
-  display: block;
-}
-
-.screen-bg {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  filter: brightness(0.95);
-  transform: scale(1.03);
-}
-
-/* Fundos específicos */
-.bg-capa {
-  background-image: url("assets/ui/capa_bg.png");
-}
-
-.bg-lobby {
-  background-image: url("assets/ui/lobby_bg.png");
-}
-
-/* Conteúdo em cima do fundo */
-.screen-content {
-  position: relative;
-  z-index: 2;
+  min-height: calc(100vh - 30px); /* espaço pra barra de cima */
   box-sizing: border-box;
-  padding: 40px 16px;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.88),
-    rgba(0, 0, 0, 0.4),
-    rgba(0, 0, 0, 0.88)
-  );
+  padding: 60px 16px 24px;
+  text-align: center;
 }
 
-.screen-content.center {
+/* Tela visível */
+.screen.active {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
-/* ===================================================================== */
-/*  TELA DE CAPA                                                         */
-/* ===================================================================== */
-
-.screen-splash .splash-subtitle {
-  font-size: 18px;
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
-  text-align: center;
-}
-
-/* Camada invisível clicável */
-.touch-catcher {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  cursor: pointer;
-}
-
-/* ===================================================================== */
-/*  TÍTULOS / TEXTOS                                                     */
-/* ===================================================================== */
-
-.title-main {
-  font-size: 32px;
-  letter-spacing: 0.25em;
-  text-align: center;
+/* Títulos principais das telas */
+.screen-title {
+  font-size: 26px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   margin-bottom: 32px;
+  text-shadow: 0 0 12px #000;
 }
 
-.title {
-  font-size: 24px;
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-/* ===================================================================== */
-/*  BOTÕES                                                               */
-/* ===================================================================== */
-
-.button-row {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.button-column {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: center;
+/* Subtítulos / textos auxiliares */
+.screen-subtitle {
+  font-size: 14px;
+  opacity: 0.9;
   margin-bottom: 16px;
 }
 
-.main-btn {
-  min-width: 160px;
-  padding: 10px 20px;
-  border-radius: 4px;
+/* ===========================
+   TELA DE CAPA (SPLASH)
+   =========================== */
+
+/* Se existir um elemento de splash, ele só
+   adiciona uma camada de texto sobre a capa,
+   o fundo já vem do body. */
+.splash-screen {
+  background: transparent;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding-bottom: 40px;
+}
+
+.splash-overlay {
+  width: 100%;
+  text-align: center;
+}
+
+.splash-tap {
+  font-size: 16px;
+  font-weight: 500;
+  text-shadow: 0 0 10px #000000;
+}
+
+/* ===========================
+   BOTÕES GERAIS
+   =========================== */
+
+.btn,
+button {
   border: none;
-  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  padding: 12px 20px;
+  margin: 6px 0;
+  border-radius: 4px;
   font-size: 14px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: #e10600;
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  transition: transform 0.1s ease, box-shadow 0.1s ease,
-    background 0.1s ease;
+  background-color: #ff0000;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
 }
 
-.main-btn:hover {
+.btn:hover,
+button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
-  background: #ff160a;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.8);
+  background-color: #ff2626;
 }
 
-.main-btn.secondary {
-  background: #202020;
-}
-
-.main-btn.secondary:hover {
-  background: #333333;
-}
-
-.main-btn.outlined {
-  background: transparent;
+.btn-secondary {
+  background-color: transparent;
   border: 1px solid #ffffff;
 }
 
-.main-btn.small {
-  min-width: 120px;
-  font-size: 12px;
-  padding: 8px 14px;
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* fileira horizontal de botões (como no menu inicial) */
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ===========================
+   TELAS ESPECÍFICAS
+   =========================== */
+
+/* Menu principal (Novo Jogo / Continuar Carreira) */
+.main-menu-title {
+  font-size: 32px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+  text-shadow: 0 0 16px #000;
+}
+
+/* Tela "Escolha o tipo de manager" */
+#manager-type-screen .button-row {
+  margin-top: 12px;
 }
 
 /* Lista de managers reais */
-.manager-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 720px;
-  margin: 0 auto 24px auto;
+.real-manager-list {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 12px;
 }
 
-/* ===================================================================== */
-/*  FORMULÁRIO DE CRIAÇÃO DE MANAGER                                    */
-/* ===================================================================== */
-
-.form-group {
-  max-width: 420px;
-  margin: 0 auto 16px auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-label {
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-
-.form-group input {
-  padding: 8px 10px;
+.real-manager-card {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  outline: none;
+  text-align: left;
+  background-color: rgba(0, 0, 0, 0.75);
+  border: 1px solid #ff0000;
+  cursor: pointer;
+  transition: background-color 0.1s ease, transform 0.1s ease;
 }
 
-.form-group input:focus {
-  border-color: #e10600;
+.real-manager-card:hover {
+  background-color: rgba(255, 0, 0, 0.16);
+  transform: translateY(-1px);
 }
 
-/* ===================================================================== */
-/*  AVISO DE ROTAÇÃO / ORIENTAÇÃO                                       */
-/* ===================================================================== */
-
-.rotate-warning {
-  position: fixed;
-  inset: 0;
-  background: #000;
-  color: #fff;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
+/* Tela de finanças: caixas em coluna */
+.finance-panels {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.rotate-card {
-  max-width: 320px;
-  padding: 20px;
-  background: #111;
+/* card genérico (finanças, funcionários, etc.) */
+.card {
+  width: 100%;
+  padding: 14px 12px;
   border-radius: 8px;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(0, 0, 0, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+  text-align: left;
 }
 
-/* Em modo retrato (celular em pé), mostramos o aviso
-   e escondemos o jogo. Em modo paisagem, o contrário. */
+/* ===========================
+   RESPONSIVO
+   =========================== */
 
-@media (orientation: portrait) {
-  #game-root {
-    display: none;
+@media (min-width: 768px) {
+  .screen {
+    padding-top: 80px;
   }
 
-  .rotate-warning {
-    display: flex;
-  }
-}
-
-@media (orientation: landscape) {
-  #game-root {
-    display: flex;
+  .main-menu-title {
+    font-size: 36px;
   }
 
-  .rotate-warning {
-    display: none;
+  .splash-tap {
+    font-size: 18px;
   }
 }
