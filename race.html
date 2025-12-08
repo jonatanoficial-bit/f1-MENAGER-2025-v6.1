@@ -4,31 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>F1 Manager 2025 – Corrida</title>
-
-    <!-- CSS da corrida -->
     <link rel="stylesheet" href="race.css" />
   </head>
 
   <body>
     <div class="race-layout">
-      <!-- =====================================
-           LADO ESQUERDO – PISTA SVG
-        ====================================== -->
+      <!-- ESQUERDA: PISTA -->
       <div class="race-left">
-        <div id="track-container" class="track-container">
-          <!-- O SVG da pista será carregado aqui -->
-        </div>
+        <div id="track-container" class="track-container"></div>
       </div>
 
-      <!-- =====================================
-           LADO DIREITO – HUD DA CORRIDA
-        ====================================== -->
+      <!-- DIREITA: HUD -->
       <div class="race-right">
         <div class="hud-panel">
           <h1 class="hud-title" id="gp-title">Corrida</h1>
-          <p class="hud-subtitle" id="gp-subtitle">Temporada oficial F1 2025</p>
+          <p class="hud-subtitle" id="gp-subtitle">
+            Temporada oficial F1 2025
+          </p>
 
-          <!-- CARTÕES DOS PILOTOS -->
           <div class="driver-row">
             <div class="driver-card">
               <div class="driver-name" id="driver1-name">Piloto 1</div>
@@ -55,7 +48,6 @@
             </div>
           </div>
 
-          <!-- CONTROLE DE VELOCIDADE -->
           <div class="controls">
             <span class="controls-label">Velocidade:</span>
             <button class="speed-btn active" data-speed="1">1x</button>
@@ -63,7 +55,6 @@
             <button class="speed-btn" data-speed="4">4x</button>
           </div>
 
-          <!-- BOTÃO VOLTAR -->
           <div class="bottom-actions">
             <button class="back-btn" onclick="window.history.back()">
               Voltar ao calendário
@@ -73,7 +64,6 @@
       </div>
     </div>
 
-    <!-- SCRIPT DA CORRIDA -->
     <script src="race.js"></script>
   </body>
 </html>
