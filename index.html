@@ -324,6 +324,52 @@
 
     <!-- SCRIPT PRINCIPAL -->
     <script src="main.js"></script>
+    <script>
+  // Mapeia o texto que aparece no lobby para a "teamKey" usada no jogo
+  const TEAM_TEXT_TO_KEY = {
+    "Williams Racing": "williams",
+    "Ferrari": "ferrari",
+    "Mercedes": "mercedes",
+    "McLaren": "mclaren",
+    "Red Bull Racing": "redbull",
+    "Aston Martin": "aston",
+    "Alpine": "alpine",
+    "Racing Bulls": "racingbulls",
+    "Sauber / Audi": "sauber",
+    "Haas": "haas"
+  };
+
+  function salvarEquipeDoManager() {
+    const teamSpan = document.getElementById("lobby-team-name");
+    if (!teamSpan) return;
+
+    const textoEquipe = (teamSpan.textContent || "").trim();
+
+    // procura um nome que esteja contido no texto
+    for (const label in TEAM_TEXT_TO_KEY) {
+      if (textoEquipe.includes(label)) {
+        const key = TEAM_TEXT_TO_KEY[label];
+        try {
+          localStorage.setItem("f1m2025_user_team", key);
+          console.log("Equipe do usuário salva:", key);
+        } catch (e) {
+          console.warn("Não foi possível salvar equipe no localStorage:", e);
+        }
+        break;
+      }
+    }
+  }
+
+  // espera o DOM carregar e dá um pequeno atraso para garantir
+  document.addEventListener("DOMContentLoaded", () => {
+    // chama uma vez assim que a tela carregar
+    salvarEquipeDoManager();
+
+    // se em algum momento você trocar de manager/equipe via JS,
+    // pode chamar salvarEquipeDoManager() de novo manualmente.
+  });
+</script>
   </body>
 </html>
+
 
