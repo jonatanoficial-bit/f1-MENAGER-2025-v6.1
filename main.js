@@ -1,217 +1,559 @@
-/* ============================================================
-   main.js — Navegação inicial / Seleção de Manager
-   F1 Manager 2025 — Vale Edition
-   ============================================================ */
+// ============================================================
+// F1 MANAGER 2025 – LÓGICA PRINCIPAL (main.js)
+// Jonatan Vale – Vale Games / Vale Produção
+// ============================================================
 
-/* IDs das telas (sections) que existem no index.html */
-const SCREENS = {
-  SPLASH: "screen-splash",
-  MAIN_MENU: "screen-main-menu",
-  MANAGER_CHOICE: "screen-manager-choice",
-  MANAGER_REAL: "screen-manager-real",
-  MANAGER_CREATE: "screen-manager-create",
-};
+// ----------------------- DADOS BÁSICOS ----------------------
 
-/* Lista de managers reais da F1 2025 (10 equipes) */
+function createDefaultState() {
+  return {
+    money: 5000000,
+    stage: 1,
+    season: 2025,
+    currentRaceIndex: 0,
+    manager: null, // { type: 'real'|'custom', id, name, country }
+    team: null,    // { id, name, country }
+  };
+}
+
+let gameState = createDefaultState();
+
+// Managers reais da F1 (temporada recente / 2025 aproximado)
 const REAL_MANAGERS = [
-  { id: "horner", name: "Christian Horner", team: "Red Bull Racing", country: "Reino Unido" },
-  { id: "wolff", name: "Toto Wolff", team: "Mercedes", country: "Áustria" },
-  { id: "vasseur", name: "Frédéric Vasseur", team: "Ferrari", country: "França" },
-  { id: "stella", name: "Andrea Stella", team: "McLaren", country: "Itália" },
-  { id: "krack", name: "Mike Krack", team: "Aston Martin", country: "Luxemburgo" },
-  { id: "famin", name: "Bruno Famin", team: "Alpine", country: "França" },
-  { id: "bayer", name: "Peter Bayer", team: "RB", country: "Áustria" },
-  { id: "vowles", name: "James Vowles", team: "Williams", country: "Reino Unido" },
-  { id: "bravi", name: "Alessandro Alunni Bravi", team: "Sauber / Stake", country: "Itália" },
-  { id: "komatsu", name: "Ayao Komatsu", team: "Haas", country: "Japão" },
+  { id: 'toto_wolff', name: 'Toto Wolff', teamId: 'mercedes' },
+  { id: 'frederic_vasseur', name: 'Frédéric Vasseur', teamId: 'ferrari' },
+  { id: 'christian_horner', name: 'Christian Horner', teamId: 'redbull' },
+  { id: 'andrea_stella', name: 'Andrea Stella', teamId: 'mclaren' },
+  { id: 'mike_krack', name: 'Mike Krack', teamId: 'astonmartin' },
+  { id: 'bruno_famin', name: 'Bruno Famin', teamId: 'alpine' },
+  { id: 'peter_bayer', name: 'Peter Bayer', teamId: 'rb' },
+  { id: 'james_vowles', name: 'James Vowles', teamId: 'williams' },
+  { id: 'alessandro_alunni', name: 'Alessandro Alunni Bravi', teamId: 'sauber' },
+  { id: 'ayao_komatsu', name: 'Ayao Komatsu', teamId: 'haas' },
 ];
 
-/* Estado simples da UI */
-const UI_STATE = {
-  currentScreen: null,
-  selectedManager: null, // { type: 'real'|'custom', data: {...} }
-};
+// Escuderias / equipes (usaremos também para o calendário)
+const TEAMS = [
+  { id: 'mercedes', name: 'Mercedes-AMG Petronas', country: 'Alemanha' },
+  { id: 'ferrari', name: 'Scuderia Ferrari', country: 'Itália' },
+  { id: 'redbull', name: 'Oracle Red Bull Racing', country: 'Áustria' },
+  { id: 'mclaren', name: 'McLaren', country: 'Reino Unido' },
+  { id: 'astonmartin', name: 'Aston Martin', country: 'Reino Unido' },
+  { id: 'alpine', name: 'BWT Alpine', country: 'França' },
+  { id: 'williams', name: 'Williams Racing', country: 'Reino Unido' },
+  { id: 'rb', name: 'Visa Cash App RB', country: 'Itália' },
+  { id: 'sauber', name: 'Stake F1 Team Sauber', country: 'Suíça' },
+  { id: 'haas', name: 'MoneyGram Haas F1 Team', country: 'Estados Unidos' },
+];
 
-/* ============================================================
-   Utilitário: mostrar uma tela e esconder as outras
-   ============================================================ */
+// Países principais (para o manager criado)
+const COUNTRIES = [
+  'Alemanha', 'Argentina', 'Austrália', 'Áustria', 'Brasil', 'Canadá',
+  'Chile', 'China', 'Colômbia', 'Coreia do Sul', 'Dinamarca', 'Espanha',
+  'Estados Unidos', 'Finlândia', 'França', 'Holanda', 'Hungria', 'Índia',
+  'Inglaterra', 'Irlanda', 'Itália', 'Japão', 'México', 'Noruega',
+  'Nova Zelândia', 'Portugal', 'Reino Unido', 'Rússia', 'Singapura',
+  'Suécia', 'Suíça', 'Tailândia', 'Turquia', 'Uruguai', 'Venezuela',
+];
+
+// Calendário base – nomes podem ser ajustados depois
+const CALENDAR = [
+  { round: 1,  name: 'Bahrein',       country: 'Bahrein' },
+  { round: 2,  name: 'Arábia Saudita', country: 'Arábia Saudita' },
+  { round: 3,  name: 'Austrália',     country: 'Austrália' },
+  { round: 4,  name: 'Japão',         country: 'Japão' },
+  { round: 5,  name: 'China',         country: 'China' },
+  { round: 6,  name: 'Miami',         country: 'Estados Unidos' },
+  { round: 7,  name: 'Imola',         country: 'Itália' },
+  { round: 8,  name: 'Mônaco',        country: 'Mônaco' },
+  { round: 9,  name: 'Canadá',        country: 'Canadá' },
+  { round: 10, name: 'Espanha',       country: 'Espanha' },
+  { round: 11, name: 'Áustria',       country: 'Áustria' },
+  { round: 12, name: 'Inglaterra',    country: 'Reino Unido' },
+  { round: 13, name: 'Hungria',       country: 'Hungria' },
+  { round: 14, name: 'Bélgica',       country: 'Bélgica' },
+  { round: 15, name: 'Holanda',       country: 'Holanda' },
+  { round: 16, name: 'Itália (Monza)',country: 'Itália' },
+  { round: 17, name: 'Singapura',     country: 'Singapura' },
+  { round: 18, name: 'Estados Unidos',country: 'Estados Unidos' },
+  { round: 19, name: 'México',        country: 'México' },
+  { round: 20, name: 'São Paulo',     country: 'Brasil' },
+  { round: 21, name: 'Las Vegas',     country: 'Estados Unidos' },
+  { round: 22, name: 'Catar',         country: 'Catar' },
+  { round: 23, name: 'Abu Dhabi',     country: 'Emirados Árabes Unidos' },
+];
+
+// ----------------------- UTILIDADES UI ----------------------
+
+function $(id) {
+  return document.getElementById(id);
+}
+
 function showScreen(screenId) {
-  const allScreens = document.querySelectorAll(".screen");
-  allScreens.forEach((el) => el.classList.remove("screen-active"));
+  const screens = document.querySelectorAll('.screen');
+  screens.forEach((s) => s.classList.remove('active'));
 
-  const target = document.getElementById(screenId);
+  const target = $(screenId);
   if (target) {
-    target.classList.add("screen-active");
-    UI_STATE.currentScreen = screenId;
-  } else {
-    console.warn(`Tela "${screenId}" não encontrada. Verifique o id no HTML.`);
+    target.classList.add('active');
   }
 }
 
-/* ============================================================
-   Fluxo: Tela de capa (splash)
-   ============================================================ */
-function onSplashTouched() {
-  showScreen(SCREENS.MAIN_MENU);
+function updateHUD() {
+  const moneyEl = $('hud-money-value');
+  const stageEl = $('hud-stage-value');
+
+  if (moneyEl) {
+    moneyEl.textContent = formatMoney(gameState.money);
+  }
+  if (stageEl) {
+    stageEl.textContent = String(gameState.stage);
+  }
 }
 
-/* ============================================================
-   Fluxo: Menu principal
-   ============================================================ */
-function onNewCareerClicked() {
-  showScreen(SCREENS.MANAGER_CHOICE);
+function formatMoney(value) {
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 0,
+  });
 }
 
-function onContinueCareerClicked() {
-  // Aqui você conecta com seu sistema de save/carreira real.
-  // Por enquanto, só um aviso.
-  alert("Sistema de 'Continuar carreira' ainda será conectado ao sistema de save.");
-}
+function updateLobbyFromState() {
+  const managerNameEl = $('lobby-manager-name');
+  const teamNameEl = $('lobby-team-name');
 
-/* ============================================================
-   Fluxo: Escolha do tipo de manager
-   ============================================================ */
-function onUseRealManagerClicked() {
-  renderRealManagersList();
-  showScreen(SCREENS.MANAGER_REAL);
-}
-
-function onCreateManagerClicked() {
-  showScreen(SCREENS.MANAGER_CREATE);
-}
-
-function onBackToMainFromChoice() {
-  showScreen(SCREENS.MAIN_MENU);
-}
-
-/* ============================================================
-   Fluxo: Manager real
-   ============================================================ */
-function renderRealManagersList() {
-  const container = document.getElementById("real-manager-list");
-  if (!container) {
-    console.warn('Elemento "#real-manager-list" não encontrado no HTML.');
-    return;
+  if (managerNameEl) {
+    managerNameEl.textContent = gameState.manager
+      ? gameState.manager.name
+      : '---';
   }
 
-  container.innerHTML = "";
+  if (teamNameEl) {
+    teamNameEl.textContent = gameState.team
+      ? gameState.team.name
+      : 'Sem equipe';
+  }
+}
 
-  REAL_MANAGERS.forEach((mgr) => {
-    const btn = document.createElement("button");
-    btn.className = "main-btn real-manager-btn";
-    btn.textContent = `${mgr.name} — ${mgr.team}`;
-    btn.addEventListener("click", () => onRealManagerSelected(mgr));
+function updateCalendarUI() {
+  const container = $('calendar-list');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  CALENDAR.forEach((race, index) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn list-item';
+
+    let label = `${race.round}. ${race.name}`;
+    if (index === gameState.currentRaceIndex) {
+      label += ' – PRÓXIMA';
+      btn.classList.add('list-item-next');
+    }
+
+    btn.textContent = label;
+
+    btn.addEventListener('click', () => {
+      gameState.currentRaceIndex = index;
+      updateCalendarUI();
+    });
+
     container.appendChild(btn);
   });
 }
 
-function onRealManagerSelected(manager) {
-  UI_STATE.selectedManager = {
-    type: "real",
-    data: manager,
-  };
+// ----------------------- SALVAR / CARREGAR ------------------
 
-  // Aqui depois vamos ligar com:
-  // Game.startCareerWithRealManager(manager) etc.
-  alert(
-    `Manager real selecionado:\n${manager.name} (${manager.team})\n\n` +
-      "Próximo passo: escolha de equipe / escuderia e lobby (será conectado na próxima etapa)."
-  );
+const STORAGE_KEY = 'f1_manager_2025_save';
 
-  showScreen(SCREENS.MAIN_MENU);
+function saveGame(showAlert = true) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+    if (showAlert) {
+      alert('Carreira salva com sucesso!');
+    }
+  } catch (err) {
+    console.error('Erro ao salvar jogo:', err);
+    if (showAlert) {
+      alert('Não foi possível salvar o jogo (ver console).');
+    }
+  }
 }
 
-function onBackToManagerChoiceFromReal() {
-  showScreen(SCREENS.MANAGER_CHOICE);
+function loadGameFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+
+    // Mesclar com estado padrão para evitar campos faltando
+    gameState = {
+      ...createDefaultState(),
+      ...parsed,
+    };
+
+    updateHUD();
+    updateLobbyFromState();
+    updateCalendarUI();
+
+    showScreen('screen-lobby');
+    return gameState;
+  } catch (err) {
+    console.error('Erro ao carregar jogo:', err);
+    alert('Não foi possível carregar a carreira salva.');
+    return null;
+  }
 }
 
-/* ============================================================
-   Fluxo: Manager personalizado
-   ============================================================ */
-function onConfirmCustomManagerClicked() {
-  const nameInput = document.getElementById("input-manager-name");
-  const countryInput = document.getElementById("input-manager-country");
+function resetNewGame() {
+  gameState = createDefaultState();
+  updateHUD();
+  updateLobbyFromState();
+  updateCalendarUI();
+}
 
-  const name = (nameInput?.value || "").trim();
-  const country = (countryInput?.value || "").trim();
+// ----------------------- ORIENTAÇÃO / FULLSCREEN ------------
 
-  if (!name) {
-    alert("Digite um nome para o seu manager.");
-    if (nameInput) nameInput.focus();
-    return;
+async function tryEnterFullscreenAndLandscape() {
+  // Algumas APIs só funcionam em mobile + ação do usuário. Vamos tentar,
+  // mas se não der certo, o jogo continua funcionando normalmente.
+  try {
+    if (document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
+    }
+  } catch (e) {
+    console.warn('Fullscreen não disponível:', e);
   }
 
-  UI_STATE.selectedManager = {
-    type: "custom",
-    data: {
-      name,
-      country: country || "País não informado",
-    },
-  };
-
-  // Depois ligamos aqui com o sistema de carreira real.
-  alert(
-    `Manager criado:\n${name} (${UI_STATE.selectedManager.data.country})\n\n` +
-      "Próximo passo: escolha de equipe / escuderia e lobby (será conectado na próxima etapa)."
-  );
-
-  showScreen(SCREENS.MAIN_MENU);
+  try {
+    if (screen.orientation && screen.orientation.lock) {
+      await screen.orientation.lock('landscape');
+    }
+  } catch (e) {
+    console.warn('Lock de orientação não disponível:', e);
+  }
 }
 
-function onBackToManagerChoiceFromCreate() {
-  showScreen(SCREENS.MANAGER_CHOICE);
-}
+// ----------------------- CONSTRUÇÃO DE LISTAS ----------------
 
-/* ============================================================
-   Inicialização: ligar todos os botões
-   ============================================================ */
-document.addEventListener("DOMContentLoaded", () => {
-  // Tela inicial = capa
-  showScreen(SCREENS.SPLASH);
+function buildRealManagerList() {
+  const container = $('real-manager-list');
+  if (!container) return;
 
-  // Splash
-  const touchCatcher = document.getElementById("touch-catcher");
-  if (touchCatcher) {
-    touchCatcher.addEventListener("click", onSplashTouched);
-    touchCatcher.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      onSplashTouched();
+  container.innerHTML = '';
+
+  REAL_MANAGERS.forEach((mng) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn list-item';
+    const team = TEAMS.find((t) => t.id === mng.teamId);
+
+    btn.textContent = team
+      ? `${mng.name} — ${team.name}`
+      : mng.name;
+
+    btn.addEventListener('click', () => {
+      gameState.manager = {
+        type: 'real',
+        id: mng.id,
+        name: mng.name,
+        country: team ? team.country : 'Desconhecido',
+      };
+
+      // Sugestão automática: equipe padrão do manager real
+      if (team) {
+        gameState.team = team;
+      }
+
+      updateLobbyFromState();
+      updateHUD();
+      updateCalendarUI();
+
+      alert(
+        `Manager real selecionado:\n${mng.name}`
+        + (team ? ` (${team.name})` : '')
+        + '\n\nVocê será levado ao lobby principal.'
+      );
+
+      showScreen('screen-lobby');
+      saveGame(false);
     });
-  } else {
-    console.warn(
-      'Elemento "#touch-catcher" não encontrado. Verifique se ele existe na tela de capa.'
-    );
+
+    container.appendChild(btn);
+  });
+}
+
+function buildCountrySelect() {
+  const select = $('select-manager-country');
+  if (!select) return;
+
+  select.innerHTML = '';
+
+  const optDefault = document.createElement('option');
+  optDefault.value = '';
+  optDefault.textContent = 'Selecione um país';
+  select.appendChild(optDefault);
+
+  COUNTRIES.forEach((country) => {
+    const opt = document.createElement('option');
+    opt.value = country;
+    opt.textContent = country;
+    select.appendChild(opt);
+  });
+}
+
+function buildTeamList() {
+  const container = $('team-list');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  TEAMS.forEach((team) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn list-item';
+    btn.textContent = team.name;
+
+    btn.addEventListener('click', () => {
+      gameState.team = team;
+      updateLobbyFromState();
+      updateHUD();
+      updateCalendarUI();
+
+      alert(
+        `Equipe selecionada:\n${team.name}\n\n` +
+        'Você será levado ao lobby principal.'
+      );
+
+      showScreen('screen-lobby');
+      saveGame(false);
+    });
+
+    container.appendChild(btn);
+  });
+}
+
+// ----------------------- EVENTOS PRINCIPAIS ------------------
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Construir listas fixas
+  buildRealManagerList();
+  buildCountrySelect();
+  buildTeamList();
+  updateCalendarUI();
+  updateHUD();
+  updateLobbyFromState();
+
+  // 1) Tela de capa – clicar em qualquer lugar
+  const screenCover = $('screen-cover');
+  if (screenCover) {
+    screenCover.addEventListener('click', async () => {
+      await tryEnterFullscreenAndLandscape();
+      showScreen('screen-main-menu');
+    });
   }
 
-  // Menu principal
-  const btnNew = document.getElementById("btn-new-career");
-  const btnContinue = document.getElementById("btn-continue-career");
-  if (btnNew) btnNew.addEventListener("click", onNewCareerClicked);
-  if (btnContinue) btnContinue.addEventListener("click", onContinueCareerClicked);
+  // 2) Menu principal
+  const btnNewGame = $('btn-new-game');
+  const btnContinue = $('btn-continue-game');
 
-  // Tela de tipo de manager
-  const btnUseReal = document.getElementById("btn-use-real-manager");
-  const btnCreate = document.getElementById("btn-create-manager");
-  const btnBackChoiceToMain = document.getElementById("btn-back-main-from-choice");
-  if (btnUseReal) btnUseReal.addEventListener("click", onUseRealManagerClicked);
-  if (btnCreate) btnCreate.addEventListener("click", onCreateManagerClicked);
-  if (btnBackChoiceToMain)
-    btnBackChoiceToMain.addEventListener("click", onBackToMainFromChoice);
+  if (btnNewGame) {
+    btnNewGame.addEventListener('click', () => {
+      resetNewGame();
+      showScreen('screen-manager-type');
+    });
+  }
 
-  // Tela de managers reais
-  const btnBackRealToChoice = document.getElementById(
-    "btn-back-manager-choice-from-real"
-  );
-  if (btnBackRealToChoice)
-    btnBackRealToChoice.addEventListener("click", onBackToManagerChoiceFromReal);
+  if (btnContinue) {
+    btnContinue.addEventListener('click', () => {
+      const loaded = loadGameFromStorage();
+      if (!loaded) {
+        alert('Nenhuma carreira salva encontrada.');
+      }
+    });
+  }
 
-  // Tela de criação de manager
-  const btnConfirmCustom = document.getElementById("btn-confirm-custom-manager");
-  const btnBackCreateToChoice = document.getElementById(
-    "btn-back-manager-choice-from-create"
-  );
-  if (btnConfirmCustom)
-    btnConfirmCustom.addEventListener("click", onConfirmCustomManagerClicked);
-  if (btnBackCreateToChoice)
-    btnBackCreateToChoice.addEventListener("click", onBackToManagerChoiceFromCreate);
+  // 3) Tipo de manager
+  const btnUseRealManager = $('btn-use-real-manager');
+  const btnCreateManager = $('btn-create-manager');
+  const btnBackToMenu = $('btn-back-to-menu');
+
+  if (btnUseRealManager) {
+    btnUseRealManager.addEventListener('click', () => {
+      showScreen('screen-manager-real');
+    });
+  }
+
+  if (btnCreateManager) {
+    btnCreateManager.addEventListener('click', () => {
+      showScreen('screen-manager-create');
+    });
+  }
+
+  if (btnBackToMenu) {
+    btnBackToMenu.addEventListener('click', () => {
+      showScreen('screen-main-menu');
+    });
+  }
+
+  // 4) Criar manager (formulário)
+  const createForm = $('create-manager-form');
+  if (createForm) {
+    createForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const nameInput = $('input-manager-name');
+      const countrySelect = $('select-manager-country');
+
+      const name = nameInput ? nameInput.value.trim() : '';
+      const country = countrySelect ? countrySelect.value : '';
+
+      if (!name) {
+        alert('Digite o nome do manager.');
+        return;
+      }
+
+      if (!country) {
+        alert('Selecione um país.');
+        return;
+      }
+
+      gameState.manager = {
+        type: 'custom',
+        id: `custom_${Date.now()}`,
+        name,
+        country,
+      };
+
+      // Próximo passo: escolher equipe
+      alert(
+        `Manager criado:\n${name} (${country})\n\n` +
+        'Escolha agora a equipe / escuderia.'
+      );
+
+      showScreen('screen-team-select');
+    });
+  }
+
+  // Voltar da tela de criar / real para tipo de manager
+  const btnBackManagerTypeFromCreate = $('btn-back-manager-type-from-create');
+  const btnBackManagerTypeFromReal = $('btn-back-manager-type-from-real');
+
+  if (btnBackManagerTypeFromCreate) {
+    btnBackManagerTypeFromCreate.addEventListener('click', () => {
+      showScreen('screen-manager-type');
+    });
+  }
+
+  if (btnBackManagerTypeFromReal) {
+    btnBackManagerTypeFromReal.addEventListener('click', () => {
+      showScreen('screen-manager-type');
+    });
+  }
+
+  // Voltar da escolha de equipe
+  const btnBackFromTeamSelect = $('btn-back-from-team-select');
+  if (btnBackFromTeamSelect) {
+    btnBackFromTeamSelect.addEventListener('click', () => {
+      // Se não tiver manager ainda, volta para tipo de manager
+      if (!gameState.manager) {
+        showScreen('screen-manager-type');
+      } else {
+        // Se já escolheu manager, volta pra tela adequada
+        if (gameState.manager.type === 'real') {
+          showScreen('screen-manager-real');
+        } else {
+          showScreen('screen-manager-create');
+        }
+      }
+    });
+  }
+
+  // 5) Lobby – abrir telas
+  const btnOpenCalendar = $('btn-open-calendar');
+  const btnOpenRace = $('btn-open-race');
+  const btnOpenFinance = $('btn-open-finance');
+  const btnOpenStaff = $('btn-open-staff');
+  const btnOpenSponsors = $('btn-open-sponsors');
+  const btnOpenContracts = $('btn-open-contracts');
+  const btnSaveGame = $('btn-save-game');
+  const btnExitToMenu = $('btn-exit-to-menu');
+
+  if (btnOpenCalendar) {
+    btnOpenCalendar.addEventListener('click', () => {
+      updateCalendarUI();
+      showScreen('screen-calendar');
+    });
+  }
+
+  if (btnOpenRace) {
+    btnOpenRace.addEventListener('click', () => {
+      showScreen('screen-race');
+    });
+  }
+
+  if (btnOpenFinance) {
+    btnOpenFinance.addEventListener('click', () => {
+      showScreen('screen-finance');
+    });
+  }
+
+  if (btnOpenStaff) {
+    btnOpenStaff.addEventListener('click', () => {
+      showScreen('screen-staff');
+    });
+  }
+
+  if (btnOpenSponsors) {
+    btnOpenSponsors.addEventListener('click', () => {
+      showScreen('screen-sponsors');
+    });
+  }
+
+  if (btnOpenContracts) {
+    btnOpenContracts.addEventListener('click', () => {
+      showScreen('screen-contracts');
+    });
+  }
+
+  if (btnSaveGame) {
+    btnSaveGame.addEventListener('click', () => {
+      saveGame(true);
+    });
+  }
+
+  if (btnExitToMenu) {
+    btnExitToMenu.addEventListener('click', () => {
+      showScreen('screen-main-menu');
+    });
+  }
+
+  // 6) Botões VOLTAR das telas internas para o lobby
+  document.querySelectorAll('.btn-back-lobby').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      showScreen('screen-lobby');
+    });
+  });
+
+  // 7) Controles simples da corrida (placeholder)
+  const btnStartRace = $('btn-start-race');
+  if (btnStartRace) {
+    btnStartRace.addEventListener('click', () => {
+      alert(
+        'Sistema de corrida detalhado (mapa, carros, pneus, ' +
+        'telemetria, etc.) será implementado na próxima etapa.\n\n' +
+        'Por enquanto, esta tela é apenas um placeholder.'
+      );
+    });
+  }
+
+  document.querySelectorAll('.race-speed-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const speed = btn.getAttribute('data-speed');
+      alert(`Velocidade de simulação ajustada para ${speed}x (placeholder).`);
+    });
+  });
+
+  // 8) Começar sempre na capa
+  showScreen('screen-cover');
 });
