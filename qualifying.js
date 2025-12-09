@@ -31,20 +31,20 @@ const DRIVERS_2025 = [
   { id: "alonso", name: "Fernando Alonso", teamKey: "aston", teamName: "Aston Martin", rating: 94, color: "#00b894", face: "assets/faces/alonso.png", logo: "assets/logos/aston.png" },
   { id: "stroll", name: "Lance Stroll",   teamKey: "aston", teamName: "Aston Martin", rating: 88, color: "#00b894", face: "assets/faces/stroll.png", logo: "assets/logos/aston.png" },
 
-  { id: "ogasly", name: "Pierre Gasly",  teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", face: "assets/faces/gasly.png",  logo: "assets/logos/alpine.png" },
-  { id: "ocon",   name: "Esteban Ocon", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", face: "assets/faces/ocon.png",   logo: "assets/logos/alpine.png" },
+  { id: "gasly", name: "Pierre Gasly",  teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", face: "assets/faces/gasly.png",  logo: "assets/logos/alpine.png" },
+  { id: "ocon",  name: "Esteban Ocon", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", face: "assets/faces/ocon.png",   logo: "assets/logos/alpine.png" },
 
   { id: "tsunoda", name: "Yuki Tsunoda", teamKey: "racingbulls", teamName: "Racing Bulls", rating: 89, color: "#7f00ff", face: "assets/faces/tsunoda.png", logo: "assets/logos/racingbulls.png" },
   { id: "lawson",  name: "Liam Lawson", teamKey: "racingbulls", teamName: "Racing Bulls", rating: 88, color: "#7f00ff", face: "assets/faces/lawson.png",  logo: "assets/logos/racingbulls.png" },
 
-  { id: "hulkenberg", name: "Nico Hülkenberg", teamKey: "sauber", teamName: "Sauber / Audi", rating: 89, color: "#00cec9", face: "assets/faces/hulkenberg.png", logo: "assets/logos/sauber.png" },
+  { id: "hulkenberg", name: "Nico Hülkenberg",   teamKey: "sauber", teamName: "Sauber / Audi", rating: 89, color: "#00cec9", face: "assets/faces/hulkenberg.png", logo: "assets/logos/sauber.png" },
   { id: "bortoleto",  name: "Gabriel Bortoleto", teamKey: "sauber", teamName: "Sauber / Audi", rating: 88, color: "#00cec9", face: "assets/faces/bortoleto.png",  logo: "assets/logos/sauber.png" },
 
-  { id: "kevin",  name: "Kevin Magnussen", teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", face: "assets/faces/magnussen.png", logo: "assets/logos/haas.png" },
-  { id: "bearman",name: "Oliver Bearman",  teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", face: "assets/faces/bearman.png",   logo: "assets/logos/haas.png" },
+  { id: "kevin",    name: "Kevin Magnussen", teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", face: "assets/faces/magnussen.png", logo: "assets/logos/haas.png" },
+  { id: "bearman",  name: "Oliver Bearman",  teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", face: "assets/faces/bearman.png",   logo: "assets/logos/haas.png" },
 
-  { id: "albon", name: "Alex Albon",  teamKey: "williams", teamName: "Williams Racing", rating: 89, color: "#0984e3", face: "assets/faces/albon.png", logo: "assets/logos/williams.png" },
-  { id: "sargeant", name: "Logan Sargeant", teamKey: "williams", teamName: "Williams Racing", rating: 86, color: "#0984e3", face: "assets/faces/sargeant.png", logo: "assets/logos/williams.png" }
+  { id: "albon",    name: "Alex Albon",        teamKey: "williams", teamName: "Williams Racing", rating: 89, color: "#0984e3", face: "assets/faces/albon.png",    logo: "assets/logos/williams.png" },
+  { id: "sargeant", name: "Logan Sargeant",    teamKey: "williams", teamName: "Williams Racing", rating: 86, color: "#0984e3", face: "assets/faces/sargeant.png", logo: "assets/logos/williams.png" }
 ];
 
 // ------------------------------
@@ -52,7 +52,7 @@ const DRIVERS_2025 = [
 // ------------------------------
 const qualyState = {
   phaseIndex: 0,          // 0=Q1 1=Q2 2=Q3
-  currentLap: 1,
+  currentLap: 1,          // volta atual do líder (para HUD)
   currentDrivers: [],
   finalGrid: null,
   nextPhaseDrivers: null,
@@ -64,7 +64,8 @@ const qualyState = {
   driverVisuals: [],
   lastUpdateTime: null,
   running: true,
-  speedMultiplier: 1
+  speedMultiplier: 1,
+  phaseFinished: false
 };
 
 // ------------------------------
@@ -80,6 +81,14 @@ function formatLapTime(ms) {
   const ss = String(seconds).padStart(2, "0");
   const mmm = String(millis).padStart(3, "0");
   return `${mm}:${ss}.${mmm}`;
+}
+
+// tempo de volta “fake” mas razoável, baseado no rating
+function randomLapTimeForDriver(drv) {
+  // base ~ 1:30 para rating 88, mais rápido para ratings maiores
+  const baseMs = 90000 - (drv.rating - 88) * 600; // cada ponto tira ~0,6s
+  const variation = (Math.random() - 0.5) * 2000; // +/- 1s
+  return baseMs + variation;
 }
 
 // Interpola posição na pista a partir de 0..1
@@ -121,7 +130,6 @@ function initQualifying() {
   qualyState.gpName = gp;
   qualyState.userTeamKey = userTeam;
 
-  // Títulos
   const titleEl = document.getElementById("qualy-title-gp");
   if (titleEl) {
     titleEl.textContent = gp;
@@ -134,12 +142,11 @@ function initQualifying() {
     ...drv,
     index: idx,
     progress: Math.random(), // posição aleatória na pista
-    speedBase: 0.00020 + (drv.rating / 100000), // mais rating = mais rápido
+    speedBase: 0.00012 + (drv.rating / 130000), // ajustado p/ não acabar tão rápido
     speedVar: 0,
     laps: 0,
     bestLapTime: null,
-    lastLapTime: null,
-    lastLapTimestamp: null
+    lastLapTime: null
   }));
 
   // Preenche cards dos pilotos da equipe do usuário
@@ -185,7 +192,6 @@ async function loadTrackSvg(trackKey) {
     return;
   }
 
-  // Amostra pontos ao longo do path
   const pathLen = path.getTotalLength();
   const samples = 400;
   const pts = [];
@@ -194,7 +200,6 @@ async function loadTrackSvg(trackKey) {
     pts.push({ x: p.x, y: p.y });
   }
 
-  // Normaliza para o viewBox 1000x600
   const xs = pts.map((p) => p.x);
   const ys = pts.map((p) => p.y);
   const minX = Math.min(...xs);
@@ -210,11 +215,8 @@ async function loadTrackSvg(trackKey) {
     y: ((p.y - minY) / height) * 600
   }));
 
-  // Desenha linha cinza
-  const trackPath = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "polyline"
-  );
+  // pista cinza
+  const trackPath = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
   trackPath.setAttribute(
     "points",
     qualyState.pathPoints.map((p) => `${p.x},${p.y}`).join(" ")
@@ -226,11 +228,8 @@ async function loadTrackSvg(trackKey) {
   trackPath.setAttribute("stroke-linejoin", "round");
   svg.appendChild(trackPath);
 
-  // Linha branca interna
-  const innerPath = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "polyline"
-  );
+  // linha branca
+  const innerPath = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
   innerPath.setAttribute(
     "points",
     qualyState.pathPoints.map((p) => `${p.x},${p.y}`).join(" ")
@@ -242,12 +241,9 @@ async function loadTrackSvg(trackKey) {
   innerPath.setAttribute("stroke-linejoin", "round");
   svg.appendChild(innerPath);
 
-  // Pontos brancos (nodes)
+  // pontos brancos
   qualyState.pathPoints.forEach((p) => {
-    const c = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "circle"
-    );
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     c.setAttribute("cx", p.x);
     c.setAttribute("cy", p.y);
     c.setAttribute("r", 3);
@@ -255,7 +251,7 @@ async function loadTrackSvg(trackKey) {
     svg.appendChild(c);
   });
 
-  // Grid de chegada (usa ponto 0)
+  // bandeira (ponto 0)
   const flagPoint = qualyState.pathPoints[0];
   const flag = document.createElementNS("http://www.w3.org/2000/svg", "text");
   flag.setAttribute("x", flagPoint.x);
@@ -266,29 +262,19 @@ async function loadTrackSvg(trackKey) {
   flag.textContent = "🏁";
   svg.appendChild(flag);
 
-  // Cria visuais dos carros
+  // carros
   qualyState.driverVisuals = qualyState.currentDrivers.map((drv) => {
-    const group = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "g"
-    );
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
-    const body = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "circle"
-    );
+    const body = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     body.setAttribute("r", 6);
     body.setAttribute("stroke", "#000");
     body.setAttribute("stroke-width", "1.5");
     body.setAttribute("fill", drv.color || "#ffffff");
     group.appendChild(body);
 
-    // Se for da equipe do usuário, desenha um triângulo (setinha)
     if (drv.teamKey === qualyState.userTeamKey) {
-      const tri = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "polygon"
-      );
+      const tri = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
       tri.setAttribute("points", "0,-10 6,0 -6,0");
       tri.setAttribute("fill", drv.color || "#ffffff");
       group.appendChild(tri);
@@ -304,7 +290,10 @@ async function loadTrackSvg(trackKey) {
 // LOOP PRINCIPAL
 // ------------------------------
 function gameLoopQualy(timestamp) {
-  if (!qualyState.running) return;
+  if (!qualyState.running) {
+    requestAnimationFrame(gameLoopQualy);
+    return;
+  }
 
   const dt =
     qualyState.lastUpdateTime != null
@@ -325,58 +314,44 @@ function updateQualySimulation(dtMs) {
   if (!qualyState.pathPoints.length) return;
 
   const fase = QUALY_PHASES[qualyState.phaseIndex];
-  if (!fase) return;
-
-  const now = performance.now();
-  let algumCompletouVolta = false;
+  if (!fase || qualyState.phaseFinished) return;
 
   qualyState.currentDrivers.forEach((drv) => {
-    // variação de velocidade para dar "vida"
     const noise = (Math.random() - 0.5) * 0.00002;
     drv.speedVar = noise;
     const speed = drv.speedBase + drv.speedVar;
 
-    // progresso na pista
     const deltaProgress = speed * (dtMs || 0);
-    const oldProgress = drv.progress;
-    let newProgress = oldProgress + deltaProgress;
+    let newProgress = drv.progress + deltaProgress;
 
     if (newProgress >= 1) {
-      // completou volta
       newProgress -= 1;
-      const lapTime = drv.lastLapTimestamp
-        ? now - drv.lastLapTimestamp
-        : 90000 + Math.random() * 5000; // primeira volta, valor aproximado
 
+      // completou UMA volta
       drv.laps += 1;
+      const lapTime = randomLapTimeForDriver(drv);
       drv.lastLapTime = lapTime;
-      if (
-        drv.bestLapTime == null ||
-        lapTime < drv.bestLapTime
-      ) {
+      if (drv.bestLapTime == null || lapTime < drv.bestLapTime) {
         drv.bestLapTime = lapTime;
       }
-      drv.lastLapTimestamp = now;
-      algumCompletouVolta = true;
     }
 
     drv.progress = newProgress;
-    if (drv.lastLapTimestamp == null) {
-      drv.lastLapTimestamp = now;
-    }
   });
 
-  if (algumCompletouVolta) {
-    qualyState.currentLap += 1;
-    if (qualyState.currentLap > fase.totalLaps) {
-      qualyState.currentLap = fase.totalLaps;
-      qualyState.running = false;
-      finalizarFaseQualy();
-    }
-    atualizarHeaderFaseQualy();
-  }
+  // líder define a volta atual
+  const maxLaps = Math.max(...qualyState.currentDrivers.map((d) => d.laps));
+  qualyState.currentLap = Math.min(maxLaps + 1, fase.totalLaps);
 
+  atualizarHeaderFaseQualy();
   atualizarListaPilotosQualy();
+
+  // terminou a fase quando o líder completar totalLaps
+  if (maxLaps >= fase.totalLaps) {
+    qualyState.phaseFinished = true;
+    qualyState.running = false;
+    finalizarFaseQualy();
+  }
 }
 
 // ------------------------------
@@ -395,10 +370,7 @@ function renderQualy() {
     const drv = driversById[vis.driverId];
     if (!drv) return;
     const pos = getPositionOnTrack(drv.progress);
-    vis.group.setAttribute(
-      "transform",
-      `translate(${pos.x},${pos.y})`
-    );
+    vis.group.setAttribute("transform", `translate(${pos.x},${pos.y})`);
   });
 }
 
@@ -410,9 +382,7 @@ function atualizarHeaderFaseQualy() {
   const faseLabel = document.getElementById("qualy-phase-label");
   const lapLabel = document.getElementById("qualy-lap-label");
   if (faseLabel) {
-    faseLabel.textContent = `${fase.id} · ELIMINADOS AO FINAL: ${
-      fase.eliminated
-    } PILOTOS`;
+    faseLabel.textContent = `${fase.id} · ELIMINADOS AO FINAL: ${fase.eliminated} PILOTOS`;
   }
   if (lapLabel) {
     lapLabel.textContent = `Volta ${qualyState.currentLap} / ${fase.totalLaps}`;
@@ -423,12 +393,6 @@ function atualizarListaPilotosQualy() {
   const list = document.getElementById("drivers-list");
   if (!list) return;
 
-  const fase = QUALY_PHASES[qualyState.phaseIndex];
-
-  // Ordena por:
-  // 1) mais voltas
-  // 2) melhor tempo
-  // 3) rating
   const ordenados = [...qualyState.currentDrivers].sort((a, b) => {
     if (b.laps !== a.laps) return b.laps - a.laps;
     const ta = a.bestLapTime ?? Infinity;
@@ -467,7 +431,6 @@ function atualizarListaPilotosQualy() {
 
     textDiv.appendChild(nameSpan);
     textDiv.appendChild(teamSpan);
-
     infoDiv.appendChild(imgFace);
     infoDiv.appendChild(textDiv);
 
@@ -483,7 +446,6 @@ function atualizarListaPilotosQualy() {
     row.appendChild(infoDiv);
     row.appendChild(statsDiv);
 
-    // destaque para pilotos da equipe do usuário
     if (drv.teamKey === qualyState.userTeamKey) {
       row.classList.add("user-team-row");
     }
@@ -509,12 +471,10 @@ function preencherPilotosDaEquipe() {
     const face = card.querySelector(".user-face");
     const name = card.querySelector(".user-name");
     const teamName = card.querySelector(".user-team");
-    const logo = card.querySelector(".user-logo");
 
     if (face) face.src = drv.face || "";
     if (name) name.textContent = drv.name;
     if (teamName) teamName.textContent = drv.teamName;
-    if (logo) logo.src = drv.logo || "";
   });
 }
 
@@ -525,14 +485,12 @@ function finalizarFaseQualy() {
   const fase = QUALY_PHASES[qualyState.phaseIndex];
   if (!fase) return;
 
-  // Ordena pelo melhor tempo
   const gridOrdenado = [...qualyState.currentDrivers].sort((a, b) => {
     const ta = a.bestLapTime ?? Infinity;
     const tb = b.bestLapTime ?? Infinity;
     return ta - tb;
   });
 
-  // adiciona posição
   gridOrdenado.forEach((drv, idx) => {
     drv.position = idx + 1;
   });
@@ -540,7 +498,6 @@ function finalizarFaseQualy() {
   const ehUltimaFase = qualyState.phaseIndex === QUALY_PHASES.length - 1;
 
   if (!ehUltimaFase) {
-    // Q1 / Q2: elimina os últimos
     const qtdEliminados = fase.eliminated || 0;
     const classificados = gridOrdenado.slice(
       0,
@@ -555,7 +512,6 @@ function finalizarFaseQualy() {
 
     mostrarModalQualyFase(fase.id, classificados, eliminados);
   } else {
-    // Q3 = GRID FINAL
     qualyState.finalGrid = gridOrdenado;
     salvarGridFinalQualy();
     qualyState.modalMode = "final";
@@ -621,16 +577,15 @@ function onQualyModalAction() {
     modal.classList.add("hidden");
     qualyState.phaseIndex++;
     qualyState.currentLap = 1;
+    qualyState.phaseFinished = false;
 
     if (Array.isArray(qualyState.nextPhaseDrivers)) {
-      // reset em voltas/tempos
       qualyState.currentDrivers = qualyState.nextPhaseDrivers.map((drv) => ({
         ...drv,
         laps: 0,
         progress: Math.random(),
         bestLapTime: null,
-        lastLapTime: null,
-        lastLapTimestamp: null
+        lastLapTime: null
       }));
     }
 
@@ -639,7 +594,6 @@ function onQualyModalAction() {
     qualyState.lastUpdateTime = performance.now();
     atualizarHeaderFaseQualy();
   } else if (qualyState.modalMode === "final") {
-    // GRID FECHADO -> VAI PARA CORRIDA
     modal.classList.add("hidden");
 
     const params = new URLSearchParams(window.location.search);
