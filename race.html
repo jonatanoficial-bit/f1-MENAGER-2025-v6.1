@@ -11,46 +11,50 @@
     <div class="race-layout">
       <!-- ESQUERDA: PISTA -->
       <div class="race-left">
-        <div id="track-container" class="track-container"></div>
+        <div id="race-track-container" class="track-container"></div>
       </div>
 
-      <!-- DIREITA: HUD -->
+      <!-- DIREITA: HUD / LISTA / PAINEL DO USUÁRIO -->
       <div class="race-right">
         <div class="hud-panel">
+          <!-- CABEÇALHO -->
           <div class="hud-header">
             <div>
-              <h1 class="hud-title" id="gp-title">Corrida</h1>
+              <h1 class="hud-title" id="race-gp-title">Corrida</h1>
               <p class="hud-subtitle">Temporada oficial F1 2025</p>
             </div>
             <div class="hud-meta">
-              <span id="race-lap-label" class="hud-lap">Volta 1 / 10</span>
+              <span id="race-lap-label" class="hud-lap">Volta 1 / 25</span>
             </div>
           </div>
 
-          <!-- LISTA DE PILOTOS (com rolagem) -->
-          <div id="drivers-list" class="drivers-list">
-            <!-- Cards criados via JS -->
+          <!-- RÁDIO (MENSAGENS DO PILOTO / SAFETY CAR) -->
+          <div id="race-radio" class="race-radio">
+            <!-- mensagens tipo: "Pneus no limite! Recomendo box!" -->
+          </div>
+
+          <!-- LISTA GERAL DE PILOTOS (com rolagem) -->
+          <div id="race-drivers-list" class="drivers-list">
+            <!-- linhas criadas via race.js -->
           </div>
 
           <!-- PAINEL DO USUÁRIO (2 pilotos da equipe escolhida) -->
           <div class="user-panel">
             <div class="user-panel-title">Pilotos da sua equipe</div>
+
             <div class="user-driver-row">
-              <div
-                class="user-driver-card"
-                id="user-driver-card-0"
-                data-index="0"
-              >
+              <!-- PILOTO 1 -->
+              <div class="user-driver-card" id="user-race-driver-1">
                 <div class="user-driver-main">
-                  <img class="user-face" id="user-face-0" src="" alt="" />
+                  <img class="user-face" src="" alt="" />
                   <div class="user-info">
-                    <div class="user-name" id="user-name-0">---</div>
-                    <div class="user-team" id="user-team-0">---</div>
+                    <div class="user-name">---</div>
+                    <div class="user-team">---</div>
                     <div class="user-status-line">
-                      Carro: <span id="user-car-0">100%</span>
+                      Pneus: <span class="user-tyre">0%</span>
                     </div>
                     <div class="user-status-line">
-                      Pneus: <span id="user-tyre-0">0%</span>
+                      Status: <span class="user-status"></span>
                     </div>
                   </div>
                 </div>
@@ -58,42 +62,36 @@
                   <button
                     class="user-btn pit"
                     data-action="pit"
-                    data-index="0"
                   >
                     PIT STOP
                   </button>
                   <button
                     class="user-btn mode"
                     data-action="save"
-                    data-index="0"
                   >
                     ECONOMIZAR
                   </button>
                   <button
                     class="user-btn mode"
-                    data-action="push"
-                    data-index="0"
+                    data-action="attack"
                   >
                     ATAQUE
                   </button>
                 </div>
               </div>
 
-              <div
-                class="user-driver-card"
-                id="user-driver-card-1"
-                data-index="1"
-              >
+              <!-- PILOTO 2 -->
+              <div class="user-driver-card" id="user-race-driver-2">
                 <div class="user-driver-main">
-                  <img class="user-face" id="user-face-1" src="" alt="" />
+                  <img class="user-face" src="" alt="" />
                   <div class="user-info">
-                    <div class="user-name" id="user-name-1">---</div>
-                    <div class="user-team" id="user-team-1">---</div>
+                    <div class="user-name">---</div>
+                    <div class="user-team">---</div>
                     <div class="user-status-line">
-                      Carro: <span id="user-car-1">100%</span>
+                      Pneus: <span class="user-tyre">0%</span>
                     </div>
                     <div class="user-status-line">
-                      Pneus: <span id="user-tyre-1">0%</span>
+                      Status: <span class="user-status"></span>
                     </div>
                   </div>
                 </div>
@@ -101,21 +99,18 @@
                   <button
                     class="user-btn pit"
                     data-action="pit"
-                    data-index="1"
                   >
                     PIT STOP
                   </button>
                   <button
                     class="user-btn mode"
                     data-action="save"
-                    data-index="1"
                   >
                     ECONOMIZAR
                   </button>
                   <button
                     class="user-btn mode"
-                    data-action="push"
-                    data-index="1"
+                    data-action="attack"
                   >
                     ATAQUE
                   </button>
@@ -128,9 +123,16 @@
           <div class="controls-row">
             <div class="controls">
               <span class="controls-label">Velocidade:</span>
-              <button class="speed-btn active" data-speed="1">1x</button>
-              <button class="speed-btn" data-speed="2">2x</button>
-              <button class="speed-btn" data-speed="4">4x</button>
+              <!-- deixei as duas classes: speed-btn (CSS antigo) e race-speed-btn (JS novo) -->
+              <button class="speed-btn race-speed-btn active" data-speed="1">
+                1x
+              </button>
+              <button class="speed-btn race-speed-btn" data-speed="2">
+                2x
+              </button>
+              <button class="speed-btn race-speed-btn" data-speed="4">
+                4x
+              </button>
             </div>
           </div>
 
@@ -143,31 +145,18 @@
       </div>
     </div>
 
-    <!-- MODAL DO PÓDIO -->
-    <div id="podium-modal" class="podium-modal hidden">
-      <div class="podium-content">
-        <h2>Pódio – Resultado Final</h2>
-        <div class="podium-cards">
-          <div class="podium-card first">
-            <div class="podium-pos">1º</div>
-            <img id="podium1-face" class="podium-face" src="" alt="1º lugar" />
-            <div class="podium-name" id="podium1-name"></div>
-            <div class="podium-team" id="podium1-team"></div>
-          </div>
-          <div class="podium-card second">
-            <div class="podium-pos">2º</div>
-            <img id="podium2-face" class="podium-face" src="" alt="2º lugar" />
-            <div class="podium-name" id="podium2-name"></div>
-            <div class="podium-team" id="podium2-team"></div>
-          </div>
-          <div class="podium-card third">
-            <div class="podium-pos">3º</div>
-            <img id="podium3-face" class="podium-face" src="" alt="3º lugar" />
-            <div class="podium-name" id="podium3-name"></div>
-            <div class="podium-team" id="podium3-team"></div>
-          </div>
+    <!-- MODAL DE RESULTADO FINAL (USADO PELO race.js) -->
+    <div id="race-result-modal" class="race-result-modal hidden">
+      <div class="race-result-content">
+        <div id="race-result-body" class="race-result-body">
+          <!-- preenchido via JS com lista final -->
         </div>
-        <button class="podium-close" onclick="closePodium()">Fechar</button>
+        <button
+          class="race-result-ok"
+          onclick="window.location.href='calendario.html'"
+        >
+          OK – Voltar ao calendário
+        </button>
       </div>
     </div>
 
