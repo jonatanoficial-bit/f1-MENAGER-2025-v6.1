@@ -350,14 +350,11 @@ function atualizarFisicaCorrida(dtMs) {
 
   raceState.totalRaceTime += dtMs;
 
-  let todosTerminaram = true;
-
   raceState.drivers.forEach((drv) => {
     if (drv.dnf || drv.finishTime != null) {
       return;
     }
 
-    todosTerminaram = false;
     drv.totalTime += dtMs;
 
     // Se estiver no box
@@ -535,7 +532,7 @@ function ativarSafetyCar() {
   if (raceState.safetyCarActive) return;
   raceState.safetyCarActive = true;
   mostrarAvisoRadio("Safety Car na pista!");
-  // poderia ter lógica para desativar depois de algumas voltas
+  // (no futuro podemos desligar depois de X voltas)
 }
 
 // ------------------------------
@@ -658,12 +655,6 @@ function atualizarHudCorrida() {
       const stats = document.createElement("div");
       stats.className = "race-stats";
 
-      let gapText = "--";
-      if (leader && drv !== leader && leader.finishTime != null && drv.finishTime != null) {
-        const gap = drv.finishTime - leader.finishTime;
-        gapText = `+${formatTime(gap)}`;
-      }
-
       stats.innerHTML = `
         <div><span>Voltas:</span> ${drv.laps}/${RACE_LAPS}</div>
         <div><span>Melhor:</span> ${formatTime(drv.bestLapTime ?? Infinity)}</div>
@@ -785,7 +776,7 @@ function atualizarPainelUserTeam() {
 }
 
 // ------------------------------
-// RESULTADOS FINAIS
+// RESULTADOS FINAIS + PÓDIO
 // ------------------------------
 function mostrarResultadosFinais() {
   // ordena por posição final
@@ -821,20 +812,52 @@ function mostrarResultadosFinais() {
     console.warn("Não foi possível salvar resultado da corrida:", e);
   }
 
-  // se existir modal de resultados na race.html, preenche
+  // monta HTML do resultado com PÓDIO
   const modal = document.getElementById("race-result-modal");
   const body = document.getElementById("race-result-body");
   if (modal && body) {
-    let html = `<h3>Resultado Final</h3><ol>`;
+    const top3 = final.filter((d) => !d.dnf && d.finishTime != null).slice(0, 3);
+
+    let html = `<h3>Pódio – ${raceState.gpName || "GP 2025"}</h3>`;
+
+    if (top3.length > 0) {
+      html += `<div class="podium-inline">`;
+
+      top3.forEach((d, idx) => {
+        const posLabel = `${idx + 1}º`;
+        html += `
+          <div class="podium-inline-card podium-pos-${idx + 1}">
+            <div class="podium-inline-pos">${posLabel}</div>
+            <img class="podium-inline-face" src="${d.face || ""}" alt="${d.name}" />
+            <div class="podium-inline-name">${d.name}</div>
+            <div class="podium-inline-team">${d.teamName}</div>
+            <div class="podium-inline-time">${formatTime(d.finishTime ?? Infinity)}</div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+    }
+
+    html += `<h4>Resultado completo</h4><ol class="race-result-list">`;
+
     final.forEach((d, idx) => {
       let obs = "";
-      if (d.dnf) obs = " – DNF (acidente)";
-      else if (d.pitPenaltyApplied) obs = " – (+20s sem pit obrigatório)";
+      if (d.dnf) {
+        obs = " – DNF (acidente)";
+      } else if (d.pitPenaltyApplied) {
+        obs = " – (+20s sem pit obrigatório)";
+      }
 
-      html += `<li>${idx + 1}º - ${d.name} (${d.teamName}) – Tempo: ${formatTime(
-        d.finishTime ?? Infinity
-      )}${obs}</li>`;
+      html += `
+        <li>
+          ${idx + 1}º - ${d.name} (${d.teamName}) –
+          Tempo: ${formatTime(d.finishTime ?? Infinity)}
+          – Pit stops: ${d.pitStops}${obs}
+        </li>
+      `;
     });
+
     html += `</ol><p>Clique em <strong>OK</strong> para voltar ao calendário.</p>`;
     body.innerHTML = html;
     modal.classList.remove("hidden");
