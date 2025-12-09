@@ -1,80 +1,145 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>F1 Manager 2025 – Classificação</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- CSS ÚNICO → Agora usa o mesmo do race -->
-  <link rel="stylesheet" href="race.css" />
-</head>
+    <title>F1 Manager 2025 – Classificação</title>
 
-<body>
+    <!-- CSS específico da qualy -->
+    <link rel="stylesheet" href="qualifying.css" />
+  </head>
 
-  <div class="race-layout">
+  <body>
+    <div class="qualy-layout">
+      <!-- ESQUERDA: PISTA -->
+      <div class="qualy-left">
+        <div id="track-container" class="track-container"></div>
+      </div>
 
-    <!-- ESQUERDA — PISTA -->
-    <div class="race-left">
-      <div id="track-container" class="track-container"></div>
-    </div>
+      <!-- DIREITA: HUD -->
+      <div class="qualy-right">
+        <div class="hud-panel">
+          <!-- Cabeçalho -->
+          <div class="hud-header">
+            <div>
+              <h1 class="hud-title">Classificação</h1>
+              <p class="hud-subtitle">TEMPORADA OFICIAL F1 2025</p>
+              <p id="qualy-title-gp" class="hud-gp-name">GP 2025</p>
+            </div>
 
-    <!-- DIREITA — HUD -->
-    <div class="race-right">
-
-      <!-- HEADER -->
-      <div class="hud-panel">
-        <div class="hud-header">
-          <div>
-            <h1 class="hud-title" id="gp-title">Classificação</h1>
-            <p class="hud-subtitle">Temporada oficial F1 2025</p>
+            <div class="hud-meta">
+              <div id="qualy-phase-label" class="hud-phase">
+                Q1 · ELIMINADOS AO FINAL: 5 PILOTOS
+              </div>
+              <!-- AQUI A CONTAGEM DE VOLTA -->
+              <div id="qualy-lap-label" class="hud-lap">
+                Volta 1 / 6
+              </div>
+            </div>
           </div>
-          <div class="hud-meta">
-            <span id="qualy-phase-label" class="hud-lap">Q1</span>
+
+          <!-- LISTA DE PILOTOS (rolagem) -->
+          <div id="drivers-list" class="drivers-list">
+            <!-- Os cards dos pilotos são criados via JS -->
           </div>
-        </div>
 
-        <!-- LISTA DE PILOTOS -->
-        <div id="drivers-list" class="drivers-list"></div>
+          <!-- PAINEL COM OS 2 PILOTOS DA EQUIPE DO JOGADOR -->
+          <div class="user-panel">
+            <div class="user-panel-title">Pilotos da sua equipe</div>
 
-        <!-- CONTROLES DE VELOCIDADE -->
-        <div class="controls-row">
-          <div class="controls">
-            <span class="controls-label">Velocidade:</span>
-            <button class="speed-btn active" data-speed="1">1x</button>
-            <button class="speed-btn" data-speed="2">2x</button>
-            <button class="speed-btn" data-speed="4">4x</button>
+            <div class="user-panel-row">
+              <!-- Piloto 1 -->
+              <div id="user-driver-1" class="user-driver-card">
+                <div class="user-main">
+                  <img class="user-face" src="" alt="" />
+                  <div class="user-info">
+                    <div class="user-name">---</div>
+                    <div class="user-team">---</div>
+                  </div>
+                  <img class="user-logo" src="" alt="" />
+                </div>
+              </div>
+
+              <!-- Piloto 2 -->
+              <div id="user-driver-2" class="user-driver-card">
+                <div class="user-main">
+                  <img class="user-face" src="" alt="" />
+                  <div class="user-info">
+                    <div class="user-name">---</div>
+                    <div class="user-team">---</div>
+                  </div>
+                  <img class="user-logo" src="" alt="" />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- BOTÃO VOLTAR -->
-        <div class="bottom-actions">
-          <button class="back-btn" onclick="window.history.back()">
-            Voltar ao calendário
-          </button>
+          <!-- CONTROLES DE VELOCIDADE -->
+          <div class="controls-row">
+            <div class="controls">
+              <span class="controls-label">Velocidade:</span>
+
+              <!-- Botões chamando diretamente setQualySpeed(...) -->
+              <button
+                class="speed-btn active"
+                data-speed="1"
+                onclick="setQualySpeed(1); marcarSpeedButton(this);"
+              >
+                1x
+              </button>
+
+              <button
+                class="speed-btn"
+                data-speed="2"
+                onclick="setQualySpeed(2); marcarSpeedButton(this);"
+              >
+                2x
+              </button>
+
+              <button
+                class="speed-btn"
+                data-speed="4"
+                onclick="setQualySpeed(4); marcarSpeedButton(this);"
+              >
+                4x
+              </button>
+            </div>
+          </div>
+
+          <!-- VOLTAR -->
+          <div class="bottom-actions">
+            <button class="back-btn" onclick="window.history.back()">
+              Voltar ao calendário
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- MODAL Q1 / Q2 / Q3 -->
-  <div id="qualy-modal" class="podium-modal hidden">
-    <div class="podium-content">
-      <h2 id="qualy-modal-title">Fase encerrada</h2>
-      <div id="qualy-modal-content" class="modal-text"></div>
-      <button id="qualy-modal-btn" class="podium-close">OK</button>
+    <!-- MODAL DA QUALY (FIM DE FASE E GRID FINAL) -->
+    <div id="qualy-modal" class="qualy-modal hidden">
+      <div class="qualy-modal-content">
+        <h2 id="qualy-modal-title">Q1 encerrada</h2>
+        <div id="qualy-modal-body" class="qualy-modal-body">
+          <!-- Preenchido pelo qualifying.js -->
+        </div>
+        <button class="qualy-modal-btn" onclick="onQualyModalAction()">
+          OK
+        </button>
+      </div>
     </div>
-  </div>
 
-  <!-- MODAL GRID FINAL -->
-  <div id="grid-modal" class="podium-modal hidden">
-    <div class="podium-content">
-      <h2>Classificação final – Grid da largada</h2>
-      <div id="grid-modal-content" class="modal-text"></div>
-      <button id="grid-modal-btn" class="podium-close">OK</button>
-    </div>
-  </div>
+    <!-- Script da simulação da qualificação -->
+    <script src="qualifying.js"></script>
 
-  <script src="qualifying.js"></script>
-
-</body>
+    <!-- Script pequeno só para trocar o "active" dos botões de velocidade -->
+    <script>
+      function marcarSpeedButton(btn) {
+        const all = document.querySelectorAll(".speed-btn");
+        all.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      }
+    </script>
+  </body>
 </html>
