@@ -2,168 +2,488 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>F1 Manager 2025 – Classificação</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Mesmo visual da corrida -->
-    <link rel="stylesheet" href="race.css" />
+    <!-- CSS do jogo -->
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="ui.css" />
+
+    <!-- Ajustes específicos da tela de qualificação -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      .qualy-root {
+        display: flex;
+        flex-direction: row;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #000000;
+      }
+
+      .qualy-track-area {
+        flex: 1;
+        background: #000000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #track-container {
+        width: 100%;
+        height: 100%;
+      }
+
+      .qualy-sidebar {
+        width: 420px;
+        max-width: 100%;
+        background: radial-gradient(circle at top, #151b2a 0, #050913 55%, #020308 100%);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+
+      .qualy-header {
+        margin-bottom: 8px;
+      }
+
+      .qualy-header h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .qualy-header .qualy-season {
+        font-size: 11px;
+        opacity: 0.8;
+        margin-top: 2px;
+      }
+
+      .qualy-header .qualy-phase-row {
+        font-size: 11px;
+        opacity: 0.9;
+        margin-top: 4px;
+      }
+
+      .qualy-header .qualy-lap {
+        font-size: 11px;
+        margin-top: 2px;
+        opacity: 0.9;
+      }
+
+      .drivers-panel {
+        margin-top: 10px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.25);
+        padding: 6px 0;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto; /* IMPORTANTE: rola no celular */
+      }
+
+      .driver-row {
+        display: flex;
+        align-items: center;
+        padding: 6px 10px;
+        gap: 8px;
+        font-size: 11px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      }
+
+      .driver-row:last-child {
+        border-bottom: none;
+      }
+
+      .driver-pos {
+        width: 32px;
+        text-align: right;
+        font-weight: 600;
+        opacity: 0.9;
+      }
+
+      .driver-info {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+      }
+
+      .driver-face {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .driver-text {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .driver-name {
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .driver-team {
+        font-size: 10px;
+        opacity: 0.8;
+      }
+
+      .driver-stats {
+        font-size: 9px;
+        min-width: 90px;
+        text-align: right;
+      }
+
+      .driver-stats .stat-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 4px;
+      }
+
+      .driver-stats .stat-line span {
+        font-weight: 600;
+      }
+
+      .user-team-row {
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.05),
+          rgba(255, 255, 255, 0)
+        );
+      }
+
+      .user-team-row .driver-name {
+        color: #ffd54f;
+      }
+
+      .qualy-user-section-title {
+        margin-top: 12px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.9;
+      }
+
+      .user-drivers-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 6px;
+      }
+
+      .user-driver-card {
+        flex: 1;
+        background: rgba(0, 0, 0, 0.35);
+        border-radius: 12px;
+        padding: 8px;
+        box-sizing: border-box;
+        font-size: 10px;
+      }
+
+      .user-driver-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+
+      .user-face {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .user-text-block {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .user-name {
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .user-team {
+        font-size: 9px;
+        opacity: 0.8;
+      }
+
+      .user-logo {
+        width: 18px;
+        height: 18px;
+        object-fit: contain;
+        margin-left: auto;
+      }
+
+      .user-driver-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+      }
+
+      .user-driver-actions button {
+        flex: 1;
+        font-size: 9px;
+        border-radius: 999px;
+        border: none;
+        padding: 4px 0;
+        cursor: pointer;
+      }
+
+      .btn-attack {
+        background: #e53935;
+        color: #ffffff;
+      }
+
+      .btn-save {
+        background: #455a64;
+        color: #ffffff;
+      }
+
+      .qualy-bottom-bar {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 10px;
+        gap: 8px;
+      }
+
+      .speed-buttons {
+        display: flex;
+        gap: 4px;
+      }
+
+      .speed-buttons button {
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 10px;
+        border: none;
+        cursor: pointer;
+      }
+
+      .btn-speed {
+        background: #263238;
+        color: #ffffff;
+      }
+
+      .btn-speed-primary {
+        background: #e53935;
+        color: #ffffff;
+      }
+
+      .btn-back-calendar {
+        border-radius: 999px;
+        padding: 4px 10px;
+        border: none;
+        font-size: 10px;
+        cursor: pointer;
+        background: #37474f;
+        color: #ffffff;
+      }
+
+      /* MODAL DE RESULTADO */
+      .qualy-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.58);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+      }
+
+      .qualy-modal.hidden {
+        display: none;
+      }
+
+      .qualy-modal-box {
+        width: 90%;
+        max-width: 520px;
+        background: #111827;
+        border-radius: 14px;
+        padding: 16px 18px 14px;
+        box-sizing: border-box;
+        color: #ffffff;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75);
+      }
+
+      .qualy-modal-title {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+      }
+
+      .qualy-modal-body {
+        font-size: 11px;
+        max-height: 260px;
+        overflow-y: auto;
+      }
+
+      .qualy-modal-body ol {
+        padding-left: 18px;
+      }
+
+      .qualy-modal-footer {
+        margin-top: 10px;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .qualy-modal-footer button {
+        border-radius: 999px;
+        border: none;
+        padding: 6px 18px;
+        font-size: 11px;
+        cursor: pointer;
+        background: #e53935;
+        color: #ffffff;
+      }
+
+      /* Responsivo */
+      @media (max-width: 900px) {
+        .qualy-root {
+          flex-direction: column;
+        }
+
+        .qualy-track-area {
+          height: 45vh;
+        }
+
+        .qualy-sidebar {
+          width: 100%;
+          height: 55vh;
+        }
+      }
+    </style>
   </head>
 
   <body>
-    <div class="race-layout">
-      <!-- ESQUERDA: PISTA -->
-      <div class="race-left">
-        <div id="track-container" class="track-container"></div>
+    <div class="qualy-root">
+      <!-- ÁREA DA PISTA -->
+      <div class="qualy-track-area">
+        <div id="track-container"></div>
       </div>
 
-      <!-- DIREITA: HUD -->
-      <div class="race-right">
-        <div class="hud-panel">
-          <div class="hud-header">
-            <div>
-              <h1 class="hud-title" id="gp-title">Classificação</h1>
-              <p class="hud-subtitle" id="qualy-phase-label">
-                Q1 • eliminados ao final: 5 pilotos
-              </p>
-            </div>
-            <div class="hud-meta">
-              <span id="qualy-lap-label" class="hud-lap">
-                Volta 1 / 6
-              </span>
-            </div>
+      <!-- BARRA LATERAL -->
+      <aside class="qualy-sidebar">
+        <div class="qualy-header">
+          <h2 id="qualy-title-gp">GP 2025</h2>
+          <div class="qualy-season">SESSÃO DE QUALIFICAÇÃO – F1 2025</div>
+          <div class="qualy-phase-row" id="qualy-phase-label">
+            Q1 · ELIMINADOS AO FINAL: 5 PILOTOS
           </div>
+          <div class="qualy-lap" id="qualy-lap-label">Volta 1 / 6</div>
+        </div>
 
-          <!-- LISTA DE PILOTOS (com rolagem) -->
-          <div id="drivers-list" class="drivers-list">
-            <!-- Cards criados via JS -->
+        <!-- LISTA DE PILOTOS -->
+        <div class="drivers-panel" id="drivers-panel">
+          <div id="drivers-list">
+            <!-- preenchido via qualifying.js -->
           </div>
+        </div>
 
-          <!-- PAINEL DO USUÁRIO -->
-          <div class="user-panel">
-            <div class="user-panel-title">Pilotos da sua equipe</div>
-            <div class="user-driver-row">
-              <div
-                class="user-driver-card"
-                id="user-driver-card-0"
-                data-index="0"
-              >
-                <div class="user-driver-main">
-                  <img class="user-face" id="user-face-0" src="" alt="" />
-                  <div class="user-info">
-                    <div class="user-name" id="user-name-0">---</div>
-                    <div class="user-team" id="user-team-0">---</div>
-                    <div class="user-status-line">
-                      Voltas: <span id="user-laps-0">0</span>
-                    </div>
-                    <div class="user-status-line">
-                      Melhor: <span id="user-best-0">--:--</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="user-driver-actions">
-                  <button
-                    class="user-btn mode"
-                    data-action="push"
-                    data-index="0"
-                  >
-                    ATAQUE
-                  </button>
-                  <button
-                    class="user-btn mode"
-                    data-action="save"
-                    data-index="0"
-                  >
-                    ECONOMIZAR
-                  </button>
-                </div>
+        <!-- PILOTOS DA SUA EQUIPE -->
+        <div class="qualy-user-section-title">PILOTOS DA SUA EQUIPE</div>
+        <div class="user-drivers-row">
+          <!-- Piloto 1 -->
+          <div class="user-driver-card" id="user-driver-1">
+            <div class="user-driver-header">
+              <img class="user-face" src="" alt="Piloto 1" />
+              <div class="user-text-block">
+                <div class="user-name">---</div>
+                <div class="user-team">---</div>
               </div>
+              <img class="user-logo" src="" alt="Logo equipe" />
+            </div>
+            <div class="user-driver-actions">
+              <button class="btn-attack">ATACAR</button>
+              <button class="btn-save">ECONOMIZAR</button>
+            </div>
+          </div>
 
-              <div
-                class="user-driver-card"
-                id="user-driver-card-1"
-                data-index="1"
-              >
-                <div class="user-driver-main">
-                  <img class="user-face" id="user-face-1" src="" alt="" />
-                  <div class="user-info">
-                    <div class="user-name" id="user-name-1">---</div>
-                    <div class="user-team" id="user-team-1">---</div>
-                    <div class="user-status-line">
-                      Voltas: <span id="user-laps-1">0</span>
-                    </div>
-                    <div class="user-status-line">
-                      Melhor: <span id="user-best-1">--:--</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="user-driver-actions">
-                  <button
-                    class="user-btn mode"
-                    data-action="push"
-                    data-index="1"
-                  >
-                    ATAQUE
-                  </button>
-                  <button
-                    class="user-btn mode"
-                    data-action="save"
-                    data-index="1"
-                  >
-                    ECONOMIZAR
-                  </button>
-                </div>
+          <!-- Piloto 2 -->
+          <div class="user-driver-card" id="user-driver-2">
+            <div class="user-driver-header">
+              <img class="user-face" src="" alt="Piloto 2" />
+              <div class="user-text-block">
+                <div class="user-name">---</div>
+                <div class="user-team">---</div>
               </div>
+              <img class="user-logo" src="" alt="Logo equipe" />
+            </div>
+            <div class="user-driver-actions">
+              <button class="btn-attack">ATACAR</button>
+              <button class="btn-save">ECONOMIZAR</button>
             </div>
           </div>
+        </div>
 
-          <!-- CONTROLES GERAIS -->
-          <div class="controls-row">
-            <div class="controls">
-              <span class="controls-label">Velocidade:</span>
-              <button class="speed-btn active" data-speed="1">1x</button>
-              <button class="speed-btn" data-speed="2">2x</button>
-              <button class="speed-btn" data-speed="4">4x</button>
-            </div>
+        <!-- BARRA INFERIOR -->
+        <div class="qualy-bottom-bar">
+          <div>
+            Velocidade:
+            <span></span>
           </div>
-
-          <div class="bottom-actions">
-            <button class="back-btn" onclick="window.history.back()">
-              Voltar ao calendário
+          <div class="speed-buttons">
+            <button
+              class="btn-speed-primary"
+              type="button"
+              onclick="setQualySpeed(1)"
+            >
+              1x
+            </button>
+            <button
+              class="btn-speed"
+              type="button"
+              onclick="setQualySpeed(2)"
+            >
+              2x
+            </button>
+            <button
+              class="btn-speed"
+              type="button"
+              onclick="setQualySpeed(4)"
+            >
+              4x
             </button>
           </div>
+          <button
+            class="btn-back-calendar"
+            type="button"
+            onclick="window.location.href='calendario.html'"
+          >
+            Voltar ao calendário
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    <!-- MODAL DE RESULTADO (FIM DE FASE / FIM DA QUALY) -->
+    <div id="qualy-modal" class="qualy-modal hidden">
+      <div class="qualy-modal-box">
+        <h3 id="qualy-modal-title" class="qualy-modal-title">
+          Resultado da sessão
+        </h3>
+        <div id="qualy-modal-body" class="qualy-modal-body">
+          <!-- conteúdo preenchido via JS -->
+        </div>
+        <div class="qualy-modal-footer">
+          <button id="qualy-modal-action" type="button" onclick="onQualyModalAction()">
+            OK
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- MODAL RESULTADOS / FASES -->
-    <div id="qualy-modal" class="podium-modal hidden">
-      <div class="podium-content">
-        <h2 id="qualy-modal-title">Resultado da Classificação</h2>
-        <p
-          id="qualy-modal-subtitle"
-          style="font-size: 11px; margin-top: 0; margin-bottom: 8px;"
-        >
-          <!-- texto definido via JS -->
-        </p>
-
-        <div
-          id="qualy-results"
-          class="drivers-list"
-          style="max-height: 260px;"
-        >
-          <!-- Linhas de resultado criadas via JS -->
-        </div>
-
-        <button
-          id="qualy-modal-action"
-          class="podium-close"
-          onclick="onQualyModalAction()"
-        >
-          Continuar
-        </button>
-      </div>
-    </div>
-
+    <!-- SCRIPT PRINCIPAL DA CLASSIFICAÇÃO -->
     <script src="qualifying.js"></script>
   </body>
 </html>
