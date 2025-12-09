@@ -1,0 +1,268 @@
+/* ===========================
+   LAYOUT BASE QUALIFYING
+=========================== */
+
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #0b0f18; /* fundo escuro profissional */
+  font-family: system-ui, sans-serif;
+  color: white;
+  overflow: hidden;
+}
+
+.qualy-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* ===========================
+   ÁREA DA PISTA
+=========================== */
+
+.qualy-left {
+  flex: 1 1 auto;
+  position: relative;
+  background: #000;
+}
+
+.track-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* ===========================
+   PAINEL DA DIREITA
+=========================== */
+
+.qualy-right {
+  width: 380px;
+  background: linear-gradient(180deg, #0e1320, #06080e);
+  display: flex;
+  flex-direction: column;
+}
+
+.hud-panel {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 14px;
+}
+
+/* ===========================
+   TÍTULOS
+=========================== */
+
+.hud-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.hud-subtitle {
+  opacity: 0.7;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.hud-gp-name {
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.hud-meta {
+  margin-top: 10px;
+}
+
+.hud-phase {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.hud-lap {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ===========================
+   LISTA DE PILOTOS (ROLAGEM)
+=========================== */
+
+.drivers-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+}
+
+.driver-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.user-team-row {
+  background: rgba(255,255,255,0.06);
+}
+
+.driver-pos {
+  width: 32px;
+  font-weight: 600;
+}
+
+.driver-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.driver-face {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* ===========================
+   PAINEL DA EQUIPE
+=========================== */
+
+.user-panel-title {
+  margin-top: 6px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.user-panel-row {
+  display: flex;
+  gap: 8px;
+}
+
+.user-driver-card {
+  flex: 1 1 auto;
+  background: rgba(255,255,255,0.05);
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.user-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-face {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.user-team {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.user-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+/* ===========================
+   BOTÕES DE VELOCIDADE
+=========================== */
+
+.controls-row {
+  margin-top: 8px;
+}
+
+.speed-btn {
+  background: rgba(255,255,255,0.12);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-right: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.speed-btn.active {
+  background: #d33636;
+}
+
+/* ===========================
+   BOTÃO VOLTAR
+=========================== */
+
+.bottom-actions {
+  margin-top: auto;
+}
+
+.back-btn {
+  width: 100%;
+  background: rgba(255,255,255,0.12);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* ===========================
+   MODAL
+=========================== */
+
+.qualy-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qualy-modal.hidden {
+  display: none;
+}
+
+.qualy-modal-content {
+  background: #121822;
+  padding: 20px;
+  border-radius: 8px;
+  width: 480px;
+  max-height: 80%;
+  overflow-y: auto;
+}
+
+.qualy-modal-btn {
+  margin-top: 14px;
+  width: 100%;
+  padding: 10px;
+  background: #d33636;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
