@@ -1,19 +1,19 @@
 // ==========================================================
-// F1 MANAGER 2025 – QUALIFYING.JS
-// Q1 / Q2 / Q3 + GRID FINAL → RACE.HTML
+// F1 MANAGER 2025 – QUALIFYING.JS (Q1 / Q2 / Q3)
 // ==========================================================
 
 // ------------------------------
-// CONFIGURAÇÃO DAS FASES
+// CONFIG DAS FASES
 // ------------------------------
 const QUALY_PHASES = [
-  { id: "Q1", totalLaps: 6, eliminated: 5 }, // elimina 5 -> 15
-  { id: "Q2", totalLaps: 5, eliminated: 5 }, // elimina 5 -> 10
-  { id: "Q3", totalLaps: 4, eliminated: 0 }  // grid final (10)
+  { id: "Q1", totalLaps: 6, eliminated: 5 }, // 20 → 15
+  { id: "Q2", totalLaps: 5, eliminated: 5 }, // 15 → 10
+  { id: "Q3", totalLaps: 4, eliminated: 0 }  // 10 → grid final
 ];
 
 // ------------------------------
-// LISTA DE PILOTOS 2025 (com Bortoleto)
+// LISTA DE PILOTOS 2025
+// (mesma usada na corrida)
 // ------------------------------
 const DRIVERS_2025 = [
   { id: "verstappen", name: "Max Verstappen", teamKey: "redbull", teamName: "Red Bull Racing", rating: 98, color: "#ffb300", face: "assets/faces/verstappen.png", logo: "assets/logos/redbull.png" },
@@ -31,45 +31,44 @@ const DRIVERS_2025 = [
   { id: "alonso", name: "Fernando Alonso", teamKey: "aston", teamName: "Aston Martin", rating: 94, color: "#00b894", face: "assets/faces/alonso.png", logo: "assets/logos/aston.png" },
   { id: "stroll", name: "Lance Stroll",   teamKey: "aston", teamName: "Aston Martin", rating: 88, color: "#00b894", face: "assets/faces/stroll.png", logo: "assets/logos/aston.png" },
 
-  { id: "gasly", name: "Pierre Gasly",  teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", face: "assets/faces/gasly.png",  logo: "assets/logos/alpine.png" },
-  { id: "ocon",  name: "Esteban Ocon", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", face: "assets/faces/ocon.png",   logo: "assets/logos/alpine.png" },
+  { id: "ogasly", name: "Pierre Gasly",  teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", face: "assets/faces/gasly.png",  logo: "assets/logos/alpine.png" },
+  { id: "ocon",   name: "Esteban Ocon", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", face: "assets/faces/ocon.png",   logo: "assets/logos/alpine.png" },
 
   { id: "tsunoda", name: "Yuki Tsunoda", teamKey: "racingbulls", teamName: "Racing Bulls", rating: 89, color: "#7f00ff", face: "assets/faces/tsunoda.png", logo: "assets/logos/racingbulls.png" },
   { id: "lawson",  name: "Liam Lawson", teamKey: "racingbulls", teamName: "Racing Bulls", rating: 88, color: "#7f00ff", face: "assets/faces/lawson.png",  logo: "assets/logos/racingbulls.png" },
 
-  { id: "hulkenberg", name: "Nico Hülkenberg",   teamKey: "sauber", teamName: "Sauber / Audi", rating: 89, color: "#00cec9", face: "assets/faces/hulkenberg.png", logo: "assets/logos/sauber.png" },
+  { id: "hulkenberg", name: "Nico Hülkenberg", teamKey: "sauber", teamName: "Sauber / Audi", rating: 89, color: "#00cec9", face: "assets/faces/hulkenberg.png", logo: "assets/logos/sauber.png" },
   { id: "bortoleto",  name: "Gabriel Bortoleto", teamKey: "sauber", teamName: "Sauber / Audi", rating: 88, color: "#00cec9", face: "assets/faces/bortoleto.png",  logo: "assets/logos/sauber.png" },
 
-  { id: "kevin",    name: "Kevin Magnussen", teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", face: "assets/faces/magnussen.png", logo: "assets/logos/haas.png" },
-  { id: "bearman",  name: "Oliver Bearman",  teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", face: "assets/faces/bearman.png",   logo: "assets/logos/haas.png" },
+  { id: "kevin",  name: "Kevin Magnussen", teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", face: "assets/faces/magnussen.png", logo: "assets/logos/haas.png" },
+  { id: "bearman",name: "Oliver Bearman",  teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", face: "assets/faces/bearman.png",   logo: "assets/logos/haas.png" },
 
-  { id: "albon",    name: "Alex Albon",        teamKey: "williams", teamName: "Williams Racing", rating: 89, color: "#0984e3", face: "assets/faces/albon.png",    logo: "assets/logos/williams.png" },
-  { id: "sargeant", name: "Logan Sargeant",    teamKey: "williams", teamName: "Williams Racing", rating: 86, color: "#0984e3", face: "assets/faces/sargeant.png", logo: "assets/logos/williams.png" }
+  { id: "albon", name: "Alex Albon",  teamKey: "williams", teamName: "Williams Racing", rating: 89, color: "#0984e3", face: "assets/faces/albon.png", logo: "assets/logos/williams.png" },
+  { id: "sargeant", name: "Logan Sargeant", teamKey: "williams", teamName: "Williams Racing", rating: 86, color: "#0984e3", face: "assets/faces/sargeant.png", logo: "assets/logos/williams.png" }
 ];
 
 // ------------------------------
 // ESTADO DA QUALIFICAÇÃO
 // ------------------------------
 const qualyState = {
-  phaseIndex: 0,          // 0=Q1 1=Q2 2=Q3
-  currentLap: 1,          // volta atual do líder (para HUD)
+  phaseIndex: 0,
+  currentLap: 1,
   currentDrivers: [],
   finalGrid: null,
   nextPhaseDrivers: null,
   userTeamKey: null,
   trackName: null,
   gpName: null,
-  modalMode: null,        // "phase" ou "final"
+  modalMode: null,
   pathPoints: [],
   driverVisuals: [],
   lastUpdateTime: null,
   running: true,
-  speedMultiplier: 1,
-  phaseFinished: false
+  speedMultiplier: 1
 };
 
 // ------------------------------
-// UTILITÁRIOS
+// FUNÇÕES UTILS
 // ------------------------------
 function formatLapTime(ms) {
   if (!isFinite(ms)) return "--:--.---";
@@ -83,15 +82,6 @@ function formatLapTime(ms) {
   return `${mm}:${ss}.${mmm}`;
 }
 
-// tempo de volta “fake” mas razoável, baseado no rating
-function randomLapTimeForDriver(drv) {
-  // base ~ 1:30 para rating 88, mais rápido para ratings maiores
-  const baseMs = 90000 - (drv.rating - 88) * 600; // cada ponto tira ~0,6s
-  const variation = (Math.random() - 0.5) * 2000; // +/- 1s
-  return baseMs + variation;
-}
-
-// Interpola posição na pista a partir de 0..1
 function getPositionOnTrack(progress) {
   const pts = qualyState.pathPoints;
   if (!pts.length) return { x: 0, y: 0 };
@@ -111,7 +101,7 @@ function getPositionOnTrack(progress) {
 }
 
 // ------------------------------
-// INICIALIZAÇÃO
+// INIT
 // ------------------------------
 window.addEventListener("DOMContentLoaded", () => {
   initQualifying();
@@ -121,7 +111,7 @@ function initQualifying() {
   const params = new URLSearchParams(window.location.search);
   const track = params.get("track") || "australia";
   const gp = params.get("gp") || "GP 2025";
-  let userTeam =
+  const userTeam =
     params.get("userTeam") ||
     localStorage.getItem("f1m2025_user_team") ||
     "ferrari";
@@ -131,28 +121,26 @@ function initQualifying() {
   qualyState.userTeamKey = userTeam;
 
   const titleEl = document.getElementById("qualy-title-gp");
-  if (titleEl) {
-    titleEl.textContent = gp;
-  }
+  if (titleEl) titleEl.textContent = gp;
 
   atualizarHeaderFaseQualy();
 
-  // Carrega pilotos iniciais (todos 20)
+  // Pilotos iniciais – todos os 20
   qualyState.currentDrivers = DRIVERS_2025.map((drv, idx) => ({
     ...drv,
     index: idx,
-    progress: Math.random(), // posição aleatória na pista
-    speedBase: 0.00012 + (drv.rating / 130000), // ajustado p/ não acabar tão rápido
+    progress: Math.random(),
+    // >>> velocidade mais LENTA (antes estava ~0.0002 + rating/100000)
+    speedBase: 0.00003 + drv.rating / 600000, // base bem menor
     speedVar: 0,
     laps: 0,
     bestLapTime: null,
-    lastLapTime: null
+    lastLapTime: null,
+    lastLapTimestamp: null
   }));
 
-  // Preenche cards dos pilotos da equipe do usuário
   preencherPilotosDaEquipe();
 
-  // Carrega a pista SVG e depois começa a simulação
   loadTrackSvg(track).then(() => {
     qualyState.lastUpdateTime = performance.now();
     requestAnimationFrame(gameLoopQualy);
@@ -160,7 +148,7 @@ function initQualifying() {
 }
 
 // ------------------------------
-// CARREGAR PISTA SVG
+// SVG DA PISTA
 // ------------------------------
 async function loadTrackSvg(trackKey) {
   const container = document.getElementById("track-container");
@@ -206,7 +194,6 @@ async function loadTrackSvg(trackKey) {
   const maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
-
   const width = maxX - minX || 1;
   const height = maxY - minY || 1;
 
@@ -215,7 +202,7 @@ async function loadTrackSvg(trackKey) {
     y: ((p.y - minY) / height) * 600
   }));
 
-  // pista cinza
+  // pista
   const trackPath = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
   trackPath.setAttribute(
     "points",
@@ -228,7 +215,6 @@ async function loadTrackSvg(trackKey) {
   trackPath.setAttribute("stroke-linejoin", "round");
   svg.appendChild(trackPath);
 
-  // linha branca
   const innerPath = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
   innerPath.setAttribute(
     "points",
@@ -241,7 +227,6 @@ async function loadTrackSvg(trackKey) {
   innerPath.setAttribute("stroke-linejoin", "round");
   svg.appendChild(innerPath);
 
-  // pontos brancos
   qualyState.pathPoints.forEach((p) => {
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     c.setAttribute("cx", p.x);
@@ -251,7 +236,6 @@ async function loadTrackSvg(trackKey) {
     svg.appendChild(c);
   });
 
-  // bandeira (ponto 0)
   const flagPoint = qualyState.pathPoints[0];
   const flag = document.createElementNS("http://www.w3.org/2000/svg", "text");
   flag.setAttribute("x", flagPoint.x);
@@ -262,7 +246,6 @@ async function loadTrackSvg(trackKey) {
   flag.textContent = "🏁";
   svg.appendChild(flag);
 
-  // carros
   qualyState.driverVisuals = qualyState.currentDrivers.map((drv) => {
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
@@ -290,10 +273,7 @@ async function loadTrackSvg(trackKey) {
 // LOOP PRINCIPAL
 // ------------------------------
 function gameLoopQualy(timestamp) {
-  if (!qualyState.running) {
-    requestAnimationFrame(gameLoopQualy);
-    return;
-  }
+  if (!qualyState.running) return;
 
   const dt =
     qualyState.lastUpdateTime != null
@@ -308,16 +288,18 @@ function gameLoopQualy(timestamp) {
 }
 
 // ------------------------------
-// SIMULAÇÃO DE VOLTAS
+// SIMULAÇÃO
 // ------------------------------
 function updateQualySimulation(dtMs) {
   if (!qualyState.pathPoints.length) return;
 
   const fase = QUALY_PHASES[qualyState.phaseIndex];
-  if (!fase || qualyState.phaseFinished) return;
+  if (!fase) return;
+
+  const now = performance.now();
 
   qualyState.currentDrivers.forEach((drv) => {
-    const noise = (Math.random() - 0.5) * 0.00002;
+    const noise = (Math.random() - 0.5) * 0.00001; // bem menor
     drv.speedVar = noise;
     const speed = drv.speedBase + drv.speedVar;
 
@@ -326,36 +308,43 @@ function updateQualySimulation(dtMs) {
 
     if (newProgress >= 1) {
       newProgress -= 1;
+      const lapTime = drv.lastLapTimestamp
+        ? now - drv.lastLapTimestamp
+        : 90000 + Math.random() * 5000;
 
-      // completou UMA volta
       drv.laps += 1;
-      const lapTime = randomLapTimeForDriver(drv);
       drv.lastLapTime = lapTime;
       if (drv.bestLapTime == null || lapTime < drv.bestLapTime) {
         drv.bestLapTime = lapTime;
       }
+      drv.lastLapTimestamp = now;
     }
 
     drv.progress = newProgress;
+    if (drv.lastLapTimestamp == null) {
+      drv.lastLapTimestamp = now;
+    }
   });
 
-  // líder define a volta atual
+  // líder define a volta atual (evita pular várias voltas de uma vez)
   const maxLaps = Math.max(...qualyState.currentDrivers.map((d) => d.laps));
-  qualyState.currentLap = Math.min(maxLaps + 1, fase.totalLaps);
+  const faseAtual = QUALY_PHASES[qualyState.phaseIndex];
 
-  atualizarHeaderFaseQualy();
-  atualizarListaPilotosQualy();
+  if (maxLaps + 1 > qualyState.currentLap) {
+    qualyState.currentLap = Math.min(maxLaps + 1, faseAtual.totalLaps);
+    atualizarHeaderFaseQualy();
+  }
 
-  // terminou a fase quando o líder completar totalLaps
-  if (maxLaps >= fase.totalLaps) {
-    qualyState.phaseFinished = true;
+  if (maxLaps >= faseAtual.totalLaps) {
     qualyState.running = false;
     finalizarFaseQualy();
   }
+
+  atualizarListaPilotosQualy();
 }
 
 // ------------------------------
-// RENDERIZAÇÃO VISUAL
+// RENDER
 // ------------------------------
 function renderQualy() {
   if (!qualyState.pathPoints.length) return;
@@ -375,7 +364,7 @@ function renderQualy() {
 }
 
 // ------------------------------
-// ATUALIZA UI (HEADER / LISTA / CARDS)
+// UI LISTA / CARDS
 // ------------------------------
 function atualizarHeaderFaseQualy() {
   const fase = QUALY_PHASES[qualyState.phaseIndex];
@@ -431,6 +420,7 @@ function atualizarListaPilotosQualy() {
 
     textDiv.appendChild(nameSpan);
     textDiv.appendChild(teamSpan);
+
     infoDiv.appendChild(imgFace);
     infoDiv.appendChild(textDiv);
 
@@ -456,14 +446,12 @@ function atualizarListaPilotosQualy() {
 
 function preencherPilotosDaEquipe() {
   const team = qualyState.userTeamKey;
-  const driversTeam = DRIVERS_2025.filter(
-    (d) => d.teamKey === team
-  ).slice(0, 2);
+  const driversTeam = DRIVERS_2025.filter((d) => d.teamKey === team).slice(0, 2);
 
-  const card1 = document.getElementById("user-driver-1");
-  const card2 = document.getElementById("user-driver-2");
-
-  const cards = [card1, card2];
+  const cards = [
+    document.getElementById("user-driver-1"),
+    document.getElementById("user-driver-2")
+  ];
 
   driversTeam.forEach((drv, idx) => {
     const card = cards[idx];
@@ -471,15 +459,17 @@ function preencherPilotosDaEquipe() {
     const face = card.querySelector(".user-face");
     const name = card.querySelector(".user-name");
     const teamName = card.querySelector(".user-team");
+    const logo = card.querySelector(".user-logo");
 
     if (face) face.src = drv.face || "";
     if (name) name.textContent = drv.name;
     if (teamName) teamName.textContent = drv.teamName;
+    if (logo) logo.src = drv.logo || "";
   });
 }
 
 // ------------------------------
-// FINALIZAÇÃO DAS FASES
+// FINAL DAS FASES
 // ------------------------------
 function finalizarFaseQualy() {
   const fase = QUALY_PHASES[qualyState.phaseIndex];
@@ -499,13 +489,8 @@ function finalizarFaseQualy() {
 
   if (!ehUltimaFase) {
     const qtdEliminados = fase.eliminated || 0;
-    const classificados = gridOrdenado.slice(
-      0,
-      Math.max(gridOrdenado.length - qtdEliminados, 0)
-    );
-    const eliminados = gridOrdenado.slice(
-      Math.max(gridOrdenado.length - qtdEliminados, 0)
-    );
+    const classificados = gridOrdenado.slice(0, gridOrdenado.length - qtdEliminados);
+    const eliminados = gridOrdenado.slice(gridOrdenado.length - qtdEliminados);
 
     qualyState.nextPhaseDrivers = classificados;
     qualyState.modalMode = "phase";
@@ -523,21 +508,16 @@ function mostrarModalQualyFase(idFase, classificados, eliminados) {
   const modal = document.getElementById("qualy-modal");
   const title = document.getElementById("qualy-modal-title");
   const body = document.getElementById("qualy-modal-body");
-
   if (!modal || !title || !body) return;
 
   title.textContent = `${idFase} encerrada`;
   let html = `<p><strong>Classificados para a próxima fase:</strong></p><ol>`;
   classificados.forEach((drv) => {
-    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — ${formatLapTime(
-      drv.bestLapTime ?? Infinity
-    )}</li>`;
+    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — ${formatLapTime(drv.bestLapTime ?? Infinity)}</li>`;
   });
   html += `</ol><p><strong>Eliminados:</strong></p><ol>`;
   eliminados.forEach((drv) => {
-    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — ${formatLapTime(
-      drv.bestLapTime ?? Infinity
-    )}</li>`;
+    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — ${formatLapTime(drv.bestLapTime ?? Infinity)}</li>`;
   });
   html += `</ol>`;
 
@@ -549,15 +529,12 @@ function mostrarModalQualyFinal(grid) {
   const modal = document.getElementById("qualy-modal");
   const title = document.getElementById("qualy-modal-title");
   const body = document.getElementById("qualy-modal-body");
-
   if (!modal || !title || !body) return;
 
   title.textContent = `Classificação final – Grid de largada`;
   let html = `<p>Este será o grid de largada para a corrida:</p><ol>`;
   grid.forEach((drv) => {
-    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — Melhor volta: ${formatLapTime(
-      drv.bestLapTime ?? Infinity
-    )}</li>`;
+    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — Melhor volta: ${formatLapTime(drv.bestLapTime ?? Infinity)}</li>`;
   });
   html += `</ol><p>Clique em <strong>OK</strong> para avançar para a corrida.</p>`;
 
@@ -566,18 +543,16 @@ function mostrarModalQualyFinal(grid) {
 }
 
 // ------------------------------
-// BOTÃO DO MODAL (OK)
+// BOTÃO OK DO MODAL
 // ------------------------------
 function onQualyModalAction() {
   const modal = document.getElementById("qualy-modal");
   if (!modal) return;
 
   if (qualyState.modalMode === "phase") {
-    // Avança para Q2 / Q3
     modal.classList.add("hidden");
     qualyState.phaseIndex++;
     qualyState.currentLap = 1;
-    qualyState.phaseFinished = false;
 
     if (Array.isArray(qualyState.nextPhaseDrivers)) {
       qualyState.currentDrivers = qualyState.nextPhaseDrivers.map((drv) => ({
@@ -585,7 +560,8 @@ function onQualyModalAction() {
         laps: 0,
         progress: Math.random(),
         bestLapTime: null,
-        lastLapTime: null
+        lastLapTime: null,
+        lastLapTimestamp: null
       }));
     }
 
@@ -599,7 +575,7 @@ function onQualyModalAction() {
     const params = new URLSearchParams(window.location.search);
     const track = params.get("track") || qualyState.trackName || "australia";
     const gp = params.get("gp") || qualyState.gpName || "GP 2025";
-    let userTeam =
+    const userTeam =
       qualyState.userTeamKey ||
       params.get("userTeam") ||
       localStorage.getItem("f1m2025_user_team") ||
@@ -615,7 +591,7 @@ function onQualyModalAction() {
 }
 
 // ------------------------------
-// SALVAR GRID FINAL
+// SALVAR GRID NO LOCALSTORAGE
 // ------------------------------
 function salvarGridFinalQualy() {
   if (!qualyState.finalGrid || !Array.isArray(qualyState.finalGrid)) return;
@@ -643,11 +619,10 @@ function salvarGridFinalQualy() {
 }
 
 // ------------------------------
-// CONTROLE DE VELOCIDADE (1x / 2x / 4x)
+// CONTROLE DE VELOCIDADE
 // ------------------------------
 function setQualySpeed(mult) {
   qualyState.speedMultiplier = mult;
 }
-
 window.setQualySpeed = setQualySpeed;
 window.onQualyModalAction = onQualyModalAction;
