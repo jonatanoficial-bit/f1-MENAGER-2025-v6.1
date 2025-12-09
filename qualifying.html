@@ -2,264 +2,79 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Classificação – F1 2025</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="ui.css" />
-  <style>
-    body {
-      background-color: #000;
-      color: #fff;
-    }
+  <title>F1 Manager 2025 – Classificação</title>
 
-    #qualy-layout {
-      display: flex;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* ESQUERDA = TRACK */
-    #track-container {
-      flex: 1;
-      position: relative;
-      background: #000;
-    }
-
-    /* DIREITA = PAINEL */
-    #panel-right {
-      width: 380px;
-      background: rgba(6, 12, 22, 0.95);
-      display: flex;
-      flex-direction: column;
-      padding: 10px;
-      overflow: hidden;
-    }
-
-    #qualy-title-gp {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    #qualy-phase-label,
-    #qualy-lap-label {
-      font-size: 14px;
-      opacity: 0.85;
-    }
-
-    /* Lista de pilotos */
-    #drivers-list {
-      flex: 1;
-      overflow-y: auto;
-      margin-top: 10px;
-    }
-
-    .driver-row {
-      display: flex;
-      align-items: center;
-      padding: 6px 4px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      font-size: 13px;
-    }
-
-    .driver-pos {
-      width: 32px;
-      font-weight: bold;
-      text-align: right;
-      margin-right: 6px;
-    }
-
-    .driver-info {
-      display: flex;
-      flex: 1;
-      align-items: center;
-    }
-
-    .driver-face {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      margin-right: 6px;
-    }
-
-    .driver-text {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.1;
-    }
-
-    .driver-team {
-      opacity: 0.6;
-      font-size: 11px;
-    }
-
-    .driver-stats {
-      font-size: 11px;
-      text-align: right;
-      width: 90px;
-    }
-
-    .user-team-row {
-      background: rgba(255,255,255,0.08);
-      border-left: 3px solid yellow;
-    }
-
-    /* CARTÕES PILOTOS DO USUÁRIO */
-    #user-team-panel {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      margin-top: 10px;
-    }
-
-    .user-card {
-      background: rgba(255,255,255,0.06);
-      padding: 6px;
-      border-radius: 6px;
-      font-size: 12px;
-    }
-
-    .user-top {
-      display: flex;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .user-face {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      margin-right: 6px;
-    }
-
-    .user-name {
-      font-weight: 600;
-    }
-
-    .user-team {
-      font-size: 11px;
-      opacity: 0.7;
-    }
-
-    .user-actions button {
-      margin: 2px;
-      font-size: 11px;
-      padding: 4px 6px;
-    }
-
-    /* MODAL */
-    #qualy-modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-
-    #qualy-modal.hidden {
-      display: none;
-    }
-
-    #qualy-modal-box {
-      background: #0e1624;
-      padding: 16px;
-      border-radius: 10px;
-      width: 380px;
-      max-height: 80vh;
-      overflow-y: auto;
-      font-size: 13px;
-    }
-
-    #qualy-modal-title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    #qualy-modal-body ol {
-      padding-left: 18px;
-    }
-
-    #qualy-modal-ok {
-      display: block;
-      margin: 14px auto 0;
-      padding: 6px 18px;
-      background: #e62828;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-  </style>
+  <!-- CSS ÚNICO → Agora usa o mesmo do race -->
+  <link rel="stylesheet" href="race.css" />
 </head>
 
 <body>
 
-<div id="qualy-layout">
+  <div class="race-layout">
 
-  <!-- TRACK -->
-  <div id="track-container"></div>
-
-  <!-- RIGHT PANEL -->
-  <div id="panel-right">
-
-    <div id="qualy-title-gp"></div>
-    <div id="qualy-phase-label"></div>
-    <div id="qualy-lap-label"></div>
-
-    <div id="drivers-list"></div>
-
-    <!-- PILOTOS DA EQUIPE DO USUÁRIO -->
-    <div id="user-team-panel">
-
-      <div id="user-driver-1" class="user-card">
-        <div class="user-top">
-          <img class="user-face" />
-          <div>
-            <div class="user-name">---</div>
-            <div class="user-team">---</div>
-          </div>
-        </div>
-        <div class="user-actions">
-          <button onclick="setQualySpeed(1)">ATACAR</button>
-          <button onclick="setQualySpeed(0.5)">ECONOMIZAR</button>
-        </div>
-      </div>
-
-      <div id="user-driver-2" class="user-card">
-        <div class="user-top">
-          <img class="user-face" />
-          <div>
-            <div class="user-name">---</div>
-            <div class="user-team">---</div>
-          </div>
-        </div>
-        <div class="user-actions">
-          <button onclick="setQualySpeed(1)">ATACAR</button>
-          <button onclick="setQualySpeed(0.5)">ECONOMIZAR</button>
-        </div>
-      </div>
-
+    <!-- ESQUERDA — PISTA -->
+    <div class="race-left">
+      <div id="track-container" class="track-container"></div>
     </div>
 
-  </div>
-</div>
+    <!-- DIREITA — HUD -->
+    <div class="race-right">
 
-<!-- MODAL -->
-<div id="qualy-modal" class="hidden">
-  <div id="qualy-modal-box">
-    <div id="qualy-modal-title"></div>
-    <div id="qualy-modal-body"></div>
-    <button id="qualy-modal-ok" onclick="onQualyModalAction()">OK</button>
-  </div>
-</div>
+      <!-- HEADER -->
+      <div class="hud-panel">
+        <div class="hud-header">
+          <div>
+            <h1 class="hud-title" id="gp-title">Classificação</h1>
+            <p class="hud-subtitle">Temporada oficial F1 2025</p>
+          </div>
+          <div class="hud-meta">
+            <span id="qualy-phase-label" class="hud-lap">Q1</span>
+          </div>
+        </div>
 
-<script src="qualifying.js"></script>
+        <!-- LISTA DE PILOTOS -->
+        <div id="drivers-list" class="drivers-list"></div>
+
+        <!-- CONTROLES DE VELOCIDADE -->
+        <div class="controls-row">
+          <div class="controls">
+            <span class="controls-label">Velocidade:</span>
+            <button class="speed-btn active" data-speed="1">1x</button>
+            <button class="speed-btn" data-speed="2">2x</button>
+            <button class="speed-btn" data-speed="4">4x</button>
+          </div>
+        </div>
+
+        <!-- BOTÃO VOLTAR -->
+        <div class="bottom-actions">
+          <button class="back-btn" onclick="window.history.back()">
+            Voltar ao calendário
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL Q1 / Q2 / Q3 -->
+  <div id="qualy-modal" class="podium-modal hidden">
+    <div class="podium-content">
+      <h2 id="qualy-modal-title">Fase encerrada</h2>
+      <div id="qualy-modal-content" class="modal-text"></div>
+      <button id="qualy-modal-btn" class="podium-close">OK</button>
+    </div>
+  </div>
+
+  <!-- MODAL GRID FINAL -->
+  <div id="grid-modal" class="podium-modal hidden">
+    <div class="podium-content">
+      <h2>Classificação final – Grid da largada</h2>
+      <div id="grid-modal-content" class="modal-text"></div>
+      <button id="grid-modal-btn" class="podium-close">OK</button>
+    </div>
+  </div>
+
+  <script src="qualifying.js"></script>
 
 </body>
 </html>
