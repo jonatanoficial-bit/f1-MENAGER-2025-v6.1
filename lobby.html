@@ -1,70 +1,240 @@
-<script>
-  // Função utilitária para achar botão pelo texto, sem mudar o HTML nem o CSS
-  function getButtonByText(texto) {
-    const botoes = Array.from(document.querySelectorAll('button, a'));
-    return botoes.find(btn =>
-      btn.textContent.trim().toUpperCase() === texto.toUpperCase()
-    );
-  }
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>F1 Manager 2025 - Lobby da Equipe</title>
 
-  function navegarPara(arquivo) {
-    window.location.href = arquivo;
-  }
+  <!-- Mantenha os mesmos CSS do projeto -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="ui.css" />
+  <!-- Se você tiver um CSS específico do lobby, mantenha aqui -->
+  <!-- <link rel="stylesheet" href="lobby.css" /> -->
+</head>
+<body>
+  <div class="app-root">
 
-  // CALENDÁRIO
-  const btnCalendario = getButtonByText('CALENDÁRIO');
-  if (btnCalendario) {
-    btnCalendario.addEventListener('click', () => {
-      // Se o nome do seu arquivo for diferente, troque aqui
-      navegarPara('calendario.html');
-    });
-  }
+    <!-- BARRA SUPERIOR -->
+    <header class="top-bar">
+      <button class="btn-voltar" id="btnVoltar">VOLTAR</button>
 
-  // OFICINA
-  const btnOficina = getButtonByText('OFICINA');
-  if (btnOficina) {
-    btnOficina.addEventListener('click', () => {
-      navegarPara('oficina.html');
-    });
-  }
+      <div class="top-center">
+        <!-- Aqui pode ficar o logo da equipe, já estilizado pelo seu CSS -->
+        <div class="team-badge">
+          <img src="assets/teams/ferrari_logo.png" alt="Ferrari" />
+        </div>
+        <div class="team-info">
+          <span class="team-name">Ferrari</span>
+          <span class="season-label">TEMPORADA OFICIAL F1 2025</span>
+        </div>
+      </div>
 
-  // FUNCIONÁRIOS
-  const btnFuncionarios = getButtonByText('FUNCIONÁRIOS');
-  if (btnFuncionarios) {
-    btnFuncionarios.addEventListener('click', () => {
-      navegarPara('funcionarios.html');
-    });
-  }
+      <div class="manager-box">
+        <div class="manager-name">Manager Demo</div>
+        <div class="manager-country">
+          <img src="assets/flags/brasil.svg" alt="Brasil" class="manager-flag" />
+          <span>Brasil</span>
+        </div>
+        <div class="manager-avatar">
+          <img src="assets/avatars/manager_demo.png" alt="Manager" />
+        </div>
+      </div>
+    </header>
 
-  // PATROCÍNIOS
-  const btnPatrocinios = getButtonByText('PATROCÍNIOS');
-  if (btnPatrocinios) {
-    btnPatrocinios.addEventListener('click', () => {
-      navegarPara('patrocinio.html');
-    });
-  }
+    <!-- TÍTULO E TEXTO GUIA -->
+    <section class="lobby-header-text">
+      <h1 class="lobby-title">LOBBY DA EQUIPE</h1>
+      <p class="lobby-subtitle">
+        Aqui você controla tudo: desenvolvimento do carro, pilotos, staff, patrocinadores e decisões de pista.
+        Use os módulos abaixo para preparar sua temporada antes de ir para o calendário e correr.
+      </p>
+    </section>
 
-  // CARREGAR CARREIRA
-  const btnCarregarCarreira = getButtonByText('CARREGAR CARREIRA');
-  if (btnCarregarCarreira) {
-    btnCarregarCarreira.addEventListener('click', () => {
-      navegarPara('carreira.html');
-    });
-  }
+    <!-- GRADE DE MÓDULOS -->
+    <main class="lobby-modules">
 
-  // NOVO GERENTE
-  const btnNovoGerente = getButtonByText('NOVO GERENTE');
-  if (btnNovoGerente) {
-    btnNovoGerente.addEventListener('click', () => {
-      navegarPara('novo_gerente.html');
-    });
-  }
+      <!-- LINHA 1: CARRO / EQUIPE TÉCNICA / PILOTOS -->
+      <div class="modules-row">
 
-  // GERENTE REAL
-  const btnGerenteReal = getButtonByText('GERENTE REAL');
-  if (btnGerenteReal) {
-    btnGerenteReal.addEventListener('click', () => {
-      navegarPara('gerentes_reais.html');
-    });
-  }
-</script>
+        <!-- CARRO – Oficina & Setup -->
+        <article class="module-card module-car">
+          <div class="module-tag">CARRO</div>
+          <h2 class="module-title">Oficina &amp; Setup</h2>
+          <p class="module-description">
+            Ajuste asas, motor e pneus. Nesta versão, o módulo é conceitual, mas toda a lógica já conversa com a simulação futura.
+          </p>
+          <p class="module-status">
+            Estado: Protótipo visual
+          </p>
+          <div class="module-actions">
+            <button class="module-button primary" id="btnOficina">
+              ABRIR OFICINA
+            </button>
+          </div>
+        </article>
+
+        <!-- EQUIPE TÉCNICA – Funcionários & Staff -->
+        <article class="module-card module-staff">
+          <div class="module-tag">EQUIPE TÉCNICA</div>
+          <h2 class="module-title">Funcionários &amp; Staff</h2>
+          <p class="module-description">
+            Engenheiros, estrategistas e mecânicos. Organize o cérebro da equipe e veja como cada função influencia nas decisões de corrida.
+          </p>
+          <p class="module-status">
+            Gestão da base humana
+          </p>
+          <div class="module-actions">
+            <button class="module-button secondary" id="btnFuncionarios">
+              EM BREVE
+            </button>
+          </div>
+        </article>
+
+        <!-- PILOTOS – Mercado de Pilotos -->
+        <article class="module-card module-drivers">
+          <div class="module-tag">PILOTOS</div>
+          <h2 class="module-title">Mercado de Pilotos</h2>
+          <p class="module-description">
+            Negocie contratos, salários e bônus de performance. Planeje o futuro da equipe montando a melhor dupla possível.
+          </p>
+          <p class="module-status">
+            Análises de mercado por temporada
+          </p>
+          <div class="module-actions">
+            <button class="module-button secondary" id="btnPilotos">
+              EM BREVE
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <!-- LINHA 2: FINANÇAS / TEMPORADA / ATALHO -->
+      <div class="modules-row">
+
+        <!-- FINANÇAS – Patrocinadores & Marca -->
+        <article class="module-card module-finance">
+          <div class="module-tag">FINANÇAS</div>
+          <h2 class="module-title">Patrocinadores &amp; Marca</h2>
+          <p class="module-description">
+            Escolha patrocinadores, metas e bônus. Cada contrato exige resultados em pista, mas injeta dinheiro no desenvolvimento do carro.
+          </p>
+          <p class="module-status">
+            Reputação &amp; objetivos
+          </p>
+          <div class="module-actions">
+            <button class="module-button secondary" id="btnPatrocinios">
+              EM BREVE
+            </button>
+          </div>
+        </article>
+
+        <!-- TEMPORADA – Calendário & GPs -->
+        <article class="module-card module-season">
+          <div class="module-tag">TEMPORADA</div>
+          <h2 class="module-title">Calendário &amp; GPs</h2>
+          <p class="module-description">
+            Escolha o próximo Grande Prêmio, acompanhe o calendário oficial e avance para treino, classificação e corrida.
+          </p>
+          <p class="module-status">
+            Modo carreira 2025
+          </p>
+          <div class="module-actions">
+            <button class="module-button primary" id="btnCalendario">
+              IR PARA O CALENDÁRIO
+            </button>
+          </div>
+        </article>
+
+        <!-- ATALHO – Acesso rápido à pista -->
+        <article class="module-card module-shortcut">
+          <div class="module-tag">ATALHO</div>
+          <h2 class="module-title">Acesso rápido à pista</h2>
+          <p class="module-description">
+            Carrega o último GP selecionado e leva você direto para a sequência treino &gt; classificação &gt; corrida.
+          </p>
+          <p class="module-status">
+            Uso do último GP salvo
+          </p>
+          <div class="module-actions">
+            <button class="module-button secondary" id="btnAtalhoDemo">
+              ATALHO DE DEMONSTRAÇÃO
+            </button>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+
+  <!-- NAVEGAÇÃO / LÓGICA DO LOBBY -->
+  <script>
+    function navegarPara(arquivo) {
+      window.location.href = arquivo;
+    }
+
+    // VOLTAR (para o menu anterior / seleção de manager)
+    const btnVoltar = document.getElementById('btnVoltar');
+    if (btnVoltar) {
+      btnVoltar.addEventListener('click', () => {
+        // Ajuste para a página correta do seu fluxo
+        navegarPara('index.html');
+      });
+    }
+
+    // OFICINA
+    const btnOficina = document.getElementById('btnOficina');
+    if (btnOficina) {
+      btnOficina.addEventListener('click', () => {
+        navegarPara('oficina.html');
+      });
+    }
+
+    // FUNCIONÁRIOS
+    const btnFuncionarios = document.getElementById('btnFuncionarios');
+    if (btnFuncionarios) {
+      btnFuncionarios.addEventListener('click', () => {
+        // No futuro pode ser "funcionarios.html"; por ora deixo como placeholder
+        // navegarPara('funcionarios.html');
+        alert('Módulo de Funcionários & Staff ainda em desenvolvimento.');
+      });
+    }
+
+    // PILOTOS
+    const btnPilotos = document.getElementById('btnPilotos');
+    if (btnPilotos) {
+      btnPilotos.addEventListener('click', () => {
+        // navegarPara('pilotos.html');
+        alert('Mercado de pilotos ainda em desenvolvimento.');
+      });
+    }
+
+    // PATROCÍNIOS
+    const btnPatrocinios = document.getElementById('btnPatrocinios');
+    if (btnPatrocinios) {
+      btnPatrocinios.addEventListener('click', () => {
+        // navegarPara('patrocinio.html');
+        alert('Módulo de patrocinadores ainda em desenvolvimento.');
+      });
+    }
+
+    // CALENDÁRIO
+    const btnCalendario = document.getElementById('btnCalendario');
+    if (btnCalendario) {
+      btnCalendario.addEventListener('click', () => {
+        // Se o seu arquivo se chama "calendar.html", troque aqui
+        navegarPara('calendario.html');
+      });
+    }
+
+    // ATALHO DEMONSTRAÇÃO
+    const btnAtalhoDemo = document.getElementById('btnAtalhoDemo');
+    if (btnAtalhoDemo) {
+      btnAtalhoDemo.addEventListener('click', () => {
+        // Exemplo: joga direto para pratic.html com um GP padrão
+        localStorage.setItem('currentTrack', 'australia');
+        localStorage.setItem('currentRound', '1');
+        localStorage.setItem('currentSession', 'practice');
+        navegarPara('practic.html');
+      });
+    }
+  </script>
+</body>
+</html>
