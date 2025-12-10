@@ -1,1 +1,129 @@
-1
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>F1 Manager 2025 – Oficina & Setup</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- CSS padrão do seu jogo -->
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="ui.css" />
+    <!-- Novo CSS das telas -->
+    <link rel="stylesheet" href="ui-screens.css" />
+  </head>
+  <body class="screen screen--oficina">
+    <div class="screen-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-logo">
+            <img id="topbar-team-logo" src="assets/logos/mercedes.png" alt="Equipe" />
+          </div>
+          <div class="topbar-title">
+            <div class="topbar-title-main">Oficina & Setup</div>
+            <div class="topbar-title-sub">
+              Ajustes finos de aerodinâmica, motor e pneus para cada GP.
+            </div>
+          </div>
+        </div>
+
+        <div class="manager-card" id="topbar-manager-card">
+          <div class="manager-avatar">
+            <img
+              id="topbar-manager-avatar"
+              src="assets/managers/manager_ethnic_01.png"
+              alt="Manager"
+            />
+          </div>
+          <div class="manager-info">
+            <span class="manager-name" id="topbar-manager-name">Manager</span>
+            <div class="manager-meta">
+              <span id="topbar-manager-country">País</span>
+              <span class="manager-flag" id="topbar-manager-flag-wrapper"></span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section style="margin-bottom: 24px">
+          <h1 style="margin: 0 0 8px; font-size: 1.6rem">
+            Centro de desenvolvimento do carro
+          </h1>
+          <p style="margin: 0; max-width: 640px; opacity: 0.8; font-size: 0.9rem">
+            Nesta versão protótipo, a oficina ainda é visual e conceitual. Aqui
+            futuramente você irá distribuir pontos entre asa dianteira, asa
+            traseira, suspensão, motor, consumo de pneus, velocidade de reta e
+            estabilidade de curva – tudo isso alimentando a simulação de
+            corrida.
+          </p>
+        </section>
+
+        <section class="grid">
+          <article class="action-card">
+            <div class="action-card-badge">Aerodinâmica</div>
+            <h2 class="action-card-title">Asas & Downforce</h2>
+            <p class="action-card-sub">
+              Ajuste o equilíbrio entre velocidade de reta e pressão aerodinâmica
+              para curvas rápidas. Ideal para pistas como Suzuka, Silverstone e
+              Interlagos.
+            </p>
+            <div class="action-card-footer">
+              <span>Configuração atual: <strong>Equilíbrio padrão</strong></span>
+              <button class="btn btn-ghost" type="button">Editar (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Motor</div>
+            <h2 class="action-card-title">Potência & Confiabilidade</h2>
+            <p class="action-card-sub">
+              Mapeamento de motor, consumo de combustível e gerenciamento de
+              ERS. Mais potência gera voltas rápidas, mas aumenta risco de
+              falha.
+            </p>
+            <div class="action-card-footer">
+              <span>Modo atual: <strong>Ritmo normal</strong></span>
+              <button class="btn btn-ghost" type="button">Editar (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Pneus</div>
+            <h2 class="action-card-title">Desgaste & Temperatura</h2>
+            <p class="action-card-sub">
+              Defina o perfil de uso de pneus: agressivo, equilibrado ou
+              conservador. Isso se conectará ao desgaste em corrida.
+            </p>
+            <div class="action-card-footer">
+              <span>Perfil atual: <strong>Equilibrado</strong></span>
+              <button class="btn btn-ghost" type="button">Editar (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Projeto</div>
+            <h2 class="action-card-title">Plano de evolução</h2>
+            <p class="action-card-sub">
+              Planeje atualizações por bloco de corridas: pacotes aerodinâmicos,
+              freios, refrigeração e melhorias de chassi.
+            </p>
+            <div class="action-card-footer">
+              <span>Pacote atual: <strong>Especificação inicial</strong></span>
+              <button class="btn btn-ghost" type="button">Planejar (em breve)</button>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <footer class="screen-footer">
+        <button class="btn btn-secondary" type="button" onclick="window.location.href='lobby.html'">
+          Voltar ao Lobby
+        </button>
+        <span style="opacity: 0.7; font-size: 0.78rem">
+          Protótipo visual – lógica de setup será ligada à simulação em versões futuras.
+        </span>
+      </footer>
+    </div>
+
+    <script src="manager_bar_loader.js"></script>
+  </body>
+</html>
