@@ -2,164 +2,249 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>F1 Manager 2025 – Corrida</title>
+    <title>Corrida – F1 MANAGER 2025</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- usa o mesmo CSS que você já está usando para a corrida -->
     <link rel="stylesheet" href="race.css" />
   </head>
+  <body class="race-page">
+    <div class="page-wrapper">
+      <!-- TOPO -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <h1 class="app-title">Corrida</h1>
+          <span class="season-label">TEMPORADA OFICIAL F1 2025</span>
+        </div>
+        <div class="top-bar-right">
+          <span id="gp-title">GP 2025</span>
+          <span id="race-lap-label" class="lap-label">Volta 1 / 25</span>
+        </div>
+      </header>
 
-  <body>
-    <div class="race-layout">
-      <!-- ESQUERDA: PISTA -->
-      <div class="race-left">
-        <div id="race-track-container" class="track-container"></div>
-      </div>
+      <!-- LAYOUT PRINCIPAL -->
+      <main class="race-layout">
+        <!-- COLUNA ESQUERDA: PISTA -->
+        <section class="race-left">
+          <div id="track-container" class="track-container">
+            <!-- SVG da pista é inserido via JS -->
+          </div>
+        </section>
 
-      <!-- DIREITA: HUD / LISTA / PAINEL DO USUÁRIO -->
-      <div class="race-right">
-        <div class="hud-panel">
-          <!-- CABEÇALHO -->
-          <div class="hud-header">
-            <div>
-              <h1 class="hud-title" id="race-gp-title">Corrida</h1>
-              <p class="hud-subtitle">Temporada oficial F1 2025</p>
+        <!-- COLUNA DIREITA: INFO / PILOTOS / EQUIPE -->
+        <section class="race-right">
+          <!-- LISTA DE PILOTOS -->
+          <section class="panel panel-classificacao">
+            <h2 class="panel-title">Classificação em tempo real</h2>
+            <div id="drivers-list" class="drivers-list">
+              <!-- linhas dos pilotos são criadas pelo race.js -->
             </div>
-            <div class="hud-meta">
-              <span id="race-lap-label" class="hud-lap">Volta 1 / 25</span>
-            </div>
-          </div>
+          </section>
 
-          <!-- RÁDIO (MENSAGENS DO PILOTO / SAFETY CAR) -->
-          <div id="race-radio" class="race-radio">
-            <!-- mensagens tipo: "Pneus no limite! Recomendo box!" -->
-          </div>
+          <!-- PAINEL DA SUA EQUIPE -->
+          <section class="panel panel-user-team">
+            <h2 class="panel-title">Pilotos da sua equipe</h2>
 
-          <!-- LISTA GERAL DE PILOTOS (com rolagem) -->
-          <div id="race-drivers-list" class="drivers-list">
-            <!-- linhas criadas via race.js -->
-          </div>
-
-          <!-- PAINEL DO USUÁRIO (2 pilotos da equipe escolhida) -->
-          <div class="user-panel">
-            <div class="user-panel-title">Pilotos da sua equipe</div>
-
-            <div class="user-driver-row">
-              <!-- PILOTO 1 -->
-              <div class="user-driver-card" id="user-race-driver-1">
-                <div class="user-driver-main">
-                  <img class="user-face" src="" alt="" />
-                  <div class="user-info">
+            <div class="user-team-cards">
+              <!-- CARD 0 -->
+              <div
+                class="user-card"
+                id="user-driver-card-0"
+                data-driver-id=""
+              >
+                <div class="user-card-header">
+                  <img
+                    class="user-face"
+                    src="assets/faces/default.png"
+                    alt="Piloto 1"
+                  />
+                  <div class="user-text">
                     <div class="user-name">---</div>
                     <div class="user-team">---</div>
-                    <div class="user-status-line">
-                      Pneus: <span class="user-tyre">0%</span>
-                    </div>
-                    <div class="user-status-line">
-                      Status: <span class="user-status"></span>
-                    </div>
                   </div>
                 </div>
-                <div class="user-driver-actions">
+
+                <div class="user-card-body">
+                  <div class="user-status-line">
+                    Pneus:
+                    <span id="user-tyre-0">0%</span>
+                  </div>
+                  <div class="user-status-line">
+                    Carro:
+                    <span id="user-car-0">100%</span>
+                  </div>
+                </div>
+
+                <div class="user-card-actions">
                   <button
-                    class="user-btn pit"
+                    class="user-btn"
+                    data-index="0"
                     data-action="pit"
                   >
                     PIT STOP
                   </button>
                   <button
-                    class="user-btn mode"
+                    class="user-btn"
+                    data-index="0"
                     data-action="save"
                   >
                     ECONOMIZAR
                   </button>
                   <button
-                    class="user-btn mode"
-                    data-action="attack"
+                    class="user-btn"
+                    data-index="0"
+                    data-action="push"
                   >
                     ATAQUE
                   </button>
                 </div>
               </div>
 
-              <!-- PILOTO 2 -->
-              <div class="user-driver-card" id="user-race-driver-2">
-                <div class="user-driver-main">
-                  <img class="user-face" src="" alt="" />
-                  <div class="user-info">
+              <!-- CARD 1 -->
+              <div
+                class="user-card"
+                id="user-driver-card-1"
+                data-driver-id=""
+              >
+                <div class="user-card-header">
+                  <img
+                    class="user-face"
+                    src="assets/faces/default.png"
+                    alt="Piloto 2"
+                  />
+                  <div class="user-text">
                     <div class="user-name">---</div>
                     <div class="user-team">---</div>
-                    <div class="user-status-line">
-                      Pneus: <span class="user-tyre">0%</span>
-                    </div>
-                    <div class="user-status-line">
-                      Status: <span class="user-status"></span>
-                    </div>
                   </div>
                 </div>
-                <div class="user-driver-actions">
+
+                <div class="user-card-body">
+                  <div class="user-status-line">
+                    Pneus:
+                    <span id="user-tyre-1">0%</span>
+                  </div>
+                  <div class="user-status-line">
+                    Carro:
+                    <span id="user-car-1">100%</span>
+                  </div>
+                </div>
+
+                <div class="user-card-actions">
                   <button
-                    class="user-btn pit"
+                    class="user-btn"
+                    data-index="1"
                     data-action="pit"
                   >
                     PIT STOP
                   </button>
                   <button
-                    class="user-btn mode"
+                    class="user-btn"
+                    data-index="1"
                     data-action="save"
                   >
                     ECONOMIZAR
                   </button>
                   <button
-                    class="user-btn mode"
-                    data-action="attack"
+                    class="user-btn"
+                    data-index="1"
+                    data-action="push"
                   >
                     ATAQUE
                   </button>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- CONTROLES GERAIS -->
-          <div class="controls-row">
-            <div class="controls">
-              <span class="controls-label">Velocidade:</span>
-              <!-- deixei as duas classes: speed-btn (CSS antigo) e race-speed-btn (JS novo) -->
-              <button class="speed-btn race-speed-btn active" data-speed="1">
+            <!-- BOTÕES DE VELOCIDADE -->
+            <div class="speed-controls">
+              <span>Velocidade:</span>
+              <button
+                class="speed-btn active"
+                data-speed="1"
+              >
                 1x
               </button>
-              <button class="speed-btn race-speed-btn" data-speed="2">
+              <button
+                class="speed-btn"
+                data-speed="2"
+              >
                 2x
               </button>
-              <button class="speed-btn race-speed-btn" data-speed="4">
+              <button
+                class="speed-btn"
+                data-speed="4"
+              >
                 4x
               </button>
             </div>
+
+            <!-- VOLTAR AO CALENDÁRIO -->
+            <div class="back-button-wrapper">
+              <button
+                type="button"
+                class="back-button"
+                onclick="window.history.back()"
+              >
+                Voltar ao calendário
+              </button>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <!-- MODAL DE PÓDIO / RESULTADO FINAL -->
+    <div id="podium-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Pódio – Resultado final</h2>
+
+        <div class="podium-grid">
+          <!-- 1º -->
+          <div class="podium-slot podium-first">
+            <div class="podium-pos">1º</div>
+            <img
+              id="podium1-face"
+              class="podium-face"
+              src="assets/faces/default.png"
+              alt="Piloto 1º"
+            />
+            <div id="podium1-name" class="podium-name">---</div>
+            <div id="podium1-team" class="podium-team">---</div>
           </div>
 
-          <div class="bottom-actions">
-            <button class="back-btn" onclick="window.history.back()">
-              Voltar ao calendário
-            </button>
+          <!-- 2º -->
+          <div class="podium-slot podium-second">
+            <div class="podium-pos">2º</div>
+            <img
+              id="podium2-face"
+              class="podium-face"
+              src="assets/faces/default.png"
+              alt="Piloto 2º"
+            />
+            <div id="podium2-name" class="podium-name">---</div>
+            <div id="podium2-team" class="podium-team">---</div>
           </div>
+
+          <!-- 3º -->
+          <div class="podium-slot podium-third">
+            <div class="podium-pos">3º</div>
+            <img
+              id="podium3-face"
+              class="podium-face"
+              src="assets/faces/default.png"
+              alt="Piloto 3º"
+            />
+            <div id="podium3-name" class="podium-name">---</div>
+            <div id="podium3-team" class="podium-team">---</div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" onclick="closePodium()">OK</button>
         </div>
       </div>
     </div>
 
-    <!-- MODAL DE RESULTADO FINAL (USADO PELO race.js) -->
-    <div id="race-result-modal" class="race-result-modal hidden">
-      <div class="race-result-content">
-        <div id="race-result-body" class="race-result-body">
-          <!-- preenchido via JS com lista final -->
-        </div>
-        <button
-          class="race-result-ok"
-          onclick="window.location.href='calendario.html'"
-        >
-          OK – Voltar ao calendário
-        </button>
-      </div>
-    </div>
-
+    <!-- SCRIPT DA CORRIDA -->
     <script src="race.js"></script>
   </body>
 </html>
