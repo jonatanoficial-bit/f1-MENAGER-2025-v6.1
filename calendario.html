@@ -5,7 +5,7 @@
   <title>Calendário & Grandes Prêmios – F1 Manager 2025</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Se tiver um style.css global, mantenha -->
+  <!-- CSS global do jogo (mantenha se já existir) -->
   <link rel="stylesheet" href="style.css" />
 
   <style>
@@ -516,8 +516,11 @@
           params.set("track", race.trackKey);
           params.set("gp", race.gp);
           params.set("userTeam", userTeamKey);
-          // Mantemos o nome do arquivo de treino como combinamos:
-          window.location.href = "practic.html?" + params.toString();
+
+          // *** AQUI ESTAVA O ERRO ***
+          // Antes: "practic.html"
+          // Agora: manda para o arquivo correto "practice.html"
+          window.location.href = "practice.html?" + params.toString();
         });
 
         container.appendChild(card);
