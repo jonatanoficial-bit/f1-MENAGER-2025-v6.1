@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>F1 Manager 2025 – Lobby</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Seus CSS antigos -->
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="ui.css" />
+    <!-- Novo CSS de telas -->
+    <link rel="stylesheet" href="ui-screens.css" />
+  </head>
+  <body class="screen screen--lobby">
+    <div class="screen-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-logo">
+            <img
+              id="topbar-team-logo"
+              src="assets/logos/mercedes.png"
+              alt="Equipe"
+            />
+          </div>
+          <div class="topbar-title">
+            <div class="topbar-title-main">Central do Manager</div>
+            <div class="topbar-title-sub">
+              <span id="topbar-team-name">Mercedes-AMG Petronas F1 Team</span> ·
+              Temporada Oficial 2025
+            </div>
+          </div>
+        </div>
+
+        <div class="manager-card" id="topbar-manager-card">
+          <div class="manager-avatar">
+            <img
+              id="topbar-manager-avatar"
+              src="assets/managers/manager_ethnic_01.png"
+              alt="Manager"
+            />
+          </div>
+          <div class="manager-info">
+            <span class="manager-name" id="topbar-manager-name">Novo Manager</span>
+            <div class="manager-meta">
+              <span id="topbar-manager-country">País não definido</span>
+              <span class="manager-flag" id="topbar-manager-flag-wrapper">
+                <!-- flag img entra via JS -->
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- GRID PRINCIPAL -->
+      <main>
+        <section style="margin-bottom: 24px">
+          <h1 style="margin: 0 0 8px; font-size: 1.6rem">
+            Bem-vindo à sua base de operações
+          </h1>
+          <p style="margin: 0; max-width: 650px; opacity: 0.8; font-size: 0.9rem">
+            Gerencie cada detalhe da sua escuderia: desenvolvimento do carro,
+            contratos, patrocínios, funcionários e calendário. Tudo começa aqui.
+          </p>
+        </section>
+
+        <section class="grid">
+          <!-- Oficina / Carro -->
+          <article
+            class="action-card"
+            onclick="window.location.href='oficina.html'"
+          >
+            <div class="action-card-badge">Carro</div>
+            <h2 class="action-card-title">Oficina & Setup</h2>
+            <p class="action-card-sub">
+              Ajuste aerodinâmica, motor, pneus e confiabilidade. Cada detalhe
+              influencia na simulação de corrida.
+            </p>
+            <div class="action-card-footer">
+              <span>Última atualização: <strong>não definido</strong></span>
+              <button class="btn btn-ghost">Abrir oficina</button>
+            </div>
+          </article>
+
+          <!-- Funcionários -->
+          <article
+            class="action-card"
+            onclick="window.location.href='funcionarios.html'"
+          >
+            <div class="action-card-badge">Equipe</div>
+            <h2 class="action-card-title">Funcionários & Staff</h2>
+            <p class="action-card-sub">
+              Engenheiros, estrategistas, mecânicos de pit-stop e analistas de
+              dados. Monte uma equipe nível mundial.
+            </p>
+            <div class="action-card-footer">
+              <span>Funcionários chave: <strong>em breve</strong></span>
+              <button class="btn btn-ghost">Gerenciar staff</button>
+            </div>
+          </article>
+
+          <!-- Patrocínio -->
+          <article
+            class="action-card"
+            onclick="window.location.href='patrocinio.html'"
+          >
+            <div class="action-card-badge">Financeiro</div>
+            <h2 class="action-card-title">Patrocínios & Marca</h2>
+            <p class="action-card-sub">
+              Negocie metas de desempenho, bônus por resultado e ativações de
+              marca para atrair novos investimentos.
+            </p>
+            <div class="action-card-footer">
+              <span>Contratos ativos: <strong>0</strong></span>
+              <button class="btn btn-ghost">Ver acordos</button>
+            </div>
+          </article>
+
+          <!-- Mercado / Pilotos -->
+          <article
+            class="action-card"
+            onclick="window.location.href='mercado.html'"
+          >
+            <div class="action-card-badge">Mercado</div>
+            <h2 class="action-card-title">Mercado de Pilotos</h2>
+            <p class="action-card-sub">
+              Observe contratos, janelas de transferência e oportunidades para
+              futuras temporadas.
+            </p>
+            <div class="action-card-footer">
+              <span>Janelas de mercado: <strong>pré-temporada</strong></span>
+              <button class="btn btn-ghost">Abrir mercado</button>
+            </div>
+          </article>
+
+          <!-- Calendário -->
+          <article
+            class="action-card"
+            onclick="window.location.href='calendar.html'"
+          >
+            <div class="action-card-badge">Temporada</div>
+            <h2 class="action-card-title">Calendário & GP atual</h2>
+            <p class="action-card-sub">
+              Escolha o próximo Grande Prêmio, acompanhe resultados e avance a
+              temporada oficial 2025.
+            </p>
+            <div class="action-card-footer">
+              <span>Próxima etapa: <strong>GP da Austrália</strong></span>
+              <button class="btn btn-ghost">Ir para calendário</button>
+            </div>
+          </article>
+
+          <!-- Perfil do Manager -->
+          <article
+            class="action-card"
+            onclick="window.location.href='manager_select.html'"
+          >
+            <div class="action-card-badge">Perfil</div>
+            <h2 class="action-card-title">Perfil do Manager</h2>
+            <p class="action-card-sub">
+              Trocar de manager, editar avatar, bandeira e escuderia favorita.
+              Ideal para apresentações e novos saves.
+            </p>
+            <div class="action-card-footer">
+              <span>Manager atual: <strong id="footer-manager-name">Novo</strong></span>
+              <button class="btn btn-ghost">Editar perfil</button>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <footer class="screen-footer">
+        <span>F1 MANAGER 2025 – Vale Games (protótipo)</span>
+        <span>Build visual · v6.1 UI</span>
+      </footer>
+    </div>
+
+    <script>
+      // Carrega info do manager e da equipe salvos no localStorage
+      (function () {
+        try {
+          const managerRaw = localStorage.getItem("f1m2025_user_manager");
+          const teamKey =
+            localStorage.getItem("f1m2025_user_team") || "mercedes";
+
+          const manager = managerRaw ? JSON.parse(managerRaw) : null;
+
+          const teamLogos = {
+            redbull: "assets/logos/redbull.png",
+            ferrari: "assets/logos/ferrari.png",
+            mercedes: "assets/logos/mercedes.png",
+            mclaren: "assets/logos/mclaren.png",
+            aston: "assets/logos/aston.png",
+            alpine: "assets/logos/alpine.png",
+            racingbulls: "assets/logos/racingbulls.png",
+            sauber: "assets/logos/sauber.png",
+            haas: "assets/logos/haas.png",
+            williams: "assets/logos/williams.png",
+          };
+
+          const teamNames = {
+            redbull: "Oracle Red Bull Racing",
+            ferrari: "Scuderia Ferrari",
+            mercedes: "Mercedes-AMG Petronas F1 Team",
+            mclaren: "McLaren Formula 1 Team",
+            aston: "Aston Martin Aramco F1 Team",
+            alpine: "BWT Alpine F1 Team",
+            racingbulls: "Visa Cash App RB F1 Team",
+            sauber: "Stake F1 Team Kick Sauber (Audi)",
+            haas: "MoneyGram Haas F1 Team",
+            williams: "Williams Racing",
+          };
+
+          // Atualiza logo e nome da equipe
+          const logoEl = document.getElementById("topbar-team-logo");
+          const teamNameEl = document.getElementById("topbar-team-name");
+          if (logoEl && teamLogos[teamKey]) {
+            logoEl.src = teamLogos[teamKey];
+          }
+          if (teamNameEl && teamNames[teamKey]) {
+            teamNameEl.textContent = teamNames[teamKey];
+          }
+
+          // Atualiza info do manager se existir
+          if (manager) {
+            if (manager.name) {
+              const nameEls = document.querySelectorAll(
+                "#topbar-manager-name, #footer-manager-name"
+              );
+              nameEls.forEach((el) => (el.textContent = manager.name));
+            }
+            if (manager.avatar) {
+              const avatarEl = document.getElementById(
+                "topbar-manager-avatar"
+              );
+              if (avatarEl) avatarEl.src = manager.avatar;
+            }
+            if (manager.countryName) {
+              const countryEl =
+                document.getElementById("topbar-manager-country");
+              if (countryEl) countryEl.textContent = manager.countryName;
+            }
+            if (manager.flagCode) {
+              const flagWrap = document.getElementById(
+                "topbar-manager-flag-wrapper"
+              );
+              if (flagWrap) {
+                flagWrap.innerHTML =
+                  '<img src="assets/flags/' +
+                  manager.flagCode +
+                  '.png" alt="' +
+                  (manager.countryName || "") +
+                  '" />';
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Erro carregando dados do manager:", e);
+        }
+      })();
+    </script>
+  </body>
+</html>
