@@ -1,5 +1,5 @@
 // =======================================================
-// TREINO LIVRE – LÓGICA BÁSICA
+// TREINO LIVRE – LÓGICA BÁSICA + ANIMAÇÃO SIMPLES DE CARROS
 // =======================================================
 
 (function () {
@@ -14,7 +14,6 @@
     localStorage.getItem("f1m2025_user_team") ||
     "ferrari";
 
-  // Persistir equipe escolhida
   localStorage.setItem("f1m2025_user_team", userTeamKey);
 
   // -----------------------------
@@ -121,15 +120,13 @@
   };
 
   // -----------------------------
-  // PREENCHER BARRA SUPERIOR
+  // BARRA SUPERIOR
   // -----------------------------
   function preencherTopBar() {
-    // Equipe
     document.getElementById("team-name").textContent = teamMeta.name;
     document.getElementById("team-base").textContent = teamMeta.base;
     document.getElementById("team-logo").src = teamMeta.logo;
 
-    // Manager (se houver no localStorage)
     const raw = localStorage.getItem("f1m2025_manager");
     if (raw) {
       try {
@@ -146,16 +143,17 @@
   }
 
   // -----------------------------
-  // PISTA (SVG)
+  // PISTA + CARROS
   // -----------------------------
   function carregarPista() {
     const panel = document.getElementById("track-panel");
-    panel.innerHTML = "";
-
-    const img = document.createElement("img");
-    img.src = `assets/tracks/${trackKey}.svg`;
-    img.alt = trackMeta.circuit;
-    panel.appendChild(img);
+    panel.innerHTML = `
+      <div class="track-wrapper">
+        <img id="track-image" src="assets/tracks/${trackKey}.svg" alt="${trackMeta.circuit}">
+        <div class="car-dot car-1"></div>
+        <div class="car-dot car-2"></div>
+      </div>
+    `;
 
     document.getElementById("circuit-name").textContent =
       trackMeta.circuit +
@@ -230,21 +228,17 @@
     sessionRemaining -= speedMultiplier;
     if (sessionRemaining < 0) sessionRemaining = 0;
 
-    // A cada ~90s de "tempo real", considera que completou 1 volta
     const elapsed = sessionDurationSeconds - sessionRemaining;
     const lapsSimuladas = Math.min(
       totalLaps,
-      1 + Math.floor((elapsed * speedMultiplier) / 90)
+      1 + Math.floor(elapsed / 90)
     );
     currentLap = Math.max(1, Math.min(totalLaps, lapsSimuladas));
 
-    // Desgaste simples de pneus e carro
     driverStates.forEach((d) => {
-      // Pneus sobem até 100%
       if (d.tyre < 100) d.tyre += 0.4 * speedMultiplier;
       if (d.tyre > 100) d.tyre = 100;
 
-      // Carro cai devagar
       if (d.car > 70) d.car -= 0.05 * speedMultiplier;
       if (d.car < 0) d.car = 0;
     });
@@ -254,7 +248,7 @@
   }
 
   // -----------------------------
-  // CONTROLES DE VELOCIDADE
+  // VELOCIDADE (1x / 2x / 4x)
   // -----------------------------
   function configurarSpeedButtons() {
     const btns = document.querySelectorAll(".btn-speed");
@@ -269,7 +263,7 @@
   }
 
   // -----------------------------
-  // NAVEGAÇÃO (OFICINA / LOBBY)
+  // NAVEGAÇÃO
   // -----------------------------
   function configurarNavButtons() {
     const preserveParams = () => {
@@ -290,6 +284,49 @@
   }
 
   // -----------------------------
+  // ANIMAÇÃO SIMPLES DOS CARROS
+  // (oval genérica por cima da pista, só para dar vida ao treino)
+  // -----------------------------
+  let theta1 = 0;
+  let theta2 = Math.PI;
+
+  function animateCars() {
+    const wrapper = document.querySelector(".track-wrapper");
+    if (!wrapper) {
+      requestAnimationFrame(animateCars);
+      return;
+    }
+
+    const car1 = document.querySelector(".car-1");
+    const car2 = document.querySelector(".car-2");
+    if (!car1 || !car2) {
+      requestAnimationFrame(animateCars);
+      return;
+    }
+
+    const baseSpeed = 0.003; // velocidade base da animação
+    theta1 += baseSpeed * speedMultiplier;
+    theta2 += baseSpeed * 0.95 * speedMultiplier;
+
+    const rX = 40; // “raio” horizontal em %
+    const rY = 30; // “raio” vertical em %
+    const cx = 50;
+    const cy = 50;
+
+    const x1 = cx + rX * Math.cos(theta1);
+    const y1 = cy + rY * Math.sin(theta1);
+    const x2 = cx + rX * Math.cos(theta2);
+    const y2 = cy + rY * Math.sin(theta2);
+
+    car1.style.left = `${x1}%`;
+    car1.style.top = `${y1}%`;
+    car2.style.left = `${x2}%`;
+    car2.style.top = `${y2}%`;
+
+    requestAnimationFrame(animateCars);
+  }
+
+  // -----------------------------
   // INIT
   // -----------------------------
   function init() {
@@ -300,8 +337,8 @@
     configurarSpeedButtons();
     configurarNavButtons();
 
-    // Loop da sessão
     setInterval(tickSessao, 1000);
+    requestAnimationFrame(animateCars);
   }
 
   document.addEventListener("DOMContentLoaded", init);
