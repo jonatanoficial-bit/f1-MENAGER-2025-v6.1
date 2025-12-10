@@ -1,315 +1,535 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>F1 Manager 2025 – Treino Livre</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+  <meta charset="UTF-8" />
+  <title>Treino Livre – F1 Manager 2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Estilos específicos do treino -->
-    <link rel="stylesheet" href="practice.css" />
-  </head>
+  <!-- CSS global do jogo -->
+  <link rel="stylesheet" href="style.css" />
+  <!-- CSS específico (se já existir) -->
+  <link rel="stylesheet" href="practice.css" />
 
-  <body>
-    <!-- Camada de escurecimento / imersão -->
-    <div class="practice-overlay"></div>
+  <style>
+    :root {
+      --accent-red: #ff1744;
+      --accent-green: #00e676;
+      --accent-blue: #40c4ff;
+      --accent-yellow: #ffd54f;
+      --card-bg: rgba(10, 10, 18, 0.96);
+      --card-radius: 18px;
+      --text-muted: #c5c8d4;
+    }
 
-    <!-- Raiz do layout do treino -->
-    <div class="practice-root">
-      <!-- =====================================================
-           BARRA SUPERIOR – LOGO, MANAGER, PAÍS
-           ===================================================== -->
-      <header class="practice-header">
-        <div class="practice-header-left">
-          <div class="practice-header-logo">
-            <!-- Logo da equipe do usuário (preenchido via JS) -->
-            <img
-              id="practice-team-logo"
-              src=""
-              alt="Logo da equipe"
-              loading="lazy"
-            />
-          </div>
-          <div class="practice-header-info">
-            <div class="practice-header-team" id="practice-team-name">
-              Equipe desconhecida
-            </div>
-            <div class="practice-header-manager">
-              Manager:
-              <span id="practice-manager-name">---</span>
-            </div>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #ffffff;
+      background: radial-gradient(circle at top, #1a1a24 0%, #020308 55%, #000000 100%);
+    }
+
+    .practice-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(135deg, #050510, #020208);
+    }
+
+    /* BARRA SUPERIOR */
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .top-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .game-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      opacity: 0.8;
+    }
+
+    .btn-back {
+      border: none;
+      outline: none;
+      padding: 8px 22px;
+      border-radius: 999px;
+      background: var(--accent-red);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(255, 23, 68, 0.6);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .btn-back:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow: 0 0 26px rgba(255, 23, 68, 0.9);
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(8, 8, 16, 0.96);
+      border: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.75rem;
+      min-width: 170px;
+    }
+
+    .pill img {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      object-fit: cover;
+      background: #222;
+    }
+
+    .pill-text span {
+      display: block;
+      line-height: 1.1;
+    }
+
+    .pill-label {
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.7rem;
+    }
+
+    .pill-main {
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .pill-sub {
+      opacity: 0.8;
+      font-size: 0.75rem;
+    }
+
+    /* LAYOUT PRINCIPAL */
+
+    .practice-main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.6fr);
+      gap: 16px;
+      padding: 12px 24px 24px 24px;
+    }
+
+    .practice-left,
+    .practice-right {
+      background: radial-gradient(circle at top, #151523, #050510);
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.85);
+      overflow: hidden;
+    }
+
+    /* PAINEL ESQUERDO – PISTA */
+
+    .practice-left-header {
+      padding: 12px 16px 8px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .practice-left-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      opacity: 0.8;
+    }
+
+    .practice-left-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .track-panel {
+      height: calc(100% - 52px);
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #141420 0%, #050510 55%, #000000 100%);
+    }
+
+    .track-panel img {
+      max-width: 100%;
+      max-height: 100%;
+      filter: drop-shadow(0 0 16px rgba(0,0,0,0.9));
+    }
+
+    /* PAINEL DIREITO */
+
+    .practice-right-header {
+      padding: 12px 16px 8px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .gp-name {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .gp-session {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .session-info {
+      text-align: right;
+      font-size: 0.75rem;
+    }
+
+    .session-label {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      opacity: 0.75;
+    }
+
+    .session-time {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .session-lap {
+      margin-top: 4px;
+      color: var(--text-muted);
+    }
+
+    .practice-right-body {
+      padding: 10px 16px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      height: calc(100% - 52px);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--card-radius);
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+
+    .your-drivers {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .driver-card {
+      background: rgba(5,5,10,0.98);
+      border-radius: 16px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255,255,255,0.05);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .driver-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      object-fit: cover;
+      background: #222;
+    }
+
+    .driver-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .driver-team {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .driver-stats {
+      margin-top: 4px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .driver-actions {
+      margin-top: 6px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn-pill {
+      flex: 1;
+      min-width: 70px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.7rem;
+      padding: 5px 9px;
+      cursor: pointer;
+      transition: filter 0.1s ease, transform 0.1s ease;
+      white-space: nowrap;
+    }
+
+    .btn-pill:active {
+      transform: translateY(1px);
+      filter: brightness(0.9);
+    }
+
+    .btn-pit {
+      background: var(--accent-red);
+      color: #fff;
+    }
+
+    .btn-eco {
+      background: #263238;
+      color: #e0f7fa;
+    }
+
+    .btn-attack {
+      background: var(--accent-yellow);
+      color: #000;
+    }
+
+    .session-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .speed-buttons {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .speed-label {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-right: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .btn-speed {
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: transparent;
+      color: #fff;
+      font-size: 0.72rem;
+      padding: 4px 10px;
+      cursor: pointer;
+      opacity: 0.8;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .btn-speed.active {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      opacity: 1;
+      font-weight: 600;
+    }
+
+    .nav-buttons {
+      display: inline-flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn-nav {
+      border-radius: 999px;
+      border: none;
+      font-size: 0.72rem;
+      padding: 6px 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-nav-office {
+      background: var(--accent-green);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .btn-nav-lobby {
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+    }
+
+    @media (max-width: 900px) {
+      .practice-main {
+        grid-template-columns: 1fr;
+      }
+
+      .practice-left, .practice-right {
+        min-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="practice-page">
+    <!-- TOPO -->
+    <header class="top-bar">
+      <div class="top-left">
+        <button class="btn-back" onclick="window.location.href='calendar.html'">&larr; VOLTAR</button>
+        <div class="game-title">TREINO LIVRE • F1 MANAGER 2025</div>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center;">
+        <!-- Pílula da equipe -->
+        <div class="pill" id="team-pill">
+          <img id="team-logo" src="assets/teams/ferrari.png" alt="Equipe" />
+          <div class="pill-text">
+            <span class="pill-label">Equipe</span>
+            <span class="pill-main" id="team-name">Ferrari</span>
+            <span class="pill-sub" id="team-base">Maranello, Itália</span>
           </div>
         </div>
 
-        <div class="practice-header-right">
-          <div class="practice-header-flag">
-            <!-- Bandeira do país do manager (preenchido via JS) -->
-            <img
-              id="practice-flag"
-              src=""
-              alt="País"
-              loading="lazy"
-            />
-            <span id="practice-country-name">País</span>
+        <!-- Pílula do manager -->
+        <div class="pill" id="manager-pill">
+          <img id="manager-avatar" src="assets/managers/manager_ethnic_01.png" alt="Manager" />
+          <div class="pill-text">
+            <span class="pill-label">Manager</span>
+            <span class="pill-main" id="manager-name">Novo gerente</span>
+            <span class="pill-sub" id="manager-country">País / Nacionalidade</span>
           </div>
         </div>
-      </header>
+      </div>
+    </header>
 
-      <!-- =====================================================
-           ÁREA PRINCIPAL – PISTA + HUD
-           ===================================================== -->
-      <section class="practice-main">
-        <!-- ESQUERDA: PISTA -->
-        <div class="practice-left">
-          <div class="practice-left-title">
-            <h2 id="practice-session-title">TREINO LIVRE</h2>
-            <div
-              class="practice-left-sub"
-              id="practice-track-name"
-            >
-              Circuito – a definir
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="practice-main">
+      <!-- ESQUERDA: PISTA -->
+      <section class="practice-left">
+        <div class="practice-left-header">
+          <div>
+            <div class="practice-left-title">Treino livre</div>
+            <div class="practice-left-subtitle" id="circuit-name">Circuito — a definir</div>
+          </div>
+        </div>
+        <div class="track-panel" id="track-panel">
+          <!-- A pista (SVG) é carregada via JS -->
+        </div>
+      </section>
+
+      <!-- DIREITA: STATUS & PILOTOS -->
+      <section class="practice-right">
+        <div class="practice-right-header">
+          <div>
+            <div class="gp-name" id="gp-name">GP 2025</div>
+            <div class="gp-session">Sessão de treino livre — 60 minutos</div>
+          </div>
+          <div class="session-info">
+            <div class="session-label">Sessão</div>
+            <div class="session-time" id="session-time">60:00</div>
+            <div class="session-lap" id="session-lap">Volta 1 / 20</div>
+          </div>
+        </div>
+
+        <div class="practice-right-body">
+          <!-- Pilotos da equipe -->
+          <div class="card">
+            <div class="card-title">Pilotos da sua equipe</div>
+            <div class="your-drivers">
+              <div class="driver-card" id="driver-1-card">
+                <img class="driver-avatar" id="driver-1-avatar" src="assets/teams/ferrari.png" alt="Piloto 1" />
+                <div>
+                  <div class="driver-name" id="driver-1-name">Piloto 1</div>
+                  <div class="driver-team" id="driver-1-team">Equipe</div>
+                  <div class="driver-stats" id="driver-1-stats">Carro: 100% • Pneus: 0%</div>
+                  <div class="driver-actions">
+                    <button class="btn-pill btn-pit">PIT STOP</button>
+                    <button class="btn-pill btn-eco">ECONOMIZAR</button>
+                    <button class="btn-pill btn-attack">ATAQUE</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="driver-card" id="driver-2-card">
+                <img class="driver-avatar" id="driver-2-avatar" src="assets/teams/ferrari.png" alt="Piloto 2" />
+                <div>
+                  <div class="driver-name" id="driver-2-name">Piloto 2</div>
+                  <div class="driver-team" id="driver-2-team">Equipe</div>
+                  <div class="driver-stats" id="driver-2-stats">Carro: 100% • Pneus: 0%</div>
+                  <div class="driver-actions">
+                    <button class="btn-pill btn-pit">PIT STOP</button>
+                    <button class="btn-pill btn-eco">ECONOMIZAR</button>
+                    <button class="btn-pill btn-attack">ATAQUE</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Contêiner do SVG da pista -->
-          <div id="track-container"></div>
-        </div>
-
-        <!-- DIREITA: HUD / LISTA DE PILOTOS / PAINEL DO USUÁRIO -->
-        <div class="practice-right">
-          <div class="practice-hud-panel">
-            <!-- Cabeçalho HUD -->
-            <div class="practice-hud-header">
-              <div class="practice-hud-left">
-                <div class="practice-gp-title" id="practice-gp-title">
-                  GP 2025 – a definir
-                </div>
-                <div
-                  class="practice-track-label"
-                  id="practice-session-subtitle"
-                >
-                  Sessão de treino livre – 60 minutos
-                </div>
+          <!-- Controles de sessão -->
+          <div class="card">
+            <div class="session-controls">
+              <div class="speed-buttons">
+                <span class="speed-label">Velocidade:</span>
+                <button class="btn-speed active" data-speed="1">1x</button>
+                <button class="btn-speed" data-speed="2">2x</button>
+                <button class="btn-speed" data-speed="4">4x</button>
               </div>
 
-              <div class="practice-hud-right">
-                <div class="practice-session-label">SESSÃO</div>
-                <div
-                  class="practice-time-remaining"
-                  id="practice-time-remaining"
-                >
-                  60:00
-                </div>
-              </div>
-            </div>
-
-            <!-- Info de volta -->
-            <div class="practice-lap-info">
-              <span id="practice-lap-label">Volta 1 / 20</span>
-            </div>
-
-            <!-- Lista de todos os pilotos (rolagem) -->
-            <div
-              id="practice-drivers-list"
-              class="practice-drivers-list"
-            >
-              <!-- Linhas criadas via practice.js
-                   Estrutura esperada:
-                   <div class="practice-driver-row [practice-user-team-row]">
-                     <div class="practice-driver-pos">1º</div>
-                     <div class="practice-driver-info">
-                       <img class="practice-driver-face" ...>
-                       <div class="practice-driver-text">
-                         <div class="practice-driver-name">Nome</div>
-                         <div class="practice-driver-team">Equipe</div>
-                       </div>
-                     </div>
-                     <div class="practice-driver-stats">
-                       <div class="practice-stat-line">Voltas <span>0</span></div>
-                       <div class="practice-stat-line">Melhor <span>--:--.---</span></div>
-                       <div class="practice-stat-line">Última <span>--:--.---</span></div>
-                     </div>
-                   </div>
-              -->
-            </div>
-
-            <!-- Painel com os 2 pilotos da equipe do usuário -->
-            <div class="practice-user-panel">
-              <div class="practice-user-panel-title">
-                Pilotos da sua equipe
-              </div>
-
-              <div class="practice-user-row">
-                <!-- CARD PILOTO 0 -->
-                <div
-                  class="practice-user-card"
-                  data-index="0"
-                >
-                  <div class="practice-user-main">
-                    <img
-                      id="practice-user-face-0"
-                      class="practice-user-face"
-                      src=""
-                      alt=""
-                      loading="lazy"
-                    />
-                    <div class="practice-user-info">
-                      <div
-                        id="practice-user-name-0"
-                        class="practice-user-name"
-                      >
-                        ---
-                      </div>
-                      <div
-                        id="practice-user-team-0"
-                        class="practice-user-team"
-                      >
-                        ---
-                      </div>
-                      <div class="practice-user-status-line">
-                        Carro:
-                        <span id="practice-user-car-0">100%</span>
-                      </div>
-                      <div class="practice-user-status-line">
-                        Pneus:
-                        <span id="practice-user-tyre-0">0%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="practice-user-actions">
-                    <button
-                      class="practice-btn"
-                      data-action="pit"
-                      data-index="0"
-                    >
-                      PIT STOP
-                    </button>
-                    <button
-                      class="practice-btn"
-                      data-action="save"
-                      data-index="0"
-                    >
-                      ECONOMIZAR
-                    </button>
-                    <button
-                      class="practice-btn"
-                      data-action="push"
-                      data-index="0"
-                    >
-                      ATAQUE
-                    </button>
-                  </div>
-                </div>
-
-                <!-- CARD PILOTO 1 -->
-                <div
-                  class="practice-user-card"
-                  data-index="1"
-                >
-                  <div class="practice-user-main">
-                    <img
-                      id="practice-user-face-1"
-                      class="practice-user-face"
-                      src=""
-                      alt=""
-                      loading="lazy"
-                    />
-                    <div class="practice-user-info">
-                      <div
-                        id="practice-user-name-1"
-                        class="practice-user-name"
-                      >
-                        ---
-                      </div>
-                      <div
-                        id="practice-user-team-1"
-                        class="practice-user-team"
-                      >
-                        ---
-                      </div>
-                      <div class="practice-user-status-line">
-                        Carro:
-                        <span id="practice-user-car-1">100%</span>
-                      </div>
-                      <div class="practice-user-status-line">
-                        Pneus:
-                        <span id="practice-user-tyre-1">0%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="practice-user-actions">
-                    <button
-                      class="practice-btn"
-                      data-action="pit"
-                      data-index="1"
-                    >
-                      PIT STOP
-                    </button>
-                    <button
-                      class="practice-btn"
-                      data-action="save"
-                      data-index="1"
-                    >
-                      ECONOMIZAR
-                    </button>
-                    <button
-                      class="practice-btn"
-                      data-action="push"
-                      data-index="1"
-                    >
-                      ATAQUE
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- CONTROLES INFERIORES: VELOCIDADE + NAVEGAÇÃO -->
-            <div class="practice-controls-row">
-              <div class="practice-controls-left">
-                <span class="practice-controls-label">Velocidade:</span>
-                <button
-                  class="practice-speed-btn active"
-                  data-speed="1"
-                >
-                  1x
-                </button>
-                <button
-                  class="practice-speed-btn"
-                  data-speed="2"
-                >
-                  2x
-                </button>
-                <button
-                  class="practice-speed-btn"
-                  data-speed="4"
-                >
-                  4x
-                </button>
-              </div>
-
-              <div class="practice-controls-right">
-                <button
-                  class="btn-small-primary"
-                  id="practice-open-garage"
-                >
-                  Ir para Oficina
-                </button>
-                <button
-                  class="btn-small-ghost"
-                  id="practice-back-lobby"
-                >
-                  Voltar ao Lobby
-                </button>
+              <div class="nav-buttons">
+                <button class="btn-nav btn-nav-office" id="btn-office">IR PARA OFICINA</button>
+                <button class="btn-nav btn-nav-lobby" id="btn-lobby">VOLTAR AO LOBBY</button>
               </div>
             </div>
           </div>
         </div>
       </section>
-    </div>
+    </main>
+  </div>
 
-    <!-- Lógica do treino (telemetria leve + integração com oficina) -->
-    <script src="practice.js"></script>
-  </body>
+  <script src="practice.js"></script>
+</body>
 </html>
