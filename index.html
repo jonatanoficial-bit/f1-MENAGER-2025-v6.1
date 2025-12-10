@@ -8,16 +8,135 @@
     <!-- CSS base do jogo -->
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="ui.css" />
-    <!-- CSS das telas cinematográficas -->
     <link rel="stylesheet" href="ui-screens.css" />
 
     <style>
-      /* Ajustes específicos só da capa (se quiser, pode mover para ui-screens.css) */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
 
       body.screen--capa {
-        /* fundo principal já está em assets/ui/capa_bg.png no ui.css */
         color: #ffffff;
+        overflow: hidden; /* evita scroll na capa */
       }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* ========= TELA 1: CAPA CINEMATOGRÁFICA ========= */
+
+      .intro-cover {
+        position: fixed;
+        inset: 0;
+        background-image: url("assets/ui/capa_bg.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 32px 24px 28px;
+        cursor: pointer;
+      }
+
+      .intro-gradient {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+            circle at 15% 15%,
+            rgba(0, 0, 0, 0.85),
+            transparent 55%
+          ),
+          radial-gradient(
+            circle at 80% 80%,
+            rgba(0, 0, 0, 0.9),
+            transparent 60%
+          );
+        pointer-events: none;
+      }
+
+      .intro-top,
+      .intro-bottom {
+        position: relative;
+        z-index: 1;
+      }
+
+      .intro-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .intro-logo-block {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .intro-title-big {
+        font-size: clamp(2.5rem, 7vw, 3.4rem);
+        line-height: 1.02;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .intro-sub {
+        font-size: 0.78rem;
+        max-width: 380px;
+        opacity: 0.85;
+      }
+
+      .intro-pill {
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        backdrop-filter: blur(4px);
+        background: rgba(0, 0, 0, 0.4);
+      }
+
+      .intro-bottom-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 18px;
+      }
+
+      .intro-cta {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        opacity: 0.9;
+      }
+
+      .intro-cta span {
+        font-size: 0.75rem;
+        opacity: 0.7;
+        display: block;
+        margin-top: 4px;
+      }
+
+      .intro-key-hint {
+        font-size: 0.78rem;
+        opacity: 0.8;
+      }
+
+      .intro-key-hint kbd {
+        padding: 3px 7px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        font-size: 0.7rem;
+      }
+
+      /* ========= TELA 2: MENU PRINCIPAL (já existente) ========= */
 
       .capa-overlay {
         position: relative;
@@ -36,6 +155,9 @@
             rgba(0, 0, 0, 0.9),
             transparent 60%
           );
+        background-image: url("assets/ui/capa_bg.png");
+        background-size: cover;
+        background-position: center;
       }
 
       .capa-header {
@@ -244,7 +366,38 @@
   </head>
 
   <body class="screen screen--capa">
-    <div class="capa-overlay">
+    <!-- TELA 1: CAPA -->
+    <div id="intro-cover" class="intro-cover">
+      <div class="intro-gradient"></div>
+
+      <div class="intro-top">
+        <div class="intro-logo-block">
+          <div class="intro-title-big">F1 Manager 2025</div>
+          <div class="intro-sub">
+            Protótipo jogável desenvolvido pela Vale Games. Toque em qualquer
+            lugar para entrar no paddock.
+          </div>
+        </div>
+        <div class="intro-pill">Vale Games · Vale Produção</div>
+      </div>
+
+      <div class="intro-bottom">
+        <div class="intro-bottom-main">
+          <div class="intro-cta">
+            TOQUE PARA COMEÇAR
+            <span>Ou pressione Enter no teclado</span>
+          </div>
+          <div class="intro-key-hint">
+            Melhor experiência em tela cheia.<br />
+            <span>Desktop: use <kbd>F11</kbd> · Mobile: “Adicionar à tela
+              inicial”.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA 2: MENU PRINCIPAL -->
+    <div id="capa-main" class="capa-overlay hidden">
       <!-- HEADER -->
       <header class="capa-header">
         <div class="capa-logo-wrap">
@@ -270,8 +423,7 @@
           <p class="capa-subtitle">
             Assuma o comando de uma equipe de Fórmula 1, gerencie pilotos,
             contratos, patrocínios e estratégia de corrida em um simulador
-            criado pela <strong>Vale Games</strong>. Visual imersivo, decisões
-            em tempo real e telemetria inspirada no mundo real da F1.
+            criado pela <strong>Vale Games</strong>.
           </p>
 
           <div class="capa-tagline">
@@ -318,7 +470,7 @@
           <div style="font-size: 0.78rem; opacity: 0.9">
             Este protótipo já está conectado à simulação de treino, qualifying
             e corrida. As próximas versões vão aprofundar contratos, clima,
-            desgaste de pneus, falhas mecânicas e telemetria avançada.
+            desgaste de pneus e falhas mecânicas.
           </div>
         </aside>
       </main>
@@ -341,13 +493,33 @@
     </div>
 
     <script>
-      // Controle simples de fluxo da capa
-
+      const intro = document.getElementById("intro-cover");
+      const capaMain = document.getElementById("capa-main");
       const btnNew = document.getElementById("btn-new-career");
       const btnContinue = document.getElementById("btn-continue");
       const saveSlot = document.getElementById("save-slot");
       const slotTitle = document.getElementById("save-slot-title");
       const slotSub = document.getElementById("save-slot-sub");
+
+      function tryFullscreen() {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(() => {});
+        }
+      }
+
+      function entrarNoMenu() {
+        if (intro.classList.contains("hidden")) return;
+        intro.classList.add("hidden");
+        capaMain.classList.remove("hidden");
+        // opcional: tentar tela cheia
+        tryFullscreen();
+      }
+
+      intro.addEventListener("click", entrarNoMenu);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") entrarNoMenu();
+      });
 
       function carregarSave() {
         try {
@@ -357,7 +529,6 @@
 
           if (hasCareer) {
             const manager = JSON.parse(rawManager);
-
             saveSlot.classList.remove("empty");
             slotTitle.textContent =
               (manager.name || "Manager") + " – " + (manager.teamKey || "");
