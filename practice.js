@@ -1,428 +1,337 @@
-// =======================================================
-// F1 MANAGER 2025 - TREINO LIVRE (PRACTICE.JS)
-// - Carros seguem o traçado real do SVG
-// - Cores por equipe
-// - Desgaste, temperatura e modo (Ataque / Normal / Economizar)
-// =======================================================
+// ============================================================
+// F1 MANAGER 2025 – PRACTICE.JS  (TREINO LIVRE)
+// ============================================================
 
-(function () {
-  // -----------------------------
-  // PARÂMETROS DA URL
-  // -----------------------------
-  const params = new URLSearchParams(window.location.search);
-  const trackKey    = params.get("track")    || "australia";
-  const gpName      = params.get("gp")       || "GP 2025";
-  const userTeamKey = params.get("userTeam") || "ferrari";
+// ------------------------
+// 1. Leitura dos parâmetros
+// ------------------------
+const urlParams = new URLSearchParams(window.location.search);
+const trackKey  = urlParams.get("track")    || "australia";
+const gpName    = urlParams.get("gp")       || "GP 2025";
+const userTeam  = (urlParams.get("userTeam") || "ferrari").toLowerCase();
 
-  localStorage.setItem("f1m2025_user_team", userTeamKey);
+// Mapeia o arquivo SVG da pista
+const TRACK_SVG_PATH = `assets/tracks/${trackKey}.svg`;
 
-  // -----------------------------
-  // CORES DAS EQUIPES
-  // -----------------------------
-  const TEAM_COLORS = {
-    ferrari:      { primary: "#ff1c1c", secondary: "#b30000" },
-    redbull:      { primary: "#0a1a6d", secondary: "#ffdd00" },
-    mercedes:     { primary: "#00e5ff", secondary: "#cccccc" },
-    mclaren:      { primary: "#ff8c1a", secondary: "#cc5200" },
-    aston:        { primary: "#006644", secondary: "#00aa77" },
-    alpine:       { primary: "#0055ff", secondary: "#99bbff" },
-    sauber:       { primary: "#ffffff", secondary: "#0066cc" },
-    haas:         { primary: "#e60000", secondary: "#333333" },
-    williams:     { primary: "#0044cc", secondary: "#66aaff" },
-    racingbulls:  { primary: "#003399", secondary: "#ff3300" }
-  };
-  const colors = TEAM_COLORS[userTeamKey] || TEAM_COLORS.ferrari;
+// ------------------------
+// 2. Dados básicos de times e pilotos
+//    (apenas o necessário para o treino)
+// ------------------------
 
-  // -----------------------------
-  // ESTADO DA SESSÃO
-  // -----------------------------
-  const SESSION_TOTAL_SECONDS = 60 * 60; // 60 minutos
-  const TOTAL_LAPS = 20;
+// Cor de cada equipe (para os carrinhos)
+const TEAM_COLORS = {
+  redbull:  "#0600ef",
+  ferrari:  "#ff0000",
+  mercedes:"#00d2be",
+  mclaren: "#ff8700",
+  aston:   "#006f62",
+  alpine:  "#0090ff",
+  williams:"#00a0de",
+  rb:      "#469bff",
+  haas:    "#ffffff",
+  sauber:  "#52e252",
+  "sauber/audi": "#52e252"
+};
 
-  let sessionSecondsLeft = SESSION_TOTAL_SECONDS;
-  let currentLap = 1;
+// Array simples só para vincular drivers à equipe e foto
+const DRIVERS_2025 = [
+  { code: "VER", name: "Max Verstappen",   teamKey: "redbull"  },
+  { code: "PER", name: "Sergio Pérez",     teamKey: "redbull"  },
+  { code: "LEC", name: "Charles Leclerc",  teamKey: "ferrari"  },
+  { code: "SAI", name: "Carlos Sainz",     teamKey: "ferrari"  },
+  { code: "HAM", name: "Lewis Hamilton",   teamKey: "mercedes" },
+  { code: "RUS", name: "George Russell",   teamKey: "mercedes" },
+  { code: "NOR", name: "Lando Norris",     teamKey: "mclaren"  },
+  { code: "PIA", name: "Oscar Piastri",    teamKey: "mclaren"  },
+  { code: "ALO", name: "Fernando Alonso",  teamKey: "aston"    },
+  { code: "STR", name: "Lance Stroll",     teamKey: "aston"    },
+  { code: "GAS", name: "Pierre Gasly",     teamKey: "alpine"   },
+  { code: "OCO", name: "Esteban Ocon",     teamKey: "alpine"   },
+  { code: "ALB", name: "Alex Albon",       teamKey: "williams" },
+  { code: "SAR", name: "Logan Sargeant",   teamKey: "williams" },
+  { code: "TSU", name: "Yuki Tsunoda",     teamKey: "rb"       },
+  { code: "RIC", name: "Daniel Ricciardo", teamKey: "rb"       },
+  { code: "HUL", name: "Nico Hülkenberg",  teamKey: "haas"     },
+  { code: "MAG", name: "Kevin Magnussen",  teamKey: "haas"     },
+  { code: "BOT", name: "Valtteri Bottas",  teamKey: "sauber"   },
+  { code: "ZHO", name: "Guanyu Zhou",      teamKey: "sauber"   }
+];
 
-  // -----------------------------
-  // ESTADO DOS CARROS
-  // -----------------------------
-  const cars = [
-    {
-      id: 1,
-      progress: 0,           // 0–999
-      mode: "normal",        // "normal" | "attack" | "save"
-      carHealth: 100,        // %
-      tireWear: 0,           // % gasto
-      temp: 80,              // °C
-      inPit: false
-    },
-    {
-      id: 2,
-      progress: 500,
-      mode: "normal",
-      carHealth: 100,
-      tireWear: 0,
-      temp: 80,
-      inPit: false
-    }
+// Pega os dois pilotos da equipe do usuário
+function getUserDrivers(teamKey) {
+  const tk = teamKey.toLowerCase();
+  const list = DRIVERS_2025.filter(d => d.teamKey.toLowerCase() === tk);
+  if (list.length >= 2) return list.slice(0, 2);
+
+  // fallback: se não encontrar, devolve dois genéricos
+  return [
+    { code: "GEN", name: "Piloto 1", teamKey: tk },
+    { code: "GEN", name: "Piloto 2", teamKey: tk }
   ];
+}
 
-  let speedMultiplier = 1;
-  let trackPoints = [];
-  let lastFrameTime = null;
+const userDrivers = getUserDrivers(userTeam);
+const teamColor   = TEAM_COLORS[userTeam] || "#ff4444";
 
-  // -----------------------------
-  // HELPER – FORMATA TEMPO
-  // -----------------------------
-  function formatTime(seconds) {
-    const s = Math.max(0, Math.floor(seconds));
-    const m = Math.floor(s / 60);
-    const r = s % 60;
-    return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+// ------------------------
+// 3. Estado da sessão de treino
+// ------------------------
+let trackPoints = [];    // pontos amostrados no traçado
+let animationId = null;
+let lastFrameTs = null;
+let speedFactor = 1;     // 1x, 2x, 4x
+
+// Carros apenas da equipe do usuário
+const cars = [
+  {
+    driver: userDrivers[0],
+    progress: 0,
+    baseSpeed: 40,      // “velocidade virtual” em pontos/segundo
+    lap: 1
+  },
+  {
+    driver: userDrivers[1],
+    progress: 0,
+    baseSpeed: 38,
+    lap: 1
   }
+];
 
-  // -----------------------------
-  // CARREGAR PISTA (SVG)
-  // -----------------------------
-  function loadTrack() {
-    const panel = document.getElementById("track-panel");
-    if (!panel) return;
+// Duração da sessão (segundos) – apenas visual
+let sessionTime = 60 * 60; // 60 min
+const sessionInterval = setInterval(() => {
+  sessionTime = Math.max(0, sessionTime - 1);
+  updateSessionClock();
+}, 1000);
 
-    panel.innerHTML = `
-      <div class="track-wrapper">
-        <svg id="track-svg" viewBox="0 0 1000 1000" style="width:95%;height:95%;overflow:visible;"></svg>
-        <div class="car-dot car-1"></div>
-        <div class="car-dot car-2"></div>
-      </div>
-    `;
+// ------------------------
+// 4. Utilitários de UI
+// ------------------------
+function updateSessionClock() {
+  const el = document.querySelector("[data-session-clock]");
+  if (!el) return;
+  const min = String(Math.floor(sessionTime / 60)).padStart(2, "0");
+  const sec = String(sessionTime % 60).padStart(2, "0");
+  el.textContent = `${min}:${sec}`;
+}
 
-    const svgEl = document.getElementById("track-svg");
+function setSpeed(newSpeed) {
+  speedFactor = newSpeed;
+  document.querySelectorAll("[data-speed-btn]").forEach(btn => {
+    const v = Number(btn.dataset.speedBtn);
+    if (v === newSpeed) btn.classList.add("active");
+    else btn.classList.remove("active");
+  });
+}
 
-    fetch(`assets/tracks/${trackKey}.svg`)
-      .then(r => r.text())
-      .then(svgText => {
-        svgEl.innerHTML = svgText;
+// Preenche nome do GP
+function fillHeaderInfo() {
+  const gpEl = document.querySelector("[data-gp-name]");
+  if (gpEl) gpEl.textContent = gpName;
 
-        // Pega todos os paths e escolhe o mais longo (normalmente o traçado principal)
-        const paths = Array.from(svgEl.querySelectorAll("path"));
-        if (!paths.length) {
-          console.error("Nenhum <path> encontrado no SVG da pista.");
-          return;
-        }
-
-        let mainPath = paths[0];
-        let maxLen = mainPath.getTotalLength();
-        paths.forEach(p => {
-          const len = p.getTotalLength();
-          if (len > maxLen) {
-            maxLen = len;
-            mainPath = p;
-          }
-        });
-
-        extractPathPoints(mainPath);
-      })
-      .catch(err => {
-        console.error("Erro ao carregar SVG da pista:", err);
-      });
+  const trackLabelEl = document.querySelector("[data-track-label]");
+  if (trackLabelEl) {
+    trackLabelEl.textContent = "Albert Park – Melbourne • Austrália"; // texto fixo por enquanto
   }
+}
 
-  // -----------------------------
-  // CONVERTE PATH EM LISTA DE PONTOS
-  // -----------------------------
-  function extractPathPoints(path) {
-    const length = path.getTotalLength();
-    const resolution = 1000;
+// Preenche info dos pilotos (nome + foto)
+function fillDriverCards() {
+  const d1 = userDrivers[0];
+  const d2 = userDrivers[1];
+
+  const d1Name = document.querySelector("[data-driver1-name]");
+  const d2Name = document.querySelector("[data-driver2-name]");
+  const d1Img  = document.querySelector("[data-driver1-face]");
+  const d2Img  = document.querySelector("[data-driver2-face]");
+
+  if (d1Name) d1Name.textContent = d1.name;
+  if (d2Name) d2Name.textContent = d2.name;
+
+  // Foto do piloto: assets/faces/COD.png  (ex: VER.png, LEC.png)
+  if (d1Img) d1Img.src = `assets/faces/${d1.code}.png`;
+  if (d2Img) d2Img.src = `assets/faces/${d2.code}.png`;
+
+  // Deixa o logo da equipe só no topo (não mexemos no chip já existente)
+}
+
+// ------------------------
+// 5. Carregamento da pista SVG
+//    e criação dos carros dentro do próprio SVG
+// ------------------------
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+async function loadTrackSvg() {
+  const wrapper = document.querySelector(".track-wrapper");
+  const svgRoot = document.getElementById("track-svg");
+
+  if (!wrapper || !svgRoot) return;
+
+  try {
+    const resp = await fetch(TRACK_SVG_PATH);
+    if (!resp.ok) throw new Error("Falha ao carregar SVG da pista");
+
+    const svgText = await resp.text();
+    const parser  = new DOMParser();
+    const doc     = parser.parseFromString(svgText, "image/svg+xml");
+    const importedSvg = doc.querySelector("svg");
+
+    if (!importedSvg) throw new Error("SVG inválido");
+
+    // Copia viewBox e conteúdo do SVG original
+    const vb = importedSvg.getAttribute("viewBox") || "0 0 1000 1000";
+    svgRoot.setAttribute("viewBox", vb);
+    svgRoot.innerHTML = ""; // limpa
+
+    // move todos os filhos
+    while (importedSvg.firstChild) {
+      svgRoot.appendChild(importedSvg.firstChild);
+    }
+
+    // Encontra o path principal (se houver mais de um, pega o primeiro)
+    const mainPath = svgRoot.querySelector("path");
+    if (!mainPath) {
+      console.error("Nenhum <path> encontrado na pista");
+      return;
+    }
+
+    // Amostra pontos ao longo do path
+    const totalLen = mainPath.getTotalLength();
+    const steps    = 800; // quanto maior, mais suave o movimento
     trackPoints = [];
-
-    for (let i = 0; i < resolution; i++) {
-      const p = path.getPointAtLength((i / resolution) * length);
+    for (let i = 0; i < steps; i++) {
+      const p = mainPath.getPointAtLength((i / steps) * totalLen);
       trackPoints.push({ x: p.x, y: p.y });
     }
 
-    // Inicia o loop de animação
-    requestAnimationFrame(tick);
+    // Cria os carrinhos dentro do próprio SVG
+    createSvgCars(svgRoot);
+
+    // Inicia animação
+    startAnimation();
+  } catch (err) {
+    console.error(err);
   }
-
-  // -----------------------------
-  // ATUALIZA FÍSICA DE DESGASTE/TEMPERATURA
-  // -----------------------------
-  function updateCarPhysics(car, deltaSeconds) {
-    if (car.inPit) {
-      // Recupera vida e pneus enquanto está no box
-      car.carHealth = Math.min(100, car.carHealth + 20 * deltaSeconds);
-      car.tireWear  = Math.max(0, car.tireWear - 40 * deltaSeconds);
-      car.temp      = Math.max(70, car.temp - 25 * deltaSeconds);
-      if (car.carHealth >= 99 && car.tireWear <= 1 && car.temp <= 80) {
-        car.inPit = false;
-      }
-      return;
-    }
-
-    // Fatores por modo
-    let wearFactor = 1;        // desgaste de pneus
-    let tempTarget = 90;       // temperatura alvo
-    let healthWearFactor = 0.2; // desgaste do carro
-
-    switch (car.mode) {
-      case "attack":
-        wearFactor = 2.0;
-        tempTarget = 105;
-        healthWearFactor = 0.35;
-        break;
-      case "save":
-        wearFactor = 0.5;
-        tempTarget = 80;
-        healthWearFactor = 0.1;
-        break;
-      default:
-        wearFactor = 1.0;
-        tempTarget = 95;
-        healthWearFactor = 0.2;
-    }
-
-    // Desgaste de pneus (aprox. 0–60% num treino inteiro, em modo normal)
-    const baseTireWearRate = 0.002; // % por segundo
-    car.tireWear = Math.min(100, car.tireWear + baseTireWearRate * wearFactor * deltaSeconds * 60);
-
-    // Desgaste de carro (mais leve)
-    const baseHealthWearRate = 0.0006;
-    car.carHealth = Math.max(0, car.carHealth - baseHealthWearRate * healthWearFactor * deltaSeconds * 60);
-
-    // Temperatura converge para um alvo
-    const tempChangeRate = 4; // °C por segundo aproximado
-    const tempDiff = tempTarget - car.temp;
-    car.temp += tempDiff * (1 - Math.exp(-tempChangeRate * deltaSeconds));
-
-    // Se pneu muito destruído ou temp muito alta, carro perde saúde extra
-    if (car.tireWear > 80) {
-      car.carHealth = Math.max(0, car.carHealth - 0.0015 * (car.tireWear - 80) * deltaSeconds * 60);
-    }
-    if (car.temp > 110) {
-      car.carHealth = Math.max(0, car.carHealth - 0.002 * (car.temp - 110) * deltaSeconds * 60);
-    }
-  }
-
-  // -----------------------------
-  // CALCULA VELOCIDADE DO CARRO
-  // -----------------------------
-  function getCarSpeedFactor(car) {
-    // Base
-    let speed = 0.8;
-
-    // Modo
-    if (car.mode === "attack") speed += 0.25;
-    if (car.mode === "save")   speed -= 0.25;
-
-    // Pneu: quanto mais desgaste, pior o grip
-    const grip = Math.max(0.3, 1 - car.tireWear / 120);
-    speed *= grip;
-
-    // Saúde do carro
-    const healthFactor = Math.max(0.3, car.carHealth / 100);
-    speed *= healthFactor;
-
-    // Temperatura – faixa ideal ~ 90–105
-    let tempFactor = 1.0;
-    if (car.temp < 85) {
-      tempFactor -= (85 - car.temp) * 0.004;
-    } else if (car.temp > 105) {
-      tempFactor -= (car.temp - 105) * 0.004;
-    }
-    tempFactor = Math.max(0.6, tempFactor);
-    speed *= tempFactor;
-
-    return speed;
-  }
-
-  // -----------------------------
-  // ATUALIZA HUD (se elementos existirem)
-  // -----------------------------
-  function updateHUD() {
-    const timeEl = document.querySelector("[data-session-time]");
-    const lapEl  = document.querySelector("[data-lap-counter]");
-
-    if (timeEl) timeEl.textContent = formatTime(sessionSecondsLeft);
-    if (lapEl)  lapEl.textContent  = `Volta ${currentLap} / ${TOTAL_LAPS}`;
-
-    cars.forEach(car => {
-      const hEl = document.querySelector(`[data-car-health="${car.id}"]`);
-      const tEl = document.querySelector(`[data-car-tires="${car.id}"]`);
-      const sEl = document.querySelector(`[data-car-status="${car.id}"]`);
-
-      if (hEl) hEl.textContent = `Carro: ${car.carHealth.toFixed(0)}%`;
-      if (tEl) tEl.textContent = `Pneus: ${car.tireWear.toFixed(0)}%`;
-
-      if (sEl) {
-        if (car.inPit) {
-          sEl.textContent = "Status: Box";
-        } else if (car.carHealth <= 0) {
-          sEl.textContent = "Status: Quebra";
-        } else if (car.tireWear > 85) {
-          sEl.textContent = "Status: Pneus no limite";
-        } else {
-          sEl.textContent = "Status: Rodando";
-        }
-      }
-    });
-  }
-
-  // -----------------------------
-  // LOOP PRINCIPAL
-  // -----------------------------
-  function tick(timestamp) {
-    if (!lastFrameTime) lastFrameTime = timestamp;
-    const deltaMs = timestamp - lastFrameTime;
-    lastFrameTime = timestamp;
-
-    const deltaSeconds = deltaMs / 1000;
-
-    // Se ainda não temos pontos de pista, volta depois
-    if (trackPoints.length < 2) {
-      requestAnimationFrame(tick);
-      return;
-    }
-
-    // Atualiza tempo de sessão (acelera com speedMultiplier)
-    sessionSecondsLeft = Math.max(
-      0,
-      sessionSecondsLeft - deltaSeconds * speedMultiplier
-    );
-
-    // Atualiza cada carro
-    cars.forEach(car => {
-      if (car.carHealth <= 0) return; // carro quebrado
-
-      updateCarPhysics(car, deltaSeconds * speedMultiplier);
-
-      // velocidade relativa
-      const speedFactor = getCarSpeedFactor(car);
-      const step = 0.8 * speedMultiplier * speedFactor; // ajuste grosso
-      car.progress = (car.progress + step) % 1000;
-    });
-
-    // Verifica completude de volta (considerando o carro 1 como referência)
-    // Se ele passou de 999 para 0, consideramos uma volta completa
-    if (cars[0].progress < 50 && cars[0].progress > 0) {
-      // simples: usa laps aproximadas pela distância total percorrida/1000
-      // aqui poderíamos ser mais sofisticados; mantemos leve
-    }
-
-    // Desenha carros
-    drawCars();
-    // Atualiza HUD
-    updateHUD();
-
-    requestAnimationFrame(tick);
-  }
-
-  // -----------------------------
-  // DESENHA CARROS NA PISTA
-  // -----------------------------
-  function drawCars() {
-  const wrapper = document.querySelector(".track-wrapper");
-  const svgEl   = document.getElementById("track-svg");
-
-  if (!wrapper || !svgEl || trackPoints.length < 2) return;
-
-  // Usa o próprio viewBox do SVG carregado
-  const vb = svgEl.viewBox.baseVal;
-  const vbX = vb.x;
-  const vbY = vb.y;
-  const vbW = vb.width;
-  const vbH = vb.height;
-
-  // Tamanho real do container exibido na tela
-  const rect = wrapper.getBoundingClientRect();
-
-  // Converte coordenadas do SVG → tela
-  const scaleX = rect.width  / vbW;
-  const scaleY = rect.height / vbH;
-
-  const car1El = document.querySelector(".car-1");
-  const car2El = document.querySelector(".car-2");
-
-  const p1 = trackPoints[Math.floor(cars[0].progress) % trackPoints.length];
-  const p2 = trackPoints[Math.floor(cars[1].progress) % trackPoints.length];
-
-  // Conversão perfeita de coordenadas SVG → tela
-  car1El.style.left = ((p1.x - vbX) * scaleX) + "px";
-  car1El.style.top  = ((p1.y - vbY) * scaleY) + "px";
-
-  car2El.style.left = ((p2.x - vbX) * scaleX) + "px";
-  car2El.style.top  = ((p2.y - vbY) * scaleY) + "px";
 }
 
-  // -----------------------------
-  // BOTÕES DE VELOCIDADE
-  // -----------------------------
-  function setupSpeedButtons() {
-    document.querySelectorAll(".btn-speed").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".btn-speed").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        speedMultiplier = Number(btn.dataset.speed || 1);
-      });
+function createSvgCars(svgRoot) {
+  // remove carros antigos, se houver
+  const oldCars = svgRoot.querySelectorAll(".car-dot");
+  oldCars.forEach(el => el.remove());
+
+  const c1 = document.createElementNS(SVG_NS, "circle");
+  c1.setAttribute("r", "6");
+  c1.setAttribute("class", "car-dot car-dot-1");
+  c1.setAttribute("fill", teamColor);
+
+  const c2 = document.createElementNS(SVG_NS, "circle");
+  c2.setAttribute("r", "6");
+  c2.setAttribute("class", "car-dot car-dot-2");
+  c2.setAttribute("fill", teamColor);
+
+  svgRoot.appendChild(c1);
+  svgRoot.appendChild(c2);
+}
+
+// ------------------------
+// 6. Animação dos carros
+// ------------------------
+function startAnimation() {
+  if (!trackPoints.length) return;
+  lastFrameTs = null;
+  if (animationId) cancelAnimationFrame(animationId);
+  animationId = requestAnimationFrame(frame);
+}
+
+function frame(ts) {
+  if (!lastFrameTs) lastFrameTs = ts;
+  const dt = (ts - lastFrameTs) / 1000; // segundos
+  lastFrameTs = ts;
+
+  updateCars(dt);
+  animationId = requestAnimationFrame(frame);
+}
+
+function updateCars(dt) {
+  if (!trackPoints.length) return;
+
+  const svgRoot = document.getElementById("track-svg");
+  const c1 = svgRoot.querySelector(".car-dot-1");
+  const c2 = svgRoot.querySelector(".car-dot-2");
+  if (!c1 || !c2) return;
+
+  cars.forEach((car, idx) => {
+    // avança progress com baseSpeed * velocidade geral
+    car.progress += car.baseSpeed * speedFactor * dt;
+
+    const maxIndex = trackPoints.length;
+    if (car.progress >= maxIndex) {
+      car.progress -= maxIndex;
+      car.lap += 1;
+    }
+
+    const point = trackPoints[Math.floor(car.progress) % maxIndex];
+
+    if (idx === 0) {
+      c1.setAttribute("cx", point.x);
+      c1.setAttribute("cy", point.y);
+    } else {
+      c2.setAttribute("cx", point.x);
+      c2.setAttribute("cy", point.y);
+    }
+  });
+}
+
+// ------------------------
+// 7. Ligações de botões (velocidade, voltar, oficina)
+// ------------------------
+function bindButtons() {
+  // Velocidade
+  document.querySelectorAll("[data-speed-btn]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const v = Number(btn.dataset.speedBtn);
+      setSpeed(v);
+    });
+  });
+
+  // Voltar ao lobby
+  const backLobby = document.querySelector("[data-back-lobby]");
+  if (backLobby) {
+    backLobby.addEventListener("click", () => {
+      // Mantém os mesmos parâmetros básicos
+      window.location.href = `lobby.html?userTeam=${encodeURIComponent(
+        userTeam
+      )}`;
     });
   }
 
-  // -----------------------------
-  // BOTÕES DE MODO (ATAQUE / ECO / NORMAL)
-  // -----------------------------
-  function setupModeButtons() {
-    document.querySelectorAll("[data-action='mode']").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const carId = Number(btn.dataset.car || "1");
-        const mode  = btn.dataset.mode || "normal";
-        const car   = cars.find(c => c.id === carId);
-        if (!car) return;
-        car.mode = mode;
-
-        // Visual (marcar ativo)
-        const groupSelector = `[data-action='mode'][data-car='${carId}']`;
-        document.querySelectorAll(groupSelector).forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-      });
+  // Ir para oficina
+  const toGarage = document.querySelector("[data-go-garage]");
+  if (toGarage) {
+    toGarage.addEventListener("click", () => {
+      const url = `oficina.html?track=${encodeURIComponent(
+        trackKey
+      )}&gp=${encodeURIComponent(gpName)}&userTeam=${encodeURIComponent(
+        userTeam
+      )}`;
+      window.location.href = url;
     });
   }
 
-  // -----------------------------
-  // BOTÕES PIT STOP
-  // -----------------------------
-  function setupPitButtons() {
-    document.querySelectorAll("[data-action='pit']").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const carId = Number(btn.dataset.car || "1");
-        const car   = cars.find(c => c.id === carId);
-        if (!car) return;
-        car.inPit = true;
-      });
-    });
-  }
+  // Botões de “ataque / economizar / pit stop” podem ser ligados depois
+  // Aqui só evitamos erros se não existirem.
+}
 
-  // -----------------------------
-  // CORES DOS CARROS
-  // -----------------------------
-  function applyTeamColors() {
-    const car1El = document.querySelector(".car-1");
-    const car2El = document.querySelector(".car-2");
-    if (car1El) car1El.style.background = colors.primary;
-    if (car2El) car2El.style.background = colors.secondary;
-  }
+// ------------------------
+// 8. Inicialização
+// ------------------------
+function initPractice() {
+  fillHeaderInfo();
+  fillDriverCards();
+  bindButtons();
+  setSpeed(1);         // começa em 1x
+  updateSessionClock();
+  loadTrackSvg();      // carrega pista, cria carros e inicia animação
+}
 
-  // -----------------------------
-  // INICIALIZAÇÃO
-  // -----------------------------
-  function init() {
-    loadTrack();
-    setupSpeedButtons();
-    setupModeButtons();
-    setupPitButtons();
-    applyTeamColors();
-
-    // Título do GP (se existir elemento)
-    const gpTitleEl = document.querySelector("[data-gp-name]");
-    if (gpTitleEl) gpTitleEl.textContent = gpName;
-  }
-
-  document.addEventListener("DOMContentLoaded", init);
-})();
+document.addEventListener("DOMContentLoaded", initPractice);
