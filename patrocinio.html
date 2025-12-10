@@ -1,1 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>F1 Manager 2025 – Patrocínios & Marca</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="ui-screens.css" />
+  </head>
+  <body class="screen screen--patrocinio">
+    <div class="screen-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-logo">
+            <img id="topbar-team-logo" src="assets/logos/mercedes.png" alt="Equipe" />
+          </div>
+          <div class="topbar-title">
+            <div class="topbar-title-main">Patrocínios & Marca</div>
+            <div class="topbar-title-sub">
+              Mostrando para patrocinadores como será o painel financeiro do jogo.
+            </div>
+          </div>
+        </div>
+
+        <div class="manager-card" id="topbar-manager-card">
+          <div class="manager-avatar">
+            <img
+              id="topbar-manager-avatar"
+              src="assets/managers/manager_ethnic_01.png"
+              alt="Manager"
+            />
+          </div>
+          <div class="manager-info">
+            <span class="manager-name" id="topbar-manager-name">Manager</span>
+            <div class="manager-meta">
+              <span id="topbar-manager-country">País</span>
+              <span class="manager-flag" id="topbar-manager-flag-wrapper"></span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section style="margin-bottom: 24px">
+          <h1 style="margin: 0 0 8px; font-size: 1.6rem">
+            Painel de contratos de patrocínio
+          </h1>
+          <p style="margin: 0; max-width: 650px; opacity: 0.8; font-size: 0.9rem">
+            Aqui você poderá negociar metas, bônus por resultado, exposição de
+            marca e orçamento anual. No protótipo, usamos cartões explicativos
+            para apresentar o conceito aos patrocinadores.
+          </p>
+        </section>
+
+        <section class="grid">
+          <article class="action-card">
+            <div class="action-card-badge">Principal</div>
+            <h2 class="action-card-title">Patrocinador Máster</h2>
+            <p class="action-card-sub">
+              Contrato de maior valor, ligado a metas de pódio, vitórias e
+              posição no campeonato de construtores.
+            </p>
+            <div class="action-card-footer">
+              <span>Valor alvo: <strong>€ X mi / temporada</strong></span>
+              <button class="btn btn-ghost" type="button">Detalhes (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Secundário</div>
+            <h2 class="action-card-title">Apoiadores oficiais</h2>
+            <p class="action-card-sub">
+              Marcas que aparecem em asas, sidepods e macacões. Metas mais
+              moderadas e contratos estáveis.
+            </p>
+            <div class="action-card-footer">
+              <span>Slots disponíveis: <strong>3</strong></span>
+              <button class="btn btn-ghost" type="button">Gerenciar (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Bônus</div>
+            <h2 class="action-card-title">Patrocinadores por objetivo</h2>
+            <p class="action-card-sub">
+              Pagam por volta mais rápida, pontos, top 10 e metas específicas em
+              determinadas pistas.
+            </p>
+            <div class="action-card-footer">
+              <span>Contratos ativos: <strong>0</strong></span>
+              <button class="btn btn-ghost" type="button">Criar contrato (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Imagem</div>
+            <h2 class="action-card-title">Linha do tempo de resultados</h2>
+            <p class="action-card-sub">
+              Gráficos com desempenho da equipe, exposição de marca e retorno de
+              mídia – perfeito para apresentações comerciais.
+            </p>
+            <div class="action-card-footer">
+              <span>Dashboard: <strong>conceito visual</strong></span>
+              <button class="btn btn-ghost" type="button">Ver demo (em breve)</button>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <footer class="screen-footer">
+        <button class="btn btn-secondary" type="button" onclick="window.location.href='lobby.html'">
+          Voltar ao Lobby
+        </button>
+        <span style="opacity: 0.7; font-size: 0.78rem">
+          Protótipo para apresentações comerciais da Vale Games.
+        </span>
+      </footer>
+    </div>
+
+    <script src="manager_bar_loader.js"></script>
+  </body>
+</html>
 
