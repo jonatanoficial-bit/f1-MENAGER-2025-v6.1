@@ -2,374 +2,390 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>F1 Manager 2025 – Vale Edition</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>F1 MANAGER 2025 – Vale Games</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- CSS base do jogo -->
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="ui.css" />
-  </head>
-  <body>
-    <!-- HUD SUPERIOR (sempre visível) -->
-    <header id="hud-top">
-      <div class="hud-item">
-        Caixa:
-        <span id="hud-money-value">R$ 5.000.000</span>
-      </div>
-      <div class="hud-item">
-        Etapa:
-        <span id="hud-stage-value">1</span>
-      </div>
-    </header>
+    <!-- CSS das telas cinematográficas -->
+    <link rel="stylesheet" href="ui-screens.css" />
 
-    <!-- RAIZ DO JOGO -->
-    <main id="game-root">
-      <!-- 1) TELA DE CAPA -->
-      <section id="screen-cover" class="screen screen-cover active">
-        <div class="cover-overlay">
-          <p class="cover-tip">
-            Toque em qualquer lugar para começar
-          </p>
-        </div>
-      </section>
+    <style>
+      /* Ajustes específicos só da capa (se quiser, pode mover para ui-screens.css) */
 
-      <!-- 2) MENU PRINCIPAL -->
-      <section id="screen-main-menu" class="screen">
-        <div class="screen-inner">
-          <p class="orientation-tip">
-            Para uma melhor experiência, gire o celular para o modo paisagem.
-          </p>
-
-          <h1 class="title-main">F1 MANAGER 2025</h1>
-
-          <div class="button-row center">
-            <button id="btn-new-game" class="btn primary">
-              NOVO JOGO
-            </button>
-            <button id="btn-continue-game" class="btn secondary">
-              CONTINUAR CARREIRA
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 3) TIPO DE MANAGER -->
-      <section id="screen-manager-type" class="screen">
-        <div class="screen-inner">
-          <h2 class="title-section">ESCOLHA O TIPO DE MANAGER</h2>
-
-          <div class="button-row center">
-            <button id="btn-use-real-manager" class="btn primary">
-              USAR MANAGER REAL
-            </button>
-            <button id="btn-create-manager" class="btn secondary">
-              CRIAR MEU MANAGER
-            </button>
-          </div>
-
-          <div class="button-row center">
-            <button id="btn-back-to-menu" class="btn ghost">
-              VOLTAR
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 4) LISTA DE MANAGERS REAIS -->
-      <section id="screen-manager-real" class="screen">
-        <div class="screen-inner">
-          <h2 class="title-section">ESCOLHA UM MANAGER REAL</h2>
-
-          <div id="real-manager-list" class="list-column">
-            <!-- preenchido via JS -->
-          </div>
-
-          <div class="button-row center">
-            <button
-              id="btn-back-manager-type-from-real"
-              class="btn ghost btn-back"
-            >
-              VOLTAR
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 5) CRIAR MEU MANAGER -->
-      <section id="screen-manager-create" class="screen">
-        <div class="screen-inner">
-          <h2 class="title-section">CRIAR MEU MANAGER</h2>
-
-          <form id="create-manager-form" class="form-vertical">
-            <label class="form-label">
-              Nome do manager
-              <input
-                id="input-manager-name"
-                type="text"
-                class="input-text"
-                placeholder="Digite o nome"
-                required
-              />
-            </label>
-
-            <label class="form-label">
-              País de origem
-              <select
-                id="select-manager-country"
-                class="input-select"
-                required
-              >
-                <!-- opções preenchidas via JS -->
-              </select>
-            </label>
-
-            <div class="button-row center">
-              <button type="submit" class="btn primary">
-                CONTINUAR
-              </button>
-              <button
-                type="button"
-                id="btn-back-manager-type-from-create"
-                class="btn ghost btn-back"
-              >
-                VOLTAR
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
-
-      <!-- 6) ESCOLHA DE EQUIPE / ESCUDERIA -->
-      <section id="screen-team-select" class="screen">
-        <div class="screen-inner">
-          <h2 class="title-section">ESCOLHA A EQUIPE</h2>
-
-          <div id="team-list" class="list-column">
-            <!-- preenchido via JS -->
-          </div>
-
-          <div class="button-row center">
-            <button
-              id="btn-back-from-team-select"
-              class="btn ghost btn-back"
-            >
-              VOLTAR
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 7) LOBBY PRINCIPAL -->
-      <section id="screen-lobby" class="screen screen-lobby">
-        <div class="screen-inner">
-          <h2 class="title-section">MANAGER: <span id="lobby-manager-name">---</span></h2>
-          <p class="lobby-subtitle">
-            Equipe:
-            <span id="lobby-team-name">Sem equipe</span>
-          </p>
-
-          <div class="button-row center wrap">
-           <button onclick="window.location.href='calendario.html'">
-  CALENDÁRIO 2025
-</button>
-            <button id="btn-open-race" class="btn primary">
-              CORRIDA
-            </button>
-            <button id="btn-open-finance" class="btn primary">
-              FINANÇAS
-            </button>
-            <button id="btn-open-staff" class="btn primary">
-              FUNCIONÁRIOS
-            </button>
-            <button id="btn-open-sponsors" class="btn primary">
-              PATROCÍNIOS
-            </button>
-            <button id="btn-open-contracts" class="btn primary">
-              CONTRATOS
-            </button>
-          </div>
-
-          <div class="button-row center">
-            <button id="btn-save-game" class="btn secondary">
-              SALVAR
-            </button>
-            <button id="btn-exit-to-menu" class="btn ghost">
-              SAIR PARA O MENU
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 8) CALENDÁRIO -->
-      <section id="screen-calendar" class="screen screen-calendar">
-        <div class="screen-inner">
-          <h2 class="title-section">CALENDÁRIO 2025</h2>
-
-          <div id="calendar-list" class="list-column">
-            <!-- preenchido via JS -->
-          </div>
-
-          <div class="button-row center">
-            <button class="btn ghost btn-back-lobby">VOLTAR AO LOBBY</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 9) CORRIDA (PLACEHOLDER) -->
-      <section id="screen-race" class="screen screen-race">
-        <div class="screen-inner">
-          <h2 class="title-section">CORRIDA</h2>
-
-          <p class="race-status">Pronto</p>
-
-          <div class="race-table-placeholder">
-            <div class="race-header-row">
-              <span>POS</span>
-              <span>PILOTO</span>
-              <span>TEMPO</span>
-              <span>PNEU</span>
-              <span>DESGASTE</span>
-            </div>
-            <!-- futura lista de pilotos e carros vai aqui -->
-          </div>
-
-          <div class="button-row center">
-            <button id="btn-start-race" class="btn primary">
-              INICIAR CORRIDA
-            </button>
-            <button class="btn ghost btn-back-lobby">
-              VOLTAR
-            </button>
-          </div>
-
-          <div class="button-row center">
-            <button class="btn small race-speed-btn" data-speed="1">
-              1x
-            </button>
-            <button class="btn small race-speed-btn" data-speed="2">
-              2x
-            </button>
-            <button class="btn small race-speed-btn" data-speed="4">
-              4x
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 10) FINANÇAS (PLACEHOLDER) -->
-      <section id="screen-finance" class="screen screen-finance">
-        <div class="screen-inner">
-          <h2 class="title-section">FINANÇAS</h2>
-
-          <p class="finance-balance">
-            Saldo atual:
-            <span id="finance-balance-value">R$ 5.000.000</span>
-          </p>
-
-          <div class="finance-panels">
-            <div class="finance-panel">
-              <h3>Evolução do Saldo</h3>
-              <div class="panel-placeholder"></div>
-            </div>
-            <div class="finance-panel">
-              <h3>Distribuição por Categoria</h3>
-              <div class="panel-placeholder"></div>
-            </div>
-            <div class="finance-panel">
-              <h3>Histórico</h3>
-              <div class="panel-placeholder"></div>
-            </div>
-          </div>
-
-          <div class="button-row center">
-            <button class="btn ghost btn-back-lobby">VOLTAR AO LOBBY</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 11) FUNCIONÁRIOS (PLACEHOLDER) -->
-      <section id="screen-staff" class="screen screen-staff">
-        <div class="screen-inner">
-          <h2 class="title-section">FUNCIONÁRIOS</h2>
-          <p>Em breve: contratação, demissão, upgrades de staff e muito mais.</p>
-
-          <div class="button-row center">
-            <button class="btn ghost btn-back-lobby">VOLTAR AO LOBBY</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 12) PATROCÍNIOS (PLACEHOLDER) -->
-      <section id="screen-sponsors" class="screen screen-sponsors">
-        <div class="screen-inner">
-          <h2 class="title-section">PATROCÍNIOS</h2>
-          <p>Em breve: contratos de patrocínio, metas de desempenho e bônus.</p>
-
-          <div class="button-row center">
-            <button class="btn ghost btn-back-lobby">VOLTAR AO LOBBY</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 13) CONTRATOS (PLACEHOLDER) -->
-      <section id="screen-contracts" class="screen screen-contracts">
-        <div class="screen-inner">
-          <h2 class="title-section">CONTRATOS</h2>
-          <p>Em breve: contratos com pilotos, equipes e objetivos da temporada.</p>
-
-          <div class="button-row center">
-            <button class="btn ghost btn-back-lobby">VOLTAR AO LOBBY</button>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- SCRIPT PRINCIPAL -->
-    <script src="main.js"></script>
-    <script>
-  // Mapeia o texto que aparece no lobby para a "teamKey" usada no jogo
-  const TEAM_TEXT_TO_KEY = {
-    "Williams Racing": "williams",
-    "Ferrari": "ferrari",
-    "Mercedes": "mercedes",
-    "McLaren": "mclaren",
-    "Red Bull Racing": "redbull",
-    "Aston Martin": "aston",
-    "Alpine": "alpine",
-    "Racing Bulls": "racingbulls",
-    "Sauber / Audi": "sauber",
-    "Haas": "haas"
-  };
-
-  function salvarEquipeDoManager() {
-    const teamSpan = document.getElementById("lobby-team-name");
-    if (!teamSpan) return;
-
-    const textoEquipe = (teamSpan.textContent || "").trim();
-
-    // procura um nome que esteja contido no texto
-    for (const label in TEAM_TEXT_TO_KEY) {
-      if (textoEquipe.includes(label)) {
-        const key = TEAM_TEXT_TO_KEY[label];
-        try {
-          localStorage.setItem("f1m2025_user_team", key);
-          console.log("Equipe do usuário salva:", key);
-        } catch (e) {
-          console.warn("Não foi possível salvar equipe no localStorage:", e);
-        }
-        break;
+      body.screen--capa {
+        /* fundo principal já está em assets/ui/capa_bg.png no ui.css */
+        color: #ffffff;
       }
-    }
-  }
 
-  // espera o DOM carregar e dá um pequeno atraso para garantir
-  document.addEventListener("DOMContentLoaded", () => {
-    // chama uma vez assim que a tela carregar
-    salvarEquipeDoManager();
+      .capa-overlay {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 32px 24px 28px;
+        background: radial-gradient(
+            circle at 10% 20%,
+            rgba(0, 0, 0, 0.75),
+            transparent 55%
+          ),
+          radial-gradient(
+            circle at 90% 80%,
+            rgba(0, 0, 0, 0.9),
+            transparent 60%
+          );
+      }
 
-    // se em algum momento você trocar de manager/equipe via JS,
-    // pode chamar salvarEquipeDoManager() de novo manualmente.
-  });
-</script>
+      .capa-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .capa-logo-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .capa-logo-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        backdrop-filter: blur(6px);
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.1),
+          rgba(0, 0, 0, 0.6)
+        );
+      }
+
+      .capa-logo-text {
+        display: flex;
+        flex-direction: column;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        opacity: 0.85;
+      }
+
+      .capa-logo-text span:last-child {
+        font-size: 0.65rem;
+        opacity: 0.7;
+      }
+
+      .capa-badge {
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        opacity: 0.9;
+        backdrop-filter: blur(4px);
+        background: rgba(0, 0, 0, 0.4);
+      }
+
+      .capa-main {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        gap: 28px;
+        align-items: center;
+        margin-top: 32px;
+        margin-bottom: 32px;
+      }
+
+      @media (max-width: 900px) {
+        .capa-main {
+          grid-template-columns: minmax(0, 1fr);
+          margin-top: 24px;
+        }
+      }
+
+      .capa-title {
+        font-size: clamp(2.4rem, 4vw, 3.1rem);
+        line-height: 1.05;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 12px;
+      }
+
+      .capa-subtitle {
+        font-size: 0.95rem;
+        max-width: 520px;
+        opacity: 0.88;
+      }
+
+      .capa-tagline {
+        margin-top: 16px;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        opacity: 0.7;
+      }
+
+      .capa-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 22px;
+      }
+
+      .btn-primary-big {
+        padding: 12px 24px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #ff1e3c, #ff7b00);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.9rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: 0 0 24px rgba(0, 0, 0, 0.85);
+      }
+
+      .btn-primary-big:active {
+        transform: translateY(1px);
+      }
+
+      .btn-ghost-big {
+        padding: 11px 22px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .btn-ghost-big[disabled] {
+        opacity: 0.35;
+        cursor: default;
+      }
+
+      .capa-right {
+        border-radius: 24px;
+        padding: 18px 18px 16px;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        display: grid;
+        gap: 12px;
+      }
+
+      .capa-panel-title {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        opacity: 0.75;
+      }
+
+      .capa-save-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 14px;
+        background: radial-gradient(
+          circle at 0 50%,
+          rgba(0, 255, 135, 0.25),
+          transparent 60%
+        );
+        border: 1px solid rgba(0, 255, 135, 0.35);
+        font-size: 0.8rem;
+      }
+
+      .capa-save-row.empty {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+      }
+
+      .capa-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.75rem;
+        opacity: 0.8;
+      }
+
+      .capa-footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill {
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+
+  <body class="screen screen--capa">
+    <div class="capa-overlay">
+      <!-- HEADER -->
+      <header class="capa-header">
+        <div class="capa-logo-wrap">
+          <div class="capa-logo-mark">VG</div>
+          <div class="capa-logo-text">
+            <span>Vale Games</span>
+            <span>Simulação • Estratégia • Música</span>
+          </div>
+        </div>
+
+        <div class="capa-badge">
+          Temporada oficial F1 2025 · Protótipo jogável
+        </div>
+      </header>
+
+      <!-- MAIN -->
+      <main class="capa-main">
+        <section>
+          <h1 class="capa-title">
+            F1 MANAGER<br />
+            TEMPORADA 2025
+          </h1>
+          <p class="capa-subtitle">
+            Assuma o comando de uma equipe de Fórmula 1, gerencie pilotos,
+            contratos, patrocínios e estratégia de corrida em um simulador
+            criado pela <strong>Vale Games</strong>. Visual imersivo, decisões
+            em tempo real e telemetria inspirada no mundo real da F1.
+          </p>
+
+          <div class="capa-tagline">
+            Escolha seu manager, defina sua escuderia e comece a temporada.
+          </div>
+
+          <div class="capa-actions">
+            <button id="btn-new-career" class="btn-primary-big" type="button">
+              Iniciar nova carreira
+            </button>
+
+            <button
+              id="btn-continue"
+              class="btn-ghost-big"
+              type="button"
+              disabled
+            >
+              Continuar carreira
+            </button>
+          </div>
+        </section>
+
+        <aside class="capa-right">
+          <div class="capa-panel-title">Resumo rápido</div>
+
+          <div id="save-slot" class="capa-save-row empty">
+            <div>
+              <div id="save-slot-title" style="font-weight: 600">
+                Nenhuma carreira salva
+              </div>
+              <div
+                id="save-slot-sub"
+                style="font-size: 0.75rem; opacity: 0.8; margin-top: 2px"
+              >
+                Clique em “Iniciar nova carreira” para criar seu primeiro
+                manager.
+              </div>
+            </div>
+            <div>
+              <span class="pill">Slot 01</span>
+            </div>
+          </div>
+
+          <div style="font-size: 0.78rem; opacity: 0.9">
+            Este protótipo já está conectado à simulação de treino, qualifying
+            e corrida. As próximas versões vão aprofundar contratos, clima,
+            desgaste de pneus, falhas mecânicas e telemetria avançada.
+          </div>
+        </aside>
+      </main>
+
+      <!-- FOOTER -->
+      <footer class="capa-footer">
+        <div>
+          Vale Games · Vale Produção · Instituto Musical Vale<br />
+          <span style="opacity: 0.75">
+            Projeto autoral de simulação · Uso não oficial da F1 para fins de
+            estudo e prototipagem.
+          </span>
+        </div>
+
+        <div class="capa-footer-links">
+          <span class="pill">Versão 6.1 – Protótipo</span>
+          <span class="pill">Telemetria em desenvolvimento</span>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // Controle simples de fluxo da capa
+
+      const btnNew = document.getElementById("btn-new-career");
+      const btnContinue = document.getElementById("btn-continue");
+      const saveSlot = document.getElementById("save-slot");
+      const slotTitle = document.getElementById("save-slot-title");
+      const slotSub = document.getElementById("save-slot-sub");
+
+      function carregarSave() {
+        try {
+          const rawManager = localStorage.getItem("f1m2025_user_manager");
+          const teamKey = localStorage.getItem("f1m2025_user_team");
+          const hasCareer = !!rawManager && !!teamKey;
+
+          if (hasCareer) {
+            const manager = JSON.parse(rawManager);
+
+            saveSlot.classList.remove("empty");
+            slotTitle.textContent =
+              (manager.name || "Manager") + " – " + (manager.teamKey || "");
+            slotSub.textContent =
+              "Toque em “Continuar carreira” para ir direto ao lobby da equipe.";
+            btnContinue.disabled = false;
+          } else {
+            saveSlot.classList.add("empty");
+            slotTitle.textContent = "Nenhuma carreira salva";
+            slotSub.textContent =
+              "Clique em “Iniciar nova carreira” para criar seu primeiro manager.";
+            btnContinue.disabled = true;
+          }
+        } catch (e) {
+          console.warn("Erro lendo save:", e);
+        }
+      }
+
+      btnNew.addEventListener("click", () => {
+        window.location.href = "manager_select.html";
+      });
+
+      btnContinue.addEventListener("click", () => {
+        if (btnContinue.disabled) return;
+        window.location.href = "lobby.html";
+      });
+
+      carregarSave();
+    </script>
   </body>
 </html>
-
-
