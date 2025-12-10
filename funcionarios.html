@@ -1,1 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>F1 Manager 2025 – Funcionários & Staff</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="ui-screens.css" />
+  </head>
+  <body class="screen screen--funcionarios">
+    <div class="screen-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-logo">
+            <img id="topbar-team-logo" src="assets/logos/mercedes.png" alt="Equipe" />
+          </div>
+          <div class="topbar-title">
+            <div class="topbar-title-main">Funcionários & Staff</div>
+            <div class="topbar-title-sub">
+              Engenheiros, estrategistas e mecânicos de pit-stop.
+            </div>
+          </div>
+        </div>
+
+        <div class="manager-card" id="topbar-manager-card">
+          <div class="manager-avatar">
+            <img
+              id="topbar-manager-avatar"
+              src="assets/managers/manager_ethnic_01.png"
+              alt="Manager"
+            />
+          </div>
+          <div class="manager-info">
+            <span class="manager-name" id="topbar-manager-name">Manager</span>
+            <div class="manager-meta">
+              <span id="topbar-manager-country">País</span>
+              <span class="manager-flag" id="topbar-manager-flag-wrapper"></span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section style="margin-bottom: 24px">
+          <h1 style="margin: 0 0 8px; font-size: 1.6rem">
+            Organização da equipe técnica
+          </h1>
+          <p style="margin: 0; max-width: 640px; opacity: 0.8; font-size: 0.9rem">
+            Nesta tela você terá uma visão geral da estrutura da equipe:
+            engenheiros de pista, chefe de estratégia, chefe de performance,
+            chefe de pit-stop e analistas. Por enquanto, é uma vitrine visual
+            para apresentação do projeto.
+          </p>
+        </section>
+
+        <section class="grid">
+          <article class="action-card">
+            <div class="action-card-badge">Estratégia</div>
+            <h2 class="action-card-title">Chefe de Estratégia</h2>
+            <p class="action-card-sub">
+              Responsável por janelas de pit-stop, leitura de clima, pneus e
+              safety car. Futuramente terá impacto direto nas chances de vitória.
+            </p>
+            <div class="action-card-footer">
+              <span>Status: <strong>Em recrutamento</strong></span>
+              <button class="btn btn-ghost" type="button">Detalhes (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Performance</div>
+            <h2 class="action-card-title">Engenheiro de Pista</h2>
+            <p class="action-card-sub">
+              Cuida da comunicação com o piloto, ajustes de rádio e feedback
+              técnico após cada sessão de pista.
+            </p>
+            <div class="action-card-footer">
+              <span>Status: <strong>Alocado</strong></span>
+              <button class="btn btn-ghost" type="button">Ver ficha (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Pit Stop</div>
+            <h2 class="action-card-title">Equipe de Pit-Stop</h2>
+            <p class="action-card-sub">
+              Tempo médio de pit, consistência e risco de erro. Isso se ligará
+              diretamente ao tempo de pit-stop na simulação.
+            </p>
+            <div class="action-card-footer">
+              <span>Pit médio: <strong>3.0s (placeholder)</strong></span>
+              <button class="btn btn-ghost" type="button">Ajustar treino (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Dados</div>
+            <h2 class="action-card-title">Analistas & Telemetria</h2>
+            <p class="action-card-sub">
+              Responsáveis por interpretar dados, sugerir acertos e prever
+              ritmo de corrida. Conectaremos essa área à telemetria do jogo.
+            </p>
+            <div class="action-card-footer">
+              <span>Status: <strong>Ferramentas em desenvolvimento</strong></span>
+              <button class="btn btn-ghost" type="button">Ver painel (em breve)</button>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <footer class="screen-footer">
+        <button class="btn btn-secondary" type="button" onclick="window.location.href='lobby.html'">
+          Voltar ao Lobby
+        </button>
+        <span style="opacity: 0.7; font-size: 0.78rem">
+          Protótipo visual – módulos de contratação e atributos virão depois.
+        </span>
+      </footer>
+    </div>
+
+    <script src="manager_bar_loader.js"></script>
+  </body>
+</html>
 
