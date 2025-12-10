@@ -1,135 +1,70 @@
-<!-- lobby.html -->
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <title>F1 Manager 2025 - Lobby</title>
+<script>
+  // Função utilitária para achar botão pelo texto, sem mudar o HTML nem o CSS
+  function getButtonByText(texto) {
+    const botoes = Array.from(document.querySelectorAll('button, a'));
+    return botoes.find(btn =>
+      btn.textContent.trim().toUpperCase() === texto.toUpperCase()
+    );
+  }
 
-  <!-- Mantenha aqui os mesmos CSS que você já usa no projeto -->
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="ui.css" />
-  <!-- Se você tiver um CSS específico do lobby, deixe aqui também -->
-  <!-- <link rel="stylesheet" href="lobby.css" /> -->
-</head>
-<body>
-  <div class="lobby-container">
-    <!-- CABEÇALHO DO LOBBY -->
-    <header class="lobby-header">
-      <!-- Pode ser logo + título, use o que seu CSS já estiliza -->
-      <h1 class="lobby-title">F1 Manager 2025</h1>
-      <p class="lobby-subtitle">Lobby do Gerente</p>
-    </header>
+  function navegarPara(arquivo) {
+    window.location.href = arquivo;
+  }
 
-    <!-- CONTEÚDO PRINCIPAL DO LOBBY -->
-    <main class="lobby-main">
-      <!-- Se você já tinha uma estrutura de grid ou colunas, 
-           mantenha essas classes e adapte aqui, se necessário -->
-      <div class="menu-grid">
-        <!-- Botão Calendário -->
-        <button id="btnCalendario" class="menu-button">
-          Calendário
-        </button>
+  // CALENDÁRIO
+  const btnCalendario = getButtonByText('CALENDÁRIO');
+  if (btnCalendario) {
+    btnCalendario.addEventListener('click', () => {
+      // Se o nome do seu arquivo for diferente, troque aqui
+      navegarPara('calendario.html');
+    });
+  }
 
-        <!-- Oficina -->
-        <button id="btnOficina" class="menu-button">
-          Oficina
-        </button>
+  // OFICINA
+  const btnOficina = getButtonByText('OFICINA');
+  if (btnOficina) {
+    btnOficina.addEventListener('click', () => {
+      navegarPara('oficina.html');
+    });
+  }
 
-        <!-- Funcionários -->
-        <button id="btnFuncionarios" class="menu-button">
-          Funcionários
-        </button>
+  // FUNCIONÁRIOS
+  const btnFuncionarios = getButtonByText('FUNCIONÁRIOS');
+  if (btnFuncionarios) {
+    btnFuncionarios.addEventListener('click', () => {
+      navegarPara('funcionarios.html');
+    });
+  }
 
-        <!-- Patrocínios -->
-        <button id="btnPatrocinio" class="menu-button">
-          Patrocínios
-        </button>
+  // PATROCÍNIOS
+  const btnPatrocinios = getButtonByText('PATROCÍNIOS');
+  if (btnPatrocinios) {
+    btnPatrocinios.addEventListener('click', () => {
+      navegarPara('patrocinio.html');
+    });
+  }
 
-        <!-- Carreira / Save Load -->
-        <button id="btnCarreira" class="menu-button">
-          Carregar Carreira
-        </button>
+  // CARREGAR CARREIRA
+  const btnCarregarCarreira = getButtonByText('CARREGAR CARREIRA');
+  if (btnCarregarCarreira) {
+    btnCarregarCarreira.addEventListener('click', () => {
+      navegarPara('carreira.html');
+    });
+  }
 
-        <!-- Opcional: Novo Gerente / Manager Real, se já faz parte do jogo -->
-        <button id="btnNovoGerente" class="menu-button">
-          Novo Gerente
-        </button>
+  // NOVO GERENTE
+  const btnNovoGerente = getButtonByText('NOVO GERENTE');
+  if (btnNovoGerente) {
+    btnNovoGerente.addEventListener('click', () => {
+      navegarPara('novo_gerente.html');
+    });
+  }
 
-        <button id="btnGerenteReal" class="menu-button">
-          Gerente Real
-        </button>
-      </div>
-    </main>
-  </div>
-
-  <!-- SCRIPT DE NAVEGAÇÃO DO LOBBY -->
-  <script>
-    // Função auxiliar para navegar com segurança
-    function navegarPara(arquivo) {
-      // Se o arquivo ainda não existir, você pode trocar por outro ou comentar
-      window.location.href = arquivo;
-    }
-
-    // CALENDÁRIO
-    const btnCalendario = document.getElementById('btnCalendario');
-    if (btnCalendario) {
-      btnCalendario.addEventListener('click', () => {
-        // AJUSTE AQUI se o nome do seu arquivo de calendário for diferente
-        navegarPara('calendario.html');
-      });
-    }
-
-    // OFICINA
-    const btnOficina = document.getElementById('btnOficina');
-    if (btnOficina) {
-      btnOficina.addEventListener('click', () => {
-        navegarPara('oficina.html');
-      });
-    }
-
-    // FUNCIONÁRIOS
-    const btnFuncionarios = document.getElementById('btnFuncionarios');
-    if (btnFuncionarios) {
-      btnFuncionarios.addEventListener('click', () => {
-        navegarPara('funcionarios.html');
-      });
-    }
-
-    // PATROCÍNIOS
-    const btnPatrocinio = document.getElementById('btnPatrocinio');
-    if (btnPatrocinio) {
-      btnPatrocinio.addEventListener('click', () => {
-        navegarPara('patrocinio.html');
-      });
-    }
-
-    // CARREIRA (CARREGAR SAVE)
-    const btnCarreira = document.getElementById('btnCarreira');
-    if (btnCarreira) {
-      btnCarreira.addEventListener('click', () => {
-        // Aqui você pode, no futuro, abrir tela de saves, 
-        // por enquanto vai para uma página genérica
-        navegarPara('carreira.html');
-      });
-    }
-
-    // NOVO GERENTE
-    const btnNovoGerente = document.getElementById('btnNovoGerente');
-    if (btnNovoGerente) {
-      btnNovoGerente.addEventListener('click', () => {
-        // Exemplo: página de criação de gerente
-        navegarPara('novo_gerente.html');
-      });
-    }
-
-    // GERENTE REAL
-    const btnGerenteReal = document.getElementById('btnGerenteReal');
-    if (btnGerenteReal) {
-      btnGerenteReal.addEventListener('click', () => {
-        // Exemplo: seleção de gerentes reais
-        navegarPara('gerentes_reais.html');
-      });
-    }
-  </script>
-</body>
-</html>
+  // GERENTE REAL
+  const btnGerenteReal = getButtonByText('GERENTE REAL');
+  if (btnGerenteReal) {
+    btnGerenteReal.addEventListener('click', () => {
+      navegarPara('gerentes_reais.html');
+    });
+  }
+</script>
