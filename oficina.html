@@ -10,34 +10,65 @@
     <link rel="stylesheet" href="ui-screens.css" />
 
     <style>
-      body.screen--oficina {
+      html, body {
         margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body.screen--oficina {
         min-height: 100vh;
-        color: #ffffff;
         background-image: url("assets/ui/oficina_bg.png");
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
+        color: #ffffff;
       }
 
       .oficina-overlay {
-        min-height: 100vh;
-        padding: 24px 24px 32px;
-        background: radial-gradient(
-            circle at 15% 10%,
-            rgba(0, 0, 0, 0.9),
-            transparent 55%
-          ),
-          radial-gradient(
-            circle at 85% 90%,
-            rgba(0, 0, 0, 0.9),
-            transparent 65%
-          );
+        height: 100%;
+        width: 100%;
         display: flex;
         flex-direction: column;
         gap: 24px;
+        padding: 24px 24px 32px;
+        background: radial-gradient(
+          circle at 15% 10%,
+          rgba(0,0,0,0.88),
+          transparent 55%
+        ),
+        radial-gradient(
+          circle at 85% 90%,
+          rgba(0,0,0,0.88),
+          transparent 65%
+        );
       }
 
+      /* ===== BOTÃO VOLTAR VISÍVEL ===== */
+      .btn-back {
+        padding: 8px 18px;
+        border-radius: 12px;
+        background: linear-gradient(130deg, #ff2b2b, #b10000);
+        color: white;
+        font-size: 0.85rem;
+        font-weight: bold;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        border: none;
+        box-shadow: 0 0 12px rgba(0,0,0,0.6);
+        cursor: pointer;
+      }
+
+      .btn-back:hover {
+        filter: brightness(1.1);
+      }
+
+      .btn-back:active {
+        transform: translateY(1px);
+      }
+
+      /* ===== CABEÇALHO ===== */
       .top-bar {
         display: flex;
         justify-content: space-between;
@@ -45,59 +76,41 @@
         gap: 16px;
       }
 
-      .top-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .btn-back {
-        padding: 6px 12px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        background: rgba(0, 0, 0, 0.7);
-        color: #fff;
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        cursor: pointer;
-      }
-
       .team-pill {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        background: rgba(0, 0, 0, 0.7);
+        padding: 8px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.35);
+        background: rgba(0,0,0,0.7);
       }
 
       .team-pill img {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         object-fit: contain;
       }
 
       .team-pill span {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         text-transform: uppercase;
-        letter-spacing: 0.12em;
+        font-weight: 600;
       }
 
       .manager-pill {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        background: rgba(0, 0, 0, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.25);
+        padding: 8px 12px;
+        border-radius: 12px;
+        background: rgba(0,0,0,0.85);
+        border: 1px solid rgba(255,255,255,0.25);
       }
 
       .manager-avatar {
-        width: 32px;
-        height: 32px;
+        width: 34px;
+        height: 34px;
         border-radius: 50%;
         object-fit: cover;
       }
@@ -105,58 +118,59 @@
       .manager-text {
         display: flex;
         flex-direction: column;
-        font-size: 0.78rem;
+        font-size: 0.8rem;
       }
 
       .manager-text span:first-child {
         font-weight: 600;
       }
 
-      .manager-flag {
-        width: 16px;
-        height: 16px;
-        border-radius: 999px;
-        object-fit: cover;
-      }
-
       .manager-country {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         gap: 4px;
-        font-size: 0.72rem;
-        opacity: 0.8;
+        font-size: 0.75rem;
       }
 
+      .manager-flag {
+        width: 18px;
+        height: 18px;
+        object-fit: cover;
+        border-radius: 999px;
+      }
+
+      /* ===== TÍTULOS ===== */
       .oficina-header {
         text-align: center;
         margin-top: 8px;
       }
 
       .oficina-title {
-        font-size: 1rem;
+        font-size: 1.1rem;
         text-transform: uppercase;
         letter-spacing: 0.18em;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
       }
 
       .oficina-sub {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         opacity: 0.8;
       }
 
       .oficina-main-title {
-        margin-top: 16px;
-        font-size: 1.2rem;
-        font-weight: 700;
+        margin-top: 14px;
+        font-size: 1.3rem;
+        font-weight: 800;
       }
 
       .oficina-main-sub {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         opacity: 0.85;
         max-width: 680px;
-        margin: 4px auto 0;
+        margin: 6px auto 0;
       }
 
+      /* ===== GRID CARDS ===== */
       .oficina-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -164,24 +178,24 @@
         margin-top: 26px;
       }
 
-      @media (max-width: 900px) {
+      @media(max-width:900px){
         .oficina-grid {
           grid-template-columns: minmax(0, 1fr);
         }
       }
 
       .oficina-card {
-        background: rgba(0, 0, 0, 0.85);
+        background: rgba(0,0,0,0.88);
         border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
         padding: 16px 18px 18px;
+        border: 1px solid rgba(255,255,255,0.15);
         display: grid;
         gap: 8px;
-        box-shadow: 0 0 18px rgba(0, 0, 0, 0.7);
+        box-shadow: 0 0 18px rgba(0,0,0,0.8);
       }
 
       .oficina-card small {
-        font-size: 0.7rem;
+        font-size: 0.72rem;
         letter-spacing: 0.16em;
         text-transform: uppercase;
         opacity: 0.6;
@@ -189,268 +203,154 @@
 
       .oficina-card h3 {
         margin: 0;
-        font-size: 0.95rem;
+        font-size: 1rem;
       }
 
       .oficina-card p {
         margin: 0;
-        font-size: 0.78rem;
-        opacity: 0.9;
+        font-size: 0.82rem;
       }
 
       .oficina-card-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 8px;
-        margin-top: 6px;
+        margin-top: 8px;
       }
 
       .oficina-config {
-        font-size: 0.74rem;
-        opacity: 0.8;
+        font-size: 0.8rem;
+        opacity: 0.85;
       }
 
       .btn-small {
         padding: 6px 10px;
         border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255,255,255,0.4);
+        background: rgba(255,255,255,0.08);
         color: #fff;
         font-size: 0.72rem;
         text-transform: uppercase;
-        letter-spacing: 0.12em;
-        cursor: default;
       }
 
       .btn-small.disabled {
-        opacity: 0.55;
-      }
-
-      .oficina-bottom-row {
-        margin-top: 20px;
-      }
-
-      .oficina-footer-note {
-        margin-top: 12px;
-        font-size: 0.75rem;
-        opacity: 0.8;
-        text-align: center;
+        opacity: 0.4;
       }
     </style>
   </head>
 
   <body class="screen screen--oficina">
     <div class="oficina-overlay">
-      <!-- BARRA SUPERIOR -->
-      <header class="top-bar">
-        <div class="top-left">
-          <button class="btn-back" type="button" onclick="voltarLobby()">
-            ← Voltar ao lobby
-          </button>
 
-          <div class="team-pill">
-            <img id="team-logo" src="" alt="Equipe" />
-            <span id="team-name">Equipe</span>
-          </div>
+      <header class="top-bar">
+        <button class="btn-back" onclick="voltarLobby()">Voltar</button>
+
+        <div class="team-pill">
+          <img id="team-logo" src="" />
+          <span id="team-name">Equipe</span>
         </div>
 
         <div class="manager-pill">
-          <img
-            id="manager-avatar"
-            class="manager-avatar"
-            src="assets/managers/manager_ethnic_01.png"
-            alt="Manager"
-          />
+          <img id="manager-avatar" class="manager-avatar" src="" />
           <div class="manager-text">
-            <span id="manager-name">Manager convidado</span>
-            <span class="manager-country">
-              <img
-                id="manager-flag"
-                class="manager-flag"
-                src="assets/flags/br.png"
-                alt="País"
-              />
-              <span id="manager-country-label">Brasil</span>
-            </span>
+            <span id="manager-name">Manager</span>
+            <div class="manager-country">
+              <img id="manager-flag" class="manager-flag" src="" />
+              <span id="manager-country-label"></span>
+            </div>
           </div>
         </div>
       </header>
 
-      <!-- TÍTULOS -->
       <section class="oficina-header">
-        <div class="oficina-title">Oficina &amp; Setup</div>
+        <div class="oficina-title">Oficina & Setup</div>
         <div class="oficina-sub">
           Ajustes finos de aerodinâmica, motor e pneus para cada GP.
         </div>
-
         <div class="oficina-main-title">Centro de desenvolvimento do carro</div>
         <div class="oficina-main-sub">
-          Nesta versão protótipo, a oficina ainda é visual e conceitual. Em
-          breve você poderá distribuir pontos entre asa dianteira, asa traseira,
-          suspensão, motor, consumo de pneus, velocidade de reta e estabilidade
-          de curva – tudo isso alimentando a simulação de corrida.
+          Nesta versão protótipo, os ajustes são conceituais. Futuras atualizações conectarão esta tela ao simulador de corrida.
         </div>
       </section>
 
-      <!-- CARDS DE AJUSTE -->
       <section>
         <div class="oficina-grid">
-          <!-- Aerodinâmica -->
+
           <article class="oficina-card">
-            <small>Aerodinâmica</small>
-            <h3>Asas &amp; Downforce</h3>
-            <p>
-              Ajuste o equilíbrio entre velocidade de reta e pressão
-              aerodinâmica para curvas rápidas. Ideal para pistas como Suzuka,
-              Silverstone e Interlagos.
-            </p>
+            <small>AERODINÂMICA</small>
+            <h3>Asas & Downforce</h3>
+            <p>Equilíbrio entre reta e pressão aerodinâmica para curvas rápidas.</p>
             <div class="oficina-card-footer">
-              <div class="oficina-config">
-                Configuração atual:<br />
-                <strong>Equilíbrio padrão</strong>
-              </div>
-              <button class="btn-small disabled" type="button">
-                Editar (em breve)
-              </button>
+              <div class="oficina-config">Equilíbrio atual: Padrão</div>
+              <button class="btn-small disabled">EM BREVE</button>
             </div>
           </article>
 
-          <!-- Motor -->
           <article class="oficina-card">
-            <small>Motor</small>
-            <h3>Potência &amp; Confiabilidade</h3>
-            <p>
-              Mapeamento de motor, consumo de combustível e gerenciamento de
-              ERS. Mais potência gera voltas rápidas, mas aumenta risco de
-              falha.
-            </p>
+            <small>MOTOR</small>
+            <h3>Potência & Confiabilidade</h3>
+            <p>Mapeamento de motor e risco de falha.</p>
             <div class="oficina-card-footer">
-              <div class="oficina-config">
-                Modo atual:<br />
-                <strong>Ritmo normal</strong>
-              </div>
-              <button class="btn-small disabled" type="button">
-                Editar (em breve)
-              </button>
+              <div class="oficina-config">Modo: Normal</div>
+              <button class="btn-small disabled">EM BREVE</button>
             </div>
           </article>
 
-          <!-- Pneus -->
           <article class="oficina-card">
-            <small>Pneus</small>
-            <h3>Desgaste &amp; Temperatura</h3>
-            <p>
-              Defina o perfil de uso de pneus: agressivo, equilibrado ou
-              conservador. Isso se conectará ao desgaste em corrida e risco de
-              superaquecimento.
-            </p>
+            <small>PNEUS</small>
+            <h3>Desgaste & Temperatura</h3>
+            <p>Perfil de uso de pneus, agressivo ou conservador.</p>
             <div class="oficina-card-footer">
-              <div class="oficina-config">
-                Perfil atual:<br />
-                <strong>Equilibrado</strong>
-              </div>
-              <button class="btn-small disabled" type="button">
-                Editar (em breve)
-              </button>
+              <div class="oficina-config">Perfil: Equilibrado</div>
+              <button class="btn-small disabled">EM BREVE</button>
             </div>
           </article>
-        </div>
 
-        <!-- PLANO DE EVOLUÇÃO -->
-        <div class="oficina-bottom-row">
-          <article class="oficina-card">
-            <small>Projeto</small>
-            <h3>Plano de evolução</h3>
-            <p>
-              Planeje atualizações por bloco de corridas: pacotes aerodinâmicos,
-              freios, reforço de chassi e melhorias de motor. Cada pacote terá
-              custo, tempo de desenvolvimento e impacto de performance.
-            </p>
-            <div class="oficina-card-footer">
-              <div class="oficina-config">
-                Pacote atual:<br />
-                <strong>Especificação inicial</strong>
-              </div>
-              <button class="btn-small disabled" type="button">
-                Planejar (em breve)
-              </button>
-            </div>
-          </article>
         </div>
       </section>
 
-      <div class="oficina-footer-note">
-        Todos os ajustes desta tela ainda são conceituais na versão 6.1. Em
-        futuras versões, as escolhas aqui irão alterar diretamente o ritmo de
-        corrida, desgaste de pneus e confiabilidade do carro.
-      </div>
     </div>
 
-    <!-- database.js deve estar disponível para pegar o logo correto -->
     <script src="database.js"></script>
 
     <script>
+      // ===== FULLSCREEN =====
+      function tryFullscreen() {
+        const el = document.documentElement;
+        if (el.requestFullscreen) {
+          el.requestFullscreen().catch(() => {});
+        }
+      }
+
+      document.addEventListener("click", () => {
+        tryFullscreen();
+      }, { once: true });
+
+      // ===== VOLTAR AO LOBBY =====
       function voltarLobby() {
         window.location.href = "lobby.html";
       }
 
-      (function carregarBarra() {
-        // Equipe do usuário
-        const teamKey =
-          localStorage.getItem("f1m2025_user_team") || "ferrari";
-        let teamName = teamKey.toUpperCase();
-        let teamLogoPath = "";
+      // ===== CARREGAR BARRA SUPERIOR =====
+      (function loadUI() {
+        const teamKey = localStorage.getItem("f1m2025_user_team") || "ferrari";
 
-        if (window.TEAMS_2025) {
-          const t = TEAMS_2025.find((x) => x.key === teamKey);
-          if (t) {
-            teamName = t.name || teamName;
-            teamLogoPath = t.logo || "";
-          }
-        }
+        // Equipe
+        const team = (window.TEAMS_2025 || []).find(t => t.key === teamKey);
+        document.getElementById("team-name").textContent = team ? team.name : teamKey;
+        document.getElementById("team-logo").src = team ? team.logo : "assets/teams/" + teamKey + ".png";
 
-        const teamLogoEl = document.getElementById("team-logo");
-        const teamNameEl = document.getElementById("team-name");
-
-        if (teamLogoPath) {
-          teamLogoEl.src = teamLogoPath;
-        } else {
-          // fallback simples se não tiver no database.js
-          teamLogoEl.src = "assets/teams/" + teamKey + ".png";
-        }
-
-        teamLogoEl.onerror = () => {
-          teamLogoEl.style.display = "none";
-        };
-
-        teamNameEl.textContent = teamName;
-
-        // Manager (nome, país, avatar)
-        try {
-          const rawManager = localStorage.getItem("f1m2025_user_manager");
-          if (rawManager) {
-            const mgr = JSON.parse(rawManager);
-            const nameEl = document.getElementById("manager-name");
-            const countryLabel = document.getElementById(
-              "manager-country-label"
-            );
-            const flagEl = document.getElementById("manager-flag");
-            const avatarEl = document.getElementById("manager-avatar");
-
-            if (mgr.name) nameEl.textContent = mgr.name;
-            if (mgr.countryName) countryLabel.textContent = mgr.countryName;
-            if (mgr.countryCode) {
-              flagEl.src = "assets/flags/" + mgr.countryCode + ".png";
-            }
-            if (mgr.avatarPath) {
-              avatarEl.src = mgr.avatarPath;
-            }
-          }
-        } catch (e) {
-          console.warn("Erro carregando manager:", e);
+        // Manager
+        const raw = localStorage.getItem("f1m2025_user_manager");
+        if (raw) {
+          const m = JSON.parse(raw);
+          document.getElementById("manager-name").textContent = m.name || "Manager";
+          document.getElementById("manager-country-label").textContent = m.countryName || "";
+          document.getElementById("manager-flag").src = "assets/flags/" + (m.countryCode || "br") + ".png";
+          if (m.avatarPath) document.getElementById("manager-avatar").src = m.avatarPath;
         }
       })();
     </script>
+
   </body>
 </html>
