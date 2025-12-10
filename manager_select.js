@@ -3,61 +3,20 @@
 // Tela de escolha de manager, bandeira e time
 // =============================================
 const ManagerData = (function () {
-  // TIMES – chaves compatíveis com seu jogo
   const TEAMS = [
-    {
-      key: "redbull",
-      name: "Oracle Red Bull Racing",
-      logo: "assets/logos/redbull.png",
-    },
-    {
-      key: "ferrari",
-      name: "Scuderia Ferrari",
-      logo: "assets/logos/ferrari.png",
-    },
-    {
-      key: "mercedes",
-      name: "Mercedes-AMG Petronas F1 Team",
-      logo: "assets/logos/mercedes.png",
-    },
-    {
-      key: "mclaren",
-      name: "McLaren Formula 1 Team",
-      logo: "assets/logos/mclaren.png",
-    },
-    {
-      key: "aston",
-      name: "Aston Martin Aramco F1 Team",
-      logo: "assets/logos/aston.png",
-    },
-    {
-      key: "alpine",
-      name: "BWT Alpine F1 Team",
-      logo: "assets/logos/alpine.png",
-    },
-    {
-      key: "racingbulls",
-      name: "Visa Cash App RB F1 Team",
-      logo: "assets/logos/racingbulls.png",
-    },
-    {
-      key: "sauber",
-      name: "Stake F1 Team Kick Sauber (Audi)",
-      logo: "assets/logos/sauber.png",
-    },
-    {
-      key: "haas",
-      name: "MoneyGram Haas F1 Team",
-      logo: "assets/logos/haas.png",
-    },
-    {
-      key: "williams",
-      name: "Williams Racing",
-      logo: "assets/logos/williams.png",
-    },
+    { key: "redbull", name: "Oracle Red Bull Racing", logo: "assets/logos/redbull.png" },
+    { key: "ferrari", name: "Scuderia Ferrari", logo: "assets/logos/ferrari.png" },
+    { key: "mercedes", name: "Mercedes-AMG Petronas F1 Team", logo: "assets/logos/mercedes.png" },
+    { key: "mclaren", name: "McLaren Formula 1 Team", logo: "assets/logos/mclaren.png" },
+    { key: "aston", name: "Aston Martin Aramco F1 Team", logo: "assets/logos/aston.png" },
+    { key: "alpine", name: "BWT Alpine F1 Team", logo: "assets/logos/alpine.png" },
+    { key: "racingbulls", name: "Visa Cash App RB F1 Team", logo: "assets/logos/racingbulls.png" },
+    { key: "sauber", name: "Stake F1 Team Kick Sauber (Audi)", logo: "assets/logos/sauber.png" },
+    { key: "haas", name: "MoneyGram Haas F1 Team", logo: "assets/logos/haas.png" },
+    { key: "williams", name: "Williams Racing", logo: "assets/logos/williams.png" },
   ];
 
-  // PAÍSES – usar só os que você já tem na pasta assets/flags
+  // use apenas códigos de países que você tem em assets/flags
   const COUNTRIES = [
     { code: "br", name: "Brasil" },
     { code: "gb", name: "Reino Unido" },
@@ -75,7 +34,6 @@ const ManagerData = (function () {
     { code: "fi", name: "Finlândia" },
   ];
 
-  // MANAGERS REAIS – usando nomes dos arquivos em assets/managers_real
   const REAL_MANAGERS = [
     {
       id: "wolff",
@@ -150,8 +108,8 @@ const ManagerData = (function () {
       photo: "assets/managers_real/krack.png",
     },
     {
-      id: "gasly",
-      name: "Equipe Imagem Extra",
+      id: "images",
+      name: "Diretor Esportivo",
       teamKey: "alpine",
       countryCode: "fr",
       countryName: "França",
@@ -159,7 +117,6 @@ const ManagerData = (function () {
     },
   ];
 
-  // AVATARES FICTÍCIOS – assets/managers/manager_ethnic_01.png etc.
   const AVATARS = [
     "assets/managers/manager_ethnic_01.png",
     "assets/managers/manager_ethnic_02.png",
@@ -173,10 +130,9 @@ const ManagerData = (function () {
 })();
 
 // =============================================
-// LÓGICA DA UI
-// =============================================
+
 const ManagerUI = (function () {
-  let mode = "real"; // 'real' ou 'custom'
+  let mode = "real";
   let selectedRealId = null;
   let selectedAvatar = ManagerData.AVATARS[0];
   let selectedCountryCode = "br";
@@ -189,8 +145,8 @@ const ManagerUI = (function () {
   function renderRealManagers() {
     const container = qs("manager-real-grid");
     if (!container) return;
-
     container.innerHTML = "";
+
     ManagerData.REAL_MANAGERS.forEach((m) => {
       const team = ManagerData.TEAMS.find((t) => t.key === m.teamKey);
       const card = document.createElement("article");
@@ -219,8 +175,8 @@ const ManagerUI = (function () {
   function renderCustomAvatars() {
     const container = qs("manager-custom-grid");
     if (!container) return;
-
     container.innerHTML = "";
+
     ManagerData.AVATARS.forEach((src) => {
       const card = document.createElement("article");
       card.className = "manager-card-select";
@@ -231,13 +187,13 @@ const ManagerUI = (function () {
         </div>
         <div class="manager-card-name">Avatar personalizado</div>
         <div class="manager-card-meta">
-          <span>Escolha para criar seu perfil</span>
+          <span>Use para criar seu próprio manager</span>
         </div>
       `;
       card.addEventListener("click", () => selectAvatar(src));
       container.appendChild(card);
     });
-    // marca o primeiro como selecionado
+
     selectAvatar(selectedAvatar);
   }
 
@@ -245,12 +201,14 @@ const ManagerUI = (function () {
     const select = qs("select-country");
     if (!select) return;
     select.innerHTML = "";
+
     ManagerData.COUNTRIES.forEach((c) => {
       const opt = document.createElement("option");
       opt.value = c.code;
       opt.textContent = c.name;
       select.appendChild(opt);
     });
+
     select.value = selectedCountryCode;
     select.addEventListener("change", () => {
       selectedCountryCode = select.value;
@@ -261,19 +219,21 @@ const ManagerUI = (function () {
   function renderTeams() {
     const select = qs("select-team");
     if (!select) return;
-
     select.innerHTML = "";
+
     ManagerData.TEAMS.forEach((t) => {
       const opt = document.createElement("option");
       opt.value = t.key;
       opt.textContent = t.name;
       select.appendChild(opt);
     });
+
     select.value = selectedTeamKey;
     select.addEventListener("change", () => {
       selectedTeamKey = select.value;
       updateTeamPreview();
     });
+
     updateTeamPreview();
   }
 
@@ -296,7 +256,6 @@ const ManagerUI = (function () {
     selectedCountryCode = m.countryCode || "br";
     selectedTeamKey = m.teamKey || "mercedes";
 
-    // atualiza campos
     const nameInput = qs("input-name");
     if (nameInput) nameInput.value = m.name;
 
@@ -309,7 +268,6 @@ const ManagerUI = (function () {
     updateTeamPreview();
     updateSummary(m.name, selectedAvatar, selectedCountryCode, m.countryName);
 
-    // marcar card selecionado
     document
       .querySelectorAll(".manager-card-select")
       .forEach((el) => el.classList.remove("is-selected"));
@@ -321,12 +279,10 @@ const ManagerUI = (function () {
 
   function selectAvatar(src) {
     selectedAvatar = src;
-    const currentName =
-      (qs("input-name") && qs("input-name").value) || "Novo Manager";
     updateSummaryFromInputs();
 
     document
-      .querySelectorAll('#manager-custom-grid .manager-card-select')
+      .querySelectorAll("#manager-custom-grid .manager-card-select")
       .forEach((el) => el.classList.remove("is-selected"));
     const active = document.querySelector(
       `.manager-card-select[data-avatar="${src}"]`
@@ -337,11 +293,9 @@ const ManagerUI = (function () {
   function updateSummaryFromInputs() {
     const nameInput = qs("input-name");
     const name = nameInput && nameInput.value ? nameInput.value : "Novo Manager";
-
     const country = ManagerData.COUNTRIES.find(
       (c) => c.code === selectedCountryCode
     );
-
     updateSummary(
       name,
       selectedAvatar,
@@ -372,7 +326,6 @@ const ManagerUI = (function () {
     if (countryEl) countryEl.textContent = countryName || "";
   }
 
-  // Troca entre aba "real" e "custom"
   function switchMode(newMode) {
     mode = newMode;
     const tabReal = qs("tab-real");
@@ -389,7 +342,6 @@ const ManagerUI = (function () {
       gridCustom.style.display = mode === "custom" ? "grid" : "none";
     }
 
-    // quando mudar para custom, garantimos que o resumo usa o avatar escolhido
     updateSummaryFromInputs();
   }
 
@@ -413,16 +365,12 @@ const ManagerUI = (function () {
     };
 
     try {
-      localStorage.setItem(
-        "f1m2025_user_manager",
-        JSON.stringify(payload)
-      );
+      localStorage.setItem("f1m2025_user_manager", JSON.stringify(payload));
       localStorage.setItem("f1m2025_user_team", selectedTeamKey);
     } catch (e) {
       console.warn("Erro salvando manager:", e);
     }
 
-    // volta para o lobby (ou outra tela que você preferir)
     window.location.href = "lobby.html";
   }
 
@@ -430,7 +378,6 @@ const ManagerUI = (function () {
     try {
       const raw = localStorage.getItem("f1m2025_user_manager");
       if (!raw) {
-        // estado padrão
         updateSummaryFromInputs();
         return;
       }
@@ -468,15 +415,12 @@ const ManagerUI = (function () {
     initFromStorage();
   }
 
-  // inicialização
   document.addEventListener("DOMContentLoaded", init);
 
-  // expor funções globais usadas no HTML
   return {
     switchMode,
     saveAndContinue,
   };
 })();
 
-// Deixa disponível globalmente
 window.ManagerUI = ManagerUI;
