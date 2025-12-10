@@ -1,0 +1,618 @@
+/* =========================================================
+   F1 MANAGER 2025 – PRACTICE.CSS (TREINO LIVRE)
+   Layout AAA, tela cheia, compatível com practice.js
+   ========================================================= */
+
+/* RESET BÁSICO */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* BODY – TELA CHEIA COM FUNDO DO TREINO */
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: #000000;
+  background-image: url("assets/ui/practice_bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: #ffffff;
+  overflow: hidden; /* sensação de app full screen */
+}
+
+/* CAMADA DE ESCURECIMENTO SUTIL (CASO USE WRAPPER NO HTML, OPCIONAL) */
+.practice-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(0, 0, 0, 0.6), #000000 55%);
+}
+
+/* RAIZ DO LAYOUT DO TREINO */
+.practice-root {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  padding: 8px 10px 10px;
+}
+
+/* =========================================================
+   BARRA SUPERIOR (MESMO ESTILO DA OFICINA / LOBBY)
+   ========================================================= */
+
+.practice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.90), rgba(16, 16, 40, 0.95));
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.practice-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.practice-header-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #999999);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.practice-header-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.practice-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.practice-header-team {
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8be9ff;
+}
+
+.practice-header-manager {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.practice-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.practice-header-flag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.practice-header-flag img {
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.practice-header-flag span {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #dddddd;
+}
+
+/* =========================================================
+   ÁREA PRINCIPAL (PISTA + HUD)
+   ========================================================= */
+
+.practice-main {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  min-height: 0; /* importante p/ flex + overflow */
+}
+
+/* ESQUERDA – PISTA */
+.practice-left {
+  flex: 1.6;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.95));
+  border-radius: 18px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 26px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.practice-left-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.practice-left-title h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #e5e5ff;
+}
+
+.practice-left-sub {
+  font-size: 0.78rem;
+  color: #bbbbbb;
+}
+
+/* CONTÊINER DA PISTA (SVG) */
+#track-container {
+  flex: 1;
+  min-height: 0;
+  border-radius: 16px;
+  background: radial-gradient(circle at 10% 10%, #2c2c3a, #080812);
+  overflow: hidden;
+  position: relative;
+}
+
+/* SVG ocupa toda a área */
+#track-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* DIREITA – HUD COMPLETO */
+.practice-right {
+  flex: 1.25;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* PAINEL HUD */
+.practice-hud-panel {
+  flex: 1;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(9, 9, 20, 0.98), rgba(14, 14, 40, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 0 28px rgba(0, 0, 0, 0.95);
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* TOPO HUD – TÍTULOS E RELOGIO */
+.practice-hud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.practice-hud-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.practice-gp-title {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.practice-track-label {
+  font-size: 0.8rem;
+  color: #bbbbbb;
+}
+
+.practice-hud-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.practice-session-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8be9ff;
+}
+
+.practice-time-remaining {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* SUB-LINHA (VOLTA) */
+.practice-lap-info {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 0.78rem;
+  color: #cccccc;
+  margin-bottom: 6px;
+}
+
+/* LISTA DE PILOTOS – COM ROLAGEM */
+.practice-drivers-list {
+  flex: 1;
+  border-radius: 12px;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.92));
+  padding: 6px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* SCROLL SUAVE */
+.practice-drivers-list::-webkit-scrollbar {
+  width: 6px;
+}
+.practice-drivers-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.practice-drivers-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+/* LINHA DE PILOTO */
+.practice-driver-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 10px;
+  margin-bottom: 3px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.80), rgba(10, 10, 30, 0.80));
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.practice-driver-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Destaque para pilotos da equipe do usuário */
+.practice-user-team-row {
+  border-color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.35);
+  background: linear-gradient(90deg, rgba(40, 30, 0, 0.95), rgba(9, 9, 20, 0.95));
+}
+
+/* POSIÇÃO */
+.practice-driver-pos {
+  width: 36px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffdf6b;
+}
+
+/* INFO PILOTO */
+.practice-driver-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.practice-driver-face {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.practice-driver-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.practice-driver-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.practice-driver-team {
+  font-size: 0.72rem;
+  color: #bbbbbb;
+}
+
+/* STATS À DIREITA */
+.practice-driver-stats {
+  font-size: 0.7rem;
+  text-align: right;
+  min-width: 80px;
+}
+
+.practice-stat-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+/* =========================================================
+   PAINEL DO USUÁRIO (2 PILOTOS)
+   ========================================================= */
+
+.practice-user-panel {
+  margin-top: 6px;
+  border-radius: 14px;
+  padding: 6px 8px 8px;
+  background: radial-gradient(circle at top, rgba(0, 0, 0, 0.95), rgba(10, 10, 40, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.practice-user-panel-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #8be9ff;
+  margin-bottom: 4px;
+}
+
+/* LINHA COM DOIS CARDS */
+.practice-user-row {
+  display: flex;
+  gap: 6px;
+}
+
+.practice-user-card {
+  flex: 1;
+  border-radius: 10px;
+  padding: 6px;
+  background: linear-gradient(145deg, rgba(16, 16, 40, 0.95), rgba(26, 26, 60, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Parte principal (foto + nome + status) */
+.practice-user-main {
+  display: flex;
+  gap: 6px;
+}
+
+.practice-user-face {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.practice-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.practice-user-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.practice-user-team {
+  font-size: 0.72rem;
+  color: #bbbbbb;
+}
+
+.practice-user-status-line {
+  font-size: 0.72rem;
+  color: #dddddd;
+}
+
+/* LINHA DE BOTÕES */
+.practice-user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+/* BOTÕES DO USUÁRIO */
+.practice-btn {
+  flex: 1;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
+}
+
+.practice-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+/* PIT – vermelho */
+.practice-btn[data-action="pit"] {
+  background: linear-gradient(145deg, #ff5555, #b00020);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 85, 85, 0.4);
+}
+
+/* ECONOMIZAR – azul */
+.practice-btn[data-action="save"] {
+  background: linear-gradient(145deg, #3aa9ff, #0050a0);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(58, 169, 255, 0.4);
+}
+
+/* ATAQUE – dourado */
+.practice-btn[data-action="push"] {
+  background: linear-gradient(145deg, #ffd45a, #b8860b);
+  color: #101010;
+  box-shadow: 0 0 10px rgba(255, 212, 90, 0.4);
+}
+
+/* =========================================================
+   CONTROLES INFERIORES (VELOCIDADE + VOLTAR/OFC)
+   ========================================================= */
+
+.practice-controls-row {
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+}
+
+.practice-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.practice-controls-label {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #bbbbbb;
+}
+
+/* SPEED BUTTONS */
+.practice-speed-btn {
+  min-width: 32px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.practice-speed-btn.active {
+  background: linear-gradient(145deg, #00ffd5, #0077ff);
+  box-shadow: 0 0 10px rgba(0, 255, 213, 0.5);
+}
+
+.practice-speed-btn:active {
+  transform: translateY(1px);
+}
+
+/* BOTÕES DE NAVEGAÇÃO (OFICINA / LOBBY) */
+.practice-controls-right {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-small-ghost,
+.btn-small-primary {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #ffffff;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+}
+
+/* Voltar ao Lobby – estilo "ghost" */
+.btn-small-ghost {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.btn-small-ghost:active {
+  transform: translateY(1px);
+}
+
+/* Ir para Oficina – destaque */
+.btn-small-primary {
+  border-color: rgba(0, 255, 213, 0.4);
+  background: linear-gradient(145deg, #00ffd5, #0078ff);
+  box-shadow: 0 0 10px rgba(0, 255, 213, 0.5);
+}
+
+.btn-small-primary:active {
+  transform: translateY(1px);
+}
+
+/* =========================================================
+   RESPONSIVIDADE – MOBILE (TELA MENOR)
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .practice-root {
+    padding: 6px;
+  }
+
+  .practice-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .practice-main {
+    flex-direction: column;
+  }
+
+  .practice-left,
+  .practice-right {
+    flex: none;
+    min-height: 260px;
+  }
+
+  .practice-user-row {
+    flex-direction: column;
+  }
+}
