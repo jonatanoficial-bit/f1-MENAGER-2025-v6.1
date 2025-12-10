@@ -4,54 +4,61 @@
     <meta charset="UTF-8" />
     <title>Corrida – F1 MANAGER 2025</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- usa o mesmo CSS que você já está usando para a corrida -->
     <link rel="stylesheet" href="race.css" />
   </head>
+
   <body class="race-page">
     <div class="page-wrapper">
-      <!-- TOPO -->
+      <!-- TOPO ----------------------------------------------------------- -->
       <header class="top-bar">
         <div class="top-bar-left">
           <h1 class="app-title">Corrida</h1>
           <span class="season-label">TEMPORADA OFICIAL F1 2025</span>
         </div>
         <div class="top-bar-right">
-          <span id="gp-title">GP 2025</span>
+          <span id="gp-title" class="gp-title">GP 2025</span>
           <span id="race-lap-label" class="lap-label">Volta 1 / 25</span>
         </div>
       </header>
 
-      <!-- LAYOUT PRINCIPAL -->
+      <!-- FAIXA DE CLIMA / CONDIÇÕES ------------------------------------ -->
+      <section class="race-meta-bar">
+        <div id="weather-label">Clima: Seco</div>
+        <div id="track-temp-label">Pista: 28ºC</div>
+        <div id="air-temp-label">Ar: 24ºC</div>
+      </section>
+
+      <!-- LAYOUT PRINCIPAL ---------------------------------------------- -->
       <main class="race-layout">
-        <!-- COLUNA ESQUERDA: PISTA -->
+        <!-- ESQUERDA: PISTA --------------------------------------------- -->
         <section class="race-left">
           <div id="track-container" class="track-container">
-            <!-- SVG da pista é inserido via JS -->
+            <!-- SVG é inserido via race.js -->
           </div>
         </section>
 
-        <!-- COLUNA DIREITA: INFO / PILOTOS / EQUIPE -->
+        <!-- DIREITA: HUD / TABELA / EQUIPE ------------------------------ -->
         <section class="race-right">
-          <!-- LISTA DE PILOTOS -->
+          <!-- CLASSIFICAÇÃO EM TEMPO REAL ------------------------------- -->
           <section class="panel panel-classificacao">
             <h2 class="panel-title">Classificação em tempo real</h2>
             <div id="drivers-list" class="drivers-list">
-              <!-- linhas dos pilotos são criadas pelo race.js -->
+              <!-- linhas dos pilotos criadas pelo race.js -->
             </div>
           </section>
 
-          <!-- PAINEL DA SUA EQUIPE -->
+          <!-- PAINEL – PILOTOS DA SUA EQUIPE ---------------------------- -->
           <section class="panel panel-user-team">
             <h2 class="panel-title">Pilotos da sua equipe</h2>
 
-            <div class="user-team-cards">
-              <!-- CARD 0 -->
-              <div
+            <div class="user-team-row">
+              <!-- PILOTO 0 -->
+              <article
                 class="user-card"
                 id="user-driver-card-0"
-                data-driver-id=""
+                data-index="0"
               >
-                <div class="user-card-header">
+                <header class="user-card-header">
                   <img
                     class="user-face"
                     src="assets/faces/default.png"
@@ -61,51 +68,53 @@
                     <div class="user-name">---</div>
                     <div class="user-team">---</div>
                   </div>
-                </div>
+                </header>
 
                 <div class="user-card-body">
                   <div class="user-status-line">
-                    Pneus:
-                    <span id="user-tyre-0">0%</span>
+                    Pneus (desgaste): <span id="user-tyre-0">0%</span>
                   </div>
                   <div class="user-status-line">
-                    Carro:
-                    <span id="user-car-0">100%</span>
+                    Carro: <span id="user-car-0">100%</span>
+                  </div>
+                  <div class="user-status-line">
+                    Ritmo / Potência:
+                    <span id="user-mode-0">Ritmo normal</span>
                   </div>
                 </div>
 
-                <div class="user-card-actions">
+                <footer class="user-card-actions">
                   <button
-                    class="user-btn"
+                    class="user-btn pit"
                     data-index="0"
                     data-action="pit"
                   >
                     PIT STOP
                   </button>
                   <button
-                    class="user-btn"
+                    class="user-btn save"
                     data-index="0"
                     data-action="save"
                   >
                     ECONOMIZAR
                   </button>
                   <button
-                    class="user-btn"
+                    class="user-btn push"
                     data-index="0"
                     data-action="push"
                   >
                     ATAQUE
                   </button>
-                </div>
-              </div>
+                </footer>
+              </article>
 
-              <!-- CARD 1 -->
-              <div
+              <!-- PILOTO 1 -->
+              <article
                 class="user-card"
                 id="user-driver-card-1"
-                data-driver-id=""
+                data-index="1"
               >
-                <div class="user-card-header">
+                <header class="user-card-header">
                   <img
                     class="user-face"
                     src="assets/faces/default.png"
@@ -115,69 +124,56 @@
                     <div class="user-name">---</div>
                     <div class="user-team">---</div>
                   </div>
-                </div>
+                </header>
 
                 <div class="user-card-body">
                   <div class="user-status-line">
-                    Pneus:
-                    <span id="user-tyre-1">0%</span>
+                    Pneus (desgaste): <span id="user-tyre-1">0%</span>
                   </div>
                   <div class="user-status-line">
-                    Carro:
-                    <span id="user-car-1">100%</span>
+                    Carro: <span id="user-car-1">100%</span>
+                  </div>
+                  <div class="user-status-line">
+                    Ritmo / Potência:
+                    <span id="user-mode-1">Ritmo normal</span>
                   </div>
                 </div>
 
-                <div class="user-card-actions">
+                <footer class="user-card-actions">
                   <button
-                    class="user-btn"
+                    class="user-btn pit"
                     data-index="1"
                     data-action="pit"
                   >
                     PIT STOP
                   </button>
                   <button
-                    class="user-btn"
+                    class="user-btn save"
                     data-index="1"
                     data-action="save"
                   >
                     ECONOMIZAR
                   </button>
                   <button
-                    class="user-btn"
+                    class="user-btn push"
                     data-index="1"
                     data-action="push"
                   >
                     ATAQUE
                   </button>
-                </div>
-              </div>
+                </footer>
+              </article>
             </div>
 
-            <!-- BOTÕES DE VELOCIDADE -->
+            <!-- CONTROLES DE VELOCIDADE -------------------------------- -->
             <div class="speed-controls">
-              <span>Velocidade:</span>
-              <button
-                class="speed-btn active"
-                data-speed="1"
-              >
-                1x
-              </button>
-              <button
-                class="speed-btn"
-                data-speed="2"
-              >
-                2x
-              </button>
-              <button
-                class="speed-btn"
-                data-speed="4"
-              >
-                4x
-              </button>
+              <span class="speed-label">Velocidade:</span>
+              <button class="speed-btn active" data-speed="1">1x</button>
+              <button class="speed-btn" data-speed="2">2x</button>
+              <button class="speed-btn" data-speed="4">4x</button>
             </div>
 
-            <!-- VOLTAR AO CALENDÁRIO -->
+            <!-- VOLTAR AO CALENDÁRIO ----------------------------------- -->
             <div class="back-button-wrapper">
               <button
                 type="button"
@@ -192,13 +188,13 @@
       </main>
     </div>
 
-    <!-- MODAL DE PÓDIO / RESULTADO FINAL -->
+    <!-- MODAL DE PÓDIO / RESULTADO FINAL ------------------------------- -->
     <div id="podium-modal" class="modal hidden">
       <div class="modal-content">
         <h2>Pódio – Resultado final</h2>
 
         <div class="podium-grid">
-          <!-- 1º -->
+          <!-- 1º lugar -->
           <div class="podium-slot podium-first">
             <div class="podium-pos">1º</div>
             <img
@@ -211,7 +207,7 @@
             <div id="podium1-team" class="podium-team">---</div>
           </div>
 
-          <!-- 2º -->
+          <!-- 2º lugar -->
           <div class="podium-slot podium-second">
             <div class="podium-pos">2º</div>
             <img
@@ -224,7 +220,7 @@
             <div id="podium2-team" class="podium-team">---</div>
           </div>
 
-          <!-- 3º -->
+          <!-- 3º lugar -->
           <div class="podium-slot podium-third">
             <div class="podium-pos">3º</div>
             <img
@@ -244,7 +240,7 @@
       </div>
     </div>
 
-    <!-- SCRIPT DA CORRIDA -->
+    <!-- SCRIPT DA CORRIDA --------------------------------------------- -->
     <script src="race.js"></script>
   </body>
 </html>
