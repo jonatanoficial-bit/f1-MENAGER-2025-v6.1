@@ -1,433 +1,308 @@
-// ==========================================================
-// F1 MANAGER 2025 – PRACTICE.JS
-// ==========================================================
+// =======================================================
+// TREINO LIVRE – LÓGICA BÁSICA
+// =======================================================
 
-const PRACTICE_STATE = {
-  trackName: null,
-  gpName: null,
-  userTeamKey: null,
-  managerName: null,
-  managerCountry: null,
-
-  timeRemainingMs: 60 * 60 * 1000, // 60 minutos
-  running: true,
-  speedMultiplier: 1,
-
-  pathPoints: [],
-  drivers: [],
-  visuals: [],
-
-  lastUpdateTime: null,
-};
-
-// ==========================================================
-// DRIVERS 2025
-// (mesmos usados no qualifying/corrida)
-// ==========================================================
-
-importDrivers();
-
-function importDrivers() {
-  if (window.DRIVERS_2025) return;
-  console.error("DRIVERS_2025 não encontrado. Certifique-se de que o arquivo foi incluído antes.");
-}
-
-// ==========================================================
-// INIT
-// ==========================================================
-
-window.addEventListener("DOMContentLoaded", () => {
-  initPractice();
-});
-
-function initPractice() {
-  // ====== Ler parâmetros ======
+(function () {
+  // -----------------------------
+  // LEITURA DOS PARÂMETROS
+  // -----------------------------
   const params = new URLSearchParams(window.location.search);
-  PRACTICE_STATE.trackName = params.get("track") || "australia";
-  PRACTICE_STATE.gpName = params.get("gp") || "GP 2025";
-  PRACTICE_STATE.userTeamKey =
+  const trackKey = params.get("track") || "australia";
+  const gpName = params.get("gp") || "GP 2025";
+  const userTeamKey =
     params.get("userTeam") ||
     localStorage.getItem("f1m2025_user_team") ||
     "ferrari";
 
-  PRACTICE_STATE.managerName =
-    localStorage.getItem("f1m2025_manager_name") || "Manager";
-  PRACTICE_STATE.managerCountry =
-    localStorage.getItem("f1m2025_manager_country") || "brazil";
+  // Persistir equipe escolhida
+  localStorage.setItem("f1m2025_user_team", userTeamKey);
 
-  // ====== Preencher UI TOP ======
-  document.getElementById("practice-manager-name").textContent =
-    PRACTICE_STATE.managerName;
+  // -----------------------------
+  // METADADOS DE EQUIPE
+  // -----------------------------
+  const TEAM_METADATA = {
+    ferrari: {
+      name: "Ferrari",
+      base: "Maranello, Itália",
+      logo: "assets/teams/ferrari.png",
+      drivers: ["Charles Leclerc", "Carlos Sainz"],
+    },
+    redbull: {
+      name: "Red Bull Racing",
+      base: "Milton Keynes, Reino Unido",
+      logo: "assets/teams/redbull.png",
+      drivers: ["Max Verstappen", "Sergio Pérez"],
+    },
+    mercedes: {
+      name: "Mercedes",
+      base: "Brackley, Reino Unido",
+      logo: "assets/teams/mercedes.png",
+      drivers: ["Lewis Hamilton", "George Russell"],
+    },
+    mclaren: {
+      name: "McLaren",
+      base: "Woking, Reino Unido",
+      logo: "assets/teams/mclaren.png",
+      drivers: ["Lando Norris", "Oscar Piastri"],
+    },
+    aston: {
+      name: "Aston Martin",
+      base: "Silverstone, Reino Unido",
+      logo: "assets/teams/aston.png",
+      drivers: ["Fernando Alonso", "Lance Stroll"],
+    },
+    alpine: {
+      name: "Alpine",
+      base: "Enstone / Viry, França",
+      logo: "assets/teams/alpine.png",
+      drivers: ["Pierre Gasly", "Esteban Ocon"],
+    },
+    sauber: {
+      name: "Sauber / Audi",
+      base: "Hinwil, Suíça",
+      logo: "assets/teams/sauber.png",
+      drivers: ["Piloto 1", "Piloto 2"],
+    },
+    haas: {
+      name: "Haas",
+      base: "Kannapolis, EUA",
+      logo: "assets/teams/haas.png",
+      drivers: ["Piloto 1", "Piloto 2"],
+    },
+    williams: {
+      name: "Williams",
+      base: "Grove, Reino Unido",
+      logo: "assets/teams/williams.png",
+      drivers: ["Piloto 1", "Piloto 2"],
+    },
+    racingbulls: {
+      name: "Racing Bulls",
+      base: "Faenza, Itália",
+      logo: "assets/teams/racingbulls.png",
+      drivers: ["Piloto 1", "Piloto 2"],
+    },
+  };
 
-  document.getElementById("practice-country-name").textContent =
-    PRACTICE_STATE.managerCountry.toUpperCase();
+  const teamMeta = TEAM_METADATA[userTeamKey] || TEAM_METADATA.ferrari;
 
-  // TEAM LOGO
-  try {
-    const logoPath = `assets/logos/${PRACTICE_STATE.userTeamKey}.png`;
-    document.getElementById("practice-team-logo").src = logoPath;
-  } catch (e) {}
+  // -----------------------------
+  // CIRCUITOS (NOME BONITO)
+  // -----------------------------
+  const TRACK_METADATA = {
+    australia: { circuit: "Albert Park – Melbourne", country: "Austrália" },
+    bahrain: { circuit: "Sakhir", country: "Bahrein" },
+    jeddah: { circuit: "Jeddah Corniche", country: "Arábia Saudita" },
+    japan: { circuit: "Suzuka", country: "Japão" },
+    china: { circuit: "Xangai", country: "China" },
+    miami: { circuit: "Miami International Autodrome", country: "EUA" },
+    imola: { circuit: "Imola", country: "Itália" },
+    monaco: { circuit: "Monte Carlo", country: "Mônaco" },
+    canada: { circuit: "Circuit Gilles Villeneuve", country: "Canadá" },
+    spain: { circuit: "Barcelona-Catalunha", country: "Espanha" },
+    austria: { circuit: "Red Bull Ring", country: "Áustria" },
+    uk: { circuit: "Silverstone", country: "Reino Unido" },
+    hungary: { circuit: "Hungaroring", country: "Hungria" },
+    belgium: { circuit: "Spa-Francorchamps", country: "Bélgica" },
+    netherlands: { circuit: "Zandvoort", country: "Países Baixos" },
+    monza: { circuit: "Monza", country: "Itália" },
+    baku: { circuit: "Baku City Circuit", country: "Azerbaijão" },
+    singapore: { circuit: "Marina Bay", country: "Singapura" },
+    cota: { circuit: "Circuit of the Americas", country: "EUA" },
+    mexico: { circuit: "Hermanos Rodríguez", country: "México" },
+    brazil: { circuit: "Interlagos", country: "Brasil" },
+    lasvegas: { circuit: "Las Vegas Strip Circuit", country: "EUA" },
+    qatar: { circuit: "Losail", country: "Qatar" },
+    abudhabi: { circuit: "Yas Marina", country: "Emirados Árabes" },
+  };
 
-  document.getElementById("practice-team-name").textContent =
-    PRACTICE_STATE.userTeamKey.toUpperCase();
+  const trackMeta = TRACK_METADATA[trackKey] || {
+    circuit: "Circuito — a definir",
+    country: "",
+  };
 
-  // COUNTRY FLAG
-  try {
-    const flagPath = `assets/flags/${PRACTICE_STATE.managerCountry}.png`;
-    document.getElementById("practice-flag").src = flagPath;
-  } catch (e) {}
+  // -----------------------------
+  // PREENCHER BARRA SUPERIOR
+  // -----------------------------
+  function preencherTopBar() {
+    // Equipe
+    document.getElementById("team-name").textContent = teamMeta.name;
+    document.getElementById("team-base").textContent = teamMeta.base;
+    document.getElementById("team-logo").src = teamMeta.logo;
 
-  document.getElementById("practice-gp-title").textContent = PRACTICE_STATE.gpName;
+    // Manager (se houver no localStorage)
+    const raw = localStorage.getItem("f1m2025_manager");
+    if (raw) {
+      try {
+        const m = JSON.parse(raw);
+        if (m.name) document.getElementById("manager-name").textContent = m.name;
+        if (m.country)
+          document.getElementById("manager-country").textContent = m.country;
+        if (m.avatar)
+          document.getElementById("manager-avatar").src = m.avatar;
+      } catch (e) {
+        console.warn("Erro ao ler manager do localStorage:", e);
+      }
+    }
+  }
 
-  // ====== Setup de pilotos ======
-  PRACTICE_STATE.drivers = DRIVERS_2025.map((drv, i) => ({
-    ...drv,
-    index: i,
-    progress: Math.random(),
-    speedBase: 0.00002 + drv.rating / 700000, // lento
-    laps: 0,
-    lastLapTime: null,
-    bestLapTime: null,
-    lastLapTs: null,
-    tyreWear: 0, // 0–100%
-    carWear: 100 // 100–0%
-  }));
+  // -----------------------------
+  // PISTA (SVG)
+  // -----------------------------
+  function carregarPista() {
+    const panel = document.getElementById("track-panel");
+    panel.innerHTML = "";
 
-  // ====== Preencher pilotos da equipe ======
-  fillUserCards();
+    const img = document.createElement("img");
+    img.src = `assets/tracks/${trackKey}.svg`;
+    img.alt = trackMeta.circuit;
+    panel.appendChild(img);
 
-  // ====== Bind speed buttons ======
-  document.querySelectorAll(".practice-speed-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".practice-speed-btn").forEach((b) =>
-        b.classList.remove("active")
-      );
-      btn.classList.add("active");
-      PRACTICE_STATE.speedMultiplier = Number(btn.dataset.speed) || 1;
+    document.getElementById("circuit-name").textContent =
+      trackMeta.circuit +
+      (trackMeta.country ? ` • ${trackMeta.country}` : "");
+  }
+
+  // -----------------------------
+  // PILOTOS DA EQUIPE
+  // -----------------------------
+  const driverStates = [
+    { name: teamMeta.drivers[0] || "Piloto 1", car: 100, tyre: 0 },
+    { name: teamMeta.drivers[1] || "Piloto 2", car: 100, tyre: 0 },
+  ];
+
+  function preencherPilotos() {
+    document.getElementById("driver-1-name").textContent = driverStates[0].name;
+    document.getElementById("driver-2-name").textContent = driverStates[1].name;
+
+    document.getElementById("driver-1-team").textContent = teamMeta.name;
+    document.getElementById("driver-2-team").textContent = teamMeta.name;
+
+    document.getElementById("driver-1-avatar").src = teamMeta.logo;
+    document.getElementById("driver-2-avatar").src = teamMeta.logo;
+
+    atualizarStatsPilotos();
+  }
+
+  function atualizarStatsPilotos() {
+    const d1 = driverStates[0];
+    const d2 = driverStates[1];
+
+    document.getElementById(
+      "driver-1-stats"
+    ).textContent = `Carro: ${d1.car.toFixed(0)}% • Pneus: ${d1.tyre.toFixed(
+      0
+    )}%`;
+    document.getElementById(
+      "driver-2-stats"
+    ).textContent = `Carro: ${d2.car.toFixed(0)}% • Pneus: ${d2.tyre.toFixed(
+      0
+    )}%`;
+  }
+
+  // -----------------------------
+  // SESSÃO (TEMPO / VOLTAS)
+  // -----------------------------
+  let sessionDurationSeconds = 60 * 60; // 60 minutos
+  let sessionRemaining = sessionDurationSeconds;
+  let speedMultiplier = 1;
+  let currentLap = 1;
+  const totalLaps = 20;
+
+  function formatTime(seconds) {
+    const m = Math.max(0, Math.floor(seconds / 60));
+    const s = Math.max(0, Math.floor(seconds % 60));
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  function atualizarHeaderSessao() {
+    document.getElementById("gp-name").textContent = gpName;
+    document.getElementById("session-time").textContent = formatTime(
+      sessionRemaining
+    );
+    document.getElementById(
+      "session-lap"
+    ).textContent = `Volta ${currentLap} / ${totalLaps}`;
+  }
+
+  function tickSessao() {
+    if (sessionRemaining <= 0) return;
+
+    sessionRemaining -= speedMultiplier;
+    if (sessionRemaining < 0) sessionRemaining = 0;
+
+    // A cada ~90s de "tempo real", considera que completou 1 volta
+    const elapsed = sessionDurationSeconds - sessionRemaining;
+    const lapsSimuladas = Math.min(
+      totalLaps,
+      1 + Math.floor((elapsed * speedMultiplier) / 90)
+    );
+    currentLap = Math.max(1, Math.min(totalLaps, lapsSimuladas));
+
+    // Desgaste simples de pneus e carro
+    driverStates.forEach((d) => {
+      // Pneus sobem até 100%
+      if (d.tyre < 100) d.tyre += 0.4 * speedMultiplier;
+      if (d.tyre > 100) d.tyre = 100;
+
+      // Carro cai devagar
+      if (d.car > 70) d.car -= 0.05 * speedMultiplier;
+      if (d.car < 0) d.car = 0;
     });
-  });
 
-  // ====== Bind Navegação ======
-  document.getElementById("practice-back-lobby").onclick = () => {
-    window.location.href = "lobby.html";
-  };
-
-  document.getElementById("practice-open-garage").onclick = () => {
-    // salvar estado rápido
-    savePracticeSettings();
-    window.location.href = "oficina.html";
-  };
-
-  // ====== Track ======
-  loadTrack(PRACTICE_STATE.trackName).then(() => {
-    PRACTICE_STATE.lastUpdateTime = performance.now();
-    requestAnimationFrame(loopPractice);
-  });
-}
-
-// ==========================================================
-// CARREGAR SVG DA PISTA
-// ==========================================================
-
-async function loadTrack(track) {
-  const container = document.getElementById("track-container");
-  container.innerHTML = "";
-
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", "100%");
-  svg.setAttribute("height", "100%");
-  svg.setAttribute("viewBox", "0 0 1000 600");
-  container.appendChild(svg);
-
-  let text;
-  try {
-    const resp = await fetch(`assets/tracks/${track}.svg`);
-    text = await resp.text();
-  } catch (e) {
-    console.error("Erro carregando SVG:", e);
-    return;
+    atualizarStatsPilotos();
+    atualizarHeaderSessao();
   }
 
-  const doc = new DOMParser().parseFromString(text, "image/svg+xml");
-  const path = doc.querySelector("path");
-  if (!path) return;
-
-  const pts = [];
-  const len = path.getTotalLength();
-  for (let i = 0; i < 450; i++) {
-    const p = path.getPointAtLength((len * i) / 450);
-    pts.push({ x: p.x, y: p.y });
+  // -----------------------------
+  // CONTROLES DE VELOCIDADE
+  // -----------------------------
+  function configurarSpeedButtons() {
+    const btns = document.querySelectorAll(".btn-speed");
+    btns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        btns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const sp = Number(btn.dataset.speed || "1");
+        speedMultiplier = sp > 0 ? sp : 1;
+      });
+    });
   }
 
-  // normalizar
-  const xs = pts.map((p) => p.x);
-  const ys = pts.map((p) => p.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  PRACTICE_STATE.pathPoints = pts.map((p) => ({
-    x: ((p.x - minX) / (maxX - minX)) * 1000,
-    y: ((p.y - minY) / (maxY - minY)) * 600,
-  }));
+  // -----------------------------
+  // NAVEGAÇÃO (OFICINA / LOBBY)
+  // -----------------------------
+  function configurarNavButtons() {
+    const preserveParams = () => {
+      const p = new URLSearchParams();
+      p.set("track", trackKey);
+      p.set("gp", gpName);
+      p.set("userTeam", userTeamKey);
+      return p.toString();
+    };
 
-  // pista
-  const pl = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-  pl.setAttribute(
-    "points",
-    PRACTICE_STATE.pathPoints.map((p) => `${p.x},${p.y}`).join(" ")
-  );
-  pl.setAttribute("fill", "none");
-  pl.setAttribute("stroke", "#4d4d4d");
-  pl.setAttribute("stroke-width", "22");
-  pl.setAttribute("stroke-linecap", "round");
-  pl.setAttribute("stroke-linejoin", "round");
-  svg.appendChild(pl);
+    document.getElementById("btn-office").addEventListener("click", () => {
+      window.location.href = "oficina.html?" + preserveParams();
+    });
 
-  // linha branca
-  const pl2 = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-  pl2.setAttribute(
-    "points",
-    PRACTICE_STATE.pathPoints.map((p) => `${p.x},${p.y}`).join(" ")
-  );
-  pl2.setAttribute("fill", "none");
-  pl2.setAttribute("stroke", "#ffffff");
-  pl2.setAttribute("stroke-width", "6");
-  svg.appendChild(pl2);
-
-  // carros
-  PRACTICE_STATE.visuals = PRACTICE_STATE.drivers.map((drv) => {
-    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-
-    const car = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    car.setAttribute("r", 6);
-    car.setAttribute("fill", drv.color);
-    car.setAttribute("stroke", "#000");
-    car.setAttribute("stroke-width", "1.5");
-    g.appendChild(car);
-
-    svg.appendChild(g);
-    return { id: drv.id, group: g };
-  });
-}
-
-// ==========================================================
-// LOOP PRINCIPAL
-// ==========================================================
-
-function loopPractice(ts) {
-  if (!PRACTICE_STATE.running) return;
-
-  const dt =
-    PRACTICE_STATE.lastUpdateTime != null
-      ? (ts - PRACTICE_STATE.lastUpdateTime) * PRACTICE_STATE.speedMultiplier
-      : 0;
-  PRACTICE_STATE.lastUpdateTime = ts;
-
-  updatePractice(dt);
-  renderPractice();
-
-  requestAnimationFrame(loopPractice);
-}
-
-// ==========================================================
-// UPDATE
-// ==========================================================
-
-function updatePractice(dtMs) {
-  // tempo da sessão
-  PRACTICE_STATE.timeRemainingMs -= dtMs;
-  if (PRACTICE_STATE.timeRemainingMs <= 0) {
-    PRACTICE_STATE.timeRemainingMs = 0;
-    PRACTICE_STATE.running = false;
-    endPracticeSession();
+    document.getElementById("btn-lobby").addEventListener("click", () => {
+      window.location.href = "lobby.html";
+    });
   }
 
-  updateSessionTimeLabel();
+  // -----------------------------
+  // INIT
+  // -----------------------------
+  function init() {
+    preencherTopBar();
+    carregarPista();
+    preencherPilotos();
+    atualizarHeaderSessao();
+    configurarSpeedButtons();
+    configurarNavButtons();
 
-  // simular pilotos
-  const now = performance.now();
-
-  PRACTICE_STATE.drivers.forEach((drv) => {
-    const delta = drv.speedBase * dtMs;
-    let prog = drv.progress + delta;
-    if (prog >= 1) {
-      prog -= 1;
-
-      const lapTime = drv.lastLapTs
-        ? now - drv.lastLapTs
-        : 95000 + Math.random() * 5000;
-
-      drv.laps++;
-      drv.lastLapTime = lapTime;
-      if (drv.bestLapTime == null || lapTime < drv.bestLapTime)
-        drv.bestLapTime = lapTime;
-
-      drv.lastLapTs = now;
-
-      // desgaste de pneus e carro
-      drv.tyreWear += 1 + Math.random() * 2;
-      drv.carWear -= 0.3 + Math.random() * 0.5;
-      if (drv.tyreWear > 100) drv.tyreWear = 100;
-      if (drv.carWear < 0) drv.carWear = 0;
-    }
-    drv.progress = prog;
-    if (!drv.lastLapTs) drv.lastLapTs = now;
-  });
-
-  updateDriversList();
-  updateUserPanel();
-}
-
-// ==========================================================
-// RENDER
-// ==========================================================
-
-function renderPractice() {
-  if (!PRACTICE_STATE.pathPoints.length) return;
-  const map = {};
-  PRACTICE_STATE.drivers.forEach((d) => (map[d.id] = d));
-
-  PRACTICE_STATE.visuals.forEach((v) => {
-    const d = map[v.id];
-    if (!d) return;
-    const pos = getPos(d.progress);
-    v.group.setAttribute("transform", `translate(${pos.x},${pos.y})`);
-  });
-}
-
-function getPos(progress) {
-  const pts = PRACTICE_STATE.pathPoints;
-  const total = pts.length;
-  let i0 = Math.floor(progress * total);
-  let i1 = (i0 + 1) % total;
-  const t = progress * total - i0;
-  const p0 = pts[i0];
-  const p1 = pts[i1];
-  return {
-    x: p0.x + (p1.x - p0.x) * t,
-    y: p0.y + (p1.y - p0.y) * t,
-  };
-}
-
-// ==========================================================
-// UI
-// ==========================================================
-
-function updateSessionTimeLabel() {
-  const lbl = document.getElementById("practice-time-remaining");
-  if (!lbl) return;
-
-  let t = PRACTICE_STATE.timeRemainingMs;
-  const mins = Math.floor(t / 60000);
-  t -= mins * 60000;
-  const secs = Math.floor(t / 1000);
-  lbl.textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(
-    2,
-    "0"
-  )}`;
-}
-
-function updateDriversList() {
-  const list = document.getElementById("practice-drivers-list");
-  if (!list) return;
-
-  const sorted = [...PRACTICE_STATE.drivers].sort((a, b) => {
-    if (b.laps !== a.laps) return b.laps - a.laps;
-    const ta = a.bestLapTime ?? Infinity;
-    const tb = b.bestLapTime ?? Infinity;
-    return ta - tb;
-  });
-
-  list.innerHTML = "";
-
-  sorted.forEach((drv, idx) => {
-    const row = document.createElement("div");
-    row.className = "practice-driver-row";
-
-    if (drv.teamKey === PRACTICE_STATE.userTeamKey) {
-      row.classList.add("practice-user-team-row");
-    }
-
-    row.innerHTML = `
-      <div class="practice-driver-pos">${idx + 1}º</div>
-      <div class="practice-driver-info">
-        <img class="practice-driver-face" src="${drv.face}" />
-        <div class="practice-driver-text">
-          <div class="practice-driver-name">${drv.name}</div>
-          <div class="practice-driver-team">${drv.teamName}</div>
-        </div>
-      </div>
-      <div class="practice-driver-stats">
-        <div class="practice-stat-line">Voltas <span>${drv.laps}</span></div>
-        <div class="practice-stat-line">Melhor <span>${fmt(drv.bestLapTime)}</span></div>
-        <div class="practice-stat-line">Última <span>${fmt(drv.lastLapTime)}</span></div>
-      </div>
-    `;
-
-    list.appendChild(row);
-  });
-}
-
-function updateUserPanel() {
-  const team = PRACTICE_STATE.userTeamKey;
-  const drivers = PRACTICE_STATE.drivers.filter((d) => d.teamKey === team).slice(0, 2);
-
-  drivers.forEach((drv, i) => {
-    document.getElementById(`practice-user-name-${i}`).textContent = drv.name;
-    document.getElementById(`practice-user-team-${i}`).textContent = drv.teamName;
-    document.getElementById(`practice-user-car-${i}`).textContent =
-      Math.floor(drv.carWear) + "%";
-    document.getElementById(`practice-user-tyre-${i}`).textContent =
-      Math.floor(drv.tyreWear) + "%";
-    document.getElementById(`practice-user-face-${i}`).src = drv.face;
-  });
-}
-
-function fillUserCards() {}
-
-// ==========================================================
-// HELPER FORMAT
-// ==========================================================
-
-function fmt(ms) {
-  if (!isFinite(ms)) return "--:--.---";
-  const s = ms / 1000;
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  const mil = Math.floor((s - m * 60 - sec) * 1000);
-  return `${m}:${String(sec).padStart(2, "0")}.${String(mil).padStart(3, "0")}`;
-}
-
-// ==========================================================
-// SALVAR ESTADO PARA OFICINA
-// ==========================================================
-
-function savePracticeSettings() {
-  const payload = {
-    team: PRACTICE_STATE.userTeamKey,
-    drivers: PRACTICE_STATE.drivers
-      .filter((d) => d.teamKey === PRACTICE_STATE.userTeamKey)
-      .slice(0, 2)
-      .map((d) => ({
-        id: d.id,
-        carWear: d.carWear,
-        tyreWear: d.tyreWear,
-      })),
-  };
-
-  try {
-    localStorage.setItem("f1m2025_practice_status", JSON.stringify(payload));
-  } catch (e) {
-    console.warn("Não salvou practice:", e);
+    // Loop da sessão
+    setInterval(tickSessao, 1000);
   }
-}
 
-// ==========================================================
-// FINALIZAÇÃO DA SESSÃO
-// ==========================================================
-
-function endPracticeSession() {
-  savePracticeSettings();
-  alert("Treino finalizado! Ajustes salvos. Vá para Oficina ou Qualificação.");
-}
+  document.addEventListener("DOMContentLoaded", init);
+})();
