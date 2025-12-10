@@ -1,334 +1,629 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>F1 Manager 2025 – Calendário</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+  <meta charset="UTF-8" />
+  <title>Calendário & GPs – F1 Manager 2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Mantém seus CSS globais -->
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="ui.css" />
+  <style>
+    :root {
+      --bg-overlay: rgba(0, 0, 0, 0.80);
+      --card-bg: rgba(10, 10, 14, 0.90);
+      --card-hover: rgba(20, 20, 30, 0.98);
+      --accent-red: #ff1744;
+      --accent-green: #00e676;
+      --accent-blue: #00e5ff;
+      --text-main: #ffffff;
+      --text-soft: #b0b3c0;
+      --text-muted: #8c8f9a;
+      --border-soft: rgba(255, 255, 255, 0.08);
+      --radius-lg: 18px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.75);
+      --transition-fast: 0.18s ease-out;
+    }
 
-    <!-- Estilo específico do calendário -->
-    <style>
-      html,
-      body {
-        margin: 0;
-        padding: 0;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background-image: url("assets/ui/lobby_bg.png");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .page-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(0, 0, 0, 0.4), #000 55%);
+      backdrop-filter: blur(4px);
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      padding: 16px 18px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ---------- TOP BAR (VOLTAR + EQUIPE + MANAGER) ---------- */
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .top-bar-left,
+    .top-bar-right {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-bar-center {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+    }
+
+    .btn-back {
+      border: none;
+      outline: none;
+      border-radius: var(--radius-pill);
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      background: var(--accent-red);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), var(--shadow-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+
+    .btn-back:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.75);
+      background: #ff455e;
+    }
+
+    .btn-back:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.75);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(10, 10, 14, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(7px);
+      max-width: 260px;
+    }
+
+    .chip img {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      object-fit: cover;
+    }
+
+    .chip-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .chip-title {
+      font-size: 0.78rem;
+      opacity: 0.75;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .chip-main {
+      font-size: 0.90rem;
+      font-weight: 600;
+    }
+
+    .chip-sub {
+      font-size: 0.72rem;
+      color: var(--text-soft);
+    }
+
+    .team-chip img {
+      border-radius: 6px;
+      background: #000;
+      padding: 2px;
+    }
+
+    /* ---------- HEADER TEXT ---------- */
+
+    .page-header {
+      margin-top: 10px;
+      margin-bottom: 6px;
+    }
+
+    .page-kicker {
+      font-size: 0.78rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent-blue);
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+
+    .page-title {
+      font-size: clamp(1.4rem, 3vw, 1.8rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .page-subtitle {
+      margin-top: 6px;
+      max-width: 720px;
+      font-size: 0.9rem;
+      color: var(--text-soft);
+    }
+
+    /* ---------- NETFLIX STYLE CAROUSEL ---------- */
+
+    .season-section {
+      margin-top: 18px;
+    }
+
+    .season-row-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .season-title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .season-badge {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .gp-carousel {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding: 10px 2px 4px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+    }
+
+    .gp-carousel::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .gp-carousel::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .gp-carousel::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.24);
+      border-radius: 999px;
+    }
+
+    .gp-card {
+      position: relative;
+      flex: 0 0 250px;
+      max-width: 250px;
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 10px 10px 12px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      border: 1px solid var(--border-soft);
+      cursor: pointer;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+    }
+
+    .gp-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      background: var(--card-hover);
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 24px 55px rgba(0, 0, 0, 0.85);
+    }
+
+    .gp-tag-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .gp-round {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+    }
+
+    .gp-date {
+      font-size: 0.78rem;
+      color: var(--accent-green);
+      font-weight: 500;
+    }
+
+    .gp-main {
+      margin-bottom: 6px;
+    }
+
+    .gp-country {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .gp-flag {
+      width: 18px;
+      height: 12px;
+      border-radius: 2px;
+      object-fit: cover;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+    }
+
+    .gp-name {
+      font-size: 0.86rem;
+      color: var(--text-soft);
+    }
+
+    .gp-track-thumb {
+      position: relative;
+      background: radial-gradient(circle at top, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.85));
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gp-track-thumb img {
+      max-width: 100%;
+      max-height: 80px;
+      filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.8));
+    }
+
+    .gp-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .gp-meta-pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .gp-btn {
+      width: 100%;
+      border-radius: var(--radius-pill);
+      border: none;
+      padding: 8px 10px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      background: linear-gradient(120deg, #ff1744, #ff9100);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.8);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+    }
+
+    .gp-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.9);
+      filter: brightness(1.05);
+    }
+
+    .gp-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.9);
+      filter: brightness(0.96);
+    }
+
+    /* ---------- RESPONSIVO ---------- */
+
+    @media (max-width: 768px) {
+      .page {
+        padding: 12px 10px 22px;
       }
 
-      .calendar-wrapper {
-        min-height: 100vh;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding-top: 30px;
-        padding-bottom: 40px;
-        /* Fundo continua vindo do ui.css (capa_bg.png) */
-      }
-
-      .calendar-title {
-        color: #ffffff;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 6px;
-        text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
-      }
-
-      .calendar-subtitle {
-        color: #ffffff;
-        font-size: 13px;
-        margin-bottom: 24px;
-        text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
-      }
-
-      .gp-grid {
-        display: flex;
+      .top-bar {
         flex-wrap: wrap;
-        justify-content: center;
-        gap: 6px;
-        max-width: 980px;
+        row-gap: 8px;
       }
 
-      .gp-btn {
-        background: #e40000;
-        color: #ffffff;
-        border: none;
-        border-radius: 6px;
-        padding: 6px 14px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        cursor: pointer;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
-        letter-spacing: 0.03em;
-        transition: transform 0.08s ease, box-shadow 0.08s ease,
-          background 0.12s ease;
-        white-space: nowrap;
+      .top-bar-center {
+        order: 3;
       }
 
-      .gp-btn:hover {
-        transform: translateY(-1px);
-        background: #ff1b1b;
-        box-shadow: 0 0 14px rgba(0, 0, 0, 0.8);
+      .gp-card {
+        flex-basis: 220px;
+        max-width: 220px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-overlay"></div>
+
+  <div class="page">
+    <!-- TOP BAR -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="btn-back" onclick="window.location.href = 'lobby.html'">
+          ← Voltar
+        </button>
+      </div>
+
+      <div class="top-bar-center">
+        <div class="chip team-chip">
+          <img id="team-logo" src="" alt="Equipe" />
+          <div class="chip-text">
+            <span class="chip-title">Equipe</span>
+            <span class="chip-main" id="team-name">Equipe</span>
+            <span class="chip-sub" id="team-hq">Temporada 2025</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-bar-right">
+        <div class="chip manager-chip">
+          <img id="manager-avatar" src="" alt="Manager" />
+          <div class="chip-text">
+            <span class="chip-title">Manager</span>
+            <span class="chip-main" id="manager-name">Novo gerente</span>
+            <span class="chip-sub" id="manager-country">País / Nacionalidade</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- HEADER TEXT -->
+    <section class="page-header">
+      <div class="page-kicker">Temporada oficial F1 2025</div>
+      <h1 class="page-title">Calendário & Grandes Prêmios</h1>
+      <p class="page-subtitle">
+        Escolha o próximo fim de semana de corrida. O visual em carrossel foi
+        pensado para você navegar como em um catálogo de streaming, mas com
+        GPs reais da temporada 2025. Ao selecionar um evento, você será
+        levado diretamente para o início do fim de semana: treino, classificação
+        e corrida.
+      </p>
+    </section>
+
+    <!-- CAROUSEL 2025 -->
+    <section class="season-section">
+      <div class="season-row-header">
+        <h2 class="season-title">Grade completa 2025</h2>
+        <span class="season-badge">24 corridas • Mundo todo</span>
+      </div>
+
+      <div class="gp-carousel" id="gp-carousel">
+        <!-- Cards criados via JS -->
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // --------- DADOS BÁSICOS DA TEMPORADA 2025 ---------
+    // Fonte da ordem oficial: calendário F1 2025 (RaceFans).
+    const SEASON_2025 = [
+      { round: 1,  code: "australia",   flag: "au", country: "Austrália",   gpName: "GP da Austrália 2025",  city: "Melbourne",   date: "14–16 Mar" },
+      { round: 2,  code: "china",       flag: "cn", country: "China",       gpName: "GP da China 2025",      city: "Xangai",      date: "21–23 Mar" },
+      { round: 3,  code: "japan",       flag: "jp", country: "Japão",       gpName: "GP do Japão 2025",      city: "Suzuka",      date: "04–06 Abr" },
+      { round: 4,  code: "bahrain",     flag: "bh", country: "Bahrein",     gpName: "GP do Bahrein 2025",    city: "Sakhir",      date: "11–13 Abr" },
+      { round: 5,  code: "saudi",       flag: "sa", country: "Arábia Saudita", gpName: "GP da Arábia Saudita 2025", city: "Jeddah", date: "18–20 Abr" },
+      { round: 6,  code: "miami",       flag: "us", country: "Estados Unidos", gpName: "GP de Miami 2025",   city: "Miami",       date: "02–04 Mai" },
+      { round: 7,  code: "emilia",      flag: "it", country: "Emília-Romanha", gpName: "GP da Emília-Romanha 2025", city: "Imola", date: "16–18 Mai" },
+      { round: 8,  code: "monaco",      flag: "mc", country: "Mônaco",      gpName: "GP de Mônaco 2025",     city: "Monte Carlo", date: "23–25 Mai" },
+      { round: 9,  code: "spain",       flag: "es", country: "Espanha",     gpName: "GP da Espanha 2025",    city: "Barcelona",   date: "30 Mai–01 Jun" },
+      { round:10,  code: "canada",      flag: "ca", country: "Canadá",      gpName: "GP do Canadá 2025",     city: "Montreal",    date: "13–15 Jun" },
+      { round:11,  code: "austria",     flag: "at", country: "Áustria",     gpName: "GP da Áustria 2025",    city: "Spielberg",   date: "27–29 Jun" },
+      { round:12,  code: "britain",     flag: "gb", country: "Grã-Bretanha",gpName: "GP da Grã-Bretanha 2025", city: "Silverstone", date: "04–06 Jul" },
+      { round:13,  code: "belgium",     flag: "be", country: "Bélgica",     gpName: "GP da Bélgica 2025",    city: "Spa",         date: "25–27 Jul" },
+      { round:14,  code: "hungary",     flag: "hu", country: "Hungria",     gpName: "GP da Hungria 2025",    city: "Budapeste",   date: "01–03 Ago" },
+      { round:15,  code: "netherlands", flag: "nl", country: "Holanda",     gpName: "GP da Holanda 2025",    city: "Zandvoort",   date: "29–31 Ago" },
+      { round:16,  code: "italy",       flag: "it", country: "Itália",      gpName: "GP da Itália 2025",     city: "Monza",       date: "05–07 Set" },
+      { round:17,  code: "azerbaijan",  flag: "az", country: "Azerbaijão",  gpName: "GP do Azerbaijão 2025", city: "Baku",        date: "19–21 Set" },
+      { round:18,  code: "singapore",   flag: "sg", country: "Singapura",   gpName: "GP de Singapura 2025",  city: "Singapura",   date: "03–05 Out" },
+      { round:19,  code: "usa",         flag: "us", country: "Estados Unidos", gpName: "GP dos EUA 2025",   city: "Austin",      date: "17–19 Out" },
+      { round:20,  code: "mexico",      flag: "mx", country: "México",      gpName: "GP do México 2025",     city: "Cidade do México", date: "24–26 Out" },
+      { round:21,  code: "brazil",      flag: "br", country: "Brasil",      gpName: "GP do Brasil 2025",     city: "São Paulo",   date: "07–09 Nov" },
+      { round:22,  code: "lasvegas",    flag: "us", country: "Las Vegas",   gpName: "GP de Las Vegas 2025",  city: "Las Vegas",   date: "20–22 Nov" },
+      { round:23,  code: "qatar",       flag: "qa", country: "Catar",       gpName: "GP do Catar 2025",      city: "Losail",      date: "28–30 Nov" },
+      { round:24,  code: "abudhabi",    flag: "ae", country: "Abu Dhabi",   gpName: "GP de Abu Dhabi 2025",  city: "Yas Marina",  date: "05–07 Dez" }
+    ];
+
+    const TEAMS_2025 = {
+      redbull:  { name: "Red Bull Racing",        logo: "assets/teams/redbull.png",  hq: "Milton Keynes, Reino Unido" },
+      ferrari:  { name: "Ferrari",               logo: "assets/teams/ferrari.png",  hq: "Maranello, Itália" },
+      mercedes:{ name: "Mercedes",              logo: "assets/teams/mercedes.png", hq: "Brackley, Reino Unido" },
+      mclaren: { name: "McLaren",               logo: "assets/teams/mclaren.png",  hq: "Woking, Reino Unido" },
+      aston:   { name: "Aston Martin",          logo: "assets/teams/aston.png",    hq: "Silverstone, Reino Unido" },
+      alpine:  { name: "Alpine",                logo: "assets/teams/alpine.png",   hq: "Enstone, Reino Unido" },
+      racingbulls: { name: "Racing Bulls",      logo: "assets/teams/racingbulls.png", hq: "Faenza, Itália" },
+      sauber:  { name: "Sauber / Audi",         logo: "assets/teams/sauber.png",   hq: "Hinwil, Suíça" },
+      haas:    { name: "Haas",                  logo: "assets/teams/haas.png",     hq: "Kannapolis, EUA" },
+      williams:{ name: "Williams Racing",       logo: "assets/teams/williams.png", hq: "Grove, Reino Unido" }
+    };
+
+    function safeJSONParse(str, fallback) {
+      try {
+        return JSON.parse(str);
+      } catch {
+        return fallback;
+      }
+    }
+
+    function initHeaderFromStorage() {
+      const userTeamKey = localStorage.getItem("f1m2025_user_team") || "ferrari";
+      const managerData = safeJSONParse(localStorage.getItem("f1m2025_user_manager"), {});
+
+      const teamInfo = TEAMS_2025[userTeamKey] || {
+        name: userTeamKey.toUpperCase(),
+        logo: "assets/teams/" + userTeamKey + ".png",
+        hq: "Equipe F1"
+      };
+
+      const teamLogoEl   = document.getElementById("team-logo");
+      const teamNameEl   = document.getElementById("team-name");
+      const teamHqEl     = document.getElementById("team-hq");
+      const managerAvatarEl  = document.getElementById("manager-avatar");
+      const managerNameEl    = document.getElementById("manager-name");
+      const managerCountryEl = document.getElementById("manager-country");
+
+      if (teamLogoEl) teamLogoEl.src = teamInfo.logo;
+      if (teamNameEl) teamNameEl.textContent = teamInfo.name;
+      if (teamHqEl)   teamHqEl.textContent   = teamInfo.hq;
+
+      if (managerData && managerData.name) {
+        managerNameEl.textContent = managerData.name;
       }
 
-      .calendar-footer {
-        margin-top: 18px;
+      if (managerData && managerData.countryCode) {
+        managerCountryEl.textContent = managerData.countryLabel || ("País: " + managerData.countryCode.toUpperCase());
       }
 
-      .gp-btn.back {
-        background: #b30000;
-        padding: 8px 24px;
-      }
-
-      .gp-btn.back:hover {
-        background: #d30000;
-      }
-
-      @media (max-width: 600px) {
-        .gp-btn {
-          font-size: 11px;
-          padding: 5px 10px;
+      let avatarPath = managerData.avatar || managerData.photo;
+      if (avatarPath) {
+        if (!avatarPath.startsWith("assets/")) {
+          avatarPath = "assets/managers_real/" + avatarPath;
         }
+        managerAvatarEl.src = avatarPath;
+      } else {
+        managerAvatarEl.src = "assets/managers/manager_ethnic_01.png";
       }
-    </style>
-  </head>
+    }
 
-  <body>
-    <div class="calendar-wrapper">
-      <div class="calendar-title">CALENDÁRIO 2025</div>
-      <div class="calendar-subtitle">
-        Selecione um Grande Prêmio para iniciar a <strong>classificação</strong>
-      </div>
+    function createGpCard(gp) {
+      const card = document.createElement("article");
+      card.className = "gp-card";
+      card.dataset.track = gp.code;
 
-      <div class="gp-grid">
-        <!-- 1. Bahrein -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('bahrein','GP do Bahrein 2025')"
-        >
-          1. BAHREIN
+      const roundLabel = gp.round.toString().padStart(2, "0") + "ª ETAPA";
+
+      const flagSrc = "assets/flags/" + gp.flag + ".png";
+      const trackImgSrc = "assets/tracks/" + gp.code + ".svg";
+
+      card.innerHTML = `
+        <div class="gp-tag-row">
+          <span class="gp-round">${roundLabel}</span>
+          <span class="gp-date">${gp.date}</span>
+        </div>
+
+        <div class="gp-main">
+          <div class="gp-country">
+            <img class="gp-flag" src="${flagSrc}" alt="${gp.country}" />
+            <span>${gp.country}</span>
+          </div>
+          <div class="gp-name">${gp.gpName}</div>
+        </div>
+
+        <div class="gp-track-thumb">
+          <img src="${trackImgSrc}" alt="${gp.city}" />
+        </div>
+
+        <div class="gp-meta-row">
+          <span class="gp-meta-pill">${gp.city}</span>
+          <span class="gp-meta-pill">F1 • 2025</span>
+        </div>
+
+        <button class="gp-btn" type="button">
+          Iniciar fim de semana
         </button>
+      `;
 
-        <!-- 2. Arábia Saudita -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('arabia_saudita','GP da Arábia Saudita 2025')"
-        >
-          2. ARÁBIA SAUDITA
-        </button>
+      const btn = card.querySelector(".gp-btn");
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        startWeekend(gp);
+      });
 
-        <!-- 3. Austrália -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('australia','GP da Austrália 2025')"
-        >
-          3. AUSTRÁLIA – PRÓXIMA
-        </button>
+      card.addEventListener("click", () => startWeekend(gp));
+      return card;
+    }
 
-        <!-- 4. Japão -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('japao','GP do Japão 2025')"
-        >
-          4. JAPÃO
-        </button>
+    function startWeekend(gp) {
+      const userTeamKey = localStorage.getItem("f1m2025_user_team") || "ferrari";
 
-        <!-- 5. China -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('china','GP da China 2025')"
-        >
-          5. CHINA
-        </button>
+      const params = new URLSearchParams();
+      params.set("track", gp.code);
+      params.set("gp", gp.gpName);
+      params.set("userTeam", userTeamKey);
 
-        <!-- 6. Miami -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('miami','GP de Miami 2025')"
-        >
-          6. MIAMI
-        </button>
+      window.location.href = "practice.html?" + params.toString();
+    }
 
-        <!-- 7. Imola (Emilia-Romagna) -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('imola','GP da Emilia-Romagna 2025')"
-        >
-          7. IMOLA
-        </button>
+    function buildCarousel() {
+      const container = document.getElementById("gp-carousel");
+      if (!container) return;
 
-        <!-- 8. Mônaco -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('monaco','GP de Mônaco 2025')"
-        >
-          8. MÔNACO
-        </button>
+      SEASON_2025.forEach((gp) => {
+        const card = createGpCard(gp);
+        container.appendChild(card);
+      });
+    }
 
-        <!-- 9. Canadá -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('canada','GP do Canadá 2025')"
-        >
-          9. CANADÁ
-        </button>
-
-        <!-- 10. Espanha -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('espanha','GP da Espanha 2025')"
-        >
-          10. ESPANHA
-        </button>
-
-        <!-- 11. Áustria -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('austria','GP da Áustria 2025')"
-        >
-          11. ÁUSTRIA
-        </button>
-
-        <!-- 12. Inglaterra (Silverstone) -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('inglaterra','GP da Inglaterra 2025')"
-        >
-          12. INGLATERRA
-        </button>
-
-        <!-- 13. Hungria -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('hungria','GP da Hungria 2025')"
-        >
-          13. HUNGRIA
-        </button>
-
-        <!-- 14. Bélgica -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('belgica','GP da Bélgica 2025')"
-        >
-          14. BÉLGICA
-        </button>
-
-        <!-- 15. Holanda -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('holanda','GP da Holanda 2025')"
-        >
-          15. HOLANDA
-        </button>
-
-        <!-- 16. Itália (Monza) -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('italia_monza','GP da Itália (Monza) 2025')"
-        >
-          16. ITÁLIA (MONZA)
-        </button>
-
-        <!-- 17. Singapura -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('singapura','GP de Singapura 2025')"
-        >
-          17. SINGAPURA
-        </button>
-
-        <!-- 18. Estados Unidos (Austin) -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('estados_unidos','GP dos Estados Unidos 2025')"
-        >
-          18. ESTADOS UNIDOS
-        </button>
-
-        <!-- 19. México -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('mexico','GP do México 2025')"
-        >
-          19. MÉXICO
-        </button>
-
-        <!-- 20. São Paulo (Interlagos) -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('sao_paulo','GP de São Paulo 2025')"
-        >
-          20. SÃO PAULO
-        </button>
-
-        <!-- 21. Las Vegas -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('las_vegas','GP de Las Vegas 2025')"
-        >
-          21. LAS VEGAS
-        </button>
-
-        <!-- 22. Catar -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('catar','GP do Catar 2025')"
-        >
-          22. CATAR
-        </button>
-
-        <!-- 23. Abu Dhabi -->
-        <button
-          class="gp-btn"
-          onclick="openQualifying('abu_dhabi','GP de Abu Dhabi 2025')"
-        >
-          23. ABU DHABI
-        </button>
-      </div>
-
-      <div class="calendar-footer">
-        <button class="gp-btn back" onclick="voltarLobby()">
-          VOLTAR AO LOBBY
-        </button>
-      </div>
-    </div>
-
-    <script>
-      // Lê a equipe do usuário do localStorage.
-      // Se não tiver nada salvo ainda, usa "ferrari" como default.
-      function getUserTeamKey() {
-        let userTeam = null;
-        try {
-          const stored = localStorage.getItem("f1m2025_user_team");
-          if (stored) userTeam = stored;
-        } catch (e) {
-          console.warn("Não foi possível ler f1m2025_user_team:", e);
-        }
-        if (!userTeam) userTeam = "ferrari";
-        return userTeam;
-      }
-
-      // Abre a tela de classificação (Q1/Q2/Q3) ANTES da corrida
-      function openQualifying(track, gpName) {
-        const userTeam = getUserTeamKey();
-
-        const params = new URLSearchParams();
-        params.set("track", track);
-        params.set("gp", gpName);
-        params.set("userTeam", userTeam);
-
-        window.location.href = "qualifying.html?" + params.toString();
-      }
-
-      // Volta para o lobby principal
-      function voltarLobby() {
-        window.location.href = "index.html";
-      }
-    </script>
-  </body>
+    document.addEventListener("DOMContentLoaded", () => {
+      initHeaderFromStorage();
+      buildCarousel();
+    });
+  </script>
+</body>
 </html>
