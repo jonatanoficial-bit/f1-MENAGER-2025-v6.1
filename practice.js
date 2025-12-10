@@ -319,31 +319,38 @@
   // DESENHA CARROS NA PISTA
   // -----------------------------
   function drawCars() {
-    const wrapper = document.querySelector(".track-wrapper");
-    const svgEl   = document.getElementById("track-svg");
-    if (!wrapper || !svgEl || trackPoints.length < 2) return;
+  const wrapper = document.querySelector(".track-wrapper");
+  const svgEl   = document.getElementById("track-svg");
 
-    const boxSvg   = svgEl.getBBox();
-    const boxWrp   = wrapper.getBoundingClientRect();
-    const scaleX   = boxWrp.width  / (boxSvg.width  || 1);
-    const scaleY   = boxWrp.height / (boxSvg.height || 1);
+  if (!wrapper || !svgEl || trackPoints.length < 2) return;
 
-    const car1El = document.querySelector(".car-1");
-    const car2El = document.querySelector(".car-2");
-    if (!car1El || !car2El) return;
+  // Usa o próprio viewBox do SVG carregado
+  const vb = svgEl.viewBox.baseVal;
+  const vbX = vb.x;
+  const vbY = vb.y;
+  const vbW = vb.width;
+  const vbH = vb.height;
 
-    const p1 = trackPoints[Math.floor(cars[0].progress) % trackPoints.length];
-    const p2 = trackPoints[Math.floor(cars[1].progress) % trackPoints.length];
+  // Tamanho real do container exibido na tela
+  const rect = wrapper.getBoundingClientRect();
 
-    const offsetX = boxWrp.width  * 0.02;
-    const offsetY = boxWrp.height * 0.02;
+  // Converte coordenadas do SVG → tela
+  const scaleX = rect.width  / vbW;
+  const scaleY = rect.height / vbH;
 
-    car1El.style.left = ( (p1.x - boxSvg.x) * scaleX + offsetX) + "px";
-    car1El.style.top  = ( (p1.y - boxSvg.y) * scaleY + offsetY) + "px";
+  const car1El = document.querySelector(".car-1");
+  const car2El = document.querySelector(".car-2");
 
-    car2El.style.left = ( (p2.x - boxSvg.x) * scaleX + offsetX) + "px";
-    car2El.style.top  = ( (p2.y - boxSvg.y) * scaleY + offsetY) + "px";
-  }
+  const p1 = trackPoints[Math.floor(cars[0].progress) % trackPoints.length];
+  const p2 = trackPoints[Math.floor(cars[1].progress) % trackPoints.length];
+
+  // Conversão perfeita de coordenadas SVG → tela
+  car1El.style.left = ((p1.x - vbX) * scaleX) + "px";
+  car1El.style.top  = ((p1.y - vbY) * scaleY) + "px";
+
+  car2El.style.left = ((p2.x - vbX) * scaleX) + "px";
+  car2El.style.top  = ((p2.y - vbY) * scaleY) + "px";
+}
 
   // -----------------------------
   // BOTÕES DE VELOCIDADE
