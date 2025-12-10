@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>F1 Manager 2025 – Escolher Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="ui-screens.css" />
+  </head>
+  <body class="screen screen--mercado">
+    <div class="screen-content">
+      <header class="topbar" style="margin-bottom: 20px">
+        <div class="topbar-left">
+          <div class="topbar-logo">
+            <img src="assets/ui/1/1.png" alt="Vale Games" />
+          </div>
+          <div class="topbar-title">
+            <div class="topbar-title-main">Escolha seu Manager</div>
+            <div class="topbar-title-sub">
+              Use um chefe de equipe real ou crie o seu próprio avatar.
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="manager-layout">
+        <section>
+          <div class="manager-tabs">
+            <button
+              class="manager-tab is-active"
+              id="tab-real"
+              type="button"
+              onclick="ManagerUI.switchMode('real')"
+            >
+              Managers Reais
+            </button>
+            <button
+              class="manager-tab"
+              id="tab-custom"
+              type="button"
+              onclick="ManagerUI.switchMode('custom')"
+            >
+              Criar Novo Manager
+            </button>
+          </div>
+
+          <!-- GRID vai ser preenchido via JS -->
+          <div id="manager-real-grid" class="manager-grid"></div>
+
+          <div id="manager-custom-grid" class="manager-grid" style="display: none">
+            <!-- avatares entram via JS -->
+          </div>
+        </section>
+
+        <!-- SIDEBAR: RESUMO / TIME / BANDEIRA -->
+        <aside class="manager-sidebar-card">
+          <h2>Resumo do Manager</h2>
+
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px">
+            <div class="manager-avatar" style="width: 52px; height: 52px">
+              <img
+                id="summary-avatar"
+                src="assets/managers/manager_ethnic_01.png"
+                alt="Avatar"
+              />
+            </div>
+            <div class="manager-info">
+              <span class="manager-name" id="summary-name">Selecione um manager</span>
+              <div class="manager-meta">
+                <span class="manager-flag" id="summary-flag"></span>
+                <span id="summary-country"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-name">Nome do Manager</label>
+            <input
+              type="text"
+              id="input-name"
+              class="form-input"
+              placeholder="Seu nome artístico ou apelido"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="select-country">Nacionalidade</label>
+            <select id="select-country" class="form-select"></select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="select-team">Escuderia</label>
+            <select id="select-team" class="form-select"></select>
+            <div class="team-pick" id="team-preview">
+              <div class="team-pick-logo">
+                <img id="team-preview-logo" src="assets/logos/mercedes.png" alt="" />
+              </div>
+              <div class="team-pick-name" id="team-preview-name">
+                Mercedes-AMG Petronas F1 Team
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap">
+            <button class="btn" type="button" onclick="ManagerUI.saveAndContinue()">
+              Continuar
+            </button>
+            <button
+              class="btn btn-secondary"
+              type="button"
+              onclick="window.location.href='lobby.html'"
+            >
+              Voltar ao Lobby
+            </button>
+          </div>
+
+          <p style="margin-top: 14px; font-size: 0.75rem; opacity: 0.8">
+            Essas informações serão usadas em todo o jogo, incluindo o destaque
+            na corrida, telas de briefing e relatórios de temporada. Você poderá
+            alterar depois, se quiser.
+          </p>
+        </aside>
+      </main>
+    </div>
+
+    <script src="manager_select.js"></script>
+  </body>
+</html>
