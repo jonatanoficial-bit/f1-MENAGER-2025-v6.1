@@ -13,82 +13,66 @@ const QUALY_PHASES = [
 
 // ------------------------------
 // TEMPO MÉDIO DE VOLTA POR PISTA (ms)
-// valores aproximados, baseados em poles 2023/2024
+// valores aproximados baseados em temporadas recentes
 // ------------------------------
-const TRACK_BASE_LAP_MS = {
-  australia: 82000,
-  bahrain: 89000,
+const TRACK_BASE_LAP_TIME_MS = {
+  australia: 80000, // 1:20.000 aprox
+  bahrain: 91000,
   jeddah: 88000,
-  china: 92000,
-  imola: 84000,
+  imola: 76000,
   monaco: 72000,
-  canada: 74000,
+  canada: 77000,
   spain: 78000,
   austria: 65000,
-  silverstone: 87000,
-  hungary: 78000,
+  silverstone: 83000,
+  hungary: 77000,
   spa: 115000,
-  zandvoort: 73000,
-  monza: 74000,
-  singapore: 93000,
-  kota: 98000,
-  mexico: 78000,
+  zandvoort: 74000,
+  monza: 78000,
+  singapore: 100000,
+  suzuka: 82000,
+  qatar: 87000,
+  austin: 89000,
+  mexico: 77000,
   brazil: 70000,
-  lasvegas: 93000,
-  qatar: 84000,
-  abudhabi: 98000
+  abu_dhabi: 84000
 };
 
 // ------------------------------
 // LISTA DE PILOTOS 2025
-// (usa códigos de 3 letras em MAIÚSCULO para as faces)
+// faces usando códigos de 3 letras (ALB.png, HAM.png…)
 // ------------------------------
 const DRIVERS_2025 = [
-  // Red Bull
   { id: "verstappen", code: "VER", name: "Max Verstappen", teamKey: "redbull", teamName: "Red Bull Racing", rating: 98, color: "#ffb300", logo: "assets/logos/redbull.png" },
   { id: "perez",      code: "PER", name: "Sergio Pérez",   teamKey: "redbull", teamName: "Red Bull Racing", rating: 94, color: "#ffb300", logo: "assets/logos/redbull.png" },
 
-  // Ferrari
   { id: "leclerc", code: "LEC", name: "Charles Leclerc", teamKey: "ferrari", teamName: "Ferrari", rating: 95, color: "#ff0000", logo: "assets/logos/ferrari.png" },
   { id: "sainz",   code: "SAI", name: "Carlos Sainz",   teamKey: "ferrari", teamName: "Ferrari", rating: 93, color: "#ff0000", logo: "assets/logos/ferrari.png" },
 
-  // Mercedes
   { id: "hamilton", code: "HAM", name: "Lewis Hamilton", teamKey: "mercedes", teamName: "Mercedes", rating: 95, color: "#00e5ff", logo: "assets/logos/mercedes.png" },
   { id: "russell",  code: "RUS", name: "George Russell", teamKey: "mercedes", teamName: "Mercedes", rating: 93, color: "#00e5ff", logo: "assets/logos/mercedes.png" },
 
-  // McLaren
-  { id: "norris",  code: "NOR", name: "Lando Norris",  teamKey: "mclaren", teamName: "McLaren", rating: 94, color: "#ff8c1a", logo: "assets/logos/mclaren.png" },
+  { id: "norris", code: "NOR", name: "Lando Norris", teamKey: "mclaren", teamName: "McLaren", rating: 94, color: "#ff8c1a", logo: "assets/logos/mclaren.png" },
   { id: "piastri", code: "PIA", name: "Oscar Piastri", teamKey: "mclaren", teamName: "McLaren", rating: 92, color: "#ff8c1a", logo: "assets/logos/mclaren.png" },
 
-  // Aston Martin
   { id: "alonso", code: "ALO", name: "Fernando Alonso", teamKey: "aston", teamName: "Aston Martin", rating: 94, color: "#00b894", logo: "assets/logos/aston.png" },
-  { id: "stroll", code: "STR", name: "Lance Stroll",    teamKey: "aston", teamName: "Aston Martin", rating: 88, color: "#00b894", logo: "assets/logos/aston.png" },
+  { id: "stroll",  code: "STR", name: "Lance Stroll",   teamKey: "aston", teamName: "Aston Martin", rating: 88, color: "#00b894", logo: "assets/logos/aston.png" },
 
-  // Alpine
   { id: "gasly", code: "GAS", name: "Pierre Gasly",  teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", logo: "assets/logos/alpine.png" },
   { id: "ocon",  code: "OCO", name: "Esteban Ocon", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", logo: "assets/logos/alpine.png" },
 
-  // Racing Bulls
   { id: "tsunoda", code: "TSU", name: "Yuki Tsunoda", teamKey: "racingbulls", teamName: "Racing Bulls", rating: 89, color: "#7f00ff", logo: "assets/logos/racingbulls.png" },
   { id: "lawson",  code: "LAW", name: "Liam Lawson",  teamKey: "racingbulls", teamName: "Racing Bulls", rating: 88, color: "#7f00ff", logo: "assets/logos/racingbulls.png" },
 
-  // Sauber / Audi
-  { id: "hulkenberg", code: "HUL", name: "Nico Hülkenberg",   teamKey: "sauber", teamName: "Sauber / Audi", rating: 89, color: "#00cec9", logo: "assets/logos/sauber.png" },
-  { id: "bortoleto",  code: "BOR", name: "Gabriel Bortoleto", teamKey: "sauber", teamName: "Sauber / Audi", rating: 88, color: "#00cec9", logo: "assets/logos/sauber.png" },
+  { id: "hulkenberg", code: "HUL", name: "Nico Hülkenberg",      teamKey: "sauber", teamName: "Sauber / Audi", rating: 89, color: "#00cec9", logo: "assets/logos/sauber.png" },
+  { id: "bortoleto",  code: "BOR", name: "Gabriel Bortoleto",    teamKey: "sauber", teamName: "Sauber / Audi", rating: 88, color: "#00cec9", logo: "assets/logos/sauber.png" },
 
-  // Haas
   { id: "magnussen", code: "MAG", name: "Kevin Magnussen", teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", logo: "assets/logos/haas.png" },
   { id: "bearman",   code: "BEA", name: "Oliver Bearman",  teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", logo: "assets/logos/haas.png" },
 
-  // Williams
-  { id: "albon",    code: "ALB", name: "Alex Albon",      teamKey: "williams", teamName: "Williams Racing", rating: 89, color: "#0984e3", logo: "assets/logos/williams.png" },
-  { id: "sargeant", code: "SAR", name: "Logan Sargeant",  teamKey: "williams", teamName: "Williams Racing", rating: 86, color: "#0984e3", logo: "assets/logos/williams.png" }
+  { id: "albon",    code: "ALB", name: "Alex Albon",        teamKey: "williams", teamName: "Williams Racing", rating: 89, color: "#0984e3", logo: "assets/logos/williams.png" },
+  { id: "sargeant", code: "SAR", name: "Logan Sargeant",    teamKey: "williams", teamName: "Williams Racing", rating: 86, color: "#0984e3", logo: "assets/logos/williams.png" }
 ];
-
-// helper para montar o caminho da face
-function facePathFromCode(code) {
-  return `assets/faces/${code}.png`;
-}
 
 // ------------------------------
 // ESTADO DA QUALIFICAÇÃO
@@ -107,14 +91,15 @@ const qualyState = {
   driverVisuals: [],
   lastUpdateTime: null,
   running: true,
-  speedMultiplier: 1
+  speedMultiplier: 1,
+  baseLapMs: 90000
 };
 
 // ------------------------------
 // FUNÇÕES UTILS
 // ------------------------------
 function formatLapTime(ms) {
-  if (!isFinite(ms)) return "--:--.---";
+  if (!isFinite(ms) || ms <= 0) return "--:--.---";
   const totalSeconds = ms / 1000;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = Math.floor(totalSeconds % 60);
@@ -143,10 +128,6 @@ function getPositionOnTrack(progress) {
   };
 }
 
-function getBaseLapForTrack(trackKey) {
-  return TRACK_BASE_LAP_MS[trackKey] ?? 90000; // default 1:30
-}
-
 // ------------------------------
 // INIT
 // ------------------------------
@@ -157,7 +138,7 @@ window.addEventListener("DOMContentLoaded", () => {
 function initQualifying() {
   const params = new URLSearchParams(window.location.search);
   const track = params.get("track") || "australia";
-  const gp = params.get("gp") || "GP 2025";
+  const gp = params.get("gp") || "GP da Austrália 2025";
   const userTeam =
     params.get("userTeam") ||
     localStorage.getItem("f1m2025_user_team") ||
@@ -166,56 +147,41 @@ function initQualifying() {
   qualyState.trackName = track;
   qualyState.gpName = gp;
   qualyState.userTeamKey = userTeam;
+  qualyState.baseLapMs = TRACK_BASE_LAP_TIME_MS[track] || 90000;
 
   const titleEl = document.getElementById("qualy-title-gp");
   if (titleEl) titleEl.textContent = gp;
 
-  // botões de velocidade
-  const speedBtns = document.querySelectorAll(".speed-btn");
-  speedBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const mult = Number(btn.dataset.speed) || 1;
-      setQualySpeed(mult);
-      speedBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-    });
-  });
-
+  setupSpeedControls();
   atualizarHeaderFaseQualy();
 
-  const trackBase = getBaseLapForTrack(track);
-  qualyState.currentDrivers = initDriversForPhase(DRIVERS_2025, trackBase);
+  // Pilotos iniciais – todos os 20
+  qualyState.currentDrivers = DRIVERS_2025.map((drv, idx) => {
+    const ratingCenter = 92; // quanto maior que isso, mais rápido
+    const ratingDelta = drv.rating - ratingCenter;
+    const skillFactor = 1 - ratingDelta * 0.006; // +/- ~0.4
+    const targetLapMs = qualyState.baseLapMs * skillFactor;
+
+    return {
+      ...drv,
+      index: idx,
+      face: `assets/faces/${drv.code}.png`,
+      progress: Math.random(),
+      speedBase: 1 / targetLapMs, // 1 volta em targetLapMs ms (em 1x)
+      speedVar: 0,
+      laps: 0,
+      bestLapTime: null,
+      lastLapTime: null,
+      lastLapTimestamp: null
+    };
+  });
 
   preencherPilotosDaEquipe();
 
   loadTrackSvg(track).then(() => {
-    buildDriverVisuals(); // cria carros da Q1
     qualyState.lastUpdateTime = performance.now();
+    // IMPORTANTE: loop nunca para de ser agendado
     requestAnimationFrame(gameLoopQualy);
-  });
-}
-
-// reinicia os dados de pilotos para uma fase (Q1, Q2, Q3)
-function initDriversForPhase(sourceDrivers, trackBaseLapMs) {
-  const now = performance.now();
-  return sourceDrivers.map((drv, idx) => {
-    const skillFactor = 1 - (drv.rating - 90) * 0.004; // rating alto = volta mais rápida
-    const baseLapMs = (drv.baseLapMs ?? trackBaseLapMs) * skillFactor;
-    const firstLapTarget =
-      baseLapMs * (1 + (Math.random() - 0.5) * 0.02); // ±1%
-
-    return {
-      ...drv,
-      baseLapMs,
-      face: facePathFromCode(drv.code),
-      index: idx,
-      progress: Math.random(),
-      laps: 0,
-      bestLapTime: null,
-      lastLapTime: null,
-      lastLapTimestamp: now,
-      currentLapTargetMs: firstLapTarget
-    };
   });
 }
 
@@ -275,10 +241,7 @@ async function loadTrackSvg(trackKey) {
   }));
 
   // pista
-  const trackPath = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "polyline"
-  );
+  const trackPath = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
   trackPath.setAttribute(
     "points",
     qualyState.pathPoints.map((p) => `${p.x},${p.y}`).join(" ")
@@ -290,10 +253,7 @@ async function loadTrackSvg(trackKey) {
   trackPath.setAttribute("stroke-linejoin", "round");
   svg.appendChild(trackPath);
 
-  const innerPath = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "polyline"
-  );
+  const innerPath = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
   innerPath.setAttribute(
     "points",
     qualyState.pathPoints.map((p) => `${p.x},${p.y}`).join(" ")
@@ -305,7 +265,7 @@ async function loadTrackSvg(trackKey) {
   innerPath.setAttribute("stroke-linejoin", "round");
   svg.appendChild(innerPath);
 
-  // pontinhos brancos
+  // bolinhas brancas da pista (efeito de traçado)
   qualyState.pathPoints.forEach((p) => {
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     c.setAttribute("cx", p.x);
@@ -315,7 +275,6 @@ async function loadTrackSvg(trackKey) {
     svg.appendChild(c);
   });
 
-  // bandeira de chegada
   const flagPoint = qualyState.pathPoints[0];
   const flag = document.createElementNS("http://www.w3.org/2000/svg", "text");
   flag.setAttribute("x", flagPoint.x);
@@ -325,24 +284,8 @@ async function loadTrackSvg(trackKey) {
   flag.setAttribute("text-anchor", "middle");
   flag.textContent = "🏁";
   svg.appendChild(flag);
-}
 
-// cria / recria os "carros" no SVG com base em currentDrivers
-function buildDriverVisuals() {
-  const svg = document.getElementById("track-svg");
-  if (!svg || !qualyState.pathPoints.length) return;
-
-  // remove grupos antigos
-  if (Array.isArray(qualyState.driverVisuals)) {
-    qualyState.driverVisuals.forEach((vis) => {
-      if (vis.group && vis.group.parentNode) {
-        vis.group.parentNode.removeChild(vis.group);
-      }
-    });
-  }
-  qualyState.driverVisuals = [];
-
-  // cria novos grupos
+  // marcadores dos carros
   qualyState.driverVisuals = qualyState.currentDrivers.map((drv) => {
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
@@ -353,12 +296,8 @@ function buildDriverVisuals() {
     body.setAttribute("fill", drv.color || "#ffffff");
     group.appendChild(body);
 
-    // triângulo para destacar equipe do usuário
     if (drv.teamKey === qualyState.userTeamKey) {
-      const tri = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "polygon"
-      );
+      const tri = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
       tri.setAttribute("points", "0,-10 6,0 -6,0");
       tri.setAttribute("fill", drv.color || "#ffffff");
       group.appendChild(tri);
@@ -372,18 +311,20 @@ function buildDriverVisuals() {
 
 // ------------------------------
 // LOOP PRINCIPAL
+// (NUNCA PARA DE AGENDAR FRAMES – evita travar em Q2/Q3)
 // ------------------------------
 function gameLoopQualy(timestamp) {
-  if (!qualyState.running) return;
+  if (qualyState.lastUpdateTime == null) {
+    qualyState.lastUpdateTime = timestamp;
+  }
 
-  const dt =
-    qualyState.lastUpdateTime != null
-      ? timestamp - qualyState.lastUpdateTime
-      : 0;
+  const dt = (timestamp - qualyState.lastUpdateTime) * qualyState.speedMultiplier;
   qualyState.lastUpdateTime = timestamp;
 
-  updateQualySimulation(dt);
-  renderQualy();
+  if (qualyState.running) {
+    updateQualySimulation(dt);
+    renderQualy();
+  }
 
   requestAnimationFrame(gameLoopQualy);
 }
@@ -397,20 +338,21 @@ function updateQualySimulation(dtMs) {
   const fase = QUALY_PHASES[qualyState.phaseIndex];
   if (!fase) return;
 
-  const dtSim = (dtMs || 0) * qualyState.speedMultiplier;
   const now = performance.now();
 
   qualyState.currentDrivers.forEach((drv) => {
-    if (!drv.currentLapTargetMs || drv.currentLapTargetMs <= 0) {
-      drv.currentLapTargetMs = drv.baseLapMs;
-    }
+    // ruído pequeno de ritmo
+    const noiseFactor = 1 + (Math.random() - 0.5) * 0.06; // +/- 3%
+    const speed = drv.speedBase * noiseFactor;
 
-    const deltaProgress = dtSim / drv.currentLapTargetMs;
-    let progress = drv.progress + deltaProgress;
+    const deltaProgress = speed * (dtMs || 0);
+    let newProgress = drv.progress + deltaProgress;
 
-    if (progress >= 1) {
-      progress -= 1;
-      const lapTime = now - drv.lastLapTimestamp;
+    if (newProgress >= 1) {
+      newProgress -= 1;
+      const lapTime = drv.lastLapTimestamp
+        ? now - drv.lastLapTimestamp
+        : qualyState.baseLapMs * (0.95 + Math.random() * 0.1);
 
       drv.laps += 1;
       drv.lastLapTime = lapTime;
@@ -418,13 +360,12 @@ function updateQualySimulation(dtMs) {
         drv.bestLapTime = lapTime;
       }
       drv.lastLapTimestamp = now;
-
-      // novo alvo de volta com pequena variação
-      drv.currentLapTargetMs =
-        drv.baseLapMs * (1 + (Math.random() - 0.5) * 0.02);
     }
 
-    drv.progress = progress;
+    drv.progress = newProgress;
+    if (drv.lastLapTimestamp == null) {
+      drv.lastLapTimestamp = now;
+    }
   });
 
   // líder define a volta atual
@@ -436,7 +377,6 @@ function updateQualySimulation(dtMs) {
     atualizarHeaderFaseQualy();
   }
 
-  // fim da fase
   if (maxLaps >= faseAtual.totalLaps) {
     qualyState.running = false;
     finalizarFaseQualy();
@@ -466,7 +406,7 @@ function renderQualy() {
 }
 
 // ------------------------------
-// UI LISTA / CARDS
+// UI – HEADER / LISTA / CARTÕES
 // ------------------------------
 function atualizarHeaderFaseQualy() {
   const fase = QUALY_PHASES[qualyState.phaseIndex];
@@ -509,6 +449,11 @@ function atualizarListaPilotosQualy() {
     imgFace.className = "driver-face";
     imgFace.src = drv.face || "";
     imgFace.alt = drv.name;
+    imgFace.onerror = () => {
+      // fallback caso alguma imagem esteja faltando
+      imgFace.onerror = null;
+      imgFace.src = "assets/faces/default.png";
+    };
 
     const textDiv = document.createElement("div");
     textDiv.className = "driver-text";
@@ -530,12 +475,8 @@ function atualizarListaPilotosQualy() {
     statsDiv.className = "driver-stats";
     statsDiv.innerHTML = `
       <div class="stat-line">Voltas <span>${drv.laps}</span></div>
-      <div class="stat-line">Melhor <span>${formatLapTime(
-        drv.bestLapTime ?? Infinity
-      )}</span></div>
-      <div class="stat-line">Última <span>${formatLapTime(
-        drv.lastLapTime ?? Infinity
-      )}</span></div>
+      <div class="stat-line">Melhor <span>${formatLapTime(drv.bestLapTime ?? 0)}</span></div>
+      <div class="stat-line">Última <span>${formatLapTime(drv.lastLapTime ?? 0)}</span></div>
     `;
 
     row.appendChild(posSpan);
@@ -567,7 +508,13 @@ function preencherPilotosDaEquipe() {
     const teamName = card.querySelector(".user-team");
     const logo = card.querySelector(".user-logo");
 
-    if (face) face.src = facePathFromCode(drv.code);
+    if (face) {
+      face.src = `assets/faces/${drv.code}.png`;
+      face.onerror = () => {
+        face.onerror = null;
+        face.src = "assets/faces/default.png";
+      };
+    }
     if (name) name.textContent = drv.name;
     if (teamName) teamName.textContent = drv.teamName;
     if (logo) logo.src = drv.logo || "";
@@ -595,13 +542,8 @@ function finalizarFaseQualy() {
 
   if (!ehUltimaFase) {
     const qtdEliminados = fase.eliminated || 0;
-    const classificados = gridOrdenado.slice(
-      0,
-      gridOrdenado.length - qtdEliminados
-    );
-    const eliminados = gridOrdenado.slice(
-      gridOrdenado.length - qtdEliminados
-    );
+    const classificados = gridOrdenado.slice(0, gridOrdenado.length - qtdEliminados);
+    const eliminados = gridOrdenado.slice(gridOrdenado.length - qtdEliminados);
 
     qualyState.nextPhaseDrivers = classificados;
     qualyState.modalMode = "phase";
@@ -624,15 +566,11 @@ function mostrarModalQualyFase(idFase, classificados, eliminados) {
   title.textContent = `${idFase} encerrada`;
   let html = `<p><strong>Classificados para a próxima fase:</strong></p><ol>`;
   classificados.forEach((drv) => {
-    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — ${formatLapTime(
-      drv.bestLapTime ?? Infinity
-    )}</li>`;
+    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — ${formatLapTime(drv.bestLapTime ?? 0)}</li>`;
   });
   html += `</ol><p><strong>Eliminados:</strong></p><ol>`;
   eliminados.forEach((drv) => {
-    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — ${formatLapTime(
-      drv.bestLapTime ?? Infinity
-    )}</li>`;
+    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — ${formatLapTime(drv.bestLapTime ?? 0)}</li>`;
   });
   html += `</ol>`;
 
@@ -649,9 +587,7 @@ function mostrarModalQualyFinal(grid) {
   title.textContent = `Classificação final – Grid de largada`;
   let html = `<p>Este será o grid de largada para a corrida:</p><ol>`;
   grid.forEach((drv) => {
-    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — Melhor volta: ${formatLapTime(
-      drv.bestLapTime ?? Infinity
-    )}</li>`;
+    html += `<li>${drv.position}º - ${drv.name} (${drv.teamName}) — Melhor volta: ${formatLapTime(drv.bestLapTime ?? 0)}</li>`;
   });
   html += `</ol><p>Clique em <strong>OK</strong> para avançar para a corrida.</p>`;
 
@@ -672,18 +608,23 @@ function onQualyModalAction() {
     qualyState.currentLap = 1;
 
     if (Array.isArray(qualyState.nextPhaseDrivers)) {
-      const trackBase = getBaseLapForTrack(qualyState.trackName);
-      qualyState.currentDrivers = initDriversForPhase(
-        qualyState.nextPhaseDrivers,
-        trackBase
-      );
+      qualyState.currentDrivers = qualyState.nextPhaseDrivers.map((drv) => {
+        // mantém mesma velocidade base, zera voltas
+        return {
+          ...drv,
+          laps: 0,
+          progress: Math.random(),
+          bestLapTime: null,
+          lastLapTime: null,
+          lastLapTimestamp: null
+        };
+      });
     }
 
     qualyState.nextPhaseDrivers = null;
     qualyState.running = true;
     qualyState.lastUpdateTime = performance.now();
     atualizarHeaderFaseQualy();
-    buildDriverVisuals(); // recria somente os carros dos classificados
   } else if (qualyState.modalMode === "final") {
     modal.classList.add("hidden");
 
@@ -740,6 +681,22 @@ function setQualySpeed(mult) {
   qualyState.speedMultiplier = mult;
 }
 
-// expõe funções globais
+// liga/desliga botões 1x / 2x / 4x
+function setupSpeedControls() {
+  const buttons = document.querySelectorAll(".speed-btn");
+  if (!buttons.length) return;
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const speed = Number(btn.dataset.speed || "1") || 1;
+      setQualySpeed(speed);
+
+      buttons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+}
+
+// exporta funções para o HTML
 window.setQualySpeed = setQualySpeed;
 window.onQualyModalAction = onQualyModalAction;
