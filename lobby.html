@@ -1,469 +1,569 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Lobby – F1 Manager 2025</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+  <meta charset="UTF-8" />
+  <title>F1 Manager 2025 – Lobby da Equipe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <style>
+    /* ===== RESET BÁSICO E FULLSCREEN ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="ui.css" />
-    <link rel="stylesheet" href="ui-screens.css" />
+    html, body {
+      height: 100vh;          /* ocupa a altura total da tela */
+      overflow: hidden;       /* impede scroll para manter “tela de jogo” */
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #ffffff;
+      background: #000000;
+    }
 
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        overflow: hidden;
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    /* ===== SHELL PRINCIPAL ===== */
+    .app-shell {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      background-image: url("assets/ui/lobby_bg.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* camada escura por cima do fundo */
+    .app-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.92) 100%);
+    }
+
+    /* conteúdo */
+    .app-content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      padding: 16px 6vw 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ===== TOPO (VOLTA / EQUIPE / MANAGER) ===== */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .btn-back {
+      padding: 8px 20px;
+      border-radius: 999px;
+      border: none;
+      background: #ff1744;        /* vermelho bem visível */
+      color: #ffffff;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      box-shadow: 0 0 16px rgba(0,0,0,0.45);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-back:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 22px rgba(255, 23, 68, 0.45);
+      background: #ff4566;
+    }
+
+    .btn-back:active {
+      transform: translateY(0);
+      box-shadow: 0 0 10px rgba(0,0,0,0.7);
+    }
+
+    .team-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(10,10,10,0.82);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 0 24px rgba(0,0,0,0.6);
+      min-width: 120px;
+      justify-content: center;
+    }
+
+    .team-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      object-fit: contain;
+      background: #111;
+      padding: 2px;
+    }
+
+    .team-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.95;
+    }
+
+    .manager-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(6,6,6,0.9);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 0 22px rgba(0,0,0,0.7);
+      max-width: 260px;
+    }
+
+    .manager-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: #222;
+    }
+
+    .manager-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .manager-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .manager-country {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      opacity: 0.85;
+    }
+
+    .manager-flag {
+      width: 16px;
+      height: 11px;
+      object-fit: cover;
+      border-radius: 2px;
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    /* ===== TÍTULO E TEXTO ===== */
+    .title-block {
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 0.68rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
+    }
+
+    .headline {
+      margin-top: 6px;
+      font-size: 1.4rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: rgba(255,255,255,0.95);
+    }
+
+    .description {
+      margin-top: 12px;
+      font-size: 0.78rem;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.4;
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* ===== GRID DE CARTÕES ===== */
+    .cards-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    @media (max-width: 1024px) {
+      .cards-grid {
+        grid-template-columns: repeat(2, minmax(0,1fr));
       }
+    }
 
-      body.screen--lobby {
-        min-height: 100vh;
-        background-image: url("assets/ui/lobby_bg.png");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        color: #ffffff;
+    @media (max-width: 720px) {
+      .app-content {
+        padding-inline: 12px;
       }
-
-      .lobby-overlay {
-        height: 100%;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-        padding: 24px 24px 32px;
-        background:
-          radial-gradient(circle at 15% 10%, rgba(0,0,0,0.88), transparent 55%),
-          radial-gradient(circle at 85% 90%, rgba(0,0,0,0.88), transparent 65%);
+      .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
       }
-
-      /* ===== BOTÃO VOLTAR ===== */
-      .btn-back {
-        padding: 8px 18px;
-        border-radius: 12px;
-        background: linear-gradient(130deg, #ff2b2b, #b10000);
-        color: white;
-        font-size: 0.85rem;
-        font-weight: bold;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        border: none;
-        box-shadow: 0 0 12px rgba(0,0,0,0.6);
-        cursor: pointer;
-      }
-
-      .btn-back:hover {
-        filter: brightness(1.1);
-      }
-      .btn-back:active {
-        transform: translateY(1px);
-      }
-
-      /* ===== CABEÇALHO ===== */
-      .top-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .team-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.35);
-        background: rgba(0,0,0,0.7);
-      }
-
-      .team-pill img {
-        width: 32px;
-        height: 32px;
-        object-fit: contain;
-      }
-
-      .team-pill span {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        font-weight: 600;
-      }
-
-      .manager-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 12px;
-        background: rgba(0,0,0,0.85);
-        border: 1px solid rgba(255,255,255,0.25);
-      }
-
-      .manager-avatar {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        object-fit: cover;
-      }
-
-      .manager-text {
-        display: flex;
-        flex-direction: column;
-        font-size: 0.8rem;
-      }
-
-      .manager-text span:first-child {
-        font-weight: 600;
-      }
-
-      .manager-country {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.75rem;
-      }
-
-      .manager-flag {
-        width: 18px;
-        height: 18px;
-        object-fit: cover;
-        border-radius: 999px;
-      }
-
-      /* ===== TÍTULOS ===== */
-      .lobby-header {
-        margin-top: 10px;
-      }
-
-      .lobby-title {
+      .headline {
         font-size: 1.1rem;
-        text-transform: uppercase;
-        letter-spacing: 0.18em;
-        margin-bottom: 4px;
       }
+    }
 
-      .lobby-sub {
-        font-size: 0.9rem;
-        opacity: 0.85;
-        max-width: 520px;
-      }
+    .card {
+      position: relative;
+      border-radius: 18px;
+      padding: 16px 16px 12px;
+      background: linear-gradient(135deg, rgba(20,20,20,0.96), rgba(0,0,0,0.94));
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.75);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 135px;
+    }
 
-      /* ===== GRID DE AÇÕES ===== */
-      .lobby-grid {
-        margin-top: 26px;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 18px;
-      }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(circle at top left, rgba(255,255,255,0.08), transparent 60%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
 
-      @media (max-width: 1024px) {
-        .lobby-grid {
-          grid-template-columns: repeat(2, minmax(0,1fr));
-        }
-      }
+    .card-header {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      margin-bottom: 6px;
+      opacity: 0.8;
+    }
 
-      @media (max-width: 768px) {
-        .lobby-grid {
-          grid-template-columns: minmax(0,1fr);
-        }
-      }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
 
-      .lobby-card {
-        position: relative;
-        overflow: hidden;
-        border-radius: 20px;
-        padding: 16px 18px 18px;
-        background: radial-gradient(circle at top, rgba(255,255,255,0.05), transparent 60%),
-                    rgba(0,0,0,0.86);
-        border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 0 18px rgba(0,0,0,0.8);
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
-      }
+    .card-body {
+      font-size: 0.78rem;
+      line-height: 1.35;
+      color: rgba(255,255,255,0.82);
+      margin-bottom: 12px;
+    }
 
-      .lobby-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-        border-color: rgba(255,255,255,0.5);
-      }
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.76);
+    }
 
-      .lobby-card small {
-        font-size: 0.7rem;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        opacity: 0.6;
-      }
+    .card-status {
+      opacity: 0.92;
+    }
 
-      .lobby-card h3 {
-        margin: 0;
-        font-size: 1rem;
-      }
+    .card-button {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+    }
 
-      .lobby-card p {
-        margin: 0;
-        font-size: 0.82rem;
-        opacity: 0.9;
-      }
+    .card-button.primary {
+      background: #ff1744;
+      color: #ffffff;
+    }
 
-      .lobby-card-footer {
-        margin-top: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.8rem;
-        opacity: 0.9;
-      }
+    .card-button.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 26px rgba(255,23,68,0.6);
+      background: #ff4566;
+    }
 
-      .pill-tag {
-        padding: 4px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.4);
-        background: rgba(0,0,0,0.4);
-        font-size: 0.7rem;
-        text-transform: uppercase;
-      }
+    .card-button.primary:active {
+      transform: translateY(0);
+      box-shadow: 0 0 12px rgba(0,0,0,0.9);
+    }
 
-      .lobby-card.accent-red {
-        background:
-          radial-gradient(circle at top right, rgba(255,60,60,0.3), transparent 65%),
-          rgba(0,0,0,0.9);
-      }
+    .card-button.ghost {
+      background: transparent;
+      color: #ffffff;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
 
-      .lobby-card.accent-green {
-        background:
-          radial-gradient(circle at top right, rgba(75,255,150,0.25), transparent 60%),
-          rgba(0,0,0,0.9);
-      }
+    .card-button.ghost:hover {
+      background: rgba(255,255,255,0.08);
+    }
 
-      .lobby-card.accent-blue {
-        background:
-          radial-gradient(circle at top right, rgba(120,180,255,0.3), transparent 60%),
-          rgba(0,0,0,0.9);
-      }
+    /* variações de cor por módulo */
+    .card.car {
+      background: linear-gradient(135deg, rgba(90,0,0,0.92), rgba(10,0,0,0.96));
+    }
 
-      .lobby-card.accent-gold {
-        background:
-          radial-gradient(circle at top right, rgba(255,210,80,0.3), transparent 60%),
-          rgba(0,0,0,0.9);
-      }
+    .card.staff {
+      background: linear-gradient(135deg, rgba(0,80,40,0.95), rgba(0,20,10,0.96));
+    }
 
-      .lobby-card.accent-purple {
-        background:
-          radial-gradient(circle at top right, rgba(180,120,255,0.3), transparent 60%),
-          rgba(0,0,0,0.9);
-      }
+    .card.market {
+      background: linear-gradient(135deg, rgba(0,20,60,0.95), rgba(0,6,20,0.98));
+    }
 
-      .lobby-card.accent-cyan {
-        background:
-          radial-gradient(circle at top right, rgba(80,220,255,0.3), transparent 60%),
-          rgba(0,0,0,0.9);
-      }
+    .card.sponsors {
+      background: linear-gradient(135deg, rgba(80,30,0,0.95), rgba(15,5,0,0.98));
+    }
 
-      .lobby-card .shortcut {
-        font-size: 0.7rem;
-        opacity: 0.7;
-      }
-    </style>
-  </head>
+    .card.calendar {
+      background: linear-gradient(135deg, rgba(40,0,90,0.95), rgba(10,0,30,0.98));
+    }
 
-  <body class="screen screen--lobby">
-    <div class="lobby-overlay">
+    .card.shortcut {
+      background: linear-gradient(135deg, rgba(0,65,70,0.95), rgba(0,18,22,0.98));
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="app-overlay"></div>
 
-      <!-- TOPO -->
-      <header class="top-bar">
-        <button class="btn-back" onclick="voltarCapa()">Voltar</button>
+  <div class="app-content">
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <button class="btn-back" onclick="window.location.href='index.html'">Voltar</button>
 
-        <div class="team-pill">
-          <img id="team-logo" src="" alt="Logo equipe" />
-          <span id="team-name">Equipe</span>
-        </div>
+      <div class="team-pill" id="team-pill">
+        <img id="team-logo" class="team-logo" src="assets/teams/ferrari.png" alt="Equipe" />
+        <span id="team-name" class="team-name">Ferrari</span>
+      </div>
 
-        <div class="manager-pill">
-          <img id="manager-avatar" class="manager-avatar" src="" alt="Manager" />
-          <div class="manager-text">
-            <span id="manager-name">Manager</span>
-            <div class="manager-country">
-              <img id="manager-flag" class="manager-flag" src="" alt="País" />
-              <span id="manager-country-label"></span>
-            </div>
+      <div class="manager-card" id="manager-card">
+        <img id="manager-avatar" class="manager-avatar" src="assets/managers/manager_ethnic_01.png" alt="Manager" />
+        <div class="manager-info">
+          <div id="manager-name" class="manager-name">Manager Demo</div>
+          <div class="manager-country">
+            <img id="manager-flag" class="manager-flag" src="assets/flags/br.png" alt="Brasil">
+            <span id="manager-country-name">Brasil</span>
           </div>
         </div>
-      </header>
-
-      <!-- TÍTULO / INTRO -->
-      <section class="lobby-header">
-        <div class="lobby-title">Lobby da Equipe</div>
-        <div class="lobby-sub">
-          Aqui você controla tudo: desenvolvimento do carro, pilotos, staff, patrocínios e decisões de pista.
-          Use os módulos abaixo para preparar sua temporada antes de ir para o calendário e correr.
-        </div>
-      </section>
-
-      <!-- GRID DE MÓDULOS -->
-      <section class="lobby-main">
-        <div class="lobby-grid">
-
-          <!-- Oficina & Setup -->
-          <article class="lobby-card accent-red" onclick="irPara('oficina.html')">
-            <small>Carro</small>
-            <h3>Oficina & Setup</h3>
-            <p>
-              Ajuste asas, motor e pneus. Nesta versão, o módulo é conceitual,
-              mas toda a lógica já conversa com a simulação futura.
-            </p>
-            <div class="lobby-card-footer">
-              <span>Estado: Protótipo visual</span>
-              <span class="pill-tag">Abrir oficina</span>
-            </div>
-          </article>
-
-          <!-- Funcionários -->
-          <article class="lobby-card accent-green" onclick="irPara('funcionarios.html')">
-            <small>Equipe técnica</small>
-            <h3>Funcionários & Staff</h3>
-            <p>
-              Engenheiros, estrategistas e mecânicos. Organize o cérebro da
-              equipe e veja como cada função influencia nas decisões de corrida.
-            </p>
-            <div class="lobby-card-footer">
-              <span>Gestão da base humana</span>
-              <span class="pill-tag">Em breve</span>
-            </div>
-          </article>
-
-          <!-- Mercado de Pilotos -->
-          <article class="lobby-card accent-blue" onclick="irPara('mercado.html')">
-            <small>Pilotos</small>
-            <h3>Mercado de Pilotos</h3>
-            <p>
-              Negocie contratos, salários e bônus de performance. Planeje o
-              futuro da equipe montando a melhor dupla possível.
-            </p>
-            <div class="lobby-card-footer">
-              <span>Janelas de mercado por temporada</span>
-              <span class="pill-tag">Em breve</span>
-            </div>
-          </article>
-
-          <!-- Patrocínios -->
-          <article class="lobby-card accent-gold" onclick="irPara('patrocinio.html')">
-            <small>Finanças</small>
-            <h3>Patrocinadores & Marca</h3>
-            <p>
-              Escolha patrocinadores, metas e bônus. Cada contrato exige
-              resultados em pista, mas injeta dinheiro no desenvolvimento do carro.
-            </p>
-            <div class="lobby-card-footer">
-              <span>Reputação & objetivos</span>
-              <span class="pill-tag">Em breve</span>
-            </div>
-          </article>
-
-          <!-- Calendário / Corridas -->
-          <article class="lobby-card accent-purple" onclick="irPara('calendar.html')">
-            <small>Temporada</small>
-            <h3>Calendário & GPs</h3>
-            <p>
-              Escolha o próximo Grande Prêmio, acompanhe o calendário oficial
-              e avance para treino, classificação e corrida.
-            </p>
-            <div class="lobby-card-footer">
-              <span>Modo carreira 2025</span>
-              <span class="pill-tag">Ir para o calendário</span>
-            </div>
-          </article>
-
-          <!-- Acesso rápido pista atual (opcional) -->
-          <article class="lobby-card accent-cyan" onclick="acessoRapidoPista()">
-            <small>Atalho</small>
-            <h3>Acesso rápido à pista</h3>
-            <p>
-              Carrega o último GP selecionado e leva você direto para a
-              sequência treino → classificação → corrida.
-            </p>
-            <div class="lobby-card-footer">
-              <span>Usa o último GP salvo</span>
-              <span class="shortcut">Atalho de demonstração</span>
-            </div>
-          </article>
-
-        </div>
-      </section>
+      </div>
     </div>
 
-    <script src="database.js"></script>
+    <!-- TÍTULO & TEXTO -->
+    <div class="title-block">
+      <div class="subtitle">Temporada oficial F1 2025</div>
+      <div class="headline">Lobby da equipe</div>
+      <p class="description">
+        Aqui você controla tudo: desenvolvimento do carro, pilotos, staff, patrocínios e
+        decisões de pista. Use os módulos abaixo para preparar sua temporada antes de ir
+        para o calendário e correr.
+      </p>
+    </div>
 
-    <script>
-      // ===== FULLSCREEN GLOBAL PARA ESTA TELA =====
-      function tryFullscreen() {
-        const el = document.documentElement;
-        if (el.requestFullscreen) {
-          el.requestFullscreen().catch(() => {});
-        }
-      }
+    <!-- GRID DE CARTÕES -->
+    <div class="cards-grid">
+      <!-- CARRO – OFICINA -->
+      <div class="card car">
+        <div>
+          <div class="card-header">Carro</div>
+          <div class="card-title">Oficina &amp; Setup</div>
+          <div class="card-body">
+            Ajuste asas, motor e pneus. Nesta versão, o módulo é conceitual,
+            mas toda a lógica já conversa com a simulação futura.
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-status">Estado: Protótipo visual</span>
+          <button class="card-button primary" onclick="window.location.href='oficina.html'">
+            Abrir oficina
+          </button>
+        </div>
+      </div>
 
-      // Primeira interação do usuário tenta entrar em fullscreen
-      document.addEventListener("click", () => {
-        tryFullscreen();
-      }, { once: true });
+      <!-- EQUIPE TÉCNICA – FUNCIONÁRIOS -->
+      <div class="card staff">
+        <div>
+          <div class="card-header">Equipe técnica</div>
+          <div class="card-title">Funcionários &amp; Staff</div>
+          <div class="card-body">
+            Engenheiros, estrategistas e mecânicos. Organize o cérebro da equipe e veja
+            como cada função influencia nas decisões de corrida.
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-status">Gestão da base humana</span>
+          <button class="card-button ghost" onclick="window.location.href='funcionarios.html'">
+            Em breve
+          </button>
+        </div>
+      </div>
 
-      // ===== NAVEGAÇÃO =====
-      function voltarCapa() {
-        window.location.href = "index.html";
-      }
+      <!-- PILOTOS – MERCADO -->
+      <div class="card market">
+        <div>
+          <div class="card-header">Pilotos</div>
+          <div class="card-title">Mercado de Pilotos</div>
+          <div class="card-body">
+            Negocie contratos, salários e bônus de performance. Planeje o futuro da equipe
+            montando a melhor dupla possível.
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-status">Janelas de mercado por temporada</span>
+          <button class="card-button ghost" onclick="window.location.href='mercado.html'">
+            Em breve
+          </button>
+        </div>
+      </div>
 
-      function irPara(url) {
-        window.location.href = url;
-      }
+      <!-- PATROCINADORES -->
+      <div class="card sponsors">
+        <div>
+          <div class="card-header">Finanças</div>
+          <div class="card-title">Patrocinadores &amp; Marca</div>
+          <div class="card-body">
+            Escolha patrocinadores, metas e bônus. Cada contrato exige resultados em pista,
+            mas injeta dinheiro no desenvolvimento do carro.
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-status">Reputação &amp; objetivos</span>
+          <button class="card-button ghost" onclick="window.location.href='patrocinio.html'">
+            Em breve
+          </button>
+        </div>
+      </div>
 
-      function acessoRapidoPista() {
-        // Por enquanto apenas manda para o calendário.
-        // No futuro pode ler localStorage e ir direto para treino/qualy/corrida.
-        window.location.href = "calendar.html";
-      }
+      <!-- CALENDÁRIO -->
+      <div class="card calendar">
+        <div>
+          <div class="card-header">Temporada</div>
+          <div class="card-title">Calendário &amp; GPs</div>
+          <div class="card-body">
+            Escolha o próximo Grande Prêmio, acompanhe o calendário oficial e avance para
+            treino, classificação e corrida.
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-status">Modo carreira 2025</span>
+          <button class="card-button ghost" onclick="window.location.href='calendar.html'">
+            Ir para o calendário
+          </button>
+        </div>
+      </div>
 
-      // ===== BARRA SUPERIOR (time + manager) =====
-      (function loadUI() {
-        const teamKey = localStorage.getItem("f1m2025_user_team") || "ferrari";
+      <!-- ATALHO PARA PISTA -->
+      <div class="card shortcut">
+        <div>
+          <div class="card-header">Atalho</div>
+          <div class="card-title">Acesso rápido à pista</div>
+          <div class="card-body">
+            Carrega o último GP selecionado e leva você direto para a sequência
+            treino &gt; classificação &gt; corrida.
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-status">Uso o último GP salvo</span>
+          <button class="card-button ghost" onclick="window.location.href='calendar.html?quick=1'">
+            Atalho de demonstração
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-        // Equipe
-        const teamList = (window.TEAMS_2025 || []);
-        const team = teamList.find(t => t.key === teamKey);
-        const teamNameEl = document.getElementById("team-name");
-        const teamLogoEl = document.getElementById("team-logo");
+<script>
+  // ===== BLOQUEIA SCROLL PARA MANTER "TELA DE JOGO" =====
+  function lockScroll() {
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('scroll', lockScroll);
 
-        if (team) {
-          teamNameEl.textContent = team.name;
-          teamLogoEl.src = team.logo;
-        } else {
-          teamNameEl.textContent = teamKey;
-          teamLogoEl.src = "assets/teams/" + teamKey + ".png";
-        }
+  // ===== TENTA ENTRAR EM FULLSCREEN (QUANDO POSSÍVEL) =====
+  function tryFullscreen() {
+    const docEl = document.documentElement;
 
-        // Manager
-        const raw = localStorage.getItem("f1m2025_user_manager");
-        if (raw) {
-          try {
-            const m = JSON.parse(raw);
-            document.getElementById("manager-name").textContent =
-              m.name || "Manager";
-            document.getElementById("manager-country-label").textContent =
-              m.countryName || "";
-            document.getElementById("manager-flag").src =
-              "assets/flags/" + (m.countryCode || "br") + ".png";
+    const alreadyFullscreen =
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.msFullscreenElement;
 
-            if (m.avatarPath) {
-              document.getElementById("manager-avatar").src = m.avatarPath;
-            }
-          } catch (e) {
-            console.warn("Erro lendo manager do localStorage:", e);
-          }
-        }
-      })();
-    </script>
-  </body>
+    const inStandalone =
+      window.matchMedia &&
+      window.matchMedia('(display-mode: standalone)').matches;
+
+    if (alreadyFullscreen || inStandalone) return;
+
+    const requestFS =
+      docEl.requestFullscreen ||
+      docEl.webkitRequestFullscreen ||
+      docEl.msRequestFullscreen;
+
+    if (requestFS) {
+      requestFS.call(docEl).catch(() => {
+        // Ignora erro (usuário pode ter bloqueado)
+      });
+    }
+  }
+
+  // ===== CARREGA DADOS BÁSICOS (TIME / MANAGER) DO LOCALSTORAGE =====
+  function loadUserBar() {
+    try {
+      const teamName  = localStorage.getItem('f1m2025_user_team_name')  || 'Ferrari';
+      const teamLogo  = localStorage.getItem('f1m2025_user_team_logo')  || 'assets/teams/ferrari.png';
+
+      const managerName   = localStorage.getItem('f1m2025_user_manager_name')   || 'Manager Demo';
+      const managerAvatar = localStorage.getItem('f1m2025_user_manager_avatar') || 'assets/managers/manager_ethnic_01.png';
+      const countryFlag   = localStorage.getItem('f1m2025_user_country_flag')   || 'assets/flags/br.png';
+      const countryName   = localStorage.getItem('f1m2025_user_country_name')   || 'Brasil';
+
+      document.getElementById('team-name').textContent  = teamName;
+      document.getElementById('team-logo').src          = teamLogo;
+
+      document.getElementById('manager-name').textContent  = managerName;
+      document.getElementById('manager-avatar').src        = managerAvatar;
+      document.getElementById('manager-flag').src          = countryFlag;
+      document.getElementById('manager-country-name').textContent = countryName;
+    } catch (e) {
+      console.warn('Não foi possível carregar dados do manager/equipe:', e);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    lockScroll();
+    setTimeout(lockScroll, 50);   // garante o topo em alguns navegadores
+    loadUserBar();
+    setTimeout(tryFullscreen, 400);
+  });
+</script>
+</body>
 </html>
