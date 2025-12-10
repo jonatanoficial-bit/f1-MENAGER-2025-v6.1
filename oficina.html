@@ -1,692 +1,88 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>F1 Manager 2025 – Oficina & Setup</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!-- CSS globais do jogo -->
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="ui.css" />
-
-    <style>
-      /* Garantir página ocupando a tela toda */
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-      }
-
-      body {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", sans-serif;
-        color: #ffffff;
-        background-color: #000000;
-        /* se você tiver um fundo específico de oficina, pode trocar aqui */
-        background-image: url("assets/ui/garage_bg.png");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-      }
-
-      .garage-page-root {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        backdrop-filter: blur(4px);
-        background: linear-gradient(
-          to bottom,
-          rgba(0, 0, 0, 0.6),
-          rgba(0, 0, 0, 0.9)
-        );
-      }
-
-      /* Barra superior com manager + equipe (mesmo conceito das outras telas) */
-      .top-hud {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 16px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-        background: linear-gradient(
-          to right,
-          rgba(0, 0, 0, 0.95),
-          rgba(80, 0, 0, 0.85)
-        );
-      }
-
-      .top-hud-left,
-      .top-hud-right {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .hud-logo-team {
-        width: 40px;
-        height: 40px;
-        object-fit: contain;
-        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
-      }
-
-      .hud-team-text {
-        display: flex;
-        flex-direction: column;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-      }
-
-      .hud-team-label {
-        color: #ffb3b3;
-        font-weight: 600;
-      }
-
-      .hud-team-name {
-        color: #ffffff;
-        font-weight: 700;
-      }
-
-      .hud-manager-block {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .hud-manager-avatar {
-        width: 38px;
-        height: 38px;
-        border-radius: 999px;
-        border: 2px solid rgba(255, 255, 255, 0.9);
-        object-fit: cover;
-      }
-
-      .hud-manager-info {
-        display: flex;
-        flex-direction: column;
-        font-size: 11px;
-      }
-
-      .hud-manager-name {
-        font-weight: 600;
-      }
-
-      .hud-manager-country {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .hud-manager-flag {
-        width: 18px;
-        height: 12px;
-        object-fit: cover;
-        border-radius: 2px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-      }
-
-      .hud-session-pill {
-        padding: 4px 10px;
-        border-radius: 999px;
-        background: rgba(0, 0, 0, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-      }
-
-      .hud-session-pill span {
-        color: #ff4d4d;
-        font-weight: 700;
-      }
-
-      /* Conteúdo principal da oficina */
-      .garage-main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 16px;
-        gap: 14px;
-      }
-
-      .garage-header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-
-      .garage-title-block {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .garage-title {
-        font-size: 20px;
-        text-transform: uppercase;
-        letter-spacing: 0.22em;
-        font-weight: 700;
-        text-shadow: 0 0 14px rgba(0, 0, 0, 0.9);
-      }
-
-      .garage-subtitle {
-        font-size: 12px;
-        opacity: 0.9;
-      }
-
-      .garage-actions-top {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .btn {
-        border: none;
-        cursor: pointer;
-        border-radius: 999px;
-        padding: 8px 16px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        transition: transform 0.08s ease, box-shadow 0.08s ease,
-          background 0.12s ease, color 0.12s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .btn-primary {
-        background: #e10600;
-        color: #ffffff;
-        box-shadow: 0 0 14px rgba(0, 0, 0, 0.8);
-      }
-
-      .btn-primary:hover {
-        background: #ff1b0b;
-        transform: translateY(-1px);
-        box-shadow: 0 0 18px rgba(0, 0, 0, 1);
-      }
-
-      .btn-secondary {
-        background: rgba(0, 0, 0, 0.7);
-        color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-      }
-
-      .btn-secondary:hover {
-        background: rgba(40, 40, 40, 0.9);
-      }
-
-      .btn-danger {
-        background: #b30000;
-        color: #ffffff;
-      }
-
-      .btn-danger:hover {
-        background: #e00000;
-      }
-
-      .btn-ghost {
-        background: transparent;
-        color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-      }
-
-      .btn-ghost:hover {
-        background: rgba(255, 255, 255, 0.08);
-      }
-
-      /* Grid principal: resumo + setup */
-      .garage-grid {
-        flex: 1;
-        display: grid;
-        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-        gap: 16px;
-      }
-
-      .garage-panel {
-        background: rgba(0, 0, 0, 0.78);
-        border-radius: 14px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        padding: 12px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.8);
-      }
-
-      .garage-panel-title {
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.18em;
-        color: #ffb3b3;
-        font-weight: 600;
-      }
-
-      .garage-panel-subtitle {
-        font-size: 11px;
-        opacity: 0.9;
-      }
-
-      /* Resumo do carro */
-      .car-summary-card {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .car-summary-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 12px;
-      }
-
-      .car-summary-label {
-        opacity: 0.85;
-      }
-
-      .car-summary-value {
-        font-weight: 600;
-      }
-
-      .car-summary-bar {
-        position: relative;
-        width: 100%;
-        height: 6px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        overflow: hidden;
-      }
-
-      .car-summary-bar-fill {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #00ff9d, #ffeb3b, #ff3b3b);
-      }
-
-      /* Setup sliders */
-      .setup-group {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 10px;
-      }
-
-      .setup-label-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 12px;
-      }
-
-      .setup-label-main {
-        font-weight: 600;
-      }
-
-      .setup-label-value {
-        opacity: 0.9;
-      }
-
-      .setup-slider {
-        width: 100%;
-        -webkit-appearance: none;
-        appearance: none;
-        height: 5px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.14);
-        outline: none;
-      }
-
-      .setup-slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #e10600;
-        cursor: pointer;
-        box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
-      }
-
-      .setup-slider::-moz-range-thumb {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #e10600;
-        cursor: pointer;
-      }
-
-      .setup-select-row {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-top: 4px;
-      }
-
-      .setup-select-row label {
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .setup-select-row select {
-        background: rgba(0, 0, 0, 0.8);
-        color: #ffffff;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        padding: 6px 10px;
-        font-size: 12px;
-      }
-
-      .garage-bottom-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 6px;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-
-      .garage-hint {
-        font-size: 11px;
-        opacity: 0.85;
-      }
-
-      .garage-hint strong {
-        color: #ffb3b3;
-      }
-
-      @media (max-width: 900px) {
-        .garage-grid {
-          grid-template-columns: minmax(0, 1fr);
-        }
-      }
-
-      @media (max-width: 600px) {
-        .garage-title {
-          font-size: 16px;
-          letter-spacing: 0.16em;
-        }
-        .garage-main {
-          padding: 10px;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="garage-page-root">
-      <!-- BARRA SUPERIOR -->
-      <header class="top-hud">
-        <div class="top-hud-left">
-          <img
-            id="header-team-logo"
-            class="hud-logo-team"
-            src="assets/teams/ferrari.png"
-            alt="Equipe"
-          />
-          <div class="hud-team-text">
-            <span class="hud-team-label">Equipe</span>
-            <span id="header-team-name" class="hud-team-name">
-              Scuderia Ferrari
-            </span>
-          </div>
-        </div>
-
-        <div class="top-hud-right">
-          <div class="hud-session-pill">
-            SESSÃO ATUAL: <span>OFICINA &amp; SETUP</span>
-          </div>
-
-          <div class="hud-manager-block">
-            <img
-              id="header-manager-avatar"
-              class="hud-manager-avatar"
-              src="assets/managers/manager_ethnic_01.png"
-              alt="Manager"
-            />
-            <div class="hud-manager-info">
-              <div id="header-manager-name" class="hud-manager-name">
-                Manager Player
-              </div>
-              <div class="hud-manager-country">
-                <img
-                  id="header-manager-flag"
-                  class="hud-manager-flag"
-                  src="assets/flags/br.png"
-                  alt="País"
-                />
-                <span id="header-manager-country-name">Brasil</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- CONTEÚDO PRINCIPAL -->
-      <main class="garage-main">
-        <div class="garage-header-row">
-          <div class="garage-title-block">
-            <div class="garage-title">OFICINA &amp; SETUP</div>
-            <div class="garage-subtitle">
-              Ajuste fino do carro para maximizar desempenho na prática,
-              classificação e corrida.
-            </div>
-          </div>
-
-          <div class="garage-actions-top">
-            <button id="btn-back-lobby" class="btn btn-danger">
-              Voltar ao Lobby
-            </button>
-            <button id="btn-go-practice" class="btn btn-secondary">
-              Ir para Prática
-            </button>
-            <button id="btn-go-qualy" class="btn btn-secondary">
-              Ir para Classificação
-            </button>
-            <button id="btn-go-race" class="btn btn-secondary">
-              Ir para Corrida
-            </button>
-          </div>
-        </div>
-
-        <section class="garage-grid">
-          <!-- Painel Esquerdo: Resumo do Carro -->
-          <section class="garage-panel">
-            <div class="garage-panel-title">Resumo do Carro</div>
-            <div class="garage-panel-subtitle">
-              Aqui você vê o estado geral do pacote atual com base no setup
-              salvo para esta pista.
-            </div>
-
-            <div class="car-summary-card">
-              <div class="car-summary-row">
-                <span class="car-summary-label">Equilíbrio geral</span>
-                <span id="summary-overall-value" class="car-summary-value">
-                  82 / 100
-                </span>
-              </div>
-              <div class="car-summary-bar">
-                <div
-                  id="summary-overall-bar"
-                  class="car-summary-bar-fill"
-                  style="width: 82%;"
-                ></div>
-              </div>
-            </div>
-
-            <div class="car-summary-card">
-              <div class="car-summary-row">
-                <span class="car-summary-label">Aderência em curvas</span>
-                <span id="summary-cornering-value" class="car-summary-value">
-                  80 / 100
-                </span>
-              </div>
-              <div class="car-summary-bar">
-                <div
-                  id="summary-cornering-bar"
-                  class="car-summary-bar-fill"
-                  style="width: 80%;"
-                ></div>
-              </div>
-            </div>
-
-            <div class="car-summary-card">
-              <div class="car-summary-row">
-                <span class="car-summary-label">Velocidade em reta</span>
-                <span id="summary-straight-value" class="car-summary-value">
-                  84 / 100
-                </span>
-              </div>
-              <div class="car-summary-bar">
-                <div
-                  id="summary-straight-bar"
-                  class="car-summary-bar-fill"
-                  style="width: 84%;"
-                ></div>
-              </div>
-            </div>
-
-            <div class="car-summary-card">
-              <div class="car-summary-row">
-                <span class="car-summary-label">Uso de pneus</span>
-                <span id="summary-tyre-value" class="car-summary-value">
-                  Moderado
-                </span>
-              </div>
-              <p class="garage-hint">
-                Este painel é apenas um <strong>feedback visual</strong>.
-                A lógica real de desgaste e ritmo será aplicada na corrida.
-              </p>
-            </div>
-          </section>
-
-          <!-- Painel Direito: Ajustes de Setup -->
-          <section class="garage-panel">
-            <div class="garage-panel-title">Ajustes de Setup</div>
-            <div class="garage-panel-subtitle">
-              Faça ajustes de aerodinâmica, suspensão e motor. Este setup é
-              compartilhado com a
-              <strong>Prática</strong> e será levado para a
-              <strong>Corrida</strong>.
-            </div>
-
-            <!-- Aerofólio / Asa -->
-            <div class="setup-group">
-              <div class="setup-label-row">
-                <span class="setup-label-main">Asa / Aerodinâmica</span>
-                <span
-                  id="label-wings-value"
-                  class="setup-label-value"
-                >
-                  Equilibrado (5/10)
-                </span>
-              </div>
-              <input
-                id="input-wings"
-                type="range"
-                min="1"
-                max="10"
-                step="1"
-                value="5"
-                class="setup-slider"
-              />
-            </div>
-
-            <!-- Suspensão -->
-            <div class="setup-group">
-              <div class="setup-label-row">
-                <span class="setup-label-main">Suspensão</span>
-                <span
-                  id="label-suspension-value"
-                  class="setup-label-value"
-                >
-                  Média (5/10)
-                </span>
-              </div>
-              <input
-                id="input-suspension"
-                type="range"
-                min="1"
-                max="10"
-                step="1"
-                value="5"
-                class="setup-slider"
-              />
-            </div>
-
-            <!-- Motor -->
-            <div class="setup-group">
-              <div class="setup-label-row">
-                <span class="setup-label-main">Mapa de Motor</span>
-                <span
-                  id="label-engine-value"
-                  class="setup-label-value"
-                >
-                  Balanceado (5/10)
-                </span>
-              </div>
-              <input
-                id="input-engine"
-                type="range"
-                min="1"
-                max="10"
-                step="1"
-                value="5"
-                class="setup-slider"
-              />
-            </div>
-
-            <!-- Estratégia de pneus -->
-            <div class="setup-select-row">
-              <label for="select-tyre-strategy">
-                Estratégia de Pneus (tendência inicial)
-              </label>
-              <select id="select-tyre-strategy">
-                <option value="macio_agressivo">
-                  Macio – Agressivo (mais rápido, mais desgaste)
-                </option>
-                <option value="medio_equilibrado" selected>
-                  Médio – Equilibrado (ritmo estável)
-                </option>
-                <option value="duro_economico">
-                  Duro – Econômico (poucas paradas)
-                </option>
-              </select>
-            </div>
-
-            <div class="garage-bottom-row">
-              <div class="garage-hint">
-                Dica: Experimente ajustes diferentes na
-                <strong>Prática</strong>, salve o setup aqui e depois leve
-                esse pacote para a <strong>Classificação</strong> e
-                <strong>Corrida</strong>.
-              </div>
-
-              <div class="garage-actions-top">
-                <button id="btn-reset-setup" class="btn btn-ghost">
-                  Resetar Setup
-                </button>
-                <button
-                  id="btn-save-setup"
-                  class="btn btn-primary"
-                >
-                  Salvar Setup
-                </button>
-              </div>
-            </div>
-          </section>
-        </section>
-      </main>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>F1 Manager 2025 – Oficina</title>
+<link rel="stylesheet" href="oficina.css"/>
+<script src="oficina.js" defer></script>
+</head>
+
+<body>
+
+<div class="oficina-bg"></div>
+
+<div class="oficina-container">
+
+  <!-- HEADER TOPO -->
+  <div class="oficina-header">
+    <img id="oficina-team-logo" class="team-logo" src="" alt="LOGO"/>
+
+    <div class="oficina-title">
+      <h1>OFICINA</h1>
+      <h3 id="oficina-team-name"></h3>
     </div>
 
-    <!-- Script específico da oficina -->
-    <script src="oficina.js"></script>
-  </body>
+    <button class="back-btn" id="back-lobby-btn">VOLTAR</button>
+  </div>
+
+
+  <!-- CARDS DE AJUSTES -->
+  <div class="setup-panel">
+
+    <div class="setup-card">
+      <h2>ASA DIANTEIRA</h2>
+      <input type="range" min="1" max="10" step="1" id="setup-frontwing"/>
+      <p>Atual: <span id="val-frontwing"></span></p>
+    </div>
+
+    <div class="setup-card">
+      <h2>ASA TRASEIRA</h2>
+      <input type="range" min="1" max="10" step="1" id="setup-rearwing"/>
+      <p>Atual: <span id="val-rearwing"></span></p>
+    </div>
+
+    <div class="setup-card">
+      <h2>PRESSÃO DOS PNEUS</h2>
+      <input type="range" min="18" max="24" step="0.1" id="setup-tyrepress"/>
+      <p>Atual: <span id="val-tyrepress"></span> PSI</p>
+    </div>
+
+    <div class="setup-card">
+      <h2>ALTURA DO CARRO</h2>
+      <input type="range" min="1" max="10" step="1" id="setup-rideheight"/>
+      <p>Atual: <span id="val-rideheight"></span></p>
+    </div>
+
+    <div class="setup-card">
+      <h2>RIGIDEZ DA SUSPENSÃO</h2>
+      <input type="range" min="1" max="10" step="1" id="setup-susp"/>
+      <p>Atual: <span id="val-susp"></span></p>
+    </div>
+
+  </div>
+
+
+  <!-- RESUMO E BOTÃO -->
+  <div class="oficina-summary">
+
+    <h2>Impacto estimado</h2>
+
+    <div class="summary-line">
+      Velocidade estimada: <strong><span id="sum-speed">---</span></strong>
+    </div>
+    <div class="summary-line">
+      Desgaste de pneus: <strong><span id="sum-tyre">---</span></strong>
+    </div>
+    <div class="summary-line">
+      Estabilidade em curvas: <strong><span id="sum-corner">---</span></strong>
+    </div>
+
+    <button class="save-setup-btn" id="save-setup-btn">SALVAR AJUSTES</button>
+
+  </div>
+
+</div>
+
+</body>
 </html>
