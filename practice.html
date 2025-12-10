@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Treino Livre | F1 Manager 2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- CSS principal do jogo (já existente) -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="ui.css" />
+
+  <style>
+    /* Página de treino – aproveita o conceito full screen */
+    body.page-practice {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      color: #ffffff;
+      background-color: #000000;
+      /* se quiser outro fundo depois é só trocar aqui */
+      background-image: url("assets/ui/lobby_bg.png");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .game-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at top, rgba(0,0,0,0.6), rgba(0,0,0,0.96));
+    }
+
+    /* Barra superior padrão (time + manager) */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 28px;
+      gap: 16px;
+    }
+
+    .top-left-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-voltar-pequeno {
+      border: none;
+      outline: none;
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      background: #ff1744; /* vermelho vivo */
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(0,0,0,0.7);
+    }
+
+    .btn-voltar-pequeno:hover {
+      filter: brightness(1.1);
+    }
+
+    .top-team-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: radial-gradient(circle at top, rgba(255,255,255,0.12), rgba(0,0,0,0.9));
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+      backdrop-filter: blur(16px);
+    }
+
+    .top-team-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      object-fit: contain;
+      background: #000000;
+      padding: 4px;
+    }
+
+    .top-team-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .top-team-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .top-team-tagline {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .top-manager-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: radial-gradient(circle at top, rgba(0,0,0,0.2), rgba(0,0,0,0.85));
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+      backdrop-filter: blur(16px);
+    }
+
+    .top-manager-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 2px solid rgba(76,175,80,0.9);
+    }
+
+    .top-manager-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .top-manager-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .top-manager-country {
+      font-size: 11px;
+      opacity: 0.7;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .top-manager-flag {
+      width: 16px;
+      height: 11px;
+      border-radius: 2px;
+      object-fit: cover;
+    }
+
+    /* Conteúdo principal */
+    .practice-main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 2.1fr) minmax(420px, 1.3fr);
+      gap: 20px;
+      padding: 0 28px 24px 28px;
+    }
+
+    @media (max-width: 1024px) {
+      .practice-main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Lado esquerdo – pista */
+    .practice-track-card {
+      background: radial-gradient(circle at top, rgba(0,0,0,0.6), rgba(0,0,0,0.96));
+      border-radius: 32px;
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 24px 70px rgba(0,0,0,0.85);
+      padding: 18px 18px 22px 18px;
+      display: flex;
+      flex-direction: column;
+      min-height: 420px;
+    }
+
+    .practice-header-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .practice-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .practice-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .practice-subtitle {
+      font-size: 12px;
+      opacity: 0.75;
+    }
+
+    .practice-chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(0,0,0,0.7);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .chip-label {
+      opacity: 0.65;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .chip-value {
+      font-weight: 600;
+    }
+
+    .practice-track-container {
+      flex: 1;
+      margin-top: 10px;
+      border-radius: 26px;
+      background: #000000;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #practice-track-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Lado direito – setup, stint e tabela */
+    .practice-side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel-card {
+      background: radial-gradient(circle at top, rgba(0,0,0,0.7), rgba(0,0,0,0.98));
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 16px 50px rgba(0,0,0,0.85);
+      padding: 16px 18px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 650;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .panel-subtitle {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      font-size: 11px;
+    }
+
+    .setup-item-label {
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 10px;
+    }
+
+    .setup-item-value {
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .panel-actions-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-ghost {
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 8px 14px;
+      background: transparent;
+      color: #ffffff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .btn-accent {
+      border-radius: 999px;
+      border: none;
+      padding: 9px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #ffffff;
+      background: linear-gradient(135deg, #ff1744, #ff9100);
+      box-shadow: 0 0 18px rgba(255,23,68,0.5);
+    }
+
+    .btn-accent:hover {
+      filter: brightness(1.05);
+    }
+
+    .stint-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    .stint-label {
+      opacity: 0.65;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 10px;
+    }
+
+    .stint-value {
+      font-weight: 600;
+      margin-top: 1px;
+    }
+
+    .practice-table-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      opacity: 0.7;
+      margin-bottom: 6px;
+    }
+
+    .practice-table-body {
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .practice-row {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 6px;
+      align-items: center;
+      font-size: 11px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .practice-row-pos {
+      opacity: 0.7;
+      text-align: right;
+      padding-right: 4px;
+    }
+
+    .practice-row-main {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .practice-row-face {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .practice-row-name-team {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .practice-row-name {
+      font-weight: 600;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .practice-row-team {
+      opacity: 0.6;
+      font-size: 10px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .practice-row-times {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .practice-row-time-label {
+      opacity: 0.6;
+      font-size: 10px;
+    }
+
+    .practice-row-time-value {
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    /* Barra inferior – controles globais do treino */
+    .practice-footer {
+      padding: 0 28px 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 12px;
+    }
+
+    .footer-left-info {
+      opacity: 0.7;
+    }
+
+    .speed-buttons {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .speed-buttons button {
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.35);
+      padding: 6px 13px;
+      font-size: 12px;
+      background: rgba(0,0,0,0.8);
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .speed-buttons button.active {
+      background: #ff1744;
+      border-color: #ff9100;
+      box-shadow: 0 0 14px rgba(255,23,68,0.6);
+    }
+
+    .footer-right-actions {
+      display: inline-flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+
+<body class="page-practice">
+  <div class="game-shell">
+
+    <!-- BARRA SUPERIOR: voltar + equipe + manager -->
+    <header class="top-bar">
+      <div class="top-left-group">
+        <button class="btn-voltar-pequeno" id="btn-back-to-calendar">
+          Voltar ao calendário
+        </button>
+
+        <div class="top-team-pill">
+          <img
+            id="header-team-logo"
+            class="top-team-logo"
+            src="assets/teams/ferrari.png"
+            alt="Equipe"
+          />
+          <div class="top-team-text">
+            <span id="header-team-name" class="top-team-name">Scuderia Ferrari</span>
+            <span class="top-team-tagline">Temporada oficial F1 2025</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-manager-pill">
+        <img
+          id="header-manager-avatar"
+          class="top-manager-avatar"
+          src="assets/managers/manager_ethnic_01.png"
+          alt="Manager"
+        />
+        <div class="top-manager-text">
+          <span id="header-manager-name" class="top-manager-name">Manager Player</span>
+          <span class="top-manager-country">
+            <img
+              id="header-manager-flag"
+              class="top-manager-flag"
+              src="assets/flags/br.png"
+              alt="País"
+            />
+            <span id="header-manager-country-name">Brasil</span>
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="practice-main">
+      <!-- LADO ESQUERDO: PISTA / SIMULAÇÃO -->
+      <section class="practice-track-card">
+        <div class="practice-header-row">
+          <div class="practice-title-block">
+            <div class="practice-title">Treino livre</div>
+            <div class="practice-subtitle">
+              <span id="practice-session-label">Sessão 1</span>
+              ·
+              <span id="practice-gp-name">GP da Austrália 2025</span>
+            </div>
+          </div>
+
+          <div class="practice-chips-row">
+            <div class="chip">
+              <span class="chip-label">Clima</span>
+              <span class="chip-value" id="chip-weather">Seco</span>
+            </div>
+            <div class="chip">
+              <span class="chip-label">Pneu</span>
+              <span class="chip-value" id="chip-tyre">C3 – Médio</span>
+            </div>
+            <div class="chip">
+              <span class="chip-label">Tempo restante</span>
+              <span class="chip-value" id="chip-time-remaining">59:42</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AQUI O SVG DA PISTA SERÁ DESENHADO PELO JS (sem alterar o que já existe) -->
+        <div class="practice-track-container" id="practice-track-container">
+          <!-- JS deve criar um <svg id="practice-track-svg"> aqui dentro, como em qualy/corrida -->
+        </div>
+      </section>
+
+      <!-- LADO DIREITO: SETUP + STINT + CLASSIFICAÇÃO -->
+      <section class="practice-side-panel">
+        <!-- BLOCO SETUP / ACESSO OFICINA -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Ajuste atual do carro</div>
+              <div class="panel-subtitle">
+                Configurações trazidas da Oficina & Setup. Tudo que for salvo aqui
+                será levado para a corrida.
+              </div>
+            </div>
+          </div>
+
+          <div class="setup-grid">
+            <div>
+              <div class="setup-item-label">Asas & downforce</div>
+              <div class="setup-item-value" id="setup-wings">Equilíbrio padrão</div>
+            </div>
+            <div>
+              <div class="setup-item-label">Suspensão & altura</div>
+              <div class="setup-item-value" id="setup-suspension">Neutra</div>
+            </div>
+            <div>
+              <div class="setup-item-label">Motor & ERS</div>
+              <div class="setup-item-value" id="setup-engine">Potência normal</div>
+            </div>
+            <div>
+              <div class="setup-item-label">Estratégia de pneus</div>
+              <div class="setup-item-value" id="setup-tyre-strategy">
+                Stint de simulação
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-actions-row">
+            <!-- JS pode abrir oficina.html com os mesmos params de URL -->
+            <button class="btn-ghost" id="btn-open-garage">
+              Ir para Oficina & Setup
+            </button>
+            <!-- JS vai salvar no localStorage / state global -->
+            <button class="btn-accent" id="btn-save-practice-setup">
+              Salvar ajuste desta sessão
+            </button>
+          </div>
+        </div>
+
+        <!-- BLOCO STINT ATUAL -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Stint atual</div>
+              <div class="panel-subtitle">
+                Status em tempo real do seu piloto selecionado.
+              </div>
+            </div>
+          </div>
+
+          <div class="stint-grid">
+            <div>
+              <div class="stint-label">Piloto monitorado</div>
+              <div class="stint-value" id="stint-driver-name">Piloto 1</div>
+            </div>
+            <div>
+              <div class="stint-label">Voltas completadas</div>
+              <div class="stint-value" id="stint-laps">0</div>
+            </div>
+            <div>
+              <div class="stint-label">Melhor volta</div>
+              <div class="stint-value" id="stint-best-lap">--:--.---</div>
+            </div>
+            <div>
+              <div class="stint-label">Última volta</div>
+              <div class="stint-value" id="stint-last-lap">--:--.---</div>
+            </div>
+            <div>
+              <div class="stint-label">Desgaste de pneus</div>
+              <div class="stint-value" id="stint-tyre-wear">0%</div>
+            </div>
+            <div>
+              <div class="stint-label">Temperatura / risco</div>
+              <div class="stint-value" id="stint-temp-risk">Normal</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOCO CLASSIFICAÇÃO EM TEMPO REAL -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Classificação em tempo real</div>
+              <div class="panel-subtitle">
+                Ordem baseada no melhor tempo de cada piloto nesta sessão.
+              </div>
+            </div>
+          </div>
+
+          <div class="practice-table-header">
+            <span>Posição / Piloto</span>
+            <span>Tempos</span>
+          </div>
+
+          <div class="practice-table-body" id="practice-table-body">
+            <!-- JS da simulação de treino popula as linhas aqui -->
+            <!-- Exemplo de linha (apenas placeholder visual): -->
+            <!--
+            <div class="practice-row">
+              <div class="practice-row-pos">1º</div>
+              <div class="practice-row-main">
+                <img class="practice-row-face" src="assets/faces/VER.png" alt="" />
+                <div class="practice-row-name-team">
+                  <span class="practice-row-name">Max Verstappen</span>
+                  <span class="practice-row-team">Red Bull Racing</span>
+                </div>
+              </div>
+              <div class="practice-row-times">
+                <div>
+                  <span class="practice-row-time-label">Melhor</span>
+                  <span class="practice-row-time-value">1:19.345</span>
+                </div>
+                <div>
+                  <span class="practice-row-time-label">Última</span>
+                  <span class="practice-row-time-value">1:20.002</span>
+                </div>
+              </div>
+            </div>
+            -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- RODAPÉ DE CONTROLES GERAIS DO TREINO -->
+    <footer class="practice-footer">
+      <div class="footer-left-info">
+        Sessão de treino experimental. Os ajustes salvos aqui serão
+        carregados para a próxima qualificação e corrida.
+      </div>
+
+      <div class="speed-buttons" id="practice-speed-buttons">
+        <span>Velocidade:</span>
+        <button data-speed="1">1x</button>
+        <button data-speed="2">2x</button>
+        <button data-speed="4">4x</button>
+      </div>
+
+      <div class="footer-right-actions">
+        <button class="btn-ghost" id="btn-end-practice">
+          Encerrar treino e revisar setup
+        </button>
+        <button class="btn-accent" id="btn-go-to-qualy">
+          Ir para classificação (Q1)
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- JS geral do jogo (se houver) + JS específico de treino -->
+  <script src="shared_state.js"></script>
+  <script src="practice.js"></script>
+</body>
+</html>
