@@ -13,12 +13,13 @@
       <header class="topbar" style="margin-bottom: 20px">
         <div class="topbar-left">
           <div class="topbar-logo">
-            <img src="assets/ui/1/1.png" alt="Vale Games" />
+            <img src="assets/ui/capa_bg.png" alt="Vale Games" />
           </div>
           <div class="topbar-title">
             <div class="topbar-title-main">Escolha seu Manager</div>
             <div class="topbar-title-sub">
-              Use um chefe de equipe real ou crie o seu próprio avatar.
+              Use um chefe de equipe real ou crie o seu próprio avatar com
+              bandeira e equipe.
             </div>
           </div>
         </div>
@@ -45,19 +46,21 @@
             </button>
           </div>
 
-          <!-- GRID vai ser preenchido via JS -->
           <div id="manager-real-grid" class="manager-grid"></div>
-
-          <div id="manager-custom-grid" class="manager-grid" style="display: none">
-            <!-- avatares entram via JS -->
-          </div>
+          <div id="manager-custom-grid" class="manager-grid" style="display: none"></div>
         </section>
 
-        <!-- SIDEBAR: RESUMO / TIME / BANDEIRA -->
         <aside class="manager-sidebar-card">
           <h2>Resumo do Manager</h2>
 
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 14px;
+            "
+          >
             <div class="manager-avatar" style="width: 52px; height: 52px">
               <img
                 id="summary-avatar"
@@ -116,9 +119,8 @@
           </div>
 
           <p style="margin-top: 14px; font-size: 0.75rem; opacity: 0.8">
-            Essas informações serão usadas em todo o jogo, incluindo o destaque
-            na corrida, telas de briefing e relatórios de temporada. Você poderá
-            alterar depois, se quiser.
+            As escolhas de avatar, bandeira e escuderia serão usadas em todo o
+            jogo e ficam salvas no navegador.
           </p>
         </aside>
       </main>
