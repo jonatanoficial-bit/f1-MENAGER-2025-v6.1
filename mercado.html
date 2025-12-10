@@ -1,1 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>F1 Manager 2025 – Mercado de Pilotos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="ui-screens.css" />
+  </head>
+  <body class="screen screen--mercado">
+    <div class="screen-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-logo">
+            <img id="topbar-team-logo" src="assets/logos/mercedes.png" alt="Equipe" />
+          </div>
+          <div class="topbar-title">
+            <div class="topbar-title-main">Mercado de Pilotos</div>
+            <div class="topbar-title-sub">
+              Contratos, janelas de transferência e oportunidades futuras.
+            </div>
+          </div>
+        </div>
+
+        <div class="manager-card" id="topbar-manager-card">
+          <div class="manager-avatar">
+            <img
+              id="topbar-manager-avatar"
+              src="assets/managers/manager_ethnic_01.png"
+              alt="Manager"
+            />
+          </div>
+          <div class="manager-info">
+            <span class="manager-name" id="topbar-manager-name">Manager</span>
+            <div class="manager-meta">
+              <span id="topbar-manager-country">País</span>
+              <span class="manager-flag" id="topbar-manager-flag-wrapper"></span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section style="margin-bottom: 24px">
+          <h1 style="margin: 0 0 8px; font-size: 1.6rem">
+            Visão geral do grid e contratos
+          </h1>
+          <p style="margin: 0; max-width: 640px; opacity: 0.8; font-size: 0.9rem">
+            No jogo completo, esta tela mostrará duração de contratos, cláusulas
+            de saída, pilotos interessados em trocar de equipe e talentos da F2
+            e F3. Aqui focamos em um layout limpo e profissional para
+            demonstração.
+          </p>
+        </section>
+
+        <section class="grid">
+          <article class="action-card">
+            <div class="action-card-badge">Atual</div>
+            <h2 class="action-card-title">Pilotos da equipe</h2>
+            <p class="action-card-sub">
+              Situação contratual dos dois pilotos atuais, com duração,
+              cláusulas e objetivos mínimos de desempenho.
+            </p>
+            <div class="action-card-footer">
+              <span>Contrato: <strong>até final de 2025</strong></span>
+              <button class="btn btn-ghost" type="button">Ver detalhes (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Grid</div>
+            <h2 class="action-card-title">Pilotos de outras equipes</h2>
+            <p class="action-card-sub">
+              Observe quem está em fim de contrato, qual o nível de interesse
+              em sua equipe e o custo de rescisão.
+            </p>
+            <div class="action-card-footer">
+              <span>Oportunidades: <strong>3 em observação</strong></span>
+              <button class="btn btn-ghost" type="button">Explorar (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Base</div>
+            <h2 class="action-card-title">Jovens talentos</h2>
+            <p class="action-card-sub">
+              Pilotos da academia, F2 e F3 com potencial de crescimento. Contratos
+              mais baratos, porém com risco maior.
+            </p>
+            <div class="action-card-footer">
+              <span>Talentos monitorados: <strong>5</strong></span>
+              <button class="btn btn-ghost" type="button">Scouting (em breve)</button>
+            </div>
+          </article>
+
+          <article class="action-card">
+            <div class="action-card-badge">Resumo</div>
+            <h2 class="action-card-title">Planejamento de longo prazo</h2>
+            <p class="action-card-sub">
+              Linha do tempo dos pilotos: quem fica, quem entra e qual é o plano
+              de sucessão da equipe até 2028.
+            </p>
+            <div class="action-card-footer">
+              <span>Estratégia: <strong>rendimento + marketing</strong></span>
+              <button class="btn btn-ghost" type="button">Ver plano (em breve)</button>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <footer class="screen-footer">
+        <button class="btn btn-secondary" type="button" onclick="window.location.href='lobby.html'">
+          Voltar ao Lobby
+        </button>
+        <span style="opacity: 0.7; font-size: 0.78rem">
+          Protótipo visual – lógica de contratos será integrada depois.
+        </span>
+      </footer>
+    </div>
+
+    <script src="manager_bar_loader.js"></script>
+  </body>
+</html>
 
