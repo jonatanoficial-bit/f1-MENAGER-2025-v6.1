@@ -1,332 +1,91 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Treino Livre – F1 Manager 2025</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treino Livre - F1 Manager 2025</title>
 
-    <!-- CSS do treino -->
-    <link rel="stylesheet" href="practice.css" />
+    <link rel="stylesheet" href="practice.css">
+</head>
 
-    <!-- Ajuste para o container do SVG ocupar bem a área -->
-    <style>
-      .track-wrapper {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        position: relative;
-      }
+<body>
 
-      #track-container {
-        width: 100%;
-        height: 100%;
-      }
+    <!-- BOTÃO DE VOLTAR -->
+    <button id="btnVoltar" onclick="window.location.href='lobby.html'">← VOLTAR</button>
 
-      #track-svg {
-        width: 100%;
-        height: 100%;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="practice-layout">
-      <!-- CABEÇALHO SUPERIOR DO TREINO -->
-      <header class="practice-header">
-        <div class="practice-header-left">
-          <div class="brand-block">
-            <div class="brand-logo">F1</div>
-            <div class="brand-text">
-              <span class="brand-title">F1 MANAGER 2025</span>
-              <span class="brand-subtitle">Treino Livre Oficial</span>
-            </div>
-          </div>
-
-          <div class="session-info">
-            <span class="session-badge" id="practice-session-label">
-              FP1
-            </span>
-            <span class="session-gp" id="practice-gp-title">
-              GP 2025
-            </span>
-          </div>
+    <!-- CABEÇALHO -->
+    <header id="top-bar">
+        <div class="info">
+            F1 MANAGER 2025 Treino Livre Oficial
         </div>
-
-        <div class="practice-header-right">
-          <div class="header-pill">
-            <span class="pill-label">Pista</span>
-            <span class="pill-value" id="practice-track-name">---</span>
-          </div>
-          <div class="header-pill">
-            <span class="pill-label">Duração</span>
-            <span class="pill-value" id="practice-time-remaining">
-              60:00
-            </span>
-          </div>
-          <div class="header-pill">
-            <span class="pill-label">Condição</span>
-            <span class="pill-value" id="practice-conditions">
-              Seco · 26°C
-            </span>
-          </div>
+        <div class="info">
+            Pista — <span id="trackName">Carregando...</span>
         </div>
-      </header>
+        <div class="info">
+            Duração 60:00 • Condição Seca • 26°C
+        </div>
+    </header>
 
-      <!-- ÁREA PRINCIPAL (ESQUERDA: PISTA / DIREITA: HUD) -->
-      <main class="practice-main">
-        <!-- ESQUERDA – PISTA SVG -->
-        <section class="practice-left">
-          <div class="track-wrapper">
-            <div id="track-container"></div>
+    <!-- ÁREA PRINCIPAL -->
+    <main id="container">
 
-            <!-- Overlay opcional com status -->
-            <div class="track-overlay">
-              <div class="track-status">
-                <span id="practice-status-label">Treino em andamento</span>
-              </div>
+        <!-- 🏁 CONTÊINER DA PISTA (AQUI VAI O SVG DINÂMICO) -->
+        <section id="track-area">
+            <div id="track-container">
+                <!-- O SVG será carregado dinamicamente pelo practice.js -->
             </div>
-          </div>
         </section>
 
-        <!-- DIREITA – PAINEL DO MANAGER -->
-        <section class="practice-right">
-          <!-- BLOCO: INFORMAÇÕES GERAIS DO STINT -->
-          <div class="practice-panel">
-            <div class="panel-header">
-              <h2 class="panel-title">Resumo da sessão</h2>
+        <!-- 📊 PAINEL DE INFORMAÇÕES -->
+        <aside id="sidebar">
+
+            <h2>Resumo da sessão</h2>
+            <div id="sessionSummary">
+                Melhor volta geral: --:--:---
+                <br>Volta atual líder: 0
+                <br>Clima: Limpo
+                <br>Grip da pista: Médio
             </div>
 
-            <div class="panel-body summary-grid">
-              <div class="summary-item">
-                <span class="summary-label">Melhor volta geral</span>
-                <span
-                  class="summary-value"
-                  id="practice-best-overall-lap"
-                >
-                  --:--.---
-                </span>
-              </div>
-              <div class="summary-item">
-                <span class="summary-label">Volta atual líder</span>
-                <span
-                  class="summary-value"
-                  id="practice-leader-lap"
-                >
-                  0
-                </span>
-              </div>
-              <div class="summary-item">
-                <span class="summary-label">Clima</span>
-                <span class="summary-value" id="practice-weather">
-                  Limpo
-                </span>
-              </div>
-              <div class="summary-item">
-                <span class="summary-label">Grip da pista</span>
-                <span class="summary-value" id="practice-grip">
-                  Médio
-                </span>
-              </div>
-            </div>
-          </div>
+            <h2>Pilotos na pista</h2>
+            <div id="driversOnTrack"></div>
 
-          <!-- BLOCO: LISTA DE TODOS OS PILOTOS -->
-          <div class="practice-panel">
-            <div class="panel-header">
-              <h2 class="panel-title">Pilotos na pista</h2>
+            <h2>Pilotos da sua equipe</h2>
+
+            <div class="pilotCard">
+                <img id="p1face" class="pilotFace">
+                <div class="pilotInfo" id="p1info"></div>
+
+                <button onclick="pitStop(1)">PIT STOP</button>
+                <button onclick="setMode(1,'eco')">ECONOMIZAR</button>
+                <button onclick="setMode(1,'attack')">ATAQUE</button>
             </div>
 
-            <div id="drivers-list" class="drivers-list">
-              <!-- Preenchido via practice.js -->
-            </div>
-          </div>
+            <div class="pilotCard">
+                <img id="p2face" class="pilotFace">
+                <div class="pilotInfo" id="p2info"></div>
 
-          <!-- BLOCO: CONTROLE DOS DOIS PILOTOS DO USUÁRIO -->
-          <div class="practice-panel">
-            <div class="panel-header">
-              <h2 class="panel-title">Pilotos da sua equipe</h2>
+                <button onclick="pitStop(2)">PIT STOP</button>
+                <button onclick="setMode(2,'eco')">ECONOMIZAR</button>
+                <button onclick="setMode(2,'attack')">ATAQUE</button>
             </div>
 
-            <div class="panel-body">
-              <div class="practice-user-row">
-                <!-- PILOTO 1 -->
-                <article
-                  class="practice-user-card"
-                  data-user-driver-index="0"
-                >
-                  <div class="user-main">
-                    <img
-                      class="user-face"
-                      data-user-face="0"
-                      src="assets/faces/GEN.png"
-                      alt="Piloto 1"
-                    />
-                    <div class="user-text">
-                      <div
-                        class="user-name"
-                        data-user-name="0"
-                      >
-                        Piloto 1
-                      </div>
-                      <div
-                        class="user-team"
-                        data-user-team="0"
-                      >
-                        Equipe
-                      </div>
-                      <div class="user-status-line">
-                        Carro:
-                        <span data-user-car-health="0">100%</span>
-                      </div>
-                      <div class="user-status-line">
-                        Pneus:
-                        <span data-user-tyre-wear="0">0%</span>
-                      </div>
-                    </div>
-                    <div class="user-logo-wrapper">
-                      <img
-                        class="user-logo"
-                        data-user-logo="0"
-                        src="assets/logos/default.png"
-                        alt="Logo equipe"
-                      />
-                    </div>
-                  </div>
-
-                  <div class="user-actions">
-                    <button
-                      class="btn-action pit"
-                      data-user-action="pit"
-                      data-user-driver="0"
-                    >
-                      PIT STOP
-                    </button>
-                    <button
-                      class="btn-action mode"
-                      data-user-action="save"
-                      data-user-driver="0"
-                    >
-                      ECONOMIZAR
-                    </button>
-                    <button
-                      class="btn-action mode"
-                      data-user-action="push"
-                      data-user-driver="0"
-                    >
-                      ATAQUE
-                    </button>
-                  </div>
-                </article>
-
-                <!-- PILOTO 2 -->
-                <article
-                  class="practice-user-card"
-                  data-user-driver-index="1"
-                >
-                  <div class="user-main">
-                    <img
-                      class="user-face"
-                      data-user-face="1"
-                      src="assets/faces/GEN.png"
-                      alt="Piloto 2"
-                    />
-                    <div class="user-text">
-                      <div
-                        class="user-name"
-                        data-user-name="1"
-                      >
-                        Piloto 2
-                      </div>
-                      <div
-                        class="user-team"
-                        data-user-team="1"
-                      >
-                        Equipe
-                      </div>
-                      <div class="user-status-line">
-                        Carro:
-                        <span data-user-car-health="1">100%</span>
-                      </div>
-                      <div class="user-status-line">
-                        Pneus:
-                        <span data-user-tyre-wear="1">0%</span>
-                      </div>
-                    </div>
-                    <div class="user-logo-wrapper">
-                      <img
-                        class="user-logo"
-                        data-user-logo="1"
-                        src="assets/logos/default.png"
-                        alt="Logo equipe"
-                      />
-                    </div>
-                  </div>
-
-                  <div class="user-actions">
-                    <button
-                      class="btn-action pit"
-                      data-user-action="pit"
-                      data-user-driver="1"
-                    >
-                      PIT STOP
-                    </button>
-                    <button
-                      class="btn-action mode"
-                      data-user-action="save"
-                      data-user-driver="1"
-                    >
-                      ECONOMIZAR
-                    </button>
-                    <button
-                      class="btn-action mode"
-                      data-user-action="push"
-                      data-user-driver="1"
-                    >
-                      ATAQUE
-                    </button>
-                  </div>
-                </article>
-              </div>
-            </div>
-          </div>
-
-          <!-- CONTROLES DE VELOCIDADE E NAVEGAÇÃO -->
-          <div class="practice-controls-row">
-            <div class="speed-controls">
-              <span class="speed-label">Velocidade:</span>
-              <button
-                class="speed-btn active"
-                data-speed="1"
-              >
-                1x
-              </button>
-              <button
-                class="speed-btn"
-                data-speed="2"
-              >
-                2x
-              </button>
-              <button
-                class="speed-btn"
-                data-speed="4"
-              >
-                4x
-              </button>
+            <h2>Velocidade:</h2>
+            <div id="speedControls">
+                <button onclick="setSpeed(1)">1x</button>
+                <button onclick="setSpeed(2)">2x</button>
+                <button onclick="setSpeed(4)">4x</button>
             </div>
 
-            <div class="bottom-actions">
-              <button class="nav-btn" data-go-garage>
+            <button id="btnOficina" onclick="window.location.href='oficina.html'">
                 IR PARA OFICINA
-              </button>
-              <button class="nav-btn ghost" data-back-lobby>
-                VOLTAR AO LOBBY
-              </button>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
+            </button>
+
+        </aside>
+
+    </main>
 
     <script src="practice.js"></script>
-  </body>
+
+</body>
 </html>
