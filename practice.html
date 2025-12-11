@@ -8,11 +8,9 @@
 </head>
 
 <body>
-  <!-- Overlay opcional (CSS já prevê) -->
   <div class="practice-overlay" aria-hidden="true"></div>
 
   <div class="practice-root">
-    <!-- HEADER (precisa manter id="top-bar" para o logo injetado pelo practice.js) -->
     <header id="top-bar" class="practice-header">
       <div class="practice-header-left">
         <div class="practice-header-info">
@@ -31,20 +29,17 @@
     </header>
 
     <main class="practice-main">
-      <!-- PISTA (SVG) -->
       <section class="practice-left">
         <div class="practice-left-title">
           <h2>Mapa da Pista</h2>
           <div class="practice-left-sub">SVG • pathPoints • 60fps</div>
         </div>
 
-        <!-- IMPORTANTE: manter id="track-container" -->
         <div id="track-container" aria-label="Pista (SVG)">
           <!-- SVG será injetado pelo practice.js -->
         </div>
       </section>
 
-      <!-- HUD / LATERAL -->
       <aside class="practice-right">
         <section class="practice-hud-panel">
           <div class="practice-hud-header">
@@ -53,7 +48,7 @@
               <div class="practice-track-label">Treino Livre</div>
             </div>
             <div class="practice-hud-right">
-              <div class="practice-session-label">Live</div>
+              <div class="practice-session-label">LIVE</div>
               <div class="practice-time-remaining">60:00</div>
             </div>
           </div>
@@ -62,16 +57,12 @@
             Melhor volta geral: <span id="bestLapOverall">--:--.---</span>
           </div>
 
-          <div class="practice-drivers-list" id="driversOnTrack">
-            <!-- Lista será renderizada pelo practice.js -->
-          </div>
+          <div class="practice-drivers-list" id="driversOnTrack"></div>
 
-          <!-- PAINEL DOS 2 PILOTOS (obrigatório: foto + status + pneus) -->
           <div class="practice-user-panel">
             <div class="practice-user-panel-title">Pilotos da sua equipe</div>
 
             <div class="practice-user-row">
-              <!-- Driver 1 -->
               <div class="practice-user-card">
                 <div class="practice-user-main">
                   <img id="p1face" class="practice-user-face" alt="Piloto 1" />
@@ -89,7 +80,6 @@
                 </div>
               </div>
 
-              <!-- Driver 2 -->
               <div class="practice-user-card">
                 <div class="practice-user-main">
                   <img id="p2face" class="practice-user-face" alt="Piloto 2" />
@@ -108,7 +98,6 @@
               </div>
             </div>
 
-            <!-- CONTROLES INFERIORES -->
             <div class="practice-controls-row">
               <div class="practice-controls-left">
                 <div class="practice-controls-label">Velocidade</div>
@@ -118,11 +107,13 @@
               </div>
 
               <div class="practice-controls-right">
-                <button class="btn-small-primary" onclick="window.location.href='oficina.html'">IR PARA OFICINA</button>
+                <button class="btn-small-primary" onclick="goOficina()">IR PARA OFICINA</button>
+                <button class="btn-small-primary" onclick="goQualifying()">AVANÇAR PARA CLASSIFICAÇÃO</button>
                 <button class="btn-small-ghost" onclick="window.location.href='lobby.html'">VOLTAR AO LOBBY</button>
               </div>
             </div>
           </div>
+
         </section>
       </aside>
     </main>
