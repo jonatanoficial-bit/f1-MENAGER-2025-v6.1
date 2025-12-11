@@ -549,4 +549,3 @@ function setMode(index, mode) {
   if (!drv || drv.inPit) return;
   drv.mode = mode;
 }
-```0
