@@ -1,91 +1,133 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Treino Livre - F1 Manager 2025</title>
-
-    <link rel="stylesheet" href="practice.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Treino Livre - F1 Manager 2025</title>
+  <link rel="stylesheet" href="practice.css" />
 </head>
 
 <body>
+  <!-- Overlay opcional (CSS já prevê) -->
+  <div class="practice-overlay" aria-hidden="true"></div>
 
-    <!-- BOTÃO DE VOLTAR -->
-    <button id="btnVoltar" onclick="window.location.href='lobby.html'">← VOLTAR</button>
-
-    <!-- CABEÇALHO -->
-    <header id="top-bar">
-        <div class="info">
-            F1 MANAGER 2025 Treino Livre Oficial
-        </div>
-        <div class="info">
+  <div class="practice-root">
+    <!-- HEADER (precisa manter id="top-bar" para o logo injetado pelo practice.js) -->
+    <header id="top-bar" class="practice-header">
+      <div class="practice-header-left">
+        <div class="practice-header-info">
+          <div class="practice-header-manager">F1 MANAGER 2025 — Treino Livre Oficial</div>
+          <div class="practice-header-team">
             Pista — <span id="trackName">Carregando...</span>
+          </div>
         </div>
-        <div class="info">
-            Duração 60:00 • Condição Seca • 26°C
+      </div>
+
+      <div class="practice-header-right">
+        <div class="practice-header-flag">
+          <span>Duração 60:00 • Condição Seca • 26°C</span>
         </div>
+      </div>
     </header>
 
-    <!-- ÁREA PRINCIPAL -->
-    <main id="container">
+    <main class="practice-main">
+      <!-- PISTA (SVG) -->
+      <section class="practice-left">
+        <div class="practice-left-title">
+          <h2>Mapa da Pista</h2>
+          <div class="practice-left-sub">SVG • pathPoints • 60fps</div>
+        </div>
 
-        <!-- 🏁 CONTÊINER DA PISTA (AQUI VAI O SVG DINÂMICO) -->
-        <section id="track-area">
-            <div id="track-container">
-                <!-- O SVG será carregado dinamicamente pelo practice.js -->
+        <!-- IMPORTANTE: manter id="track-container" -->
+        <div id="track-container" aria-label="Pista (SVG)">
+          <!-- SVG será injetado pelo practice.js -->
+        </div>
+      </section>
+
+      <!-- HUD / LATERAL -->
+      <aside class="practice-right">
+        <section class="practice-hud-panel">
+          <div class="practice-hud-header">
+            <div class="practice-hud-left">
+              <div class="practice-gp-title">Sessão</div>
+              <div class="practice-track-label">Treino Livre</div>
             </div>
+            <div class="practice-hud-right">
+              <div class="practice-session-label">Live</div>
+              <div class="practice-time-remaining">60:00</div>
+            </div>
+          </div>
+
+          <div class="practice-lap-info">
+            Melhor volta geral: <span id="bestLapOverall">--:--.---</span>
+          </div>
+
+          <div class="practice-drivers-list" id="driversOnTrack">
+            <!-- Lista será renderizada pelo practice.js -->
+          </div>
+
+          <!-- PAINEL DOS 2 PILOTOS (obrigatório: foto + status + pneus) -->
+          <div class="practice-user-panel">
+            <div class="practice-user-panel-title">Pilotos da sua equipe</div>
+
+            <div class="practice-user-row">
+              <!-- Driver 1 -->
+              <div class="practice-user-card">
+                <div class="practice-user-main">
+                  <img id="p1face" class="practice-user-face" alt="Piloto 1" />
+                  <div class="practice-user-info">
+                    <div class="practice-user-name" id="p1name">Piloto 1</div>
+                    <div class="practice-user-team" id="p1team">Equipe</div>
+                    <div class="practice-user-status-line" id="p1info"></div>
+                  </div>
+                </div>
+
+                <div class="practice-user-actions">
+                  <button class="practice-btn" data-action="pit" onclick="pitStop(1)">PIT STOP</button>
+                  <button class="practice-btn" data-action="save" onclick="setMode(1,'eco')">ECONOMIZAR</button>
+                  <button class="practice-btn" data-action="push" onclick="setMode(1,'attack')">ATAQUE</button>
+                </div>
+              </div>
+
+              <!-- Driver 2 -->
+              <div class="practice-user-card">
+                <div class="practice-user-main">
+                  <img id="p2face" class="practice-user-face" alt="Piloto 2" />
+                  <div class="practice-user-info">
+                    <div class="practice-user-name" id="p2name">Piloto 2</div>
+                    <div class="practice-user-team" id="p2team">Equipe</div>
+                    <div class="practice-user-status-line" id="p2info"></div>
+                  </div>
+                </div>
+
+                <div class="practice-user-actions">
+                  <button class="practice-btn" data-action="pit" onclick="pitStop(2)">PIT STOP</button>
+                  <button class="practice-btn" data-action="save" onclick="setMode(2,'eco')">ECONOMIZAR</button>
+                  <button class="practice-btn" data-action="push" onclick="setMode(2,'attack')">ATAQUE</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONTROLES INFERIORES -->
+            <div class="practice-controls-row">
+              <div class="practice-controls-left">
+                <div class="practice-controls-label">Velocidade</div>
+                <button class="practice-speed-btn" onclick="setSpeed(1)">1x</button>
+                <button class="practice-speed-btn" onclick="setSpeed(2)">2x</button>
+                <button class="practice-speed-btn" onclick="setSpeed(4)">4x</button>
+              </div>
+
+              <div class="practice-controls-right">
+                <button class="btn-small-primary" onclick="window.location.href='oficina.html'">IR PARA OFICINA</button>
+                <button class="btn-small-ghost" onclick="window.location.href='lobby.html'">VOLTAR AO LOBBY</button>
+              </div>
+            </div>
+          </div>
         </section>
-
-        <!-- 📊 PAINEL DE INFORMAÇÕES -->
-        <aside id="sidebar">
-
-            <h2>Resumo da sessão</h2>
-            <div id="sessionSummary">
-                Melhor volta geral: --:--:---
-                <br>Volta atual líder: 0
-                <br>Clima: Limpo
-                <br>Grip da pista: Médio
-            </div>
-
-            <h2>Pilotos na pista</h2>
-            <div id="driversOnTrack"></div>
-
-            <h2>Pilotos da sua equipe</h2>
-
-            <div class="pilotCard">
-                <img id="p1face" class="pilotFace">
-                <div class="pilotInfo" id="p1info"></div>
-
-                <button onclick="pitStop(1)">PIT STOP</button>
-                <button onclick="setMode(1,'eco')">ECONOMIZAR</button>
-                <button onclick="setMode(1,'attack')">ATAQUE</button>
-            </div>
-
-            <div class="pilotCard">
-                <img id="p2face" class="pilotFace">
-                <div class="pilotInfo" id="p2info"></div>
-
-                <button onclick="pitStop(2)">PIT STOP</button>
-                <button onclick="setMode(2,'eco')">ECONOMIZAR</button>
-                <button onclick="setMode(2,'attack')">ATAQUE</button>
-            </div>
-
-            <h2>Velocidade:</h2>
-            <div id="speedControls">
-                <button onclick="setSpeed(1)">1x</button>
-                <button onclick="setSpeed(2)">2x</button>
-                <button onclick="setSpeed(4)">4x</button>
-            </div>
-
-            <button id="btnOficina" onclick="window.location.href='oficina.html'">
-                IR PARA OFICINA
-            </button>
-
-        </aside>
-
+      </aside>
     </main>
+  </div>
 
-    <script src="practice.js"></script>
-
+  <script src="practice.js"></script>
 </body>
 </html>
