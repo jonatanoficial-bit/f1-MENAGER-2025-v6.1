@@ -1,122 +1,152 @@
-//------------------------------------------------------
-//  PARÂMETROS DA SESSÃO
-//------------------------------------------------------
-let sessionTime = 60 * 60; // 60 min
-let speedMultiplier = 1;
+// ===============================================
+//  F1 MANAGER 2025 - PRACTICE (SVG VERSION)
+// ===============================================
 
-//------------------------------------------------------
-//  CARREGAR PARÂMETROS DA URL
-//------------------------------------------------------
-const url = new URL(window.location.href);
-const teamKey = url.searchParams.get("userTeam") || "ferrari";
-const gpName = url.searchParams.get("gp") || "GP da Austrália 2025";
+// =====================
+// 1. LER PARÂMETROS
+// =====================
+const urlParams = new URLSearchParams(window.location.search);
+const TRACK_KEY = urlParams.get("track") || "australia";
+const TEAM_KEY = urlParams.get("userTeam") || "ferrari";
 
-//------------------------------------------------------
-//  DADOS SIMPLES DE PILOTOS (AJUSTE OS SEUS DEPOIS)
-//------------------------------------------------------
+// =====================
+// 2. DADOS DAS EQUIPES
+// =====================
 const TEAMS = {
-    ferrari: {
-        color: "#ff0000",
-        p1: { name: "Piloto 1", face: "assets/faces/leclerc.png" },
-        p2: { name: "Piloto 2", face: "assets/faces/sainz.png" }
-    },
-    sauber: {
-        color: "#00d0ff",
-        p1: { name: "Piloto 1", face: "assets/faces/bottas.png" },
-        p2: { name: "Piloto 2", face: "assets/faces/zhou.png" }
+    ferrari: { color: "#ff2a2a", name: "Ferrari" },
+    mercedes: { color: "#00e5ff", name: "Mercedes" },
+    redbull: { color: "#ffb300", name: "Red Bull" },
+    mclaren: { color: "#ff8c00", name: "McLaren" },
+    sauber: { color: "#d0d0ff", name: "Sauber" },
+};
+
+// =====================
+// 3. PISTAS (SVG)
+// =====================
+const TRACKS = {
+    australia: {
+        name: "Albert Park – Melbourne",
+        svg: "assets/tracks/australia.svg"
     }
 };
 
-//------------------------------------------------------
-//  ELEMENTOS DO HUD
-//------------------------------------------------------
-document.getElementById("trackTitle").textContent = gpName;
+// =====================
+// 4. PREENCHER NOME
+// =====================
+document.getElementById("trackName").innerText = TRACKS[TRACK_KEY].name;
 
-// aplicar faces
-document.getElementById("p1Face").src = TEAMS[teamKey].p1.face;
-document.getElementById("p2Face").src = TEAMS[teamKey].p2.face;
+// =====================
+// 5. CARREGAR SVG
+// =====================
+async function loadTrackSVG() {
+    try {
+        const response = await fetch(TRACKS[TRACK_KEY].svg);
+        const svgText = await response.text();
 
-document.getElementById("p1Name").textContent = TEAMS[teamKey].p1.name;
-document.getElementById("p2Name").textContent = TEAMS[teamKey].p2.name;
+        const container = document.getElementById("track-container");
+        container.innerHTML = svgText;
 
-//------------------------------------------------------
-//  CARREGAR SVG DO CIRCUITO
-//------------------------------------------------------
-fetch("assets/tracks/australia.svg")
-    .then(res => res.text())
-    .then(svgText => {
-        document.getElementById("trackContainer").innerHTML = svgText;
         initPractice();
-    })
-    .catch(err => console.error("Erro ao carregar SVG:", err));
-
-
-//------------------------------------------------------
-//  SISTEMA PRINCIPAL
-//------------------------------------------------------
-function initPractice() {
-    const svg = document.querySelector("#trackContainer svg");
-
-    if (!svg) {
-        console.error("SVG não encontrado!");
-        return;
+    } catch (err) {
+        console.error("Erro ao carregar SVG:", err);
     }
-
-    //----------------------------------------------
-    // PEGAR O TRAÇADO DO MAPA
-    //----------------------------------------------
-    const path = svg.querySelector("path");
-
-    if (!path) {
-        console.error("Nenhum <path> encontrado no SVG!");
-        return;
-    }
-
-    const totalLength = path.getTotalLength();
-
-    //----------------------------------------------
-    // CRIAR CARROS
-    //----------------------------------------------
-    const car1 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    car1.setAttribute("r", 6);
-    car1.setAttribute("fill", TEAMS[teamKey].color);
-    svg.appendChild(car1);
-
-    const car2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    car2.setAttribute("r", 6);
-    car2.setAttribute("fill", TEAMS[teamKey].color);
-    svg.appendChild(car2);
-
-    // posições iniciais
-    let pos1 = 0;
-    let pos2 = totalLength * 0.5;
-
-    //----------------------------------------------
-    // LOOP DE ATUALIZAÇÃO
-    //----------------------------------------------
-    function updateCars() {
-        pos1 = (pos1 + 0.4 * speedMultiplier) % totalLength;
-        pos2 = (pos2 + 0.38 * speedMultiplier) % totalLength;
-
-        const p1 = path.getPointAtLength(pos1);
-        const p2 = path.getPointAtLength(pos2);
-
-        car1.setAttribute("cx", p1.x);
-        car1.setAttribute("cy", p1.y);
-
-        car2.setAttribute("cx", p2.x);
-        car2.setAttribute("cy", p2.y);
-
-        requestAnimationFrame(updateCars);
-    }
-
-    updateCars();
 }
 
+loadTrackSVG();
 
-//------------------------------------------------------
-//  CONTROLES DE VELOCIDADE (1X, 2X, 4X)
-//------------------------------------------------------
-window.setSpeed = function (v) {
+// =====================
+// 6. PILOTOS DA EQUIPE
+// =====================
+const myDrivers = [
+    {
+        id: 1,
+        name: "Piloto 1",
+        face: "assets/faces/default.png",
+        pos: 0
+    },
+    {
+        id: 2,
+        name: "Piloto 2",
+        face: "assets/faces/default.png",
+        pos: 0
+    }
+];
+
+// Aplicar fotos
+document.getElementById("p1face").src = myDrivers[0].face;
+document.getElementById("p2face").src = myDrivers[1].face;
+
+// =====================
+// 7. SISTEMA DE MOVIMENTO
+// =====================
+let pathPoints = [];
+let carDots = {};
+let speedMultiplier = 1;
+
+// Extrair pontos da pista
+function readSVGPoints() {
+    const svg = document.querySelector("#track-container svg");
+    const pts = [...svg.querySelectorAll("circle.track-point")];
+
+    pathPoints = pts.map(p => ({
+        x: parseFloat(p.getAttribute("cx")),
+        y: parseFloat(p.getAttribute("cy"))
+    }));
+}
+
+// Criar bolinhas dos carros
+function createCars() {
+    const svg = document.querySelector("#track-container svg");
+    const teamColor = TEAMS[TEAM_KEY].color;
+
+    myDrivers.forEach(driver => {
+        const dot = document.createElementNS("http://www.w3.org/2000/svg","circle");
+        dot.setAttribute("r", 8);
+        dot.setAttribute("fill", teamColor);
+        dot.setAttribute("class","car-dot");
+        svg.appendChild(dot);
+        carDots[driver.id] = dot;
+    });
+}
+
+// Atualizar movimento
+function updateCarPositions() {
+    myDrivers.forEach(d => {
+        d.pos = (d.pos + 0.1 * speedMultiplier) % pathPoints.length;
+        const idx = Math.floor(d.pos);
+
+        const p = pathPoints[idx];
+        carDots[d.id].setAttribute("cx", p.x);
+        carDots[d.id].setAttribute("cy", p.y);
+    });
+}
+
+// Loop principal
+function loop() {
+    updateCarPositions();
+    requestAnimationFrame(loop);
+}
+
+// =====================
+// 8. INICIALIZAR
+// =====================
+function initPractice() {
+    readSVGPoints();
+    createCars();
+    loop();
+}
+
+// =====================
+// 9. CONTROLES
+// =====================
+function setSpeed(v) {
     speedMultiplier = v;
-};
+}
+
+function pitStop(id) {
+    alert("Pit stop do piloto " + id);
+}
+
+function setMode(id, mode) {
+    alert("Modo do piloto " + id + " = " + mode);
+}
