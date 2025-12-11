@@ -1,104 +1,99 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Treino Livre – F1 Manager 2025</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Treino Livre - F1 Manager 2025</title>
 
-<link rel="stylesheet" href="practice.css">
+    <link rel="stylesheet" href="practice.css" />
 
-<style>
-/* Garantir que o SVG ocupe a área corretamente */
-.track-wrapper {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    position: relative;
-}
+    <style>
+        body {
+            margin: 0;
+            background: #0a0a12;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
 
-#track-svg {
-    width: 100%;
-    height: 100%;
-}
-</style>
+        #track-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            background: #0b0b13;
+        }
 
+        #track-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .car-dot {
+            fill: red;
+            stroke: white;
+            stroke-width: 2px;
+        }
+
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 360px;
+            padding: 20px;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(6px);
+            border-radius: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            margin-top: 8px;
+        }
+
+        .btn-red { background:#ff3b3b; color:white; }
+        .btn-blue { background:#2979ff; color:white; }
+        .btn-yellow { background:#ffd500; color:black; }
+        .btn-green { background:#00d67a; color:black; }
+    </style>
 </head>
+
 <body>
 
-<!-- BOTÃO VOLTAR -->
-<div style="padding:20px;">
-    <a href="lobby.html" class="btn-back">← VOLTAR</a>
-</div>
+    <!-- BOTÃO VOLTAR -->
+    <button onclick="window.history.back()" 
+            style="position:absolute;top:20px;left:20px;background:#ff3b3b;color:white;padding:10px 16px;border-radius:8px;border:none;cursor:pointer;">
+        ← VOLTAR
+    </button>
 
-<div class="main-container">
+    <div id="track-container">
+        <!-- O SVG do circuito será carregado dinamicamente aqui -->
+        <svg id="track-svg"></svg>
 
-    <!-- ÁREA DA PISTA -->
-    <div class="left-panel">
-        <h2>TREINO LIVRE</h2>
-        <p data-track-label>Circuito — a definir</p>
+        <div id="ui-panel">
+            <h3 id="gp-title">GP 2025</h3>
+            <p id="session-time">Sessão: 60:00</p>
 
-        <div class="track-wrapper">
-            <!-- SVG DINÂMICO DA PISTA ENTRA AQUI -->
-            <svg id="track-svg"></svg>
+            <h4>Piloto 1</h4>
+            <button class="btn btn-red" onclick="pitStop(1)">PIT STOP</button>
+            <button class="btn btn-blue" onclick="economy(1)">ECONOMIZAR</button>
+            <button class="btn btn-yellow" onclick="attack(1)">ATAQUE</button>
+
+            <h4>Piloto 2</h4>
+            <button class="btn btn-red" onclick="pitStop(2)">PIT STOP</button>
+            <button class="btn btn-blue" onclick="economy(2)">ECONOMIZAR</button>
+            <button class="btn btn-yellow" onclick="attack(2)">ATAQUE</button>
+
+            <br><br>
+            <button class="btn btn-green" onclick="window.location.href='oficina.html'">IR PARA OFICINA</button>
+            <button class="btn btn-blue" onclick="window.location.href='lobby.html'">VOLTAR AO LOBBY</button>
         </div>
     </div>
 
-    <!-- PAINEL DIREITO -->
-    <div class="right-panel">
-
-        <h2 data-gp-name>GP 2025</h2>
-        <div class="session-info">
-            Sessão de treino livre — 60 minutos  
-            <span class="clock" data-session-clock>60:00</span>
-        </div>
-
-        <h3>Pilotos da sua equipe</h3>
-
-        <!-- PILOTO 1 -->
-        <div class="driver-card">
-            <img class="driver-face" data-driver1-face src="assets/faces/GEN.png">
-            <div class="driver-info">
-                <strong data-driver1-name>Piloto 1</strong><br>
-                Carro: 100% — Pneus: 0%
-            </div>
-            <div class="driver-actions">
-                <button>PIT STOP</button>
-                <button>ECONOMIZAR</button>
-                <button>ATAQUE</button>
-            </div>
-        </div>
-
-        <!-- PILOTO 2 -->
-        <div class="driver-card">
-            <img class="driver-face" data-driver2-face src="assets/faces/GEN.png">
-            <div class="driver-info">
-                <strong data-driver2-name>Piloto 2</strong><br>
-                Carro: 100% — Pneus: 0%
-            </div>
-            <div class="driver-actions">
-                <button>PIT STOP</button>
-                <button>ECONOMIZAR</button>
-                <button>ATAQUE</button>
-            </div>
-        </div>
-
-        <!-- CONTROLES -->
-        <h3>Velocidade:</h3>
-        <div class="speed-buttons">
-            <button data-speed-btn="1">1x</button>
-            <button data-speed-btn="2">2x</button>
-            <button data-speed-btn="4">4x</button>
-        </div>
-
-        <div class="bottom-actions">
-            <button data-go-garage>IR PARA OFICINA</button>
-            <button data-back-lobby>VOLTAR AO LOBBY</button>
-        </div>
-
-    </div>
-</div>
-
-<script src="practice.js"></script>
+    <!-- SCRIPT PRINCIPAL -->
+    <script src="practice.js"></script>
 
 </body>
 </html>
