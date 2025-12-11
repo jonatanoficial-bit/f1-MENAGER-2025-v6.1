@@ -1,10 +1,7 @@
 // ==========================================================
-// F1 MANAGER 2025 – RACE.JS (v6.1) — FIX TRAVAMENTO
-// - SVG real carregado no DOM (igual practice/qualy)
-// - pathPoints via getTotalLength/getPointAtLength
-// - requestAnimationFrame garantido
-// - Controles: PIT / MOTOR / AGRESS / ERS / Modos + Speed 1x/2x/4x
-// - Clima dinâmico (impacta pace e desgaste)
+// F1 MANAGER 2025 – RACE.JS (v6.1) — TRAJETO VISÍVEL (linha)
+// - Mantém: SVG real + pathPoints + carros + rAF + controles
+// - NOVO: desenha uma polyline ligando os pathPoints
 // ==========================================================
 
 (() => {
@@ -66,15 +63,12 @@
         } catch {}
       }
     }
-    // fallback: maior path
     const all = Array.from(svg.querySelectorAll("path"));
     let best = null, bestLen = 0;
     for (const p of all) {
       try {
         const len = p.getTotalLength();
-        if (Number.isFinite(len) && len > bestLen) {
-          bestLen = len; best = p;
-        }
+        if (Number.isFinite(len) && len > bestLen) { bestLen = len; best = p; }
       } catch {}
     }
     return best;
@@ -106,7 +100,7 @@
   const USER_TEAM = (params.get("userTeam") || localStorage.getItem("f1m2025_user_team") || "ferrari").toLowerCase();
 
   // ------------------------------
-  // BASE (teams/logos) – ajuste para seus nomes reais se necessário
+  // BASE (logos)
   // ------------------------------
   const TEAM_LOGO = {
     ferrari: "assets/logos/ferrari.png",
@@ -142,7 +136,7 @@
   };
 
   // ------------------------------
-  // DRIVERS (mínimo estável; se você já tiver a lista completa, pode colar aqui mantendo campos)
+  // DRIVERS (mínimo estável)
   // ------------------------------
   const DRIVERS_2025 = [
     { id:"verstappen", name:"Max Verstappen", teamKey:"redbull", teamName:"Red Bull", rating:98, color:"#ffb300", face:"assets/faces/VER.png" },
@@ -160,14 +154,14 @@
     { id:"alonso",     name:"Fernando Alonso",teamKey:"aston",   teamName:"Aston",    rating:90, color:"#00b894", face:"assets/faces/ALO.png" },
     { id:"stroll",     name:"Lance Stroll",   teamKey:"aston",   teamName:"Aston",    rating:88, color:"#00b894", face:"assets/faces/STR.png" },
 
-    { id:"ocon",       name:"Esteban Ocon",   teamKey:"alpine",  teamName:"Alpine",   rating:90, color:"#4c6fff", face:"assets/faces/OCO.png" },
     { id:"gasly",      name:"Pierre Gasly",   teamKey:"alpine",  teamName:"Alpine",   rating:89, color:"#4c6fff", face:"assets/faces/GAS.png" },
+    { id:"ocon",       name:"Esteban Ocon",   teamKey:"alpine",  teamName:"Alpine",   rating:90, color:"#4c6fff", face:"assets/faces/OCO.png" },
 
     { id:"albon",      name:"Alex Albon",     teamKey:"williams",teamName:"Williams", rating:89, color:"#09a4e5", face:"assets/faces/ALB.png" },
     { id:"sargeant",   name:"Logan Sargeant", teamKey:"williams",teamName:"Williams", rating:86, color:"#09a4e5", face:"assets/faces/SAR.png" },
 
-    { id:"hul",        name:"Nico Hülkenberg",teamKey:"sauber",  teamName:"Sauber",   rating:89, color:"#d0d0ff", face:"assets/faces/HUL.png" },
-    { id:"bot",        name:"Valtteri Bottas",teamKey:"sauber",  teamName:"Sauber",   rating:88, color:"#d0d0ff", face:"assets/faces/BOT.png" }
+    { id:"bot",        name:"Valtteri Bottas",teamKey:"sauber",  teamName:"Sauber",   rating:88, color:"#d0d0ff", face:"assets/faces/BOT.png" },
+    { id:"hul",        name:"Nico Hülkenberg",teamKey:"sauber",  teamName:"Sauber",   rating:89, color:"#d0d0ff", face:"assets/faces/HUL.png" }
   ];
 
   // ------------------------------
@@ -192,11 +186,14 @@
     pathPoints: [],
     carNodes: new Map(),
 
+    // NOVO: linha do trajeto
+    routeLine: null,
+
     drivers: []
   };
 
   // ------------------------------
-  // INIT UI (não pode travar)
+  // INIT TOP UI
   // ------------------------------
   safeSetText("gp-title", `F1 MANAGER 2025 — ${state.gpName}`);
 
@@ -207,10 +204,9 @@
   }
 
   // ------------------------------
-  // CREATE DRIVERS
+  // DRIVERS
   // ------------------------------
   function initDrivers() {
-    // totalLaps aproximado (corrida “realista” por tempo)
     state.totalLaps = Math.max(10, Math.round(2700000 / state.baseLapMs)); // ~45min
     safeSetText("race-lap-label", `Volta 1 / ${state.totalLaps}`);
 
@@ -236,21 +232,21 @@
         wantsPit: false,
         forcePit: false,
 
-        engineMode: 2,      // 1..3
-        aggression: 2,      // 1..3
-        ers: 50,            // 0..100
-        ersBoostUntil: 0,   // timestamp
+        engineMode: 2,
+        aggression: 2,
+        ers: 50,
+        ersBoostUntil: 0
       };
     });
+  }
+
+  function getUserDrivers2() {
+    return state.drivers.filter(d => d.teamKey === state.userTeamKey).slice(0, 2);
   }
 
   // ------------------------------
   // USER CARDS
   // ------------------------------
-  function getUserDrivers2() {
-    return state.drivers.filter(d => d.teamKey === state.userTeamKey).slice(0, 2);
-  }
-
   function fillUserCards() {
     const two = getUserDrivers2();
     for (let i = 0; i < 2; i++) {
@@ -375,16 +371,22 @@
       list.appendChild(row);
     }
 
-    // Lap label (líder)
     const leader = ordered[0];
     const lapNow = Math.min(state.totalLaps, (leader?.laps || 0) + 1);
     safeSetText("race-lap-label", `Volta ${lapNow} / ${state.totalLaps}`);
   }
 
   // ------------------------------
-  // CARS (SVG nodes)
+  // SVG: CARS + ROUTE LINE
   // ------------------------------
-  function createCarNode(svg, driver) {
+  function createSvgLayer(svg, id) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("id", id);
+    svg.appendChild(g);
+    return g;
+  }
+
+  function createCarNode(parentLayer, driver) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
     const shadow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -405,7 +407,7 @@
     g.appendChild(dot);
     g.appendChild(ring);
 
-    svg.appendChild(g);
+    parentLayer.appendChild(g);
     state.carNodes.set(driver.id, g);
   }
 
@@ -413,6 +415,26 @@
     const node = state.carNodes.get(driverId);
     if (!node) return;
     node.setAttribute("transform", `translate(${x} ${y}) rotate(${angleDeg})`);
+  }
+
+  function buildRoutePolyline(points) {
+    const pl = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    pl.setAttribute("fill", "none");
+    pl.setAttribute("stroke", "rgba(255,255,255,0.85)");
+    pl.setAttribute("stroke-width", "4.5");
+    pl.setAttribute("stroke-linecap", "round");
+    pl.setAttribute("stroke-linejoin", "round");
+    pl.setAttribute("opacity", "0.85");
+
+    // brilho externo leve (AAA feel)
+    pl.style.filter = "drop-shadow(0 0 8px rgba(255,255,255,0.35)) drop-shadow(0 0 18px rgba(255,255,255,0.12))";
+
+    // fecha o loop visualmente
+    const pts = points.slice();
+    if (pts.length) pts.push(pts[0]);
+
+    pl.setAttribute("points", pts.map(p => `${p.x},${p.y}`).join(" "));
+    return pl;
   }
 
   // ------------------------------
@@ -460,15 +482,13 @@
       const aggrPace   = (d.aggression === 1) ? 0.985 : (d.aggression === 3 ? 1.02 : 1.00);
       const ersBoostActive = (d.ersBoostUntil > now) ? 1.035 : 1.0;
 
-      // pneu: quanto mais gasto, mais lento
-      const tyreFactor = 1 + d.tyreWear * 0.005; // 100% => +50% tempo
+      const tyreFactor = 1 + d.tyreWear * 0.005;
 
-      // clima reduz grip (mais lento)
       const effectiveLapMs =
         (d.idealLapMs * tyreFactor) /
         (modeCfg.pace * enginePace * aggrPace * ersBoostActive * wCfg.grip);
 
-      const baseSpeed = 1 / effectiveLapMs; // progress/ms
+      const baseSpeed = 1 / effectiveLapMs;
       const noise = (Math.random() - 0.5) * baseSpeed * 0.06;
 
       let newProg = d.progress + (baseSpeed + noise) * dtMs * state.speedMultiplier;
@@ -483,7 +503,6 @@
         d.bestLapMs = Math.min(d.bestLapMs, lapMs);
         d.totalTimeMs += lapMs;
 
-        // desgaste por volta
         const wearBase = 3.0;
         const aggrWear = (d.aggression === 1) ? 0.88 : (d.aggression === 3 ? 1.18 : 1.0);
         const engWear  = (d.engineMode === 1) ? 0.92 : (d.engineMode === 3 ? 1.10 : 1.0);
@@ -494,10 +513,8 @@
           0, 100
         );
 
-        // ERS regen por volta
         d.ers = clamp(d.ers + (modeCfg.ersRegen || 6), 0, 100);
 
-        // pede pit se muito gasto (apenas time do usuário)
         if (d.teamKey === state.userTeamKey && d.tyreWear >= 80) d.wantsPit = true;
       }
 
@@ -505,15 +522,11 @@
     }
   }
 
-  // ------------------------------
-  // PIT
-  // ------------------------------
   function applyPitIfNeeded() {
     const wCfg = WEATHER[state.weatherKey] || WEATHER.dry;
     for (const d of state.drivers) {
       if (!d.forcePit && !d.wantsPit) continue;
 
-      // entra no pit quando cruza a linha
       if (d.progress < 0.015) {
         d.forcePit = false;
         d.wantsPit = false;
@@ -528,9 +541,6 @@
     }
   }
 
-  // ------------------------------
-  // RENDER CARS (com ângulo)
-  // ------------------------------
   function renderCars() {
     const pts = state.pathPoints;
     if (!pts || pts.length < 80) return;
@@ -561,9 +571,7 @@
       renderDriversList();
       updateUserCards();
 
-      // fim corrida (quando alguém completa totalLaps)
-      const finished = state.drivers.some(d => d.laps >= state.totalLaps);
-      if (finished) state.running = false;
+      if (state.drivers.some(d => d.laps >= state.totalLaps)) state.running = false;
     }
 
     requestAnimationFrame(frame);
@@ -606,9 +614,10 @@
         else if (action === "aggrDown") drv.aggression = clamp(drv.aggression - 1, 1, 3);
 
         else if (action === "ers") {
-          if (drv.ers >= 15 && drv.ersBoostUntil < performance.now()) {
+          const now = performance.now();
+          if (drv.ers >= 15 && drv.ersBoostUntil < now) {
             drv.ers -= 15;
-            drv.ersBoostUntil = performance.now() + 6500;
+            drv.ersBoostUntil = now + 6500;
           }
         }
 
@@ -625,7 +634,7 @@
   }
 
   // ------------------------------
-  // LOAD SVG (igual practice/qualy – robusto)
+  // LOAD SVG + DRAW ROUTE LINE
   // ------------------------------
   async function loadTrack() {
     const container = $("track-container");
@@ -650,11 +659,18 @@
       throw new Error("Falha ao gerar pathPoints (path curto/inválido)");
     }
 
-    // cria nós dos carros
-    state.carNodes.clear();
-    for (const d of state.drivers) createCarNode(state.svgRoot, d);
+    // LAYERS: rota (embaixo) e carros (em cima)
+    const routeLayer = createSvgLayer(state.svgRoot, "routeLayer");
+    const carsLayer = createSvgLayer(state.svgRoot, "carsLayer");
 
-    // posiciona na largada
+    // desenha a linha ligando os pontos
+    state.routeLine = buildRoutePolyline(state.pathPoints);
+    routeLayer.appendChild(state.routeLine);
+
+    // cria carros na layer superior
+    state.carNodes.clear();
+    for (const d of state.drivers) createCarNode(carsLayer, d);
+
     renderCars();
   }
 
