@@ -1,5 +1,7 @@
 // =====================================================
-// F1 MANAGER 2025 – PRACTICE (v6.1) — FINAL (SVG PATH)
+// F1 MANAGER 2025 – PRACTICE (v6.1) — FINAL v2
+// Correções: cronômetro (rodando + countdown), velocidade 1x/2x/4x com efeito real,
+// fallback de avatars (nunca fica quebrado), UI de best lap.
 // Lógica de pontos: estilo QUALIFYING (getPointAtLength)
 // =====================================================
 
@@ -7,14 +9,14 @@
   "use strict";
 
   // =========================
-  // 1) PARAMS / CONTEXTO
+  // 1) PARAMS
   // =========================
   const urlParams = new URLSearchParams(window.location.search);
   const TRACK_KEY = (urlParams.get("track") || "australia").toLowerCase();
-  const TEAM_KEY = (urlParams.get("userTeam") || "ferrari").toLowerCase();
+  const TEAM_KEY  = (urlParams.get("userTeam") || "ferrari").toLowerCase();
 
   // =========================
-  // 2) DADOS (MÍNIMOS / SAFE)
+  // 2) TEAMS / TRACKS
   // =========================
   const TEAMS = {
     ferrari:  { color: "#ff2a2a", name: "Ferrari",  logo: "assets/logos/ferrari.png" },
@@ -24,8 +26,6 @@
     sauber:   { color: "#d0d0ff", name: "Sauber",   logo: "assets/logos/sauber.png" }
   };
 
-  // Se você tem 24 pistas, mantenha aqui a mesma chave/arquivo.
-  // (Sem renomear SVGs!)
   const TRACKS = {
     australia: { name: "Albert Park – Melbourne", svg: "assets/tracks/australia.svg" },
     bahrain:   { name: "Bahrain – Sakhir",        svg: "assets/tracks/bahrain.svg" },
@@ -57,32 +57,39 @@
   const teamData  = TEAMS[TEAM_KEY]  || TEAMS.ferrari;
 
   // =========================
-  // 3) ELEMENTOS DOM
+  // 3) DOM
   // =========================
-  const elTrackName = document.getElementById("trackName");
+  const elTrackName      = document.getElementById("trackName");
   const elTrackContainer = document.getElementById("track-container");
   const elDriversOnTrack = document.getElementById("driversOnTrack");
-  const elP1Face = document.getElementById("p1face");
-  const elP2Face = document.getElementById("p2face");
-  const elP1Info = document.getElementById("p1info");
-  const elP2Info = document.getElementById("p2info");
+  const elP1Face         = document.getElementById("p1face");
+  const elP2Face         = document.getElementById("p2face");
+  const elP1Info         = document.getElementById("p1info");
+  const elP2Info         = document.getElementById("p2info");
+
+  // UI do novo layout
+  const elBestLapOverall = document.getElementById("bestLapOverall");
+  const elTimeRemaining  = document.querySelector(".practice-time-remaining"); // no practice.html novo
+  const elSessionLabel   = document.querySelector(".practice-session-label");
+
+  // Nomes no card (se existirem)
+  const elP1Name = document.getElementById("p1name");
+  const elP2Name = document.getElementById("p2name");
+  const elP1Team = document.getElementById("p1team");
+  const elP2Team = document.getElementById("p2team");
 
   if (elTrackName) elTrackName.textContent = trackData.name;
+  if (elSessionLabel) elSessionLabel.textContent = "LIVE";
+
+  if (elP1Team) elP1Team.textContent = teamData.name;
+  if (elP2Team) elP2Team.textContent = teamData.name;
 
   // =========================
-  // 4) SETUP (OFICINA) — PERSISTÊNCIA
+  // 4) SETUP (OFICINA) — LOCALSTORAGE
   // =========================
-  const DEFAULT_SETUP = {
-    // 0..100 (ou 0..1) — suportar ambos
-    speed: 50,       // impacta velocidade
-    consumo: 50,     // impacta desgaste combustível
-    grip: 50,        // impacta ganho/consistência
-    estabilidade: 50 // impacta wobble/erro
-  };
+  const DEFAULT_SETUP = { speed: 50, consumo: 50, grip: 50, estabilidade: 50 };
 
-  function safeJsonParse(str) {
-    try { return JSON.parse(str); } catch { return null; }
-  }
+  function safeJsonParse(str) { try { return JSON.parse(str); } catch { return null; } }
 
   function loadSetupFromLocalStorage() {
     const keys = [
@@ -105,17 +112,15 @@
   function normalizeSetup(obj) {
     const s = { ...DEFAULT_SETUP, ...(obj || {}) };
 
-    // aceitar sinônimos
     if (obj) {
       if (typeof obj.velocidade !== "undefined") s.speed = obj.velocidade;
       if (typeof obj.consumption !== "undefined") s.consumo = obj.consumption;
       if (typeof obj.consumo !== "undefined") s.consumo = obj.consumo;
-      if (typeof obj.grip !== "undefined") s.grip = obj.grip;
       if (typeof obj.stability !== "undefined") s.estabilidade = obj.stability;
       if (typeof obj.estabilidade !== "undefined") s.estabilidade = obj.estabilidade;
+      if (typeof obj.grip !== "undefined") s.grip = obj.grip;
     }
 
-    // se vier 0..1 converter para 0..100
     for (const k of ["speed", "consumo", "grip", "estabilidade"]) {
       const v = Number(s[k]);
       if (!Number.isFinite(v)) s[k] = DEFAULT_SETUP[k];
@@ -128,56 +133,79 @@
   const setup = normalizeSetup(loadSetupFromLocalStorage());
 
   // =========================
-  // 5) ESTADO DA SESSÃO
+  // 5) AVATAR FALLBACK (SEM 404 VISÍVEL)
   // =========================
-  const SESSION = {
-    running: true,
-    speedMultiplier: 1,
-    startedAt: performance.now(),
-    lastFrameAt: performance.now(),
-    sessionSeconds: 60 * 60, // 60:00
-    elapsed: 0,
-    bestLapMs: Infinity
-  };
+  const PLACEHOLDER_FACE = `data:image/svg+xml;utf8,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#111827"/>
+          <stop offset="1" stop-color="#0b1220"/>
+        </linearGradient>
+      </defs>
+      <rect width="160" height="160" rx="22" fill="url(#g)"/>
+      <circle cx="80" cy="62" r="26" fill="#ffffff" opacity="0.14"/>
+      <path d="M35 134c9-26 33-40 45-40s36 14 45 40" fill="#ffffff" opacity="0.10"/>
+      <circle cx="80" cy="80" r="72" fill="none" stroke="#ffffff" opacity="0.10" stroke-width="2"/>
+    </svg>
+  `)}`;
 
-  // =========================
-  // 6) PILOTOS (2 da equipe)
-  // =========================
+  function setImgWithFallback(imgEl, primarySrc) {
+    if (!imgEl) return;
+    imgEl.loading = "lazy";
+    imgEl.decoding = "async";
+    imgEl.referrerPolicy = "no-referrer";
+
+    imgEl.onerror = () => {
+      // evita loop
+      imgEl.onerror = null;
+      imgEl.src = PLACEHOLDER_FACE;
+    };
+
+    imgEl.src = primarySrc || PLACEHOLDER_FACE;
+  }
+
   function resolveFacePath(driverIndex) {
-    // se você tiver nomes reais no localStorage do manager, use aqui.
-    // fallback para default.png
+    // Tentativas (compatível com saves diferentes)
     const fallback = "assets/faces/default.png";
-    const keys = [
-      "managerData",
-      "careerData",
-      "save_career_v61",
-      "f1m_career_v61"
-    ];
+    const keys = ["managerData", "careerData", "save_career_v61", "f1m_career_v61"];
+
     for (const k of keys) {
       const raw = localStorage.getItem(k);
       if (!raw) continue;
       const obj = safeJsonParse(raw);
       if (!obj) continue;
 
-      // tentativa de achar faces por equipe
-      // (mantém compatível sem quebrar)
-      if (obj.userTeam && String(obj.userTeam).toLowerCase() === TEAM_KEY) {
-        const faces = obj.teamFaces || obj.faces || obj.driverFaces;
-        if (Array.isArray(faces) && faces[driverIndex]) return faces[driverIndex];
+      // Tentativa: faces explícitas
+      const faces = obj.teamFaces || obj.faces || obj.driverFaces;
+      if (Array.isArray(faces) && faces[driverIndex]) return faces[driverIndex];
+
+      // Tentativa: roster por equipe
+      const team = (obj.userTeam || obj.team || "").toLowerCase();
+      if (team && team === TEAM_KEY) {
+        const roster = obj.roster || obj.drivers || obj.pilotos;
+        if (Array.isArray(roster) && roster[driverIndex]) {
+          const face = roster[driverIndex].face || roster[driverIndex].foto || roster[driverIndex].img;
+          if (face) return face;
+        }
       }
     }
+
     return fallback;
   }
 
+  // =========================
+  // 6) DRIVERS (2 do usuário)
+  // =========================
   const myDrivers = [
     {
       id: 1,
       name: "Piloto 1",
       face: resolveFacePath(0),
-      mode: "normal",          // eco | attack | normal
-      tire: { compound: "SOFT", wear: 0 }, // wear 0..100
-      fuel: 100,               // 0..100
-      posF: 0,                 // posição float nos pontos
+      mode: "normal",
+      tire: { compound: "SOFT", wear: 0 },
+      fuel: 100,
+      posF: 0,
       lap: 0,
       lapStartAt: performance.now(),
       lastLapMs: null,
@@ -190,7 +218,7 @@
       mode: "normal",
       tire: { compound: "SOFT", wear: 0 },
       fuel: 100,
-      posF: 40, // offset inicial para não colar
+      posF: 40,
       lap: 0,
       lapStartAt: performance.now(),
       lastLapMs: null,
@@ -198,23 +226,42 @@
     }
   ];
 
-  if (elP1Face) elP1Face.src = myDrivers[0].face;
-  if (elP2Face) elP2Face.src = myDrivers[1].face;
+  if (elP1Name) elP1Name.textContent = myDrivers[0].name;
+  if (elP2Name) elP2Name.textContent = myDrivers[1].name;
+
+  setImgWithFallback(elP1Face, myDrivers[0].face);
+  setImgWithFallback(elP2Face, myDrivers[1].face);
 
   // =========================
-  // 7) SVG / PATH POINTS (QUALIFYING STYLE)
+  // 7) SVG / PATH POINTS (QUALIFYING)
   // =========================
   let svgRoot = null;
   let trackPath = null;
   let pathPoints = [];
-  let carNodes = new Map();
+  const carNodes = new Map();
+
+  function ensureSvgResponsive(svg) {
+    const hasViewBox = svg.hasAttribute("viewBox");
+    if (!hasViewBox) {
+      const w = svg.getAttribute("width");
+      const h = svg.getAttribute("height");
+      if (w && h) svg.setAttribute("viewBox", `0 0 ${parseFloat(w)} ${parseFloat(h)}`);
+    }
+    svg.removeAttribute("width");
+    svg.removeAttribute("height");
+    svg.style.width = "100%";
+    svg.style.height = "100%";
+    svg.style.display = "block";
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  }
 
   function findBestTrackPath(svg) {
-    // Prioridades comuns (sem depender de um único id)
-    const selectors = [
-      "#raceLine",
-      "#trackPath",
-      "#mainPath",
+    // Prioriza id raceLine (se você marcar no SVG)
+    const preferred = svg.querySelector("#raceLine");
+    if (preferred && preferred.tagName.toLowerCase() === "path") return preferred;
+
+    // Depois tenta classes comuns
+    const candidates = [
       "path.racing-line",
       "path.race-line",
       "path.track-path",
@@ -222,43 +269,44 @@
       "path"
     ];
 
-    for (const sel of selectors) {
-      const el = svg.querySelector(sel);
-      if (el && el.tagName.toLowerCase() === "path") return el;
-    }
-    return null;
-  }
+    // Seleciona o "melhor" path (o maior comprimento) => reduz risco de pegar path decorativo
+    let best = null;
+    let bestLen = -1;
 
-  function ensureSvgResponsive(svg) {
-    // garantir viewBox para responsividade, sem distorcer
-    const hasViewBox = svg.hasAttribute("viewBox");
-    if (!hasViewBox) {
-      const w = svg.getAttribute("width");
-      const h = svg.getAttribute("height");
-      const wb = (w && h) ? `0 0 ${parseFloat(w)} ${parseFloat(h)}` : null;
-      if (wb) svg.setAttribute("viewBox", wb);
+    for (const sel of candidates) {
+      const list = [...svg.querySelectorAll(sel)];
+      for (const p of list) {
+        if (!p || p.tagName.toLowerCase() !== "path") continue;
+        try {
+          const len = p.getTotalLength();
+          if (Number.isFinite(len) && len > bestLen) {
+            bestLen = len;
+            best = p;
+          }
+        } catch { /* ignore */ }
+      }
+      if (best) break;
     }
-    svg.removeAttribute("width");
-    svg.removeAttribute("height");
-    svg.style.width = "100%";
-    svg.style.height = "100%";
-    svg.style.display = "block";
-    svg.style.overflow = "visible";
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+    return best;
   }
 
   function buildPathPointsFromPath(path, sampleCount = 1600) {
     const total = path.getTotalLength();
     if (!Number.isFinite(total) || total <= 0) return [];
-
     const pts = [];
     const step = total / sampleCount;
-
     for (let i = 0; i <= sampleCount; i++) {
-      const p = path.getPointAtLength(i * step);
-      pts.push({ x: p.x, y: p.y });
+      const pt = path.getPointAtLength(i * step);
+      pts.push({ x: pt.x, y: pt.y });
     }
     return pts;
+  }
+
+  function angleBetween(a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    return (Math.atan2(dy, dx) * 180) / Math.PI;
   }
 
   function createCarNode(svg, driverId, colorHex) {
@@ -294,54 +342,47 @@
     node.setAttribute("transform", `translate(${x} ${y}) rotate(${angleDeg})`);
   }
 
-  function angleBetween(a, b) {
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    return (Math.atan2(dy, dx) * 180) / Math.PI;
-  }
-
   // =========================
-  // 8) FÍSICA / MODELOS (SETUP)
+  // 8) SIMULAÇÃO (SETUP)
   // =========================
   function lerp(a, b, t) { return a + (b - a) * t; }
 
   function calcDriverPaceFactor(driver) {
-    // base 1.0
-    const speedBoost = lerp(0.85, 1.12, setup.speed / 100);
-    const gripBoost = lerp(0.90, 1.08, setup.grip / 100);
-    const tirePenalty = lerp(1.0, 0.70, driver.tire.wear / 100);
-    const fuelPenalty = lerp(1.0, 0.82, (100 - driver.fuel) / 100);
+    const speedBoost = lerp(0.88, 1.18, setup.speed / 100);
+    const gripBoost  = lerp(0.92, 1.10, setup.grip  / 100);
+
+    const tirePenalty = lerp(1.0, 0.72, driver.tire.wear / 100);
+    const fuelPenalty = lerp(1.0, 0.84, (100 - driver.fuel) / 100);
 
     let modeFactor = 1.0;
-    if (driver.mode === "eco") modeFactor = 0.92;
-    if (driver.mode === "attack") modeFactor = 1.06;
+    if (driver.mode === "eco") modeFactor = 0.90;
+    if (driver.mode === "attack") modeFactor = 1.08;
 
     return speedBoost * gripBoost * tirePenalty * fuelPenalty * modeFactor;
   }
 
   function calcStabilityWobble() {
-    // menor estabilidade -> mais "wobble"
-    const st = setup.estabilidade / 100; // 0..1
-    return lerp(2.8, 0.3, st);
+    const st = setup.estabilidade / 100;
+    return lerp(2.6, 0.25, st);
   }
 
   function consumeResources(driver, dtSec) {
-    // consumo (setup) + modo
-    const consumoBase = lerp(0.020, 0.060, setup.consumo / 100); // por segundo
+    // combustível
+    const consumoBase = lerp(0.018, 0.060, setup.consumo / 100); // %/s (escala)
     let modeFuel = 1.0;
     let modeWear = 1.0;
-
-    if (driver.mode === "eco") { modeFuel = 0.78; modeWear = 0.88; }
+    if (driver.mode === "eco")    { modeFuel = 0.75; modeWear = 0.86; }
     if (driver.mode === "attack") { modeFuel = 1.18; modeWear = 1.22; }
 
     driver.fuel = Math.max(0, driver.fuel - (consumoBase * 100 * modeFuel * dtSec));
 
-    const wearBase = lerp(0.010, 0.040, (100 - setup.grip) / 100); // menos grip -> mais desgaste
+    // pneus
+    const wearBase = lerp(0.010, 0.040, (100 - setup.grip) / 100);
     driver.tire.wear = Math.min(100, driver.tire.wear + (wearBase * 100 * modeWear * dtSec));
   }
 
   // =========================
-  // 9) UI / INFO
+  // 9) UI helpers
   // =========================
   function fmtMsToLap(ms) {
     if (!Number.isFinite(ms) || ms === Infinity) return "--:--.---";
@@ -352,54 +393,50 @@
     return `${String(minutes).padStart(1,"0")}:${String(seconds).padStart(2,"0")}.${String(millis).padStart(3,"0")}`;
   }
 
+  function fmtMMSS(seconds) {
+    const s = Math.max(0, Math.floor(seconds));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${String(m).padStart(2,"0")}:${String(r).padStart(2,"0")}`;
+  }
+
+  function buildPilotInfoHTML(d) {
+    const modeLabel = d.mode === "attack" ? "ATAQUE" : d.mode === "eco" ? "ECONOMIZAR" : "NORMAL";
+    return `
+      <div style="font-weight:700; font-size:14px; margin-bottom:6px;">${d.name}</div>
+      <div style="opacity:.95; font-size:12px; line-height:1.35;">
+        <div>Modo: <b>${modeLabel}</b></div>
+        <div>${d.tire.compound} • Desgaste ${d.tire.wear.toFixed(0)}%</div>
+        <div>Combustível ${d.fuel.toFixed(0)}%</div>
+        <div>Voltas: ${d.lap}</div>
+        <div>Última volta: ${fmtMsToLap(d.lastLapMs)}</div>
+        <div>Melhor volta: ${fmtMsToLap(d.bestLapMs)}</div>
+      </div>
+    `;
+  }
+
   function updatePilotCards() {
     if (elP1Info) elP1Info.innerHTML = buildPilotInfoHTML(myDrivers[0]);
     if (elP2Info) elP2Info.innerHTML = buildPilotInfoHTML(myDrivers[1]);
   }
 
-  function buildPilotInfoHTML(d) {
-    const modeLabel = d.mode === "attack" ? "ATAQUE" : d.mode === "eco" ? "ECONOMIZAR" : "NORMAL";
-    const tire = `${d.tire.compound} • Desgaste ${d.tire.wear.toFixed(0)}%`;
-    const fuel = `Combustível ${d.fuel.toFixed(0)}%`;
-    const last = `Última volta: ${fmtMsToLap(d.lastLapMs)}`;
-    const best = `Melhor volta: ${fmtMsToLap(d.bestLapMs)}`;
-    const lap  = `Voltas: ${d.lap}`;
-    return `
-      <div style="font-weight:700; font-size:14px; margin-bottom:6px;">${d.name}</div>
-      <div style="opacity:.95; font-size:12px; line-height:1.35;">
-        <div>Modo: <b>${modeLabel}</b></div>
-        <div>${tire}</div>
-        <div>${fuel}</div>
-        <div>${lap}</div>
-        <div>${last}</div>
-        <div>${best}</div>
-      </div>
-    `;
-  }
-
   function renderDriversOnTrackList() {
     if (!elDriversOnTrack) return;
-    // lista simples (2 carros). Se você adicionar IA depois, encaixa aqui.
     const items = myDrivers
       .slice()
       .sort((a,b) => b.lap - a.lap || b.posF - a.posF)
-      .map((d, idx) => {
-        const col = teamData.color;
-        return `
-          <div style="display:flex; align-items:center; gap:10px; margin:8px 0;">
-            <div style="width:10px; height:10px; border-radius:50%; background:${col}; box-shadow:0 0 0 2px rgba(255,255,255,.25);"></div>
-            <div style="font-size:12px; opacity:.95;">
-              <b>#${idx+1}</b> ${d.name} • V${d.lap} • ${fmtMsToLap(d.bestLapMs)}
-            </div>
+      .map((d, idx) => `
+        <div style="display:flex; align-items:center; gap:10px; margin:8px 0;">
+          <div style="width:10px; height:10px; border-radius:50%; background:${teamData.color}; box-shadow:0 0 0 2px rgba(255,255,255,.25);"></div>
+          <div style="font-size:12px; opacity:.95;">
+            <b>#${idx+1}</b> ${d.name} • V${d.lap} • ${fmtMsToLap(d.bestLapMs)}
           </div>
-        `;
-      })
-      .join("");
+        </div>
+      `).join("");
     elDriversOnTrack.innerHTML = items;
   }
 
   function injectTeamLogoTop() {
-    // "Logo APENAS no topo" — injeta no header sem duplicar.
     const topBar = document.getElementById("top-bar");
     if (!topBar) return;
 
@@ -414,23 +451,43 @@
       img.style.marginRight = "10px";
       img.style.filter = "drop-shadow(0 2px 8px rgba(0,0,0,.45))";
       img.style.verticalAlign = "middle";
-      // Insere no começo
       topBar.insertBefore(img, topBar.firstChild);
     }
     img.src = teamData.logo;
   }
 
   // =========================
-  // 10) SIMULAÇÃO DE VOLTA
+  // 10) SESSÃO / TEMPO / SPEED
+  // =========================
+  const SESSION = {
+    running: true,
+    speedMultiplier: 1,
+    startedAt: performance.now(),
+    lastFrameAt: performance.now(),
+    sessionSeconds: 60 * 60,
+    elapsedReal: 0,  // tempo real (1x)
+    elapsedSim: 0,   // tempo simulado (com speed)
+    bestLapMs: Infinity
+  };
+
+  function updateSessionUI() {
+    const remaining = Math.max(0, SESSION.sessionSeconds - SESSION.elapsedSim);
+    if (elTimeRemaining) elTimeRemaining.textContent = fmtMMSS(remaining);
+    if (elBestLapOverall) elBestLapOverall.textContent = fmtMsToLap(SESSION.bestLapMs);
+  }
+
+  // =========================
+  // 11) VOLTAS
   // =========================
   function handleLapCrossing(driver, prevIdx, nextIdx) {
-    // crossing: quando "volta" do fim para o começo
     if (pathPoints.length < 10) return;
     if (prevIdx > nextIdx) {
       driver.lap += 1;
+
       const now = performance.now();
       const lapMs = now - driver.lapStartAt;
       driver.lapStartAt = now;
+
       driver.lastLapMs = lapMs;
       driver.bestLapMs = Math.min(driver.bestLapMs, lapMs);
       SESSION.bestLapMs = Math.min(SESSION.bestLapMs, lapMs);
@@ -438,65 +495,68 @@
   }
 
   // =========================
-  // 11) LOOP PRINCIPAL
+  // 12) LOOP
   // =========================
   function tick(now) {
-    if (!SESSION.running) {
-      SESSION.lastFrameAt = now;
-      requestAnimationFrame(tick);
-      return;
-    }
-
-    const dt = Math.min(0.05, Math.max(0.0, (now - SESSION.lastFrameAt) / 1000)); // clamp
+    const dtReal = Math.min(0.05, Math.max(0.0, (now - SESSION.lastFrameAt) / 1000));
     SESSION.lastFrameAt = now;
 
-    // tempo sessão
-    SESSION.elapsed += dt * SESSION.speedMultiplier;
-    if (SESSION.elapsed >= SESSION.sessionSeconds) {
-      SESSION.elapsed = SESSION.sessionSeconds;
-      SESSION.running = false;
+    if (SESSION.running) {
+      SESSION.elapsedReal += dtReal;
+      const dtSim = dtReal * SESSION.speedMultiplier;
+      SESSION.elapsedSim += dtSim;
+
+      if (SESSION.elapsedSim >= SESSION.sessionSeconds) {
+        SESSION.elapsedSim = SESSION.sessionSeconds;
+        SESSION.running = false;
+        if (elSessionLabel) elSessionLabel.textContent = "FINAL";
+      }
+
+      // Movimento — AQUI o speedMultiplier tem efeito direto (dtSim)
+      const wobbleAmp = calcStabilityWobble();
+
+      for (const d of myDrivers) {
+        const pace = calcDriverPaceFactor(d);
+
+        // baseStep: pontos/seg em 1x (ajuste fino)
+        // dtSim já carrega o multiplicador de velocidade
+        const baseStep = 18.0;
+        const step = baseStep * pace * dtSim;
+
+        const prevPosF = d.posF;
+        d.posF = (d.posF + step) % pathPoints.length;
+
+        // consumo/desgaste acompanha tempo simulado
+        consumeResources(d, dtSim);
+
+        const prevIdx = Math.floor(prevPosF) % pathPoints.length;
+        const idx = Math.floor(d.posF) % pathPoints.length;
+        const nextIdx = (idx + 1) % pathPoints.length;
+
+        handleLapCrossing(d, prevIdx, idx);
+
+        const p = pathPoints[idx];
+        const p2 = pathPoints[nextIdx];
+
+        // wobble bem leve (visual), sem "sair da pista"
+        const wobx = wobbleAmp * (0.5 - Math.random());
+        const woby = wobbleAmp * (0.5 - Math.random());
+        const ang = angleBetween(p, p2);
+
+        setCarTransform(d.id, p.x + wobx, p.y + woby, ang);
+      }
     }
 
-    // move carros
-    const wobbleAmp = calcStabilityWobble();
-    for (const d of myDrivers) {
-      const pace = calcDriverPaceFactor(d);
-      const baseStep = 12.0; // pontos/seg em 1x (ajuste fino)
-      const step = baseStep * pace * dt * SESSION.speedMultiplier;
-
-      const prevPosF = d.posF;
-      d.posF = (d.posF + step) % pathPoints.length;
-
-      // consumo / desgaste
-      consumeResources(d, dt * SESSION.speedMultiplier);
-
-      const prevIdx = Math.floor(prevPosF) % pathPoints.length;
-      const idx = Math.floor(d.posF) % pathPoints.length;
-      const nextIdx = (idx + 1) % pathPoints.length;
-
-      handleLapCrossing(d, prevIdx, idx);
-
-      const p = pathPoints[idx];
-      const p2 = pathPoints[nextIdx];
-
-      // wobble leve (instabilidade) sem sair da pista (só micro deslocamento)
-      const wob = wobbleAmp * (0.5 - Math.random());
-      const wob2 = wobbleAmp * (0.5 - Math.random());
-
-      const ang = angleBetween(p, p2);
-
-      setCarTransform(d.id, p.x + wob, p.y + wob2, ang);
-    }
-
-    // UI
+    // UI sempre atualiza (mesmo pausado)
     updatePilotCards();
     renderDriversOnTrackList();
+    updateSessionUI();
 
     requestAnimationFrame(tick);
   }
 
   // =========================
-  // 12) LOAD SVG (ROBUSTO)
+  // 13) LOAD SVG
   // =========================
   async function loadTrackSVG() {
     try {
@@ -504,55 +564,46 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const svgText = await res.text();
 
-      // inserir
       elTrackContainer.innerHTML = svgText;
 
       svgRoot = elTrackContainer.querySelector("svg");
-      if (!svgRoot) throw new Error("SVG root não encontrado (verifique o arquivo da pista).");
+      if (!svgRoot) throw new Error("SVG root não encontrado.");
 
       ensureSvgResponsive(svgRoot);
 
       trackPath = findBestTrackPath(svgRoot);
-      if (!trackPath) throw new Error("Nenhum <path> encontrado no SVG para gerar pathPoints.");
+      if (!trackPath) throw new Error("Nenhum <path> válido encontrado no SVG.");
 
-      // pontos do path (lógica estilo qualifying)
       pathPoints = buildPathPointsFromPath(trackPath, 1600);
-      if (!pathPoints || pathPoints.length < 50) {
-        throw new Error("Falha ao gerar pathPoints (path muito curto ou inválido).");
-      }
+      if (!pathPoints || pathPoints.length < 80) throw new Error("Falha ao gerar pathPoints.");
 
-      // carros
       carNodes.clear();
       createCarNode(svgRoot, 1, teamData.color);
       createCarNode(svgRoot, 2, teamData.color);
 
-      // posicionar inicial (sem undefined)
+      // posicionamento inicial
       for (const d of myDrivers) {
         const idx = Math.floor(d.posF) % pathPoints.length;
         const next = (idx + 1) % pathPoints.length;
         const p = pathPoints[idx];
         const p2 = pathPoints[next];
-        const ang = angleBetween(p, p2);
-        setCarTransform(d.id, p.x, p.y, ang);
+        setCarTransform(d.id, p.x, p.y, angleBetween(p, p2));
       }
 
-      // topo (logo única)
       injectTeamLogoTop();
 
-      // iniciar loop
       SESSION.startedAt = performance.now();
       SESSION.lastFrameAt = performance.now();
+      updateSessionUI();
       requestAnimationFrame(tick);
     } catch (err) {
-      console.error("Practice SVG load/init error:", err);
+      console.error("Practice init error:", err);
       elTrackContainer.innerHTML = `
         <div style="padding:18px; color:#fff; font-family:system-ui; max-width:680px;">
           <div style="font-weight:800; font-size:16px; margin-bottom:8px;">Erro ao iniciar Treino Livre</div>
-          <div style="opacity:.9; font-size:13px; line-height:1.4;">
-            ${String(err.message || err)}
-          </div>
+          <div style="opacity:.9; font-size:13px; line-height:1.4;">${String(err.message || err)}</div>
           <div style="opacity:.75; font-size:12px; margin-top:10px;">
-            Verifique o arquivo SVG em <b>${trackData.svg}</b> e se ele contém ao menos um <b>&lt;path&gt;</b>.
+            Verifique o SVG em <b>${trackData.svg}</b> e se contém um <b>&lt;path&gt;</b> adequado (ideal: <b>id="raceLine"</b>).
           </div>
         </div>
       `;
@@ -560,12 +611,14 @@
   }
 
   // =========================
-  // 13) CONTROLES (API GLOBAL)
+  // 14) CONTROLES (GLOBAIS)
   // =========================
   window.setSpeed = (v) => {
     const n = Number(v);
     if (!Number.isFinite(n) || n <= 0) return;
     SESSION.speedMultiplier = n;
+    // feedback imediato no header (opcional)
+    if (elSessionLabel) elSessionLabel.textContent = (SESSION.running ? "LIVE" : "FINAL") + ` • ${n}x`;
   };
 
   window.setMode = (id, mode) => {
@@ -580,28 +633,19 @@
     const d = myDrivers.find(x => x.id === Number(id));
     if (!d) return;
 
-    // pit: troca pneu, recupera um pouco de combustível (simples e estável)
     d.tire.compound = "SOFT";
     d.tire.wear = 0;
     d.fuel = Math.min(100, d.fuel + 18);
-
-    // pit também volta modo normal
     d.mode = "normal";
 
     updatePilotCards();
   };
 
   // =========================
-  // 14) START
+  // 15) START
   // =========================
   updatePilotCards();
   renderDriversOnTrackList();
+  updateSessionUI();
   loadTrackSVG();
-
-  // =========================
-  // 15) OBS: ARQUIVO INÚTIL?
-  // =========================
-  // Se existir no seu repo algum arquivo antigo do treino livre tipo:
-  // "practiceSystem.js" ou "practice_old.js" (não referenciado por practice.html),
-  // pode excluir do GitHub para evitar confusão.
 })();
