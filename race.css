@@ -1,0 +1,454 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: radial-gradient(circle at top, #11172a 0, #050711 60%);
+  color: #ffffff;
+}
+
+.race-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* ESQUERDA: PISTA */
+.race-left {
+  flex: 3;
+  padding: 10px;
+  display: flex;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.track-container {
+  flex: 1;
+  background-color: #000000;
+  border-radius: 18px;
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.track-container svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Carros na pista */
+.car {
+  stroke: #ffffff;
+  stroke-width: 1.5;
+}
+
+/* DIREITA: HUD */
+.race-right {
+  flex: 2;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-width: 320px;
+  min-height: 0;
+}
+
+.hud-panel {
+  flex: 1;
+  border-radius: 18px;
+  background: radial-gradient(circle at top left, #1b2442 0, #050713 55%);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.85);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* importante pro scroll interno funcionar */
+}
+
+.hud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.hud-title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.hud-subtitle {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.hud-meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.hud-lap {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* LISTA DE PILOTOS */
+.drivers-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 6px;
+  margin-bottom: 8px;
+  min-height: 0;
+}
+
+.driver-card {
+  display: grid;
+  grid-template-columns: 32px 22px 32px 1fr auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #151a30, #0b0f1f);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+}
+
+.driver-card.leader {
+  border-color: #ffd54f;
+  box-shadow: 0 0 10px rgba(255, 213, 79, 0.3);
+}
+
+.driver-pos {
+  font-weight: 700;
+  text-align: center;
+}
+
+.driver-team-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.driver-face {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.driver-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.driver-name-text {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.driver-team-text {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.driver-stats {
+  text-align: right;
+  font-size: 10px;
+}
+
+.stat-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+/* PAINEL DO USUÁRIO */
+.user-panel {
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.user-panel-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 4px;
+}
+
+.user-driver-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.user-driver-card {
+  flex: 1;
+  min-width: 150px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #101526, #080b16);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 8px 8px 6px;
+  font-size: 11px;
+}
+
+.user-driver-main {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.user-face {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.user-team {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 2px;
+}
+
+.user-status-line {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.user-driver-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.user-btn {
+  flex: 1;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #ffffff;
+  padding: 4px 6px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.user-btn.pit {
+  border-color: #8bc34a;
+}
+
+.user-btn.mode[data-mode="push"].active,
+.user-btn.mode[data-action="push"].active {
+  background: #e53935;
+  border-color: #e53935;
+}
+
+.user-btn.mode[data-mode="save"].active,
+.user-btn.mode[data-action="save"].active {
+  background: #43a047;
+  border-color: #43a047;
+}
+
+/* CONTROLES */
+.controls-row {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.controls-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.speed-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #ffffff;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease,
+    transform 0.08s ease;
+}
+
+.speed-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.speed-btn.active {
+  background: #e53935;
+  border-color: #e53935;
+}
+
+.bottom-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.back-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #ffffff;
+  padding: 6px 18px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* MODAL PÓDIO */
+.podium-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.podium-modal.hidden {
+  display: none;
+}
+
+.podium-content {
+  background: #050713;
+  border-radius: 18px;
+  padding: 18px 20px;
+  width: 420px;
+  max-width: 95vw;
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.9);
+}
+
+.podium-content h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.podium-cards {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.podium-card {
+  flex: 1;
+  border-radius: 14px;
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 11px;
+  background: linear-gradient(135deg, #141a2f, #090d1c);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.podium-card.first {
+  border-color: #ffd54f;
+}
+
+.podium-card.second {
+  border-color: #b0bec5;
+}
+
+.podium-card.third {
+  border-color: #ffb74d;
+}
+
+.podium-pos {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.podium-face {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  margin-bottom: 4px;
+}
+
+.podium-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.podium-team {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.podium-close {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #ffffff;
+  padding: 6px 18px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.podium-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* RESPONSIVO */
+@media (max-width: 900px) {
+  .race-layout {
+    flex-direction: column;
+  }
+
+  .race-left,
+  .race-right {
+    flex: auto;
+    height: 50vh;
+  }
+}

@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>F1 MANAGER 2025 — Patrocínios</title>
+
+  <style>
+    :root{
+      --bg:#05070c;
+      --glass: rgba(10,14,22,.62);
+      --glass2: rgba(10,14,22,.74);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.68);
+      --chip: rgba(0,0,0,.35);
+      --blue:#18a7ff;
+      --blue2:#0a7bd6;
+      --ok:#23c55e;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+      --radius:18px;
+      --radius2:24px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --shadow2: 0 10px 26px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* Background */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background:
+        radial-gradient(1200px 700px at 10% 0%, rgba(24,167,255,.18), transparent 55%),
+        radial-gradient(900px 600px at 85% 10%, rgba(16,185,129,.10), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.72), rgba(0,0,0,.88)),
+        url("assets/ui/patrocinio_bg.png");
+      background-size: cover;
+      background-position: center;
+      filter: saturate(1.05) contrast(1.05);
+      z-index:-2;
+    }
+    body::after{
+      content:"";
+      position:fixed; inset:0;
+      background: radial-gradient(900px 700px at 50% 30%, rgba(0,0,0,.10), rgba(0,0,0,.70));
+      z-index:-1;
+    }
+
+    .wrap{ max-width: 1220px; margin:0 auto; padding: 20px 18px 30px; }
+
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+      padding:14px 16px;
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(10,14,22,.72), rgba(10,14,22,.48));
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(10px);
+    }
+    .brand{ display:flex; align-items:center; gap:12px; min-width: 260px; }
+    .brand img{ width:40px;height:40px;object-fit:contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,.55)); }
+    .brand h1{ font-size:14px; letter-spacing:.6px; margin:0; font-weight:800; text-transform:uppercase; line-height:1.15; }
+    .brand p{ margin:2px 0 0; font-size:12px; color:var(--muted); line-height:1.2; }
+
+    .actions{ display:flex; gap:10px; align-items:center; }
+    .btn{
+      appearance:none;
+      border:1px solid var(--stroke2);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:700;
+      letter-spacing:.2px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.35);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.22); background: rgba(0,0,0,.34); }
+    .btn:active{ transform: translateY(0); }
+    .btn.primary{
+      border-color: rgba(24,167,255,.38);
+      background: linear-gradient(180deg, rgba(24,167,255,.22), rgba(10,123,214,.18));
+    }
+
+    .grid{
+      margin-top: 18px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 14px;
+      align-items:start;
+    }
+
+    .panel{
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(10,14,22,.74), rgba(10,14,22,.56));
+      border-radius: var(--radius2);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .kpi .card{
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.18));
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: var(--shadow2);
+    }
+    .kpi .k{ font-size:12px; color:var(--muted); }
+    .kpi .v{ margin-top:6px; font-weight:900; font-size:16px; }
+
+    .sectionTitle{
+      margin: 0;
+      font-size: 13px;
+      letter-spacing:.6px;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.86);
+    }
+    .subhint{ margin:8px 0 0; color: rgba(255,255,255,.62); font-size:12px; line-height:1.35; }
+
+    /* Containers usados pelo sponsorSystem.js */
+    #listaSponsorsAtivos, #listaSponsorsOfertas{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    /* Cards gerados pelo JS */
+    .sponsor-card{
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.18));
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    }
+    .sponsor-card h3{ margin:0; font-size:14px; font-weight: 900; }
+    .sponsor-card .sub{ color: var(--muted); font-size:12px; margin-top:4px; line-height:1.25; }
+    .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-top:10px; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: var(--chip);
+      font-size: 12px;
+      color: rgba(255,255,255,.82);
+      white-space:nowrap;
+    }
+
+    .sponsor-card .btnrow{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+    .sponsor-card button{
+      flex: 1 1 160px;
+      border-radius: 999px;
+      padding: 10px 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      color: rgba(255,255,255,.92);
+      font-weight: 800;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .sponsor-card button:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.22); background: rgba(0,0,0,.34); }
+    .sponsor-card button.primary{
+      border-color: rgba(24,167,255,.38);
+      background: linear-gradient(180deg, rgba(24,167,255,.22), rgba(10,123,214,.18));
+    }
+    .sponsor-card button.danger{
+      border-color: rgba(239,68,68,.30);
+      background: linear-gradient(180deg, rgba(239,68,68,.16), rgba(0,0,0,.22));
+    }
+
+    @media (max-width: 1100px){
+      .grid{ grid-template-columns: 1fr; }
+      .kpi{ grid-template-columns: repeat(2, 1fr); }
+      .brand{ min-width: unset; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <img id="teamLogo" src="" alt="Logo da equipe" />
+        <div>
+          <h1>PATROCÍNIOS & MARCA</h1>
+          <p>Negocie contratos, cumpra metas e converta em performance real.</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="btnManager">Manager</button>
+        <button class="btn primary" id="btnVoltar">VOLTAR</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2 class="sectionTitle">Central de contratos</h2>
+        <p class="subhint">Ofertas variam por reputação, exposição e marketing. Contratos pagam por GP e podem ter bônus/penalidades.</p>
+
+        <div class="kpi">
+          <div class="card">
+            <div class="k">Caixa</div>
+            <div class="v" id="uiMoney">€ 0</div>
+          </div>
+          <div class="card">
+            <div class="k">Reputação</div>
+            <div class="v" id="uiRep">0 / 100</div>
+          </div>
+          <div class="card">
+            <div class="k">Exposição</div>
+            <div class="v" id="uiExpo">0 / 100</div>
+          </div>
+          <div class="card">
+            <div class="k">Marketing</div>
+            <div class="v" id="uiMkt">0 / 100</div>
+          </div>
+          <div class="card">
+            <div class="k">Boost ofertas</div>
+            <div class="v" id="uiBoost">x1.0</div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="sectionTitle">Contratos ativos</div>
+          <div id="listaSponsorsAtivos"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="sectionTitle">Ofertas disponíveis</h2>
+        <p class="subhint">Assine com atenção: metas podem encerrar contrato se não forem cumpridas.</p>
+        <div id="listaSponsorsOfertas"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SAVE_KEY = "F1M2025_SAVE";
+
+    function defaultState(){
+      const params = new URLSearchParams(location.search);
+      const userTeam = (params.get("userTeam") || localStorage.getItem("F1M_userTeam") || "mclaren").toLowerCase();
+      localStorage.setItem("F1M_userTeam", userTeam);
+
+      return {
+        meta: { version: 1, lastSaved: Date.now() },
+        userTeam,
+        finances: {
+          money: 140_000_000,
+          weeklyCost: 0,
+          exposure: 35,
+          reputation: 82,
+          marketing: 59
+        },
+        sponsors: [],
+        sponsorPool: []
+      };
+    }
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(SAVE_KEY);
+        if(!raw) return defaultState();
+        const parsed = JSON.parse(raw);
+        return Object.assign(defaultState(), parsed);
+      }catch(e){
+        return defaultState();
+      }
+    }
+
+    function saveState(){
+      try{
+        window.gameState.meta = window.gameState.meta || {};
+        window.gameState.meta.lastSaved = Date.now();
+        localStorage.setItem(SAVE_KEY, JSON.stringify(window.gameState));
+      }catch(e){}
+    }
+
+    window.gameState = loadState();
+
+    (function setLogo(){
+      const team = (window.gameState.userTeam || "mclaren").toLowerCase();
+      const logo = document.getElementById("teamLogo");
+      logo.src = `assets/teams/${team}.png`;
+      logo.onerror = () => { logo.style.display = "none"; };
+    })();
+
+    document.getElementById("btnVoltar").addEventListener("click", () => {
+      if (history.length > 1) history.back();
+      else location.href = "index.html";
+    });
+    document.getElementById("btnManager").addEventListener("click", () => {
+      location.href = "index.html";
+    });
+
+    let saveT;
+    document.addEventListener("click", () => {
+      clearTimeout(saveT);
+      saveT = setTimeout(saveState, 120);
+    });
+
+    function euro(n){
+      return "€ " + Math.round(n).toLocaleString("pt-BR");
+    }
+    function refreshTop(){
+      const f = window.gameState.finances || {};
+      document.getElementById("uiMoney").textContent = euro(f.money || 0);
+      document.getElementById("uiRep").textContent = `${Math.round(f.reputation || 0)} / 100`;
+      document.getElementById("uiExpo").textContent = `${Math.round(f.exposure || 0)} / 100`;
+      document.getElementById("uiMkt").textContent = `${Math.round(f.marketing || 0)} / 100`;
+      const boost = 0.7 + ((f.reputation||0)*0.004) + ((f.exposure||0)*0.003) + ((f.marketing||0)*0.004);
+      document.getElementById("uiBoost").textContent = "x" + boost.toFixed(2);
+    }
+    refreshTop();
+    setInterval(refreshTop, 400);
+  </script>
+
+  <!-- IMPORTANTE: aqui NÃO carregamos main.js/data.js para não redeclarar TEAMS_2025 -->
+  <script src="sponsorSystem.js"></script>
+  <script>
+    if (typeof mostrarTelaSponsors === "function") mostrarTelaSponsors();
+  </script>
+</body>
+</html>
