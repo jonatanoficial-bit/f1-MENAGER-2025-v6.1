@@ -1,261 +1,197 @@
-// =======================================================
-// SPONSOR SYSTEM – PATROCÍNIOS E METAS
-// =======================================================
-//
-// Cada patrocínio tem:
-// id, name, logo, upfront, perRace, bonusType, target, bonusValue, contractRaces
-//
-// Tipos de bônus:
-// - position: terminar no top X
-// - points: marcar pontos
-// - podium: top 3
-// - win: vencer
-// =======================================================
+/* =========================================================
+   F1 MANAGER 2025 — SPONSOR SYSTEM
+   ✔ Contratos realistas com metas
+   ✔ Pagamento por corrida
+   ✔ Multas e cancelamento
+   ✔ Influência direta no desempenho
+   ✔ Conectado ao GAME_STATE
+   ========================================================= */
 
-
-// Inicializa pool se vazio
-if (!gameState.sponsorPool) {
-    gameState.sponsorPool = [
-        {
-            id: "sp01",
-            name: "TechOil",
-            logo: "assets/sponsors/oil.png",
-            upfront: 2000000,
-            perRace: 180000,
-            bonusType: "position",
-            target: 10,
-            bonusValue: 350000,
-            contractRaces: 6,
-            difficulty: 0.6
-        },
-        {
-            id: "sp02",
-            name: "SuperBank",
-            logo: "assets/sponsors/bank.png",
-            upfront: 3500000,
-            perRace: 220000,
-            bonusType: "podium",
-            target: 3,
-            bonusValue: 600000,
-            contractRaces: 4,
-            difficulty: 0.75
-        },
-        {
-            id: "sp03",
-            name: "Red Cola",
-            logo: "assets/sponsors/cola.png",
-            upfront: 1500000,
-            perRace: 120000,
-            bonusType: "points",
-            target: 1,
-            bonusValue: 200000,
-            contractRaces: 8,
-            difficulty: 0.4
-        }
-    ];
+if (!window.GAME_STATE) {
+  console.error("❌ GAME_STATE não encontrado");
 }
 
-if (!gameState.activeSponsors) {
-    gameState.activeSponsors = [];
-}
+/* =========================
+   CONFIGURAÇÕES GERAIS
+   ========================= */
 
+const SPONSOR_TIERS = {
+  local:   { min: 80_000,  max: 250_000, reputation: 0 },
+  national:{ min: 250_000, max: 900_000, reputation: 30 },
+  global:  { min: 900_000, max: 2_500_000, reputation: 60 }
+};
 
-// =======================================================
-// MOSTRAR TELA DE PATROCÍNIOS
-// =======================================================
+const MAX_ACTIVE_SPONSORS = 5;
 
-function mostrarTelaSponsors() {
-    mostrarTela("tela-sponsors");
+/* =========================
+   GERAR OFERTAS DE PATROCÍNIO
+   ========================= */
 
-    let divAtivos = document.getElementById("listaSponsorsAtivos");
-    divAtivos.innerHTML = "";
+window.generateSponsorOffers = function () {
+  const offers = [];
 
-    gameState.activeSponsors.forEach(sp => {
-        divAtivos.innerHTML += cardSponsor(sp, false);
-    });
+  const teamScore =
+    GAME_STATE.team.basePerformance * 0.45 +
+    GAME_STATE.manager.score * 0.35 +
+    GAME_STATE.modifiers.sponsorBoost * 0.20;
 
-    let divPropostas = document.getElementById("listaSponsorsPropostas");
-    divPropostas.innerHTML = "";
+  Object.entries(SPONSOR_TIERS).forEach(([tier, cfg]) => {
+    if (GAME_STATE.manager.score < cfg.reputation) return;
 
-    // oferta de propostas antes de cada GP
-    let propostas = gerarPropostasSponsors();
+    const chance =
+      0.25 +
+      teamScore / 400 +
+      GAME_STATE.modifiers.sponsorBoost / 200;
 
-    propostas.forEach(sp => {
-        divPropostas.innerHTML += cardSponsor(sp, true);
-    });
-}
+    if (Math.random() < chance) {
+      const baseValue = random(cfg.min, cfg.max);
+      const value =
+        baseValue *
+        (0.85 + teamScore / 200) *
+        (1 + GAME_STATE.modifiers.sponsorBoost / 100);
 
-
-// =======================================================
-// UI helper: cartão de patrocinador
-// =======================================================
-
-function cardSponsor(sp, podeAssinar) {
-
-    let btn = podeAssinar
-        ? `<button onclick="assinarSponsor('${sp.id}')">Assinar</button>`
-        : `<button onclick="cancelarSponsor('${sp.id}')">Cancelar</button>`;
-
-    return `
-    <div class="sponsor-card">
-        <img src="${sp.logo}" class="sponsorLogo">
-        <h3>${sp.name}</h3>
-        <p>Pagamento inicial: $${sp.upfront.toLocaleString()}</p>
-        <p>Por corrida: $${sp.perRace.toLocaleString()}</p>
-        <p>Meta: ${metaSponsorTexto(sp)}</p>
-        <p>Restam: ${sp.contractRaces} corridas</p>
-        ${btn}
-    </div>
-    `;
-}
-
-function metaSponsorTexto(sp) {
-    switch (sp.bonusType) {
-        case "position": return `Terminar top ${sp.target}`;
-        case "points": return `Marcar pontos`;
-        case "podium": return `Subir ao pódio`;
-        case "win": return `Vencer`;
-        default: return "";
+      offers.push({
+        id: crypto.randomUUID(),
+        name: sponsorName(tier),
+        tier,
+        valuePerRace: Math.round(value),
+        duration: randomInt(6, 12),
+        objectives: generateObjectives(tier),
+        penalty: Math.round(value * 2)
+      });
     }
-}
+  });
 
+  return offers;
+};
 
-// =======================================================
-// GERAR PROPOSTAS DE PATROCÍNIO
-// =======================================================
+/* =========================
+   ASSINAR CONTRATO
+   ========================= */
 
-function gerarPropostasSponsors() {
+window.signSponsor = function (offer) {
+  if (GAME_STATE.sponsors.length >= MAX_ACTIVE_SPONSORS) return;
 
-    // até 3 propostas por GP
-    let lista = [];
+  GAME_STATE.sponsors.push({
+    ...offer,
+    racesLeft: offer.duration,
+    status: "active",
+    progress: initObjectiveProgress(offer.objectives)
+  });
 
-    let marketingImpact = getStaffImpact().marketing || 0;
-    let probBonus = marketingImpact / 200; // influencia chance de propostas melhores
+  console.log("🤝 Patrocínio assinado:", offer.name);
+};
 
-    gameState.sponsorPool.forEach(sp => {
-        // sorteio de ofertas
-        if (Math.random() < (0.3 + probBonus)) {
-            lista.push(sp);
-        }
-    });
+/* =========================
+   PROCESSAR CORRIDA (CALL NO FIM DA RACE)
+   ========================= */
 
-    // se nenhuma, dar ao menos 1
-    if (lista.length === 0) {
-        lista.push(gameState.sponsorPool[0]);
+window.processSponsorRaceResult = function (raceResult) {
+  GAME_STATE.sponsors.forEach(sponsor => {
+    if (sponsor.status !== "active") return;
+
+    sponsor.racesLeft--;
+
+    // Atualiza progresso de metas
+    updateObjectives(sponsor, raceResult);
+
+    // Pagamento
+    GAME_STATE.team.budget += sponsor.valuePerRace;
+
+    // Verificação de falha
+    if (checkFailure(sponsor)) {
+      sponsor.status = "failed";
+      GAME_STATE.team.budget -= sponsor.penalty;
+      GAME_STATE.manager.score -= 20;
+      console.warn("❌ Patrocínio cancelado:", sponsor.name);
     }
 
-    return lista.slice(0, 3);
-}
-
-
-// =======================================================
-// ASSINAR
-// =======================================================
-
-function assinarSponsor(id) {
-
-    let sp = gameState.sponsorPool.find(s => s.id === id);
-    if (!sp) return;
-
-    // pagar upfront
-    gameState.finances.balance += sp.upfront;
-
-    // mover para ativos
-    gameState.activeSponsors.push(sp);
-
-    // remover da pool
-    gameState.sponsorPool = gameState.sponsorPool.filter(s => s.id !== id);
-
-    salvarGame();
-    mostrarTelaSponsors();
-}
-
-
-// =======================================================
-// PAGAMENTOS POR CORRIDA
-// =======================================================
-
-function pagarSponsorsPorCorrida(resultado) {
-
-    gameState.activeSponsors.forEach(sp => {
-
-        // pagamento fixo
-        gameState.finances.balance += sp.perRace;
-
-        gameState.finances.history.push({
-            tipo: "sponsor",
-            valor: sp.perRace,
-            pista: GAME_DATA.tracks[gameState.weekendIndex].name
-        });
-
-        // bônus se meta cumprida
-        if (cumpriuMetaSponsor(sp, resultado)) {
-
-            gameState.finances.balance += sp.bonusValue;
-
-            gameState.finances.history.push({
-                tipo: "bonus",
-                valor: sp.bonusValue,
-                meta: sp.bonusType
-            });
-        }
-
-        // reduzir duração
-        sp.contractRaces--;
-
-    });
-
-    // remover contratos vencidos
-    gameState.activeSponsors = gameState.activeSponsors.filter(sp => sp.contractRaces > 0);
-
-    salvarGame();
-}
-
-
-// =======================================================
-// VERIFICAR META
-// =======================================================
-
-function cumpriuMetaSponsor(sp, resultado) {
-
-    let firstOfTeam = resultado.find(r => r.team === gameState.teamSelected);
-    if (!firstOfTeam) return false;
-
-    switch (sp.bonusType) {
-        case "position": return firstOfTeam.pos <= sp.target;
-        case "points": return firstOfTeam.pos <= 10;
-        case "podium": return firstOfTeam.pos <= 3;
-        case "win": return firstOfTeam.pos === 1;
-        default: return false;
+    if (sponsor.racesLeft <= 0 && sponsor.status === "active") {
+      sponsor.status = "completed";
+      GAME_STATE.manager.score += 15;
+      console.log("✅ Patrocínio concluído:", sponsor.name);
     }
+  });
+
+  // Remove expirados/falhos
+  GAME_STATE.sponsors = GAME_STATE.sponsors.filter(
+    s => s.status === "active"
+  );
+};
+
+/* =========================
+   OBJETIVOS
+   ========================= */
+
+function generateObjectives(tier) {
+  if (tier === "local") {
+    return {
+      minFinishAvg: randomInt(12, 15),
+      maxDNF: 2
+    };
+  }
+  if (tier === "national") {
+    return {
+      minFinishAvg: randomInt(8, 11),
+      minPoints: randomInt(12, 25)
+    };
+  }
+  return {
+    minFinishAvg: randomInt(6, 9),
+    minPoints: randomInt(30, 50),
+    noDNF: true
+  };
 }
 
-
-// =======================================================
-// CANCELAR PATROCÍNIO
-// =======================================================
-
-function cancelarSponsor(id) {
-
-    let sp = gameState.activeSponsors.find(s => s.id === id);
-    if (!sp) return;
-
-    // penalidade simples: perder upfront proporcional
-    let multa = sp.upfront * 0.3;
-
-    if (gameState.finances.balance < multa) {
-        alert("Saldo insuficiente para rescindir!");
-        return;
-    }
-
-    gameState.finances.balance -= multa;
-
-    // voltar para pool com tempo zerado
-    sp.contractRaces = 0;
-    gameState.sponsorPool.push(sp);
-
-    gameState.activeSponsors = gameState.activeSponsors.filter(s => s.id !== id);
-
-    salvarGame();
-    mostrarTelaSponsors();
+function initObjectiveProgress(obj) {
+  return {
+    races: 0,
+    totalFinish: 0,
+    points: 0,
+    dnfs: 0
+  };
 }
+
+function updateObjectives(sponsor, race) {
+  const p = sponsor.progress;
+  p.races++;
+  p.totalFinish += race.bestFinish;
+  p.points += race.points;
+  p.dnfs += race.dnfs || 0;
+}
+
+function checkFailure(sponsor) {
+  const o = sponsor.objectives;
+  const p = sponsor.progress;
+  const avgFinish = p.totalFinish / p.races;
+
+  if (o.minFinishAvg && avgFinish > o.minFinishAvg) return true;
+  if (o.minPoints && p.points < o.minPoints) return true;
+  if (o.noDNF && p.dnfs > 0) return true;
+  if (o.maxDNF && p.dnfs > o.maxDNF) return true;
+
+  return false;
+}
+
+/* =========================
+   UTIL
+   ========================= */
+
+function random(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function sponsorName(tier) {
+  const base = {
+    local: ["AutoFix", "SpeedOil", "TrackOne"],
+    national: ["NeoTech", "ApexFuel", "Velocity"],
+    global: ["Hyperion", "Titan", "Quantum"]
+  };
+  return base[tier][Math.floor(Math.random() * base[tier].length)];
+}
+
+console.log("✅ sponsorSystem.js carregado corretamente");
