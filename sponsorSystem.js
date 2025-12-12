@@ -1,197 +1,185 @@
 /* =========================================================
-   F1 MANAGER 2025 — SPONSOR SYSTEM
-   ✔ Contratos realistas com metas
-   ✔ Pagamento por corrida
-   ✔ Multas e cancelamento
-   ✔ Influência direta no desempenho
-   ✔ Conectado ao GAME_STATE
+   F1 MANAGER 2025 — SPONSORS UI SYSTEM (v6.1)
+   Requer: economySystem.js (window.F1MEconomy)
    ========================================================= */
 
-if (!window.GAME_STATE) {
-  console.error("❌ GAME_STATE não encontrado");
-}
+(function () {
+  "use strict";
 
-/* =========================
-   CONFIGURAÇÕES GERAIS
-   ========================= */
+  function $(sel, root = document) { return root.querySelector(sel); }
+  function el(tag, cls) { const n = document.createElement(tag); if (cls) n.className = cls; return n; }
 
-const SPONSOR_TIERS = {
-  local:   { min: 80_000,  max: 250_000, reputation: 0 },
-  national:{ min: 250_000, max: 900_000, reputation: 30 },
-  global:  { min: 900_000, max: 2_500_000, reputation: 60 }
-};
+  function formatMoneyEUR(n) {
+    try {
+      return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+    } catch {
+      return `€ ${Math.round(n).toLocaleString("pt-BR")}`;
+    }
+  }
 
-const MAX_ACTIVE_SPONSORS = 5;
+  function ensureDeps() {
+    if (!window.F1MEconomy) {
+      console.error("SponsorSystem: economySystem.js não carregado.");
+      return false;
+    }
+    return true;
+  }
 
-/* =========================
-   GERAR OFERTAS DE PATROCÍNIO
-   ========================= */
+  function render(container) {
+    if (!ensureDeps()) return;
 
-window.generateSponsorOffers = function () {
-  const offers = [];
+    const state = window.F1MEconomy.getState();
+    const offers = window.F1MEconomy.genOffers();
+    const mods = window.F1MEconomy.getModifiers();
 
-  const teamScore =
-    GAME_STATE.team.basePerformance * 0.45 +
-    GAME_STATE.manager.score * 0.35 +
-    GAME_STATE.modifiers.sponsorBoost * 0.20;
+    container.innerHTML = "";
 
-  Object.entries(SPONSOR_TIERS).forEach(([tier, cfg]) => {
-    if (GAME_STATE.manager.score < cfg.reputation) return;
+    const header = el("div", "sponsor-panel__header");
+    header.innerHTML = `
+      <div class="sponsor-kpis">
+        <div class="kpi"><div class="kpi__label">Caixa</div><div class="kpi__value">${formatMoneyEUR(state.economy.cash)}</div></div>
+        <div class="kpi"><div class="kpi__label">Reputação</div><div class="kpi__value">${Math.round(state.economy.reputation)} / 100</div></div>
+        <div class="kpi"><div class="kpi__label">Exposição</div><div class="kpi__value">${Math.round(state.economy.exposure)} / 100</div></div>
+        <div class="kpi"><div class="kpi__label">Marketing</div><div class="kpi__value">${Math.round(state.staff.marketing.level)} / 100</div></div>
+        <div class="kpi"><div class="kpi__label">Boost ofertas</div><div class="kpi__value">x${mods.sponsorOfferMul.toFixed(2)}</div></div>
+      </div>
+      <div class="sponsor-note">
+        Contratos pagam por GP, com bônus/penalidade no fim. Metas variam por equipe, reputação e marketing.
+      </div>
+    `;
 
-    const chance =
-      0.25 +
-      teamScore / 400 +
-      GAME_STATE.modifiers.sponsorBoost / 200;
+    const active = el("div", "sponsor-panel__block");
+    active.innerHTML = `<h3 class="sponsor-panel__title">Contratos ativos</h3>`;
+    const activeList = el("div", "sponsor-list");
 
-    if (Math.random() < chance) {
-      const baseValue = random(cfg.min, cfg.max);
-      const value =
-        baseValue *
-        (0.85 + teamScore / 200) *
-        (1 + GAME_STATE.modifiers.sponsorBoost / 100);
-
-      offers.push({
-        id: crypto.randomUUID(),
-        name: sponsorName(tier),
-        tier,
-        valuePerRace: Math.round(value),
-        duration: randomInt(6, 12),
-        objectives: generateObjectives(tier),
-        penalty: Math.round(value * 2)
+    if (!state.sponsors.active.length) {
+      const empty = el("div", "sponsor-empty");
+      empty.textContent = "Nenhum contrato ativo. Assine ofertas abaixo para iniciar fluxo de caixa.";
+      activeList.appendChild(empty);
+    } else {
+      state.sponsors.active.forEach(c => {
+        activeList.appendChild(contractCard(c, { active: true }));
       });
     }
-  });
+    active.appendChild(activeList);
 
-  return offers;
-};
+    const offersBlock = el("div", "sponsor-panel__block");
+    offersBlock.innerHTML = `<h3 class="sponsor-panel__title">Ofertas disponíveis (Rodada ${state.season.round})</h3>`;
+    const offerList = el("div", "sponsor-list");
 
-/* =========================
-   ASSINAR CONTRATO
-   ========================= */
+    offers.forEach(o => {
+      offerList.appendChild(contractCard(o, { active: false }));
+    });
 
-window.signSponsor = function (offer) {
-  if (GAME_STATE.sponsors.length >= MAX_ACTIVE_SPONSORS) return;
+    offersBlock.appendChild(offerList);
 
-  GAME_STATE.sponsors.push({
-    ...offer,
-    racesLeft: offer.duration,
-    status: "active",
-    progress: initObjectiveProgress(offer.objectives)
-  });
+    container.appendChild(header);
+    container.appendChild(active);
+    container.appendChild(offersBlock);
 
-  console.log("🤝 Patrocínio assinado:", offer.name);
-};
-
-/* =========================
-   PROCESSAR CORRIDA (CALL NO FIM DA RACE)
-   ========================= */
-
-window.processSponsorRaceResult = function (raceResult) {
-  GAME_STATE.sponsors.forEach(sponsor => {
-    if (sponsor.status !== "active") return;
-
-    sponsor.racesLeft--;
-
-    // Atualiza progresso de metas
-    updateObjectives(sponsor, raceResult);
-
-    // Pagamento
-    GAME_STATE.team.budget += sponsor.valuePerRace;
-
-    // Verificação de falha
-    if (checkFailure(sponsor)) {
-      sponsor.status = "failed";
-      GAME_STATE.team.budget -= sponsor.penalty;
-      GAME_STATE.manager.score -= 20;
-      console.warn("❌ Patrocínio cancelado:", sponsor.name);
-    }
-
-    if (sponsor.racesLeft <= 0 && sponsor.status === "active") {
-      sponsor.status = "completed";
-      GAME_STATE.manager.score += 15;
-      console.log("✅ Patrocínio concluído:", sponsor.name);
-    }
-  });
-
-  // Remove expirados/falhos
-  GAME_STATE.sponsors = GAME_STATE.sponsors.filter(
-    s => s.status === "active"
-  );
-};
-
-/* =========================
-   OBJETIVOS
-   ========================= */
-
-function generateObjectives(tier) {
-  if (tier === "local") {
-    return {
-      minFinishAvg: randomInt(12, 15),
-      maxDNF: 2
-    };
+    bindActions(container);
   }
-  if (tier === "national") {
-    return {
-      minFinishAvg: randomInt(8, 11),
-      minPoints: randomInt(12, 25)
-    };
+
+  function contractCard(c, { active }) {
+    const card = el("div", `sponsor-card ${active ? "is-active" : ""}`);
+    const badge = c.type === "MASTER" ? "Máster" : c.type === "OFFICIAL" ? "Oficial" : "Bônus";
+
+    const objective = c.objective
+      ? `${c.objective.label}: <strong>${c.objective.target}</strong>`
+      : "Meta: —";
+
+    const racesLeft = active ? `<div class="meta">Restante: <strong>${c.racesLeft}</strong> GPs</div>` : `<div class="meta">Duração: <strong>${c.durationRaces}</strong> GPs</div>`;
+
+    card.innerHTML = `
+      <div class="sponsor-card__top">
+        <div class="badge">${badge}</div>
+        <div class="name">${c.name}</div>
+      </div>
+
+      <div class="sponsor-card__mid">
+        <div class="meta">Valor anual: <strong>${formatMoneyEUR(c.annualValue)}</strong></div>
+        <div class="meta">Pagamento/GP: <strong>${formatMoneyEUR(c.payPerRace)}</strong></div>
+        ${racesLeft}
+        <div class="meta">${objective}</div>
+        <div class="meta">Bônus: <strong>${formatMoneyEUR(c.bonus)}</strong> • Penalidade: <strong>${formatMoneyEUR(c.penalty)}</strong></div>
+      </div>
+
+      <div class="sponsor-card__actions">
+        ${active
+          ? `<button class="btn-mini btn-mini--ghost" type="button" data-action="details" data-id="${c.id}">Detalhes</button>`
+          : `<button class="btn-mini" type="button" data-action="sign" data-id="${c.id}">Assinar</button>`
+        }
+      </div>
+    `;
+    return card;
   }
-  return {
-    minFinishAvg: randomInt(6, 9),
-    minPoints: randomInt(30, 50),
-    noDNF: true
+
+  function bindActions(root) {
+    root.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("[data-action]");
+      if (!btn) return;
+
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+
+      if (!window.F1MEconomy) return;
+
+      if (action === "sign") {
+        const offers = window.F1MEconomy.genOffers();
+        const offer = offers.find(o => o.id === id);
+        if (!offer) return alert("Oferta inválida.");
+
+        const res = window.F1MEconomy.signContract(offer);
+        if (!res.ok) return alert(res.reason || "Não foi possível assinar.");
+        alert("Contrato assinado com sucesso.");
+        render(root);
+      }
+
+      if (action === "details") {
+        alert("Detalhes avançados (histórico, progresso e cláusulas) podem ser exibidos aqui.");
+      }
+    });
+  }
+
+  // CSS mínimo embutido (não quebra seu layout existente)
+  function injectMiniCSS() {
+    if ($("#sponsor-mini-css")) return;
+    const style = el("style");
+    style.id = "sponsor-mini-css";
+    style.textContent = `
+      .sponsor-panel__header{margin-top:18px;padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(0,0,0,.35);backdrop-filter: blur(8px);}
+      .sponsor-kpis{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:10px;}
+      .kpi{padding:10px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);}
+      .kpi__label{font-size:12px;opacity:.75}
+      .kpi__value{font-size:14px;font-weight:700}
+      .sponsor-note{margin-top:10px;opacity:.85;font-size:12px}
+      .sponsor-panel__block{margin-top:16px}
+      .sponsor-panel__title{margin:0 0 10px 0;font-size:14px;letter-spacing:.04em;text-transform:uppercase;opacity:.9}
+      .sponsor-list{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px}
+      .sponsor-card{padding:12px;border-radius:16px;background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.10);backdrop-filter: blur(8px)}
+      .sponsor-card.is-active{border-color: rgba(0,180,255,.35)}
+      .sponsor-card__top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+      .badge{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10)}
+      .name{font-weight:800;font-size:13px}
+      .sponsor-card__mid{margin-top:10px;display:grid;gap:6px;font-size:12px;opacity:.92}
+      .meta strong{font-weight:800}
+      .sponsor-card__actions{margin-top:10px;display:flex;justify-content:flex-end}
+      .btn-mini{border:0;border-radius:999px;padding:8px 12px;background:rgba(0,180,255,.95);color:#fff;font-weight:800;cursor:pointer}
+      .btn-mini--ghost{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10)}
+      .sponsor-empty{opacity:.85;font-size:12px;padding:10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+      @media (max-width: 1100px){.sponsor-kpis{grid-template-columns:repeat(2,minmax(140px,1fr));}.sponsor-list{grid-template-columns:1fr}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  const SponsorSystem = {
+    renderInto: (selectorOrEl) => {
+      injectMiniCSS();
+      const container = typeof selectorOrEl === "string" ? document.querySelector(selectorOrEl) : selectorOrEl;
+      if (!container) return console.error("SponsorSystem: container não encontrado.");
+      render(container);
+    }
   };
-}
 
-function initObjectiveProgress(obj) {
-  return {
-    races: 0,
-    totalFinish: 0,
-    points: 0,
-    dnfs: 0
-  };
-}
-
-function updateObjectives(sponsor, race) {
-  const p = sponsor.progress;
-  p.races++;
-  p.totalFinish += race.bestFinish;
-  p.points += race.points;
-  p.dnfs += race.dnfs || 0;
-}
-
-function checkFailure(sponsor) {
-  const o = sponsor.objectives;
-  const p = sponsor.progress;
-  const avgFinish = p.totalFinish / p.races;
-
-  if (o.minFinishAvg && avgFinish > o.minFinishAvg) return true;
-  if (o.minPoints && p.points < o.minPoints) return true;
-  if (o.noDNF && p.dnfs > 0) return true;
-  if (o.maxDNF && p.dnfs > o.maxDNF) return true;
-
-  return false;
-}
-
-/* =========================
-   UTIL
-   ========================= */
-
-function random(min, max) {
-  return Math.random() * (max - min) + min;
-}
-
-function randomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function sponsorName(tier) {
-  const base = {
-    local: ["AutoFix", "SpeedOil", "TrackOne"],
-    national: ["NeoTech", "ApexFuel", "Velocity"],
-    global: ["Hyperion", "Titan", "Quantum"]
-  };
-  return base[tier][Math.floor(Math.random() * base[tier].length)];
-}
-
-console.log("✅ sponsorSystem.js carregado corretamente");
+  window.SponsorSystem = SponsorSystem;
+})();
