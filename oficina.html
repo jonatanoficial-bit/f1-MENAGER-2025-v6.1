@@ -1,88 +1,304 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>F1 Manager 2025 – Oficina</title>
-<link rel="stylesheet" href="oficina.css"/>
-<script src="oficina.js" defer></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>F1 MANAGER 2025 — Oficina (Setup)</title>
+
+  <style>
+    :root{
+      --bg:#05070c;
+      --glass: rgba(10,14,22,.66);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.66);
+      --red:#e10600;
+      --radius: 20px;
+      --radius2: 26px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --shadow2: 0 10px 26px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      overflow-x:hidden;
+    }
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background:
+        radial-gradient(1100px 650px at 10% 0%, rgba(225,6,0,.18), transparent 55%),
+        radial-gradient(900px 600px at 85% 10%, rgba(24,167,255,.12), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.72), rgba(0,0,0,.88)),
+        url("assets/ui/oficina_bg.png");
+      background-size: cover;
+      background-position: center;
+      filter: saturate(1.05) contrast(1.05);
+      z-index:-2;
+    }
+    body::after{
+      content:"";
+      position:fixed; inset:0;
+      background: radial-gradient(900px 700px at 50% 30%, rgba(0,0,0,.10), rgba(0,0,0,.70));
+      z-index:-1;
+    }
+
+    .wrap{ max-width: 1220px; margin:0 auto; padding: 18px 16px 28px; }
+
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+      padding:14px 16px;
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(10,14,22,.74), rgba(10,14,22,.52));
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(10px);
+    }
+    .brand{ display:flex; align-items:center; gap:12px; }
+    .brand img{ width:42px; height:42px; object-fit:contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,.55)); }
+    .brand h1{ margin:0; font-size: 14px; font-weight: 900; letter-spacing:.6px; text-transform: uppercase; }
+    .brand p{ margin:2px 0 0; font-size: 12px; color: var(--muted); }
+
+    .actions{ display:flex; gap:10px; }
+    .btn{
+      appearance:none; border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.25); color: var(--text);
+      padding: 10px 14px; border-radius: 999px; cursor:pointer;
+      font-weight: 800; letter-spacing:.2px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.35);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.24); background: rgba(0,0,0,.34); }
+    .btn.primary{
+      border-color: rgba(225,6,0,.38);
+      background: linear-gradient(180deg, rgba(225,6,0,.22), rgba(0,0,0,.22));
+    }
+
+    .grid{
+      margin-top: 16px;
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 14px;
+      align-items:start;
+    }
+
+    .panel{
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(10,14,22,.76), rgba(10,14,22,.56));
+      border-radius: var(--radius2);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .title{
+      margin:0;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing:.6px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.88);
+    }
+    .sub{ margin:8px 0 0; font-size:12px; color: rgba(255,255,255,.62); line-height:1.35; }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 110px;
+      gap: 10px;
+      align-items:center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .row:last-child{ border-bottom:0; }
+
+    .label{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .label strong{ font-size: 12px; letter-spacing:.2px; }
+    .label span{ font-size: 12px; color: rgba(255,255,255,.62); }
+
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--red);
+    }
+    .value{
+      text-align:right;
+      font-weight: 900;
+      font-size: 12px;
+      color: rgba(255,255,255,.92);
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .card{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.28);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.28);
+    }
+    .k{ font-size: 12px; color: rgba(255,255,255,.62); }
+    .v{ margin-top:6px; font-size: 16px; font-weight: 900; }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.25);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+      margin-right: 8px;
+      margin-top: 10px;
+    }
+
+    .btnbar{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top: 12px;
+    }
+    .btnbar .btn{ flex: 1 1 180px; }
+
+    @media (max-width: 1100px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 
 <body>
-
-<div class="oficina-bg"></div>
-
-<div class="oficina-container">
-
-  <!-- HEADER TOPO -->
-  <div class="oficina-header">
-    <img id="oficina-team-logo" class="team-logo" src="" alt="LOGO"/>
-
-    <div class="oficina-title">
-      <h1>OFICINA</h1>
-      <h3 id="oficina-team-name"></h3>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <img id="teamLogo" src="" alt="Logo da equipe" />
+        <div>
+          <h1>OFICINA — SETUP DO CARRO</h1>
+          <p>As mudanças são salvas e afetam treino, quali e corrida (reta, curva, pneus e pit).</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="btnDefault">Padrão</button>
+        <button class="btn primary" id="btnSave">Salvar</button>
+        <button class="btn primary" id="btnBack">Voltar</button>
+      </div>
     </div>
 
-    <button class="back-btn" id="back-lobby-btn">VOLTAR</button>
+    <div class="grid">
+      <div class="panel">
+        <h2 class="title">Controles principais</h2>
+        <p class="sub">Base realista: asa impacta reta/curva; suspensão/altura impacta estabilidade e pneus; diferencial impacta tração; motor impacta potência e risco.</p>
+
+        <div class="row">
+          <div class="label">
+            <strong>Asa dianteira</strong>
+            <span>Curvas (grip) vs. resistência ao ar</span>
+          </div>
+          <div class="value" id="vFrontWing">50</div>
+        </div>
+        <input id="frontWing" type="range" min="0" max="100" value="50" />
+
+        <div class="row">
+          <div class="label">
+            <strong>Asa traseira</strong>
+            <span>Estabilidade em curva vs. velocidade de reta</span>
+          </div>
+          <div class="value" id="vRearWing">55</div>
+        </div>
+        <input id="rearWing" type="range" min="0" max="100" value="55" />
+
+        <div class="row">
+          <div class="label">
+            <strong>Suspensão (rigidez)</strong>
+            <span>Resposta rápida vs. tração em zebras</span>
+          </div>
+          <div class="value" id="vSuspension">55</div>
+        </div>
+        <input id="suspension" type="range" min="0" max="100" value="55" />
+
+        <div class="row">
+          <div class="label">
+            <strong>Altura do carro</strong>
+            <span>Baixo = rápida reta (risco/instável) | Alto = estável</span>
+          </div>
+          <div class="value" id="vRideHeight">50</div>
+        </div>
+        <input id="rideHeight" type="range" min="0" max="100" value="50" />
+
+        <div class="row">
+          <div class="label">
+            <strong>Diferencial (baixa velocidade)</strong>
+            <span>Tração na saída de curva vs. desgaste</span>
+          </div>
+          <div class="value" id="vDiffLow">55</div>
+        </div>
+        <input id="diffLow" type="range" min="0" max="100" value="55" />
+
+        <div class="row">
+          <div class="label">
+            <strong>Diferencial (alta velocidade)</strong>
+            <span>Estabilidade rápida vs. rotação e pneu</span>
+          </div>
+          <div class="value" id="vDiffHigh">50</div>
+        </div>
+        <input id="diffHigh" type="range" min="0" max="100" value="50" />
+
+        <div class="row">
+          <div class="label">
+            <strong>Motor (modo)</strong>
+            <span>Eco / Normal / Ataque (potência x risco x consumo)</span>
+          </div>
+          <div class="value" id="vEngineMode">Normal</div>
+        </div>
+
+        <div class="btnbar">
+          <button class="btn" data-engine="eco">ECO</button>
+          <button class="btn" data-engine="normal">NORMAL</button>
+          <button class="btn" data-engine="attack">ATAQUE</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <span class="pill" id="pillTeam">Equipe: —</span>
+          <span class="pill" id="pillTrack">Pista: —</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="title">Impacto estimado</h2>
+        <p class="sub">Estimativa usada pelo simulador em tempo real: reta, curva, pneus, estabilidade e risco mecânico.</p>
+
+        <div class="kpi">
+          <div class="card"><div class="k">Velocidade em reta</div><div class="v" id="kStraight">x1.00</div></div>
+          <div class="card"><div class="k">Grip em curva</div><div class="v" id="kCorner">x1.00</div></div>
+          <div class="card"><div class="k">Estabilidade</div><div class="v" id="kStability">x1.00</div></div>
+          <div class="card"><div class="k">Desgaste pneus</div><div class="v" id="kTyre">x1.00</div></div>
+          <div class="card"><div class="k">Consumo/energia</div><div class="v" id="kFuel">x1.00</div></div>
+          <div class="card"><div class="k">Risco mecânico</div><div class="v" id="kRisk">Baixo</div></div>
+        </div>
+
+        <div class="btnbar" style="margin-top:14px">
+          <button class="btn primary" id="btnSendPractice">Ir para Treino</button>
+          <button class="btn primary" id="btnSendQuali">Ir para Quali</button>
+          <button class="btn primary" id="btnSendRace">Ir para Corrida</button>
+        </div>
+
+        <p class="sub" style="margin-top:12px">
+          Observação: o simulador aplica a influência por segmento (reta/curva) usando curvatura do pathPoints da pista.
+        </p>
+      </div>
+    </div>
   </div>
 
-
-  <!-- CARDS DE AJUSTES -->
-  <div class="setup-panel">
-
-    <div class="setup-card">
-      <h2>ASA DIANTEIRA</h2>
-      <input type="range" min="1" max="10" step="1" id="setup-frontwing"/>
-      <p>Atual: <span id="val-frontwing"></span></p>
-    </div>
-
-    <div class="setup-card">
-      <h2>ASA TRASEIRA</h2>
-      <input type="range" min="1" max="10" step="1" id="setup-rearwing"/>
-      <p>Atual: <span id="val-rearwing"></span></p>
-    </div>
-
-    <div class="setup-card">
-      <h2>PRESSÃO DOS PNEUS</h2>
-      <input type="range" min="18" max="24" step="0.1" id="setup-tyrepress"/>
-      <p>Atual: <span id="val-tyrepress"></span> PSI</p>
-    </div>
-
-    <div class="setup-card">
-      <h2>ALTURA DO CARRO</h2>
-      <input type="range" min="1" max="10" step="1" id="setup-rideheight"/>
-      <p>Atual: <span id="val-rideheight"></span></p>
-    </div>
-
-    <div class="setup-card">
-      <h2>RIGIDEZ DA SUSPENSÃO</h2>
-      <input type="range" min="1" max="10" step="1" id="setup-susp"/>
-      <p>Atual: <span id="val-susp"></span></p>
-    </div>
-
-  </div>
-
-
-  <!-- RESUMO E BOTÃO -->
-  <div class="oficina-summary">
-
-    <h2>Impacto estimado</h2>
-
-    <div class="summary-line">
-      Velocidade estimada: <strong><span id="sum-speed">---</span></strong>
-    </div>
-    <div class="summary-line">
-      Desgaste de pneus: <strong><span id="sum-tyre">---</span></strong>
-    </div>
-    <div class="summary-line">
-      Estabilidade em curvas: <strong><span id="sum-corner">---</span></strong>
-    </div>
-
-    <button class="save-setup-btn" id="save-setup-btn">SALVAR AJUSTES</button>
-
-  </div>
-
-</div>
-
+  <script src="oficina.js"></script>
 </body>
 </html>
