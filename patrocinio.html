@@ -1,124 +1,113 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>F1 Manager 2025 — Patrocínio</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>F1 MANAGER 2025 — Patrocínios</title>
 
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #fff;
-  background: #000;
-}
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="ui.css" />
+  <link rel="stylesheet" href="assets/css/ui-screens.css" />
 
-body {
-  background-image: url("assets/ui/patrocinio_bg.png");
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-}
-
-.overlay {
-  min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(10,15,25,0.85), rgba(0,0,0,0.95));
-  padding: 24px;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.header-title h1 {
-  font-size: 22px;
-  margin: 0;
-}
-
-.section {
-  margin-top: 24px;
-}
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.card {
-  background: rgba(15,20,35,0.75);
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid rgba(255,255,255,0.07);
-}
-
-.card h3 {
-  margin: 0 0 8px 0;
-}
-
-.card p {
-  font-size: 14px;
-  opacity: 0.85;
-}
-
-.card button {
-  margin-top: 12px;
-}
-</style>
+  <style>
+    body {
+      background: #000;
+      background-image: url("assets/ui/patrocinio_bg.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      overflow-y: auto;
+    }
+  </style>
 </head>
 
-<body>
-<div class="overlay">
-
-  <div class="header">
-    <div class="header-title">
-      <img src="assets/ui/team_logo.png" height="36">
-      <div>
-        <h1>Patrocínios & Marca</h1>
-        <small>Negocie contratos e gere fluxo de caixa</small>
+<body class="screen sponsor-screen">
+  <!-- TOP BAR -->
+  <header class="screen-topbar">
+    <div class="screen-topbar-left">
+      <img id="teamLogo" class="team-logo" src="" alt="Logo da equipe" />
+      <div class="screen-titleblock">
+        <div class="screen-title">Patrocínios &amp; Marca</div>
+        <div class="screen-subtitle">Negocie contratos, cumpra metas e converta em performance real.</div>
       </div>
     </div>
-    <button class="btn" onclick="history.back()">VOLTAR</button>
-  </div>
 
-  <div class="section">
-    <div class="cards">
-
-      <div class="card">
-        <h3>Patrocinador Máster</h3>
-        <p>Contrato de maior valor. Metas de pódio, vitórias e campeonato.</p>
-        <strong>€ 40–80 mi / temporada</strong>
-        <button class="btn">Ver ofertas</button>
-      </div>
-
-      <div class="card">
-        <h3>Apoiadores Oficiais</h3>
-        <p>Exposição média, contratos estáveis.</p>
-        <strong>Slots disponíveis: 3</strong>
-        <button class="btn">Gerenciar</button>
-      </div>
-
-      <div class="card">
-        <h3>Patrocínios Objetivo</h3>
-        <p>Bônus por volta rápida, top 10 ou metas específicas.</p>
-        <strong>Alto risco / alto retorno</strong>
-        <button class="btn">Criar contrato</button>
-      </div>
-
+    <div class="screen-topbar-right">
+      <button id="btnManager" class="pill">Manager</button>
+      <button id="btnVoltar" class="pill pill-ghost">Voltar</button>
     </div>
-  </div>
+  </header>
 
-</div>
+  <main class="screen-wrap">
+    <!-- KPI / STATUS -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Caixa</div>
+        <div class="kpi-value" id="kpiCash">€ --</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Reputação</div>
+        <div class="kpi-value" id="kpiRep">-- / 100</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Exposição</div>
+        <div class="kpi-value" id="kpiExpo">-- / 100</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Marketing</div>
+        <div class="kpi-value" id="kpiMkt">-- / 100</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Boost ofertas</div>
+        <div class="kpi-value" id="kpiBoost">x--</div>
+      </div>
+    </section>
+
+    <!-- CONTRATOS -->
+    <section class="panel">
+      <div class="panel-title">Central de contratos (ativo)</div>
+      <div id="contractsActive" class="contracts-active">
+        <!-- sponsorSystem.js preenche -->
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">Ofertas disponíveis</div>
+      <div id="offersGrid" class="offers-grid">
+        <!-- sponsorSystem.js preenche -->
+      </div>
+    </section>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="main.js"></script>
+  <script src="sponsorSystem.js"></script>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(location.search);
+      const qsTeam = (params.get("userTeam") || "").toLowerCase().trim();
+      const lsTeam = (localStorage.getItem("f1m_userTeam") || "").toLowerCase().trim();
+      const teamKey = (qsTeam || lsTeam || "ferrari");
+
+      const logo = document.getElementById("teamLogo");
+      const logoPath = `assets/logos/${teamKey}.png`;
+      logo.src = logoPath;
+      logo.onerror = () => { logo.src = "assets/logos/ferrari.png"; };
+
+      document.getElementById("btnVoltar").addEventListener("click", () => {
+        const track = params.get("track") || localStorage.getItem("f1m_lastTrack") || "australia";
+        const gp = params.get("gp") || localStorage.getItem("f1m_lastGP") || "GP da Austrália 2025";
+        location.href = `practice.html?track=${encodeURIComponent(track)}&gp=${encodeURIComponent(gp)}&userTeam=${encodeURIComponent(teamKey)}`;
+      });
+
+      document.getElementById("btnManager").addEventListener("click", () => {
+        location.href = `index.html?userTeam=${encodeURIComponent(teamKey)}`;
+      });
+
+      localStorage.setItem("f1m_userTeam", teamKey);
+    })();
+  </script>
 </body>
 </html>
