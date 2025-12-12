@@ -1,271 +1,179 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>F1 Manager 2025 — Funcionários</title>
 
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="ui.css" />
+  <link rel="stylesheet" href="ui-screens.css" />
+  <link rel="stylesheet" href="race.css" />
+
   <style>
-    :root{
-      --bg:#05060a;
-      --panel: rgba(15,18,35,.62);
-      --panel2: rgba(10,12,25,.50);
-      --stroke: rgba(255,255,255,.10);
-      --stroke2: rgba(255,255,255,.14);
-      --txt: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.68);
-      --muted2: rgba(255,255,255,.55);
-      --brand:#22d3ee;
-      --good:#34d399;
-      --warn:#fbbf24;
-      --bad:#fb7185;
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --radius: 18px;
-    }
+    html, body { height: 100%; }
+    body { margin: 0; overflow-y: auto; }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--txt);
-      background: var(--bg);
-      overflow:auto;
-    }
+    .screen-shell { min-height: 100vh; display: flex; flex-direction: column; background:#000; }
 
-    .bg{
-      position:fixed; inset:0;
+    .screen-bg {
+      position: fixed; inset: 0;
       background:
-        radial-gradient(1200px 600px at 20% 10%, rgba(34,211,238,.18), transparent 60%),
-        radial-gradient(900px 600px at 80% 20%, rgba(99,102,241,.18), transparent 60%),
-        radial-gradient(900px 700px at 55% 90%, rgba(16,185,129,.10), transparent 60%),
-        linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.85));
-      z-index:-3;
-    }
-    .bg::before{
-      content:"";
-      position:absolute; inset:0;
-      background-image: url("assets/ui/funcionarios_bg.png");
+        radial-gradient(1200px 700px at 15% 10%, rgba(60,120,255,.18), transparent 55%),
+        radial-gradient(900px 600px at 85% 15%, rgba(0,255,200,.12), transparent 55%),
+        radial-gradient(900px 600px at 70% 90%, rgba(255,120,0,.10), transparent 55%),
+        url("assets/ui/staff_bg.jpg");
       background-size: cover;
       background-position: center;
-      filter: saturate(1.05) contrast(1.05) brightness(.82);
-      opacity:.55;
-      z-index:-2;
+      filter: saturate(1.05) contrast(1.05);
+      z-index: -2;
     }
-    .bg::after{
+    .screen-bg::after{
       content:"";
       position:absolute; inset:0;
-      background: linear-gradient(180deg, rgba(0,0,0,.30), rgba(0,0,0,.88));
-      z-index:-1;
-    }
-
-    .shell{
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 18px 16px 28px;
-    }
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding: 14px 14px;
-      border:1px solid var(--stroke);
-      border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(18,22,44,.72), rgba(10,12,24,.55));
+      background: rgba(0,0,0,.55);
       backdrop-filter: blur(10px);
-      box-shadow: var(--shadow);
+      -webkit-backdrop-filter: blur(10px);
     }
-    .brand-left{display:flex; align-items:center; gap:12px}
-    .teamLogo{
-      width:44px; height:44px;
-      border-radius: 12px;
+
+    .topbar {
+      position: sticky; top: 0; z-index: 10;
+      padding: 14px 18px;
+    }
+    .topbar-glass {
+      border-radius: 18px;
+      background: rgba(10,12,18,.62);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 14px 40px rgba(0,0,0,.35);
+      padding: 12px 14px;
+      width: min(1180px, calc(100% - 16px));
+      margin: 0 auto;
+      display:flex; align-items:center; justify-content:space-between; gap: 12px;
+    }
+
+    .brand { display:flex; align-items:center; gap: 10px; min-width: 240px; }
+    .brand .badge {
+      width: 34px; height: 34px; border-radius: 10px;
+      display:grid; place-items:center;
       background: rgba(255,255,255,.08);
-      border:1px solid var(--stroke);
-      display:flex; align-items:center; justify-content:center;
+      border: 1px solid rgba(255,255,255,.10);
       overflow:hidden;
     }
-    .teamLogo img{width:100%; height:100%; object-fit:contain; padding:6px}
+    .brand .badge img { width: 22px; height: 22px; object-fit: contain; }
 
-    .titles .h1{
-      font-weight:800;
-      letter-spacing:.6px;
-      font-size: 16px;
-      text-transform: uppercase;
-      line-height: 1.05;
+    .brand .titles { line-height: 1.1; }
+    .brand .titles .kicker {
+      font-size: 12px; opacity:.85; letter-spacing:.12em; text-transform: uppercase;
     }
-    .titles .sub{
-      margin-top:4px;
-      font-size: 12px;
-      color: var(--muted);
-    }
+    .brand .titles .title { font-size: 14px; font-weight: 700; }
 
-    .btn{
-      border:1px solid var(--stroke2);
-      background: rgba(255,255,255,.07);
-      color: var(--txt);
+    .top-actions { display:flex; align-items:center; gap:10px; }
+    .pill {
+      display:inline-flex; align-items:center; gap:10px;
+      padding: 8px 12px;
       border-radius: 999px;
-      padding: 10px 14px;
-      font-weight: 800;
-      letter-spacing:.3px;
-      cursor:pointer;
-      transition: .16s ease;
-      text-transform: uppercase;
-      font-size: 12px;
-      user-select:none;
-      white-space:nowrap;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
     }
-    .btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.10)}
-    .btn:active{transform: translateY(0px)}
-    .btn.primary{
-      background: linear-gradient(180deg, rgba(34,211,238,.22), rgba(34,211,238,.10));
-      border-color: rgba(34,211,238,.35);
-    }
+    .pill:hover { background: rgba(255,255,255,.09); }
 
-    .grid{
-      margin-top: 14px;
-      display:grid;
-      grid-template-columns: 1fr;
+    .content {
+      width: min(1180px, calc(100% - 16px));
+      margin: 0 auto;
+      padding: 12px 0 28px;
+      display: grid;
       gap: 14px;
     }
 
-    .panel{
-      border:1px solid var(--stroke);
-      border-radius: var(--radius);
-      background: var(--panel);
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .panelHeader{
-      padding: 14px 16px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
-    }
-    .panelHeader .t{
-      font-weight:900;
-      text-transform: uppercase;
-      letter-spacing:.5px;
-      font-size: 13px;
-    }
-    .panelHeader .d{
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height:1.35;
-    }
-    .panelBody{padding: 14px 16px}
-
-    .twoCols{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-    @media (max-width: 980px){
-      .twoCols{grid-template-columns: 1fr}
+    .panel {
+      border-radius: 18px;
+      background: rgba(10,12,18,.62);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 14px 40px rgba(0,0,0,.35);
+      padding: 16px;
     }
 
-    #listaStaffAtual, #listaStaffMercado{
-      border:1px solid rgba(255,255,255,.10);
-      border-radius: 16px;
-      background: rgba(0,0,0,.22);
-      padding: 12px;
-      min-height: 120px;
-      overflow:auto;
+    @media (max-width: 780px) {
+      .brand { min-width: unset; }
+      .brand .titles .title { font-size: 13px; }
+      .topbar-glass { padding: 10px 10px; }
+      .content { padding-bottom: 22px; }
     }
-
-    /* Scrollbar */
-    *::-webkit-scrollbar{height:10px;width:10px}
-    *::-webkit-scrollbar-thumb{background: rgba(255,255,255,.18); border-radius: 999px}
-    *::-webkit-scrollbar-track{background: rgba(255,255,255,.06)}
   </style>
 </head>
 
 <body>
-  <div class="bg" aria-hidden="true"></div>
+  <div class="screen-shell">
+    <div class="screen-bg" aria-hidden="true"></div>
 
-  <div class="shell">
-    <header class="topbar">
-      <div class="brand-left">
-        <div class="teamLogo" title="Equipe">
-          <img id="teamLogoImg" alt="Logo da equipe" />
-        </div>
-        <div class="titles">
-          <div class="h1">Funcionários & Equipe Técnica</div>
-          <div class="sub">Contrate, demita e influencie pit-stop, desenvolvimento do carro, desgaste e consistência de corrida.</div>
-        </div>
-      </div>
-
-      <button class="btn" id="btnVoltar">Voltar</button>
-    </header>
-
-    <section class="grid">
-      <div class="panel">
-        <div class="panelHeader">
-          <div>
-            <div class="t">Gestão do quadro (ativo)</div>
-            <div class="d">O custo semanal cresce com qualidade. Funcionários melhores melhoram performance real na pista e na oficina.</div>
+    <div class="topbar">
+      <div class="topbar-glass">
+        <div class="brand">
+          <div class="badge" title="Equipe">
+            <img id="teamLogo" src="assets/teams/ferrari.png" alt="Logo da equipe" onerror="this.style.opacity=.25">
+          </div>
+          <div class="titles">
+            <div class="kicker">Funcionários & Equipe Técnica</div>
+            <div class="title">Contrate, demita e converta qualidade em pit-stop, pneus e desenvolvimento.</div>
           </div>
         </div>
-        <div class="panelBody">
-          <div id="listaStaffAtual"></div>
-        </div>
-      </div>
 
-      <div class="panel">
-        <div class="panelHeader">
-          <div>
-            <div class="t">Mercado de talentos</div>
-            <div class="d">Disponibilidade e preço variam com reputação e nível da equipe. Demitir pode reduzir reputação.</div>
-          </div>
-          <button class="btn primary" id="btnRefreshMercado">Atualizar mercado</button>
-        </div>
-        <div class="panelBody">
-          <div id="listaStaffMercado"></div>
+        <div class="top-actions">
+          <div class="pill" id="managerPill" title="Manager">Manager</div>
+          <button class="pill" id="btnVoltar" type="button">VOLTAR</button>
         </div>
       </div>
-    </section>
+    </div>
+
+    <main class="content">
+      <!-- Root onde seu staffSystem injeta a UI (LÓGICA NÃO ALTERADA) -->
+      <section class="panel" id="staffRoot">
+        <!-- Conteúdo será renderizado pelo staffSystem.js -->
+      </section>
+    </main>
   </div>
 
-  <!-- ===== Scripts (ordem importa) ===== -->
-  <script src="data.js"></script>
-  <script src="main.js"></script>
-  <script src="staffSystem.js"></script>
+  <script src="assets/js/managerBarLoader.js"></script>
 
+  <!-- Compat: não altera lógica; só garante gameState/salvarGame se estiverem ausentes -->
   <script>
     (function(){
-      const params = new URLSearchParams(location.search);
-      const track = params.get("track") || "australia";
-      const gp = params.get("gp") || "GP da Austrália 2025";
-      const userTeam = (params.get("userTeam") || "ferrari").toLowerCase();
+      const LS_KEY = "f1m2025_save_v6_1";
+      if (!window.gameState) {
+        try { window.gameState = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }
+        catch(e){ window.gameState = {}; }
+      }
+      if (typeof window.salvarGame !== "function") {
+        window.salvarGame = function(){
+          try { localStorage.setItem(LS_KEY, JSON.stringify(window.gameState || {})); } catch(e){}
+        };
+      }
 
-      const teamLogo = document.getElementById("teamLogoImg");
-      const map = {
-        redbull:"assets/teams/redbull.png",
-        ferrari:"assets/teams/ferrari.png",
-        mclaren:"assets/teams/mclaren.png",
-        mercedes:"assets/teams/mercedes.png",
-        aston:"assets/teams/aston.png",
-        alpine:"assets/teams/alpine.png",
-        sauber:"assets/teams/sauber.png",
-        williams:"assets/teams/williams.png",
-        haas:"assets/teams/haas.png",
-        racingbulls:"assets/teams/racingbulls.png"
-      };
-      teamLogo.src = map[userTeam] || "assets/ui/logo.png";
-
-      document.getElementById("btnVoltar").addEventListener("click", ()=>{
-        location.href = `index.html?track=${encodeURIComponent(track)}&gp=${encodeURIComponent(gp)}&userTeam=${encodeURIComponent(userTeam)}`;
+      const btn = document.getElementById("btnVoltar");
+      if (btn) btn.addEventListener("click", () => {
+        const p = new URLSearchParams(location.search);
+        const track = p.get("track") || "australia";
+        const gp = p.get("gp") || "GP da Austrália 2025";
+        const userTeam = p.get("userTeam") || "ferrari";
+        const lobby = `lobby.html?track=${encodeURIComponent(track)}&gp=${encodeURIComponent(gp)}&userTeam=${encodeURIComponent(userTeam)}`;
+        fetch(lobby, { method: "HEAD" }).then(r => {
+          if (r.ok) location.href = lobby;
+          else history.back();
+        }).catch(()=>history.back());
       });
 
-      document.getElementById("btnRefreshMercado").addEventListener("click", ()=>{
-        // staffSystem.js pode expor algum método; se não expor, recarrega com cache-bust
-        const u = new URL(location.href);
-        u.searchParams.set("_", String(Date.now()));
-        location.href = u.toString();
-      });
+      try {
+        const teamKey = (new URLSearchParams(location.search).get("userTeam") || (window.gameState && window.gameState.userTeam) || "ferrari").toLowerCase();
+        const logo = document.getElementById("teamLogo");
+        if (logo) logo.src = `assets/teams/${teamKey}.png`;
+      } catch(e){}
     })();
   </script>
+
+  <script src="staffSystem.js"></script>
 </body>
 </html>
