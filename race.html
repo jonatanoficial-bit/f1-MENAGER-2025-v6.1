@@ -1,562 +1,128 @@
-// ==========================================================
-// F1 MANAGER 2025 – RACE.JS (CORRIDA PRINCIPAL)
-// ==========================================================
-
-// ------------------------------
-// LISTA DE PILOTOS 2025
-// (mesma usada na qualificação)
-// ------------------------------
-const DRIVERS_2025 = [
-  { id: "verstappen", name: "Max Verstappen", teamKey: "redbull", teamName: "Red Bull Racing", rating: 98, color: "#ffb300", face: "assets/faces/VER.png", logo: "assets/teams/redbull.png" },
-  { id: "perez",      name: "Sergio Pérez",   teamKey: "redbull", teamName: "Red Bull Racing", rating: 94, color: "#ffb300", face: "assets/faces/PER.png", logo: "assets/teams/redbull.png" },
-
-  { id: "leclerc", name: "Charles Leclerc", teamKey: "ferrari", teamName: "Ferrari", rating: 95, color: "#ff0000", face: "assets/faces/LEC.png", logo: "assets/teams/ferrari.png" },
-  { id: "sainz",   name: "Carlos Sainz",   teamKey: "ferrari", teamName: "Ferrari", rating: 93, color: "#ff0000", face: "assets/faces/SAI.png", logo: "assets/teams/ferrari.png" },
-
-  { id: "hamilton", name: "Lewis Hamilton", teamKey: "mercedes", teamName: "Mercedes", rating: 95, color: "#00e5ff", face: "assets/faces/HAM.png", logo: "assets/teams/mercedes.png" },
-  { id: "russell",  name: "George Russell", teamKey: "mercedes", teamName: "Mercedes", rating: 93, color: "#00e5ff", face: "assets/faces/RUS.png", logo: "assets/teams/mercedes.png" },
-
-  { id: "norris", name: "Lando Norris", teamKey: "mclaren", teamName: "McLaren", rating: 94, color: "#ff8c1a", face: "assets/faces/NOR.png", logo: "assets/teams/mclaren.png" },
-  { id: "piastri", name: "Oscar Piastri", teamKey: "mclaren", teamName: "McLaren", rating: 92, color: "#ff8c1a", face: "assets/faces/PIA.png", logo: "assets/teams/mclaren.png" },
-
-  { id: "alonso", name: "Fernando Alonso", teamKey: "aston", teamName: "Aston Martin", rating: 94, color: "#00b894", face: "assets/faces/ALO.png", logo: "assets/teams/aston.png" },
-  { id: "stroll", name: "Lance Stroll",   teamKey: "aston", teamName: "Aston Martin", rating: 88, color: "#00b894", face: "assets/faces/STR.png", logo: "assets/teams/aston.png" },
-
-  { id: "gasly", name: "Pierre Gasly",  teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", face: "assets/faces/GAS.png",  logo: "assets/teams/alpine.png" },
-  { id: "ocon",  name: "Esteban Ocon", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", face: "assets/faces/OCO.png",   logo: "assets/teams/alpine.png" },
-
-  { id: "tsunoda", name: "Yuki Tsunoda", teamKey: "racingbulls", teamName: "Racing Bulls", rating: 89, color: "#7f00ff", face: "assets/faces/TSU.png", logo: "assets/teams/racingbulls.png" },
-  { id: "lawson",  name: "Liam Lawson", teamKey: "racingbulls", teamName: "Racing Bulls", rating: 88, color: "#7f00ff", face: "assets/faces/LAW.png", logo: "assets/teams/racingbulls.png" },
-
-  { id: "hulkenberg", name: "Nico Hülkenberg", teamKey: "sauber", teamName: "Sauber / Audi", rating: 89, color: "#00cec9", face: "assets/faces/HUL.png", logo: "assets/teams/sauber.png" },
-  { id: "bortoleto",  name: "Gabriel Bortoleto", teamKey: "sauber", teamName: "Sauber / Audi", rating: 88, color: "#00cec9", face: "assets/faces/BOR.png",  logo: "assets/teams/sauber.png" },
-
-  { id: "kevin",   name: "Kevin Magnussen", teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", face: "assets/faces/MAG.png", logo: "assets/teams/haas.png" },
-  { id: "bearman", name: "Oliver Bearman",  teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", face: "assets/faces/BEA.png",   logo: "assets/teams/haas.png" },
-
-  { id: "albon",    name: "Alex Albon",    teamKey: "williams", teamName: "Williams Racing", rating: 89, color: "#0984e3", face: "assets/faces/ALB.png", logo: "assets/teams/williams.png" },
-  { id: "sargeant", name: "Logan Sargeant", teamKey: "williams", teamName: "Williams Racing", rating: 86, color: "#0984e3", face: "assets/faces/SAR.png", logo: "assets/teams/williams.png" }
-];
-
-// ------------------------------
-// ESTADO DA CORRIDA
-// ------------------------------
-const raceState = {
-  trackName: null,
-  gpName: null,
-  userTeamKey: null,
-  totalLaps: 25,
-  currentLap: 1,
-  drivers: [],
-  pathPoints: [],
-  driverVisuals: [],
-  running: true,
-  speedMultiplier: 1,
-  lastUpdateTime: null
-};
-
-// ------------------------------
-// UTILS
-// ------------------------------
-function formatLapTime(ms) {
-  if (!isFinite(ms) || ms <= 0) return "--:--.---";
-  const totalSeconds = ms / 1000;
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = Math.floor(totalSeconds % 60);
-  const millis = Math.floor((totalSeconds - minutes * 60 - seconds) * 1000);
-  const mm = String(minutes);
-  const ss = String(seconds).padStart(2, "0");
-  const mmm = String(millis).padStart(3, "0");
-  return `${mm}:${ss}.${mmm}`;
-}
-
-function getPositionOnTrack(progress) {
-  const pts = raceState.pathPoints;
-  if (!pts.length) return { x: 0, y: 0 };
-  const total = pts.length;
-  const idxFloat = progress * total;
-  let i0 = Math.floor(idxFloat);
-  let i1 = (i0 + 1) % total;
-  const t = idxFloat - i0;
-  if (i0 >= total) i0 = total - 1;
-  if (i1 >= total) i1 = 0;
-  const p0 = pts[i0];
-  const p1 = pts[i1];
-  return {
-    x: p0.x + (p1.x - p0.x) * t,
-    y: p0.y + (p1.y - p0.y) * t
-  };
-}
-
-// ------------------------------
-// GRID: CARREGAR QUALY OU GERAR PADRÃO
-// ------------------------------
-function carregarGridDaQualyOuGerarPadrao() {
-  const params = new URLSearchParams(window.location.search);
-  const track = params.get("track") || "australia";
-  const gp = params.get("gp") || "GP da Austrália 2025";
-
-  let grid = null;
-
-  try {
-    const raw = localStorage.getItem("f1m2025_last_qualy");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (
-        parsed &&
-        parsed.track === track &&
-        parsed.gp === gp &&
-        Array.isArray(parsed.grid)
-      ) {
-        grid = parsed.grid.map((drv, index) => ({
-          ...drv,
-          position: drv.position || index + 1
-        }));
-      }
-    }
-  } catch (e) {
-    console.warn("Erro lendo grid salvo da qualy:", e);
-  }
-
-  if (!grid) {
-    console.warn(
-      "Nenhum grid de qualificação encontrado. Gerando grid padrão para iniciar a corrida."
-    );
-    grid = DRIVERS_2025
-      .slice()
-      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-      .map((drv, index) => ({
-        id: drv.id,
-        name: drv.name,
-        teamKey: drv.teamKey,
-        teamName: drv.teamName,
-        rating: drv.rating,
-        color: drv.color,
-        face: drv.face,
-        logo: drv.logo,
-        position: index + 1,
-        bestLapTime: null
-      }));
-  }
-
-  return { track, gp, grid };
-}
-
-// ------------------------------
-// SVG DA PISTA
-// ------------------------------
-async function loadTrackSvg(trackKey) {
-  const container = document.getElementById("track-container");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("id", "track-svg");
-  svg.setAttribute("width", "100%");
-  svg.setAttribute("height", "100%");
-  svg.setAttribute("viewBox", "0 0 1000 600");
-  container.appendChild(svg);
-
-  let text;
-  try {
-    const resp = await fetch(`assets/tracks/${trackKey}.svg`);
-    text = await resp.text();
-  } catch (e) {
-    console.error("Erro carregando SVG da pista:", e);
-    return;
-  }
-
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(text, "image/svg+xml");
-  const path = doc.querySelector("path");
-  if (!path) {
-    console.error("Nenhum <path> encontrado no SVG da pista.");
-    return;
-  }
-
-  const pathLen = path.getTotalLength();
-  const samples = 450;
-  const pts = [];
-  for (let i = 0; i < samples; i++) {
-    const p = path.getPointAtLength((pathLen * i) / samples);
-    pts.push({ x: p.x, y: p.y });
-  }
-
-  const xs = pts.map((p) => p.x);
-  const ys = pts.map((p) => p.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const width = maxX - minX || 1;
-  const height = maxY - minY || 1;
-
-  raceState.pathPoints = pts.map((p) => ({
-    x: ((p.x - minX) / width) * 1000,
-    y: ((p.y - minY) / height) * 600
-  }));
-
-  // pista – parte externa
-  const trackPath = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-  trackPath.setAttribute(
-    "points",
-    raceState.pathPoints.map((p) => `${p.x},${p.y}`).join(" ")
-  );
-  trackPath.setAttribute("fill", "none");
-  trackPath.setAttribute("stroke", "#555");
-  trackPath.setAttribute("stroke-width", "18");
-  trackPath.setAttribute("stroke-linecap", "round");
-  trackPath.setAttribute("stroke-linejoin", "round");
-  svg.appendChild(trackPath);
-
-  // faixa interna clara
-  const innerPath = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-  innerPath.setAttribute(
-    "points",
-    raceState.pathPoints.map((p) => `${p.x},${p.y}`).join(" ")
-  );
-  innerPath.setAttribute("fill", "none");
-  innerPath.setAttribute("stroke", "#ffffff");
-  innerPath.setAttribute("stroke-width", "6");
-  innerPath.setAttribute("stroke-linecap", "round");
-  innerPath.setAttribute("stroke-linejoin", "round");
-  svg.appendChild(innerPath);
-
-  // marcações de pista
-  raceState.pathPoints.forEach((p) => {
-    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    c.setAttribute("cx", p.x);
-    c.setAttribute("cy", p.y);
-    c.setAttribute("r", 2.5);
-    c.setAttribute("fill", "#dddddd");
-    svg.appendChild(c);
-  });
-
-  // bandeira de chegada
-  const flagPoint = raceState.pathPoints[0];
-  const flag = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  flag.setAttribute("x", flagPoint.x);
-  flag.setAttribute("y", flagPoint.y - 10);
-  flag.setAttribute("fill", "#ffffff");
-  flag.setAttribute("font-size", "18");
-  flag.setAttribute("text-anchor", "middle");
-  flag.textContent = "🏁";
-  svg.appendChild(flag);
-
-  // carros (círculos)
-  raceState.driverVisuals = raceState.drivers.map((drv) => {
-    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-
-    const body = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    body.setAttribute("r", 6);
-    body.setAttribute("stroke", "#000");
-    body.setAttribute("stroke-width", "1.5");
-    body.setAttribute("fill", drv.color || "#ffffff");
-    group.appendChild(body);
-
-    if (drv.teamKey === raceState.userTeamKey) {
-      const tri = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-      tri.setAttribute("points", "0,-10 6,0 -6,0");
-      tri.setAttribute("fill", drv.color || "#ffffff");
-      group.appendChild(tri);
-    }
-
-    svg.appendChild(group);
-
-    return { driverId: drv.id, group, body };
-  });
-}
-
-// ------------------------------
-// INIT
-// ------------------------------
-function initRace() {
-  const { track, gp, grid } = carregarGridDaQualyOuGerarPadrao();
-
-  const params = new URLSearchParams(window.location.search);
-  const userTeam =
-    params.get("userTeam") ||
-    localStorage.getItem("f1m2025_user_team") ||
-    "ferrari";
-
-  raceState.trackName = track;
-  raceState.gpName = gp;
-  raceState.userTeamKey = userTeam;
-  raceState.currentLap = 1;
-  raceState.running = true;
-  raceState.speedMultiplier = 1;
-
-  // Preencher info de topo
-  const titleEl = document.getElementById("race-title-gp");
-  if (titleEl) {
-    titleEl.textContent = `${gp}`;
-  }
-  atualizarLapHeader();
-
-  // Transformar grid em estado de corrida
-  raceState.drivers = grid.map((drv, idx) => ({
-    id: drv.id,
-    name: drv.name,
-    teamKey: drv.teamKey,
-    teamName: drv.teamName,
-    rating: drv.rating || 90,
-    color: drv.color || "#ffffff",
-    face: drv.face,
-    logo: drv.logo,
-    gridPosition: drv.position || idx + 1,
-    racePosition: drv.position || idx + 1,
-    progress: (drv.position - 1) / grid.length, // espalha no traçado
-    laps: 0,
-    lastLapTime: null,
-    bestLapTime: null,
-    totalRaceTime: 0,
-    tyreWear: 0, // 0–100
-    status: "Na pista",
-    currentLapStartTime: performance.now()
-  }));
-
-  preencherPilotosDaEquipe();
-
-  loadTrackSvg(track).then(() => {
-    raceState.lastUpdateTime = performance.now();
-    requestAnimationFrame(gameLoopRace);
-  });
-}
-
-window.addEventListener("DOMContentLoaded", initRace);
-
-// ------------------------------
-// LOOP
-// ------------------------------
-function gameLoopRace(timestamp) {
-  if (!raceState.running) return;
-
-  const dt =
-    raceState.lastUpdateTime != null
-      ? (timestamp - raceState.lastUpdateTime) * raceState.speedMultiplier
-      : 0;
-
-  raceState.lastUpdateTime = timestamp;
-
-  updateRaceSimulation(dt);
-  renderRace();
-
-  requestAnimationFrame(gameLoopRace);
-}
-
-// ------------------------------
-// SIMULAÇÃO DA CORRIDA
-// ------------------------------
-function updateRaceSimulation(dtMs) {
-  if (!raceState.pathPoints.length || !raceState.drivers.length) return;
-
-  const now = performance.now();
-
-  raceState.drivers.forEach((drv) => {
-    if (drv.status !== "Na pista") return;
-
-    // velocidade base influenciada pelo rating
-    // ex: ~1m30 a 1m40 por volta
-    const baseLapMs = 90000 - (drv.rating - 90) * 800; // pilotos fortes um pouco mais rápidos
-    const wearPenalty = 1 + drv.tyreWear / 300; // quanto mais desgaste, mais lento
-    const effectiveLapMs = baseLapMs * wearPenalty;
-
-    const lapSpeed = 1 / effectiveLapMs; // progresso por ms
-    const noise = (Math.random() - 0.5) * 0.00002;
-    let deltaProgress = (lapSpeed + noise) * (dtMs || 0);
-
-    let newProgress = drv.progress + deltaProgress;
-    drv.totalRaceTime += dtMs;
-
-    if (newProgress >= 1) {
-      newProgress -= 1;
-
-      const lapTime = now - drv.currentLapStartTime;
-      drv.laps += 1;
-      drv.lastLapTime = lapTime;
-      if (drv.bestLapTime == null || lapTime < drv.bestLapTime) {
-        drv.bestLapTime = lapTime;
-      }
-      drv.currentLapStartTime = now;
-
-      // desgaste de pneus a cada volta
-      drv.tyreWear = Math.min(100, drv.tyreWear + 3 + Math.random() * 4);
-    }
-
-    drv.progress = newProgress;
-
-    // caso esteja parando nos boxes, você pode futuramente
-    // reduzir lapSpeed, resetar tyreWear etc.
-  });
-
-  // volta global = maior número de voltas entre os pilotos
-  const maxLaps = Math.max(...raceState.drivers.map((d) => d.laps));
-  if (maxLaps + 1 > raceState.currentLap) {
-    raceState.currentLap = Math.min(maxLaps + 1, raceState.totalLaps);
-    atualizarLapHeader();
-  }
-
-  // ordena posição em tempo real – mais voltas à frente, depois menor tempo total
-  const ordenados = [...raceState.drivers].sort((a, b) => {
-    if (b.laps !== a.laps) return b.laps - a.laps;
-    const ta = a.totalRaceTime;
-    const tb = b.totalRaceTime;
-    return ta - tb;
-  });
-  ordenados.forEach((d, idx) => {
-    d.racePosition = idx + 1;
-  });
-
-  // fim da corrida
-  if (maxLaps >= raceState.totalLaps) {
-    raceState.running = false;
-    // aqui você pode abrir modal de resultado final se quiser
-  }
-}
-
-// ------------------------------
-// RENDER (SVG + HUD)
-// ------------------------------
-function renderRace() {
-  if (!raceState.pathPoints.length) return;
-  if (!raceState.driverVisuals.length) return;
-
-  const driversById = {};
-  raceState.drivers.forEach((d) => {
-    driversById[d.id] = d;
-  });
-
-  raceState.driverVisuals.forEach((vis) => {
-    const drv = driversById[vis.driverId];
-    if (!drv) return;
-    const pos = getPositionOnTrack(drv.progress);
-    vis.group.setAttribute("transform", `translate(${pos.x},${pos.y})`);
-  });
-
-  atualizarLeaderboard();
-}
-
-function atualizarLapHeader() {
-  const lapLabel = document.getElementById("race-lap-label");
-  if (lapLabel) {
-    lapLabel.textContent = `Volta ${raceState.currentLap} / ${raceState.totalLaps}`;
-  }
-}
-
-function atualizarLeaderboard() {
-  const list = document.getElementById("race-leaderboard");
-  if (!list) return;
-
-  const ordenados = [...raceState.drivers].sort(
-    (a, b) => a.racePosition - b.racePosition
-  );
-
-  list.innerHTML = "";
-
-  ordenados.forEach((drv) => {
-    const row = document.createElement("div");
-    row.className = "race-row";
-
-    const posDiv = document.createElement("div");
-    posDiv.className = "race-pos";
-    posDiv.textContent = `${drv.racePosition}º`;
-
-    const infoDiv = document.createElement("div");
-    infoDiv.className = "race-info";
-
-    const imgFace = document.createElement("img");
-    imgFace.className = "race-face";
-    imgFace.src = drv.face || "";
-    imgFace.alt = drv.name;
-
-    const textDiv = document.createElement("div");
-    textDiv.className = "race-text";
-    const nameSpan = document.createElement("div");
-    nameSpan.className = "race-name";
-    nameSpan.textContent = drv.name;
-
-    const teamSpan = document.createElement("div");
-    teamSpan.className = "race-team";
-    teamSpan.textContent = drv.teamName;
-
-    textDiv.appendChild(nameSpan);
-    textDiv.appendChild(teamSpan);
-
-    infoDiv.appendChild(imgFace);
-    infoDiv.appendChild(textDiv);
-
-    const statsDiv = document.createElement("div");
-    statsDiv.className = "race-stats";
-
-    const lapsDiv = document.createElement("div");
-    lapsDiv.className = "race-stat-line";
-    lapsDiv.innerHTML = `Voltas <span>${drv.laps}</span>`;
-
-    const bestDiv = document.createElement("div");
-    bestDiv.className = "race-stat-line";
-    bestDiv.innerHTML = `Melhor <span>${formatLapTime(
-      drv.bestLapTime
-    )}</span>`;
-
-    const lastDiv = document.createElement("div");
-    lastDiv.className = "race-stat-line";
-    lastDiv.innerHTML = `Última <span>${formatLapTime(
-      drv.lastLapTime
-    )}</span>`;
-
-    const tyreDiv = document.createElement("div");
-    tyreDiv.className = "race-stat-line";
-    tyreDiv.innerHTML = `Pneus <span>${drv.tyreWear.toFixed(0)}%</span>`;
-
-    statsDiv.appendChild(lapsDiv);
-    statsDiv.appendChild(bestDiv);
-    statsDiv.appendChild(lastDiv);
-    statsDiv.appendChild(tyreDiv);
-
-    row.appendChild(posDiv);
-    row.appendChild(infoDiv);
-    row.appendChild(statsDiv);
-
-    if (drv.teamKey === raceState.userTeamKey) {
-      row.classList.add("user-team-row");
-    }
-
-    list.appendChild(row);
-  });
-}
-
-// ------------------------------
-// CARTÕES DOS PILOTOS DA EQUIPE
-// ------------------------------
-function preencherPilotosDaEquipe() {
-  const team = raceState.userTeamKey;
-  const driversTeam = DRIVERS_2025.filter((d) => d.teamKey === team).slice(0, 2);
-
-  const cards = [
-    document.getElementById("race-user-driver-1"),
-    document.getElementById("race-user-driver-2")
-  ];
-
-  driversTeam.forEach((drv, idx) => {
-    const card = cards[idx];
-    if (!card) return;
-    const face = card.querySelector(".user-face");
-    const name = card.querySelector(".user-name");
-    const teamName = card.querySelector(".user-team");
-    const logo = card.querySelector(".user-logo");
-
-    if (face) face.src = drv.face || "";
-    if (name) name.textContent = drv.name;
-    if (teamName) teamName.textContent = drv.teamName;
-    if (logo) logo.src = drv.logo || "";
-  });
-}
-
-// ------------------------------
-// CONTROLE DE VELOCIDADE
-// ------------------------------
-function setRaceSpeed(mult) {
-  raceState.speedMultiplier = mult;
-}
-window.setRaceSpeed = setRaceSpeed;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>F1 MANAGER 2025 — Corrida</title>
+  <link rel="stylesheet" href="race.css" />
+</head>
+
+<body>
+  <div class="topbar" style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 14px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <img id="teamLogoTop" src="" alt="Equipe" style="height:32px; width:auto; object-fit:contain; filter:drop-shadow(0 2px 10px rgba(0,0,0,.45));" />
+      <div style="display:flex; flex-direction:column;">
+        <div id="gp-title" style="font-weight:900; letter-spacing:.5px;">F1 MANAGER 2025 — CORRIDA</div>
+        <div style="opacity:.85; font-size:12px;">
+          <span id="race-lap-label">Volta 1</span>
+          <span style="margin:0 8px; opacity:.55;">•</span>
+          <span id="weather-label">Clima: Seco</span>
+          <span style="margin:0 8px; opacity:.55;">•</span>
+          <span id="tracktemp-label">Pista: 26°C</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="speedbar" style="display:flex; gap:8px; align-items:center;">
+        <span style="opacity:.85; font-size:12px;">Velocidade</span>
+        <button class="speed-btn active" data-speed="1">1x</button>
+        <button class="speed-btn" data-speed="2">2x</button>
+        <button class="speed-btn" data-speed="4">4x</button>
+      </div>
+
+      <button id="btnBackLobby" class="btn" style="padding:10px 14px; border-radius:12px;">VOLTAR AO LOBBY</button>
+    </div>
+  </div>
+
+  <div class="race-layout" style="display:grid; grid-template-columns: 1.25fr .85fr; gap:14px; padding:12px 14px; height: calc(100vh - 66px);">
+    <div class="panel" style="border-radius:18px; overflow:hidden; position:relative;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px;">
+        <div style="font-weight:900; letter-spacing:.6px;">MAPA DA PISTA</div>
+        <div style="opacity:.75; font-size:12px;">SVG • pathPoints • 60fps</div>
+      </div>
+      <div id="track-container" class="track-container" style="width:100%; height: calc(100% - 44px);"></div>
+    </div>
+
+    <div class="hud panel" style="border-radius:18px; overflow:hidden; display:flex; flex-direction:column;">
+      <div style="padding:12px 12px 8px 12px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-weight:900; letter-spacing:.6px;">SESSÃO</div>
+        <div style="opacity:.8; font-size:12px;">TEMPO REAL</div>
+      </div>
+
+      <div id="drivers-list" style="padding: 0 12px 10px 12px; overflow:auto; flex: 1 1 auto;"></div>
+
+      <div style="padding:12px; border-top:1px solid rgba(255,255,255,.08);">
+        <div style="font-weight:900; letter-spacing:.6px; margin-bottom:10px;">SEUS PILOTOS</div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div class="user-driver-card" id="user-driver-card-0" style="border-radius:16px; padding:10px;">
+            <div style="display:flex; gap:10px; align-items:center;">
+              <img class="user-face" src="" alt="Piloto" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,.18);" />
+              <div style="min-width:0;">
+                <div class="user-name" style="font-weight:900; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Piloto</div>
+                <div class="user-team" style="opacity:.8; font-size:12px;">Equipe</div>
+                <div class="user-status" style="opacity:.9; font-size:12px; margin-top:2px;">Normal</div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:10px; opacity:.9; font-size:12px; flex-wrap:wrap;">
+              <div>Carro: <b id="user-car-0">--%</b></div>
+              <div>Pneu: <b id="user-tyre-0">--%</b></div>
+              <div>Motor: <b id="user-engine-0">M2</b></div>
+              <div>Agress.: <b id="user-aggr-0">A2</b></div>
+              <div>ERS: <b id="user-ers-0">50%</b></div>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+              <button class="user-btn" data-index="0" data-action="pit">PIT</button>
+              <button class="user-btn" data-index="0" data-action="push">ATAQUE</button>
+              <button class="user-btn" data-index="0" data-action="save">ECONOMIZAR</button>
+              <button class="user-btn" data-index="0" data-action="engineUp">MOTOR +</button>
+              <button class="user-btn" data-index="0" data-action="engineDown">MOTOR -</button>
+              <button class="user-btn" data-index="0" data-action="aggrUp">AGRESS +</button>
+              <button class="user-btn" data-index="0" data-action="aggrDown">AGRESS -</button>
+              <button class="user-btn" data-index="0" data-action="ers">ERS BOOST</button>
+            </div>
+          </div>
+
+          <div class="user-driver-card" id="user-driver-card-1" style="border-radius:16px; padding:10px;">
+            <div style="display:flex; gap:10px; align-items:center;">
+              <img class="user-face" src="" alt="Piloto" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,.18);" />
+              <div style="min-width:0;">
+                <div class="user-name" style="font-weight:900; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Piloto</div>
+                <div class="user-team" style="opacity:.8; font-size:12px;">Equipe</div>
+                <div class="user-status" style="opacity:.9; font-size:12px; margin-top:2px;">Normal</div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:10px; opacity:.9; font-size:12px; flex-wrap:wrap;">
+              <div>Carro: <b id="user-car-1">--%</b></div>
+              <div>Pneu: <b id="user-tyre-1">--%</b></div>
+              <div>Motor: <b id="user-engine-1">M2</b></div>
+              <div>Agress.: <b id="user-aggr-1">A2</b></div>
+              <div>ERS: <b id="user-ers-1">50%</b></div>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+              <button class="user-btn" data-index="1" data-action="pit">PIT</button>
+              <button class="user-btn" data-index="1" data-action="push">ATAQUE</button>
+              <button class="user-btn" data-index="1" data-action="save">ECONOMIZAR</button>
+              <button class="user-btn" data-index="1" data-action="engineUp">MOTOR +</button>
+              <button class="user-btn" data-index="1" data-action="engineDown">MOTOR -</button>
+              <button class="user-btn" data-index="1" data-action="aggrUp">AGRESS +</button>
+              <button class="user-btn" data-index="1" data-action="aggrDown">AGRESS -</button>
+              <button class="user-btn" data-index="1" data-action="ers">ERS BOOST</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="podium-modal" style="display:none;"></div>
+
+  <!-- IMPORTANTE: o JS deve estar aqui, e race.html não pode conter JS "cru" -->
+  <script src="race.js"></script>
+</body>
+</html>

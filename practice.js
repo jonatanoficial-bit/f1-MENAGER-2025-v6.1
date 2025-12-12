@@ -1,687 +1,938 @@
 /* =========================================================
-   F1 MANAGER 2025 – PRACTICE.JS (TREINO LIVRE) — FINAL (v6.1)
-   Alinhado ao HTML/SVG reais do projeto (practice.html + assets/tracks/*.svg)
+   F1 MANAGER 2025 – PRACTICE.JS (TREINO LIVRE) — v6.1
+   Alinhado ao HTML real (practice.html) e SVG (assets/tracks/*.svg)
 
-   ✔ Carrega SVG dinamicamente em #track-container
-   ✔ Gera pathPoints a partir do <path> do SVG (mesma lógica do qualifying.js)
-   ✔ Desenha linha da pista (outer + inner) dentro do SVG renderizado
-   ✔ Cria 2 carros da equipe do usuário e move sobre pathPoints
-   ✔ requestAnimationFrame + deltaTime normalizado (1x/2x/4x correto)
-   ✔ Pilotos corretos por equipe (userTeam)
-   ✔ Integração de navegação: Oficina e Qualifying preservando querystring
-   ✔ APIs globais esperadas pelo HTML: setSpeed(), pitStop(), setMode()
-
-   Observação: este JS é robusto para diferentes variações do seu HTML:
-   - Se existir botão via data-speed, ele funciona.
-   - Se existir botões com onclick="setSpeed()", também funciona.
-   - Se existir ids p1face/p2face e p1info/p2info, ele preenche.
+   ✔ Carrega SVG em #track-container
+   ✔ Gera pathPoints a partir do PATH principal (lógica estilo qualifying)
+   ✔ Carros como elementos SVG (cx/cy) => SEM desalinhamento ao redimensionar
+   ✔ Velocidade realista por km/h, com variação por curva + modo + setup da oficina
+   ✔ 1x / 2x / 4x com deltaTime correto (sem “supervelocidade”)
+   ✔ Pit stop + modos (eco/normal/attack)
+   ✔ Telemetria avançada + gráfico (canvas #telemetrySpark atualiza de verdade)
+   ✔ Pilotos dinâmicos por equipe (userTeam) + faces (assets/faces/*.png)
    ========================================================= */
 
-/* ===============================
-   PARÂMETROS DE URL
-   =============================== */
-const QS = new URLSearchParams(window.location.search);
-const trackKey = (QS.get("track") || "australia").toLowerCase();
-const gpName = QS.get("gp") || "";
-const userTeamKey = (QS.get("userTeam") || "ferrari").toLowerCase();
+(() => {
+  "use strict";
 
-/* ===============================
-   DADOS – PILOTOS 2025 (subset)
-   (mantenha coerente com seus assets/faces/*.png)
-   =============================== */
-const DRIVERS_2025 = [
-  { id: "verstappen", code: "VER", name: "Max Verstappen", teamKey: "redbull", teamName: "Red Bull", rating: 98, color: "#1e41ff", face: "assets/faces/VER.png", logo: "assets/logos/redbull.png" },
-  { id: "perez",      code: "PER", name: "Sergio Pérez",   teamKey: "redbull", teamName: "Red Bull", rating: 94, color: "#1e41ff", face: "assets/faces/PER.png", logo: "assets/logos/redbull.png" },
+  /* ===============================
+     BASE DE PILOTOS (ajuste livre)
+     =============================== */
+  const DRIVERS_2025 = [
+    { id: "ver", name: "Max Verstappen", teamKey: "redbull", teamName: "Red Bull", rating: 98, color: "#1e41ff", face: "assets/faces/VER.png", short: "VER" },
+    { id: "per", name: "Sergio Pérez", teamKey: "redbull", teamName: "Red Bull", rating: 94, color: "#1e41ff", face: "assets/faces/PER.png", short: "PER" },
 
-  { id: "leclerc", code: "LEC", name: "Charles Leclerc", teamKey: "ferrari", teamName: "Ferrari", rating: 95, color: "#dc0000", face: "assets/faces/LEC.png", logo: "assets/logos/ferrari.png" },
-  { id: "sainz",   code: "SAI", name: "Carlos Sainz",   teamKey: "ferrari", teamName: "Ferrari", rating: 93, color: "#dc0000", face: "assets/faces/SAI.png", logo: "assets/logos/ferrari.png" },
+    { id: "lec", name: "Charles Leclerc", teamKey: "ferrari", teamName: "Ferrari", rating: 95, color: "#dc0000", face: "assets/faces/LEC.png", short: "LEC" },
+    { id: "sai", name: "Carlos Sainz", teamKey: "ferrari", teamName: "Ferrari", rating: 93, color: "#dc0000", face: "assets/faces/SAI.png", short: "SAI" },
 
-  { id: "norris", code: "NOR", name: "Lando Norris", teamKey: "mclaren", teamName: "McLaren", rating: 94, color: "#ff8700", face: "assets/faces/NOR.png", logo: "assets/logos/mclaren.png" },
-  { id: "piastri", code: "PIA", name: "Oscar Piastri", teamKey: "mclaren", teamName: "McLaren", rating: 92, color: "#ff8700", face: "assets/faces/PIA.png", logo: "assets/logos/mclaren.png" },
+    { id: "nor", name: "Lando Norris", teamKey: "mclaren", teamName: "McLaren", rating: 94, color: "#ff8700", face: "assets/faces/NOR.png", short: "NOR" },
+    { id: "pia", name: "Oscar Piastri", teamKey: "mclaren", teamName: "McLaren", rating: 92, color: "#ff8700", face: "assets/faces/PIA.png", short: "PIA" },
 
-  { id: "hamilton", code: "HAM", name: "Lewis Hamilton", teamKey: "mercedes", teamName: "Mercedes", rating: 95, color: "#00d2be", face: "assets/faces/HAM.png", logo: "assets/logos/mercedes.png" },
-  { id: "russell",  code: "RUS", name: "George Russell", teamKey: "mercedes", teamName: "Mercedes", rating: 93, color: "#00d2be", face: "assets/faces/RUS.png", logo: "assets/logos/mercedes.png" },
+    { id: "ham", name: "Lewis Hamilton", teamKey: "mercedes", teamName: "Mercedes", rating: 95, color: "#00d2be", face: "assets/faces/HAM.png", short: "HAM" },
+    { id: "rus", name: "George Russell", teamKey: "mercedes", teamName: "Mercedes", rating: 93, color: "#00d2be", face: "assets/faces/RUS.png", short: "RUS" },
 
-  { id: "alonso", code: "ALO", name: "Fernando Alonso", teamKey: "aston", teamName: "Aston Martin", rating: 94, color: "#006f62", face: "assets/faces/ALO.png", logo: "assets/logos/aston.png" },
-  { id: "stroll", code: "STR", name: "Lance Stroll", teamKey: "aston", teamName: "Aston Martin", rating: 88, color: "#006f62", face: "assets/faces/STR.png", logo: "assets/logos/aston.png" },
+    { id: "alo", name: "Fernando Alonso", teamKey: "aston", teamName: "Aston Martin", rating: 94, color: "#006f62", face: "assets/faces/ALO.png", short: "ALO" },
+    { id: "str", name: "Lance Stroll", teamKey: "aston", teamName: "Aston Martin", rating: 88, color: "#006f62", face: "assets/faces/STR.png", short: "STR" },
 
-  { id: "gasly", code: "GAS", name: "Pierre Gasly", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#0090ff", face: "assets/faces/GAS.png", logo: "assets/logos/alpine.png" },
-  { id: "ocon",  code: "OCO", name: "Esteban Ocon",  teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#0090ff", face: "assets/faces/OCO.png", logo: "assets/logos/alpine.png" },
+    { id: "gas", name: "Pierre Gasly", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#0090ff", face: "assets/faces/GAS.png", short: "GAS" },
+    { id: "oco", name: "Esteban Ocon", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#0090ff", face: "assets/faces/OCO.png", short: "OCO" },
 
-  // Sauber 2025 (conforme seu pedido)
-  { id: "hulkenberg", code: "HUL", name: "Nico Hülkenberg", teamKey: "sauber", teamName: "Sauber", rating: 89, color: "#00ffcc", face: "assets/faces/HUL.png", logo: "assets/logos/sauber.png" },
-  { id: "bortoleto",  code: "BOR", name: "Gabriel Bortoleto", teamKey: "sauber", teamName: "Sauber", rating: 88, color: "#00ffcc", face: "assets/faces/BOR.png", logo: "assets/logos/sauber.png" }
-];
+    // SAUBER 2025 (corrigido conforme pedido)
+    { id: "hul", name: "Nico Hülkenberg", teamKey: "sauber", teamName: "Sauber", rating: 89, color: "#00ffcc", face: "assets/faces/HUL.png", short: "HUL" },
+    { id: "bor", name: "Gabriel Bortoleto", teamKey: "sauber", teamName: "Sauber", rating: 88, color: "#00ffcc", face: "assets/faces/BOR.png", short: "BOR" },
 
-/* ===============================
-   TELEMETRIA / SETUP (localStorage)
-   - Lê várias chaves possíveis sem quebrar nada.
-   =============================== */
-function safeJsonParse(raw, fallback) {
-  try { return JSON.parse(raw); } catch { return fallback; }
-}
+    { id: "tsu", name: "Yuki Tsunoda", teamKey: "racingbulls", teamName: "Racing Bulls", rating: 89, color: "#2b4562", face: "assets/faces/TSU.png", short: "TSU" },
+    { id: "law", name: "Liam Lawson", teamKey: "racingbulls", teamName: "Racing Bulls", rating: 88, color: "#2b4562", face: "assets/faces/LAW.png", short: "LAW" },
 
-function loadCarSetup() {
-  // Tenta chaves comuns; se a sua oficina usar outra, mantemos compatibilidade acrescentando aqui.
-  const candidates = [
-    "f1m2025_car_setup",
-    "f1m2025_setup",
-    "f1m2025_oficina_setup",
-    "carSetup",
-    "setup"
+    { id: "alb", name: "Alex Albon", teamKey: "williams", teamName: "Williams", rating: 89, color: "#00a0de", face: "assets/faces/ALB.png", short: "ALB" },
+    { id: "sar", name: "Logan Sargeant", teamKey: "williams", teamName: "Williams", rating: 86, color: "#00a0de", face: "assets/faces/SAR.png", short: "SAR" },
+
+    { id: "mag", name: "Kevin Magnussen", teamKey: "haas", teamName: "Haas", rating: 87, color: "#b6babd", face: "assets/faces/MAG.png", short: "MAG" },
+    { id: "bea", name: "Oliver Bearman", teamKey: "haas", teamName: "Haas", rating: 87, color: "#b6babd", face: "assets/faces/BEA.png", short: "BEA" },
   ];
 
-  for (const k of candidates) {
-    const raw = localStorage.getItem(k);
-    if (raw) {
-      const parsed = safeJsonParse(raw, null);
-      if (parsed && typeof parsed === "object") return parsed;
+  /* ===============================
+     TRACK LENGTHS (km) p/ realismo
+     =============================== */
+  const TRACK_LENGTH_KM = {
+    australia: 5.278,
+    bahrain: 5.412,
+    saudiarabia: 6.174,
+    japan: 5.807,
+    china: 5.451,
+    miami: 5.412,
+    imola: 4.909,
+    monaco: 3.337,
+    canada: 4.361,
+    spain: 4.657,
+    austria: 4.318,
+    britain: 5.891,
+    hungary: 4.381,
+    belgium: 7.004,
+    netherlands: 4.259,
+    italy: 5.793,
+    azerbaijan: 6.003,
+    singapore: 4.940,
+    usa: 5.513,
+    mexico: 4.304,
+    brazil: 4.309,
+    lasvegas: 6.201,
+    qatar: 5.419,
+    abudhabi: 5.281,
+  };
+
+  /* ===============================
+     URL PARAMS
+     =============================== */
+  const params = new URLSearchParams(window.location.search);
+  const trackKey = (params.get("track") || "australia").toLowerCase();
+  const gpName = params.get("gp") || "GP da Austrália 2025";
+  const userTeam = (params.get("userTeam") || "ferrari").toLowerCase();
+
+  /* ===============================
+     DOM (ids reais do HTML)
+     =============================== */
+  const elTeamLogoTop = document.getElementById("teamLogoTop");
+  const elTrackName = document.getElementById("trackName");
+
+  const elSessionStatus = document.getElementById("sessionStatus");
+  const elTimeRemaining = document.getElementById("timeRemaining");
+
+  const elBestLapValue = document.getElementById("bestLapValue");
+  const elBestLapValue2 = document.getElementById("bestLapValue2");
+  const elDriversOnTrack = document.getElementById("driversOnTrack");
+
+  const elHudLiveTag = document.getElementById("hudLiveTag");
+  const elHudClock = document.getElementById("hudClock");
+
+  const elTelemetrySource = document.getElementById("telemetrySource");
+  const elTelemetryMode = document.getElementById("telemetryMode");
+  const elTelemetryERS = document.getElementById("telemetryERS");
+
+  const elTelSpeed = document.getElementById("telSpeed");
+  const elBarSpeed = document.getElementById("barSpeed");
+  const elTelGear = document.getElementById("telGear");
+  const elTelRPM = document.getElementById("telRPM");
+  const elTelG = document.getElementById("telG");
+
+  const elTelThrottle = document.getElementById("telThrottle");
+  const elBarThrottle = document.getElementById("barThrottle");
+  const elTelTraction = document.getElementById("telTraction");
+  const elTelGrip = document.getElementById("telGrip");
+
+  const elTelBrake = document.getElementById("telBrake");
+  const elBarBrake = document.getElementById("barBrake");
+  const elTelStability = document.getElementById("telStability");
+  const elTelDelta = document.getElementById("telDelta");
+
+  const elTelTyreWear = document.getElementById("telTyreWear");
+  const elBarTyre = document.getElementById("barTyre");
+  const elTelTyreTemp = document.getElementById("telTyreTemp");
+  const elTelTyrePress = document.getElementById("telTyrePress");
+
+  const elTelFuel = document.getElementById("telFuel");
+  const elBarFuel = document.getElementById("barFuel");
+  const elTelConsumption = document.getElementById("telConsumption");
+  const elTelMix = document.getElementById("telMix");
+
+  const elTelEngineTemp = document.getElementById("telEngineTemp");
+  const elBarEngine = document.getElementById("barEngine");
+  const elTelERS = document.getElementById("telERS");
+  const elBarERS = document.getElementById("barERS");
+  const elTelStress = document.getElementById("telStress");
+
+  const elTelS1 = document.getElementById("telS1");
+  const elTelS2 = document.getElementById("telS2");
+  const elTelS3 = document.getElementById("telS3");
+  const elTelLap = document.getElementById("telLap");
+
+  const elTelemetrySpark = document.getElementById("telemetrySpark");
+
+  const elP1Face = document.getElementById("p1face");
+  const elP1Name = document.getElementById("p1name");
+  const elP1Team = document.getElementById("p1team");
+  const elP1Info = document.getElementById("p1info");
+
+  const elP2Face = document.getElementById("p2face");
+  const elP2Name = document.getElementById("p2name");
+  const elP2Team = document.getElementById("p2team");
+  const elP2Info = document.getElementById("p2info");
+
+  const btnBackLobby = document.getElementById("btnBackLobby");
+  const btnGoOficina = document.getElementById("btnGoOficina");
+  const btnGoQualy = document.getElementById("btnGoQualy");
+
+  const trackContainer = document.getElementById("track-container");
+
+  /* ===============================
+     HELPERS
+     =============================== */
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  const formatLap = (sec) => {
+    if (!isFinite(sec) || sec <= 0) return "--:--.---";
+    const m = Math.floor(sec / 60);
+    const s = sec - m * 60;
+    const ss = String(Math.floor(s)).padStart(2, "0");
+    const ms = String(Math.floor((s - Math.floor(s)) * 1000)).padStart(3, "0");
+    return `${m}:${ss}.${ms}`;
+  };
+
+  const formatClock = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+
+  function safeSetText(el, txt) {
+    if (!el) return;
+    el.textContent = txt;
+  }
+
+  function safeSetBar(el, pct) {
+    if (!el) return;
+    el.style.width = `${clamp(pct, 0, 100)}%`;
+  }
+
+  /* ===============================
+     SETUP (OFICINA) – leitura robusta
+     =============================== */
+  function readSetup() {
+    // tenta vários nomes (compatibilidade com versões anteriores)
+    const keys = ["f1m2025_setup", "f1m2025_car_setup", "setupCarro", "carSetup"];
+    let raw = null;
+    for (const k of keys) {
+      raw = localStorage.getItem(k);
+      if (raw) break;
+    }
+    if (!raw) {
+      return {
+        asaDianteira: 6,
+        asaTraseira: 6,
+        pressaoPneus: 21.5,
+        alturaCarro: 6,
+        rigidezSuspensao: 6,
+      };
+    }
+    try {
+      const obj = JSON.parse(raw);
+      return {
+        asaDianteira: Number(obj.asaDianteira ?? obj.frontWing ?? 6),
+        asaTraseira: Number(obj.asaTraseira ?? obj.rearWing ?? 6),
+        pressaoPneus: Number(obj.pressaoPneus ?? obj.tyrePressure ?? 21.5),
+        alturaCarro: Number(obj.alturaCarro ?? obj.rideHeight ?? 6),
+        rigidezSuspensao: Number(obj.rigidezSuspensao ?? obj.suspension ?? 6),
+      };
+    } catch {
+      return {
+        asaDianteira: 6,
+        asaTraseira: 6,
+        pressaoPneus: 21.5,
+        alturaCarro: 6,
+        rigidezSuspensao: 6,
+      };
     }
   }
 
-  // default neutro
-  return {
-    frontWing: 50,
-    rearWing: 50,
-    tyrePressure: 22.5,
-    rideHeight: 50,
-    suspension: 50,
-    engineMap: 50
-  };
-}
+  function setupToFactors(setup) {
+    // Escalas baseadas em comportamento “sim” (não científico, mas consistente e controlável)
+    const fw = clamp(setup.asaDianteira, 1, 11);
+    const rw = clamp(setup.asaTraseira, 1, 11);
+    const tp = clamp(setup.pressaoPneus, 18.0, 26.0);
+    const rh = clamp(setup.alturaCarro, 1, 11);
+    const su = clamp(setup.rigidezSuspensao, 1, 11);
 
-// Converte setup -> multiplicadores (simples e estáveis; refinamos depois)
-function computeSetupMultipliers(setup) {
-  // clamp helper
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    // downforce (mais asa => mais grip, menos v.final)
+    const downforce = clamp((fw + rw) / 22, 0.15, 1.0); // 0..1
+    const topSpeedFactor = clamp(1.06 - downforce * 0.10, 0.92, 1.06);
 
-  const fw = clamp(Number(setup.frontWing ?? 50), 0, 100);
-  const rw = clamp(Number(setup.rearWing ?? 50), 0, 100);
-  const rh = clamp(Number(setup.rideHeight ?? 50), 0, 100);
-  const sus = clamp(Number(setup.suspension ?? 50), 0, 100);
-  const tp = clamp(Number(setup.tyrePressure ?? 22.5), 18, 28);
-  const em = clamp(Number(setup.engineMap ?? 50), 0, 100);
+    // grip por asa + suspensão
+    const gripFactor = clamp(0.90 + downforce * 0.14 + (su - 6) * 0.006, 0.90, 1.10);
 
-  // Downforce maior (asas altas) = mais grip, menos vMax
-  const downforce = (fw + rw) / 200;           // 0..1
-  const vMaxMul = 1.06 - downforce * 0.10;     // ~0.96..1.06
-  const gripMul = 0.92 + downforce * 0.18;     // ~0.92..1.10
+    // estabilidade por altura + suspensão
+    const stabilityFactor = clamp(0.92 + (rh - 6) * (-0.006) + (su - 6) * 0.010, 0.85, 1.12);
 
-  // Ride height alto = estabilidade em zebras, menos eficiência
-  const stabilityMul = 0.92 + (rh / 100) * 0.16; // ~0.92..1.08
-  const dragMul = 1.02 - (rh / 100) * 0.06;      // ~0.96..1.02
+    // pneus: pressão alta aquece e desgasta mais, mas reduz resistência
+    const tyreWearFactor = clamp(1.0 + (tp - 21.5) * 0.03 + (1.0 - gripFactor) * 0.35, 0.75, 1.45);
+    const rollingResistance = clamp(1.0 - (tp - 21.5) * 0.008, 0.92, 1.06);
 
-  // Suspensão mais rígida = resposta rápida, mas menor tração em baixa
-  const tractionMul = 1.06 - (sus / 100) * 0.10; // ~0.96..1.06
+    // consumo: mais drag e mais agressividade => mais consumo (o modo vai aplicar também)
+    const fuelFactor = clamp(1.0 + (downforce - 0.55) * 0.10 + (1.0 - rollingResistance) * 0.20, 0.90, 1.20);
 
-  // Pressão afeta grip e desgaste (simplificado)
-  const pressureCenter = 23.0;
-  const pressureDelta = Math.abs(tp - pressureCenter); // 0..~5
-  const tyreGripMul = 1.02 - pressureDelta * 0.01;     // ~0.97..1.02
-  const tyreWearMul = 1.00 + pressureDelta * 0.03;     // ~1.00..1.15
-
-  // Mapa de motor
-  const enginePowerMul = 0.90 + (em / 100) * 0.20;     // ~0.90..1.10
-  const fuelUseMul = 0.92 + (em / 100) * 0.25;         // ~0.92..1.17
-
-  return {
-    vMaxMul: vMaxMul * dragMul * enginePowerMul,
-    gripMul: gripMul * tyreGripMul,
-    stabilityMul,
-    tractionMul,
-    tyreWearMul,
-    fuelUseMul
-  };
-}
-
-/* ===============================
-   UTIL – formatação de tempo
-   =============================== */
-function formatTimeMs(ms) {
-  if (!isFinite(ms) || ms <= 0) return "--:--.---";
-  const total = ms / 1000;
-  const m = Math.floor(total / 60);
-  const s = Math.floor(total % 60);
-  const mm = Math.floor((total - m * 60 - s) * 1000);
-  return `${m}:${String(s).padStart(2, "0")}.${String(mm).padStart(3, "0")}`;
-}
-
-function formatClock(seconds) {
-  const s = Math.max(0, seconds);
-  const m = Math.floor(s / 60);
-  const r = Math.floor(s % 60);
-  return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
-}
-
-/* ===============================
-   ELEMENTOS DO HTML (tolerante)
-   =============================== */
-const elTrackContainer = document.getElementById("track-container");
-const elDriversOnTrack = document.getElementById("driversOnTrack");
-const elP1Face = document.getElementById("p1face");
-const elP2Face = document.getElementById("p2face");
-const elP1Info = document.getElementById("p1info");
-const elP2Info = document.getElementById("p2info");
-const elBtnOficina = document.getElementById("btnOficina");
-const elBtnVoltar = document.getElementById("btnVoltar");
-
-// Alguns HTMLs seus usam outros ids/classes — cobrimos também:
-const elSessionTime =
-  document.querySelector("#session-time") ||
-  document.querySelector("#sessionTime") ||
-  document.querySelector(".practice-time") ||
-  document.querySelector("[data-role='sessionTime']") ||
-  null;
-
-const elBestLap =
-  document.querySelector("#best-lap") ||
-  document.querySelector("#bestLap") ||
-  document.querySelector("[data-role='bestLap']") ||
-  null;
-
-if (!elTrackContainer) {
-  console.error("❌ practice.html: #track-container não encontrado. (O SVG não terá onde renderizar)");
-}
-
-/* ===============================
-   PILOTOS DO USUÁRIO (2)
-   =============================== */
-const userDrivers = DRIVERS_2025.filter(d => d.teamKey === userTeamKey);
-if (userDrivers.length !== 2) {
-  console.warn("⚠️ userTeam sem 2 pilotos no DRIVERS_2025:", userTeamKey, "→ usando fallback Ferrari");
-}
-
-/* ===============================
-   ESTADO DO TREINO LIVRE
-   =============================== */
-const practice = {
-  ready: false,
-  speedMultiplier: 1,
-  running: true,
-  sessionSeconds: 60 * 60,
-  lastNow: performance.now(),
-  pathPoints: [],
-  trackLengthM: 5200,         // fallback
-  trackLengthPx: 1,           // calculado
-  cars: [],
-  bestLapMs: Infinity,
-  leaderLap: 0,
-  setup: loadCarSetup(),
-  setupMul: null
-};
-
-practice.setupMul = computeSetupMultipliers(practice.setup);
-
-/* ===============================
-   TABELA OPCIONAL DE COMPRIMENTO (m)
-   (se não achar a pista, usa fallback)
-   =============================== */
-const TRACK_LENGTHS_M = {
-  australia: 5278,
-  bahrain: 5412,
-  saudi: 6174,
-  japan: 5807,
-  china: 5451,
-  miami: 5410,
-  imola: 4909,
-  monaco: 3337,
-  canada: 4361,
-  spain: 4657,
-  austria: 4318,
-  britain: 5891,
-  hungary: 4381,
-  belgium: 7004,
-  netherlands: 4259,
-  italy: 5793,
-  singapore: 4928,
-  usa: 5513,
-  mexico: 4304,
-  brazil: 4309,
-  lasvegas: 6201,
-  qatar: 5419,
-  abudhabi: 5281
-};
-
-if (TRACK_LENGTHS_M[trackKey]) practice.trackLengthM = TRACK_LENGTHS_M[trackKey];
-
-/* ===============================
-   API GLOBAL (onclick do HTML)
-   =============================== */
-window.setSpeed = (n) => {
-  const v = Number(n);
-  practice.speedMultiplier = (v === 1 || v === 2 || v === 4) ? v : 1;
-  // Se houver botões data-speed, marca ativo:
-  document.querySelectorAll("[data-speed]").forEach(b => {
-    b.classList.toggle("active", Number(b.dataset.speed) === practice.speedMultiplier);
-  });
-};
-
-window.pitStop = (carIndex1based) => {
-  const idx = Number(carIndex1based) - 1;
-  const car = practice.cars[idx];
-  if (!car) return;
-
-  // Simples: "box" por 7s simulados; zera stress e melhora pneus
-  car.pit.active = true;
-  car.pit.remaining = 7; // segundos (sim)
-};
-
-window.setMode = (carIndex1based, mode) => {
-  const idx = Number(carIndex1based) - 1;
-  const car = practice.cars[idx];
-  if (!car) return;
-
-  if (mode === "eco") car.mode = "ECO";
-  else if (mode === "attack") car.mode = "ATTACK";
-  else car.mode = "NORMAL";
-};
-
-/* ===============================
-   BIND BOTÕES VIA data-speed (se existir)
-   =============================== */
-document.querySelectorAll("[data-speed]").forEach(btn => {
-  btn.addEventListener("click", () => window.setSpeed(btn.dataset.speed));
-});
-
-/* ===============================
-   NAVEGAÇÃO – preservar querystring
-   =============================== */
-function buildUrl(page) {
-  const q = new URLSearchParams();
-  q.set("track", trackKey);
-  if (gpName) q.set("gp", gpName);
-  q.set("userTeam", userTeamKey);
-  return `${page}?${q.toString()}`;
-}
-
-// Botão voltar (se existir) – mantém seu onclick original, mas melhora mantendo parâmetros:
-if (elBtnVoltar) {
-  elBtnVoltar.addEventListener("click", (e) => {
-    // Se o HTML já manda para lobby sem query, mantemos simples:
-    // (você pode trocar para buildUrl('lobby.html') se quiser)
-    // Aqui: preserva seu fluxo atual.
-  });
-}
-
-// Botão oficina – garante que leve track/userTeam/gp:
-if (elBtnOficina) {
-  elBtnOficina.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.location.href = buildUrl("oficina.html");
-  });
-}
-
-/* ===============================
-   CARREGAR SVG E GERAR pathPoints (igual qualifying)
-   =============================== */
-async function loadTrackSvgAndBuildPoints() {
-  const url = `assets/tracks/${trackKey}.svg`;
-
-  let text = "";
-  try {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    text = await res.text();
-  } catch (err) {
-    console.error("❌ Falha ao carregar SVG:", url, err);
-    return;
+    return { topSpeedFactor, gripFactor, stabilityFactor, tyreWearFactor, fuelFactor };
   }
 
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(text, "image/svg+xml");
-  const srcSvg = doc.querySelector("svg");
-  const path = doc.querySelector("path");
+  /* ===============================
+     PILOTOS DO USUÁRIO
+     =============================== */
+  function getUserDrivers(teamKey) {
+    const list = DRIVERS_2025.filter(d => d.teamKey === teamKey);
+    if (list.length >= 2) return list.slice(0, 2);
 
-  if (!srcSvg || !path) {
-    console.error("❌ SVG inválido: precisa conter <svg> e pelo menos um <path>:", url);
-    return;
+    // fallback: se a equipe não existir, mantém Ferrari
+    return DRIVERS_2025.filter(d => d.teamKey === "ferrari").slice(0, 2);
   }
 
-  // Render target SVG (1000x600, como qualifying)
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("viewBox", "0 0 1000 600");
-  svg.setAttribute("width", "100%");
-  svg.setAttribute("height", "100%");
-  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  const userDrivers = getUserDrivers(userTeam);
 
-  // Amostragem do path do SVG original
-  const pathLen = path.getTotalLength();
-  const samples = 500;
-  const pts = [];
+  /* ===============================
+     HEADER / LINKS
+     =============================== */
+  safeSetText(elTrackName, gpName || trackKey.toUpperCase());
+  safeSetText(elSessionStatus, "Treino Livre");
+  safeSetText(elHudLiveTag, "LIVE");
 
-  for (let i = 0; i < samples; i++) {
-    const p = path.getPointAtLength((pathLen * i) / samples);
-    pts.push({ x: p.x, y: p.y });
-  }
-
-  // Normalização para 1000x600
-  const xs = pts.map(p => p.x);
-  const ys = pts.map(p => p.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const w = (maxX - minX) || 1;
-  const h = (maxY - minY) || 1;
-
-  const norm = pts.map(p => ({
-    x: ((p.x - minX) / w) * 1000,
-    y: ((p.y - minY) / h) * 600
-  }));
-
-  practice.pathPoints = norm;
-  window.pathPoints = norm; // compat global (se outros arquivos usam)
-
-  // Calcula comprimento em "px" do traçado normalizado (para telemetria futura)
-  let lengthPx = 0;
-  for (let i = 1; i < norm.length; i++) {
-    const dx = norm[i].x - norm[i - 1].x;
-    const dy = norm[i].y - norm[i - 1].y;
-    lengthPx += Math.hypot(dx, dy);
-  }
-  practice.trackLengthPx = Math.max(1, lengthPx);
-
-  // Desenho da pista (outer)
-  const outer = document.createElementNS(svgNS, "polyline");
-  outer.setAttribute("points", norm.map(p => `${p.x},${p.y}`).join(" "));
-  outer.setAttribute("fill", "none");
-  outer.setAttribute("stroke", "#111");           // base escura (fica bonito com o fundo)
-  outer.setAttribute("stroke-width", "22");
-  outer.setAttribute("stroke-linecap", "round");
-  outer.setAttribute("stroke-linejoin", "round");
-  svg.appendChild(outer);
-
-  // Desenho da pista (inner)
-  const inner = document.createElementNS(svgNS, "polyline");
-  inner.setAttribute("points", norm.map(p => `${p.x},${p.y}`).join(" "));
-  inner.setAttribute("fill", "none");
-  inner.setAttribute("stroke", "#f2f2f2");
-  inner.setAttribute("stroke-width", "4");
-  inner.setAttribute("stroke-linecap", "round");
-  inner.setAttribute("stroke-linejoin", "round");
-  inner.setAttribute("opacity", "0.95");
-  svg.appendChild(inner);
-
-  // Renderiza no container
-  if (elTrackContainer) {
-    elTrackContainer.innerHTML = "";
-    elTrackContainer.appendChild(svg);
-  }
-
-  return true;
-}
-
-/* ===============================
-   CRIAR CARROS + HUD DO PILOTO
-   =============================== */
-function setImgSafe(imgEl, src, alt) {
-  if (!imgEl) return;
-  imgEl.alt = alt || "";
-  imgEl.src = src;
-  imgEl.onerror = () => {
-    // fallback discreto
-    imgEl.src =
-      "data:image/svg+xml;charset=utf-8," +
-      encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
-        <rect width="100%" height="100%" fill="#222"/>
-        <text x="50%" y="55%" font-size="12" text-anchor="middle" fill="#aaa" font-family="Arial">NO IMG</text>
-      </svg>`);
-  };
-}
-
-function createCarElement(color) {
-  const el = document.createElement("div");
-  el.className = "practice-car";
-  // caso seu CSS não defina, garantimos visual mínimo:
-  el.style.position = "absolute";
-  el.style.width = "12px";
-  el.style.height = "12px";
-  el.style.borderRadius = "50%";
-  el.style.boxShadow = "0 0 0 2px rgba(0,0,0,.45)";
-  el.style.background = color;
-  el.style.transform = "translate(-6px, -6px)";
-  el.style.pointerEvents = "none";
-  return el;
-}
-
-function buildUserCars() {
-  const drivers = (userDrivers.length === 2)
-    ? userDrivers
-    : DRIVERS_2025.filter(d => d.teamKey === "ferrari");
-
-  // Preenche faces e infos se existirem no HTML
-  setImgSafe(elP1Face, drivers[0].face, drivers[0].name);
-  setImgSafe(elP2Face, drivers[1].face, drivers[1].name);
-
-  if (elP1Info) elP1Info.textContent = `${drivers[0].name} • ${drivers[0].teamName || drivers[0].teamKey}`;
-  if (elP2Info) elP2Info.textContent = `${drivers[1].name} • ${drivers[1].teamName || drivers[1].teamKey}`;
-
-  // Cria layer para carros por cima do SVG
-  const overlay = document.createElement("div");
-  overlay.id = "cars-layer";
-  overlay.style.position = "absolute";
-  overlay.style.inset = "0";
-  overlay.style.pointerEvents = "none";
-
-  // #track-container precisa ser position:relative no CSS (se não for, forçamos aqui)
-  if (elTrackContainer) {
-    const cs = getComputedStyle(elTrackContainer);
-    if (cs.position === "static") elTrackContainer.style.position = "relative";
-    elTrackContainer.appendChild(overlay);
-  }
-
-  practice.cars = drivers.map((drv, i) => {
-    const carEl = createCarElement(drv.color);
-    overlay.appendChild(carEl);
-
-    // velocidade base (m/s) realista: depende de rating + setup
-    // depois refinamos por setores e mapas de motor
-    const baseSpeed = 70 + (drv.rating * 0.45); // ~109..114 m/s (alta, mas normalizada pela pista)
-    const speedMS = baseSpeed * practice.setupMul.vMaxMul;
-
-    return {
-      driver: drv,
-      el: carEl,
-      mode: "NORMAL",
-      progress: i * 0.52, // espalha
-      lap: 0,
-      lapStartMs: performance.now(),
-      lastLapMs: null,
-      bestLapMs: Infinity,
-      tyres: { compound: "SOFT", wear: 0.16, temp: 92, pressure: 23.0 },
-      fuel: { pct: 0.75 },
-      ers: { pct: 1.0 },
-      pit: { active: false, remaining: 0 },
-      speedMS
+  // Logo topo (se não existir, não quebra)
+  if (elTeamLogoTop) {
+    // tenta dois padrões comuns do projeto: assets/logos/*.png OU assets/teams/*.png
+    const candidates = [
+      `assets/logos/${userTeam}.png`,
+      `assets/teams/${userTeam}.png`,
+      `assets/logos/${userTeam.toUpperCase()}.png`,
+      `assets/teams/${userTeam.toUpperCase()}.png`,
+    ];
+    let idx = 0;
+    elTeamLogoTop.onerror = () => {
+      idx++;
+      if (idx < candidates.length) elTeamLogoTop.src = candidates[idx];
     };
-  });
+    elTeamLogoTop.src = candidates[0];
+    elTeamLogoTop.alt = `Logo ${userTeam}`;
+  }
 
-  // Lista "Pilotos na pista" (se existir no HTML)
-  if (elDriversOnTrack) {
-    elDriversOnTrack.innerHTML = "";
-    practice.cars.forEach((c, idx) => {
-      const row = document.createElement("div");
-      row.className = "driverRow";
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.gap = "8px";
-      row.style.marginBottom = "6px";
-
-      const dot = document.createElement("span");
-      dot.style.width = "10px";
-      dot.style.height = "10px";
-      dot.style.borderRadius = "50%";
-      dot.style.background = c.driver.color;
-      dot.style.display = "inline-block";
-
-      const name = document.createElement("span");
-      name.textContent = `${idx + 1}. ${c.driver.name}`;
-
-      row.appendChild(dot);
-      row.appendChild(name);
-      elDriversOnTrack.appendChild(row);
+  if (btnBackLobby) {
+    btnBackLobby.addEventListener("click", () => {
+      const url = new URL("lobby.html", window.location.href);
+      url.searchParams.set("userTeam", userTeam);
+      window.location.href = url.toString();
     });
   }
-}
 
-/* ===============================
-   FÍSICA SIMPLES + TIMING
-   =============================== */
-function applyModeMultipliers(car) {
-  // Modo afeta velocidade / desgaste / combustível
-  let speedMul = 1.0;
-  let wearMul = 1.0;
-  let fuelMul = 1.0;
-
-  if (car.mode === "ECO") {
-    speedMul = 0.965;
-    wearMul = 0.90;
-    fuelMul = 0.85;
-  } else if (car.mode === "ATTACK") {
-    speedMul = 1.03;
-    wearMul = 1.18;
-    fuelMul = 1.15;
+  if (btnGoOficina) {
+    btnGoOficina.addEventListener("click", () => {
+      const url = new URL("oficina.html", window.location.href);
+      url.searchParams.set("track", trackKey);
+      url.searchParams.set("gp", gpName);
+      url.searchParams.set("userTeam", userTeam);
+      window.location.href = url.toString();
+    });
   }
 
-  return { speedMul, wearMul, fuelMul };
-}
-
-function updateUI() {
-  if (elSessionTime) elSessionTime.textContent = formatClock(practice.sessionSeconds);
-
-  // Melhor volta geral (se existir)
-  if (elBestLap) {
-    elBestLap.textContent = isFinite(practice.bestLapMs) ? formatTimeMs(practice.bestLapMs) : "--:--.---";
+  if (btnGoQualy) {
+    btnGoQualy.addEventListener("click", () => {
+      const url = new URL("qualifying.html", window.location.href);
+      url.searchParams.set("track", trackKey);
+      url.searchParams.set("gp", gpName);
+      url.searchParams.set("userTeam", userTeam);
+      window.location.href = url.toString();
+    });
   }
 
-  // Atualiza infos textuais simples (p1info/p2info)
-  const c1 = practice.cars[0];
-  const c2 = practice.cars[1];
-
-  if (elP1Info && c1) {
-    elP1Info.textContent =
-      `${c1.driver.name}\n` +
-      `Modo: ${c1.mode}\n` +
-      `${c1.tyres.compound} • Desgaste ${(c1.tyres.wear * 100).toFixed(0)}%\n` +
-      `Combustível ${(c1.fuel.pct * 100).toFixed(0)}%\n` +
-      `Última volta: ${c1.lastLapMs ? formatTimeMs(c1.lastLapMs) : "--:--.---"}\n` +
-      `Melhor: ${isFinite(c1.bestLapMs) ? formatTimeMs(c1.bestLapMs) : "--:--.---"}`;
+  /* ===============================
+     SPEED BUTTONS (1x/2x/4x)
+     =============================== */
+  const speedButtons = Array.from(document.querySelectorAll("[data-speed]"));
+  function setSpeedMultiplier(v) {
+    state.speedMultiplier = v;
+    speedButtons.forEach(b => b.classList.toggle("active", Number(b.dataset.speed) === v));
+    safeSetText(elHudLiveTag, `LIVE · ${v}x`);
   }
+  speedButtons.forEach(btn => {
+    btn.addEventListener("click", () => setSpeedMultiplier(Number(btn.dataset.speed || 1)));
+  });
 
-  if (elP2Info && c2) {
-    elP2Info.textContent =
-      `${c2.driver.name}\n` +
-      `Modo: ${c2.mode}\n` +
-      `${c2.tyres.compound} • Desgaste ${(c2.tyres.wear * 100).toFixed(0)}%\n` +
-      `Combustível ${(c2.fuel.pct * 100).toFixed(0)}%\n` +
-      `Última volta: ${c2.lastLapMs ? formatTimeMs(c2.lastLapMs) : "--:--.---"}\n` +
-      `Melhor: ${isFinite(c2.bestLapMs) ? formatTimeMs(c2.bestLapMs) : "--:--.---"}`;
-  }
-}
+  /* ===============================
+     SVG LOADER + PATHPOINTS
+     =============================== */
+  let svgRoot = null;
+  let mainPath = null;
+  let pathPoints = [];
+  let curvature = []; // 0..1 (quanto mais alto, mais curva)
+  let carsLayer = null;
 
-/* ===============================
-   LOOP PRINCIPAL (deltaTime correto)
-   =============================== */
-function tick(now) {
-  const dt = Math.max(0, (now - practice.lastNow) / 1000);
-  practice.lastNow = now;
+  async function loadTrackSVG() {
+    if (!trackContainer) throw new Error("track-container não encontrado no HTML.");
 
-  if (!practice.running) {
-    requestAnimationFrame(tick);
-    return;
-  }
+    const url = `assets/tracks/${trackKey}.svg`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Falha ao carregar SVG: ${url} (${res.status})`);
 
-  const simDt = dt * practice.speedMultiplier;
+    const svgText = await res.text();
+    trackContainer.innerHTML = svgText;
 
-  // relógio da sessão
-  practice.sessionSeconds -= simDt;
-  if (practice.sessionSeconds <= 0) {
-    practice.sessionSeconds = 0;
-    practice.running = false;
-  }
+    svgRoot = trackContainer.querySelector("svg");
+    if (!svgRoot) throw new Error("SVG inválido: <svg> não encontrado.");
 
-  // move carros
-  const pts = practice.pathPoints;
-  const n = pts.length;
+    // garante responsivo
+    svgRoot.setAttribute("width", "100%");
+    svgRoot.setAttribute("height", "100%");
+    svgRoot.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
-  for (const car of practice.cars) {
-    // pit stop (pausa real)
-    if (car.pit.active) {
-      car.pit.remaining -= simDt;
-      if (car.pit.remaining <= 0) {
-        car.pit.active = false;
-        car.tyres.wear = Math.max(0.05, car.tyres.wear - 0.18); // troca/refresh parcial
-        car.ers.pct = 1.0;
+    // encontra o PATH principal pelo maior length (mais robusto)
+    const paths = Array.from(svgRoot.querySelectorAll("path"));
+    if (!paths.length) throw new Error("Nenhum <path> encontrado no SVG.");
+
+    let best = null;
+    let bestLen = -1;
+    for (const p of paths) {
+      try {
+        const len = p.getTotalLength();
+        if (len > bestLen) {
+          bestLen = len;
+          best = p;
+        }
+      } catch {
+        // ignora path inválido
       }
-      continue;
+    }
+    if (!best) throw new Error("Não foi possível detectar o path principal da pista.");
+    mainPath = best;
+
+    // estiliza pista (mantém look: fundo preto com traço claro)
+    // NÃO destrói o SVG original — apenas aplica estilo no path principal
+    mainPath.style.fill = "none";
+    mainPath.style.stroke = "#eaeaea";
+    mainPath.style.strokeWidth = "8";
+    mainPath.style.strokeLinecap = "round";
+    mainPath.style.strokeLinejoin = "round";
+    mainPath.style.filter = "drop-shadow(0 0 6px rgba(0,0,0,.55))";
+
+    // cria layer para carros dentro do próprio SVG (alinhamento perfeito)
+    carsLayer = svgRoot.querySelector("#cars-layer");
+    if (!carsLayer) {
+      carsLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      carsLayer.setAttribute("id", "cars-layer");
+      svgRoot.appendChild(carsLayer);
     }
 
-    const { speedMul, wearMul, fuelMul } = applyModeMultipliers(car);
+    // gera pontos (densidade boa p/ 60fps)
+    pathPoints = buildPathPoints(mainPath, 1400);
+    curvature = buildCurvature(pathPoints);
 
-    // Velocidade efetiva (m/s)
-    const v = car.speedMS * speedMul;
+    // expõe para debug
+    window.pathPoints = pathPoints;
 
-    // converte deslocamento (m) em progresso (0..1) por volta
-    const dProg = (v * simDt) / practice.trackLengthM;
-
-    car.progress += dProg;
-
-    // desgaste / combustível (simples, estável)
-    car.tyres.wear = Math.min(1.0, car.tyres.wear + (0.00055 * simDt * wearMul * practice.setupMul.tyreWearMul));
-    car.fuel.pct = Math.max(0, car.fuel.pct - (0.00035 * simDt * fuelMul * practice.setupMul.fuelUseMul));
-    car.ers.pct = Math.max(0, car.ers.pct - (0.00025 * simDt * (car.mode === "ATTACK" ? 1.35 : 1.0)));
-
-    // volta completada
-    if (car.progress >= 1) {
-      car.progress -= 1;
-      car.lap += 1;
-
-      const lapMs = now - car.lapStartMs;
-      car.lapStartMs = now;
-      car.lastLapMs = lapMs;
-      if (lapMs < car.bestLapMs) car.bestLapMs = lapMs;
-      if (lapMs < practice.bestLapMs) practice.bestLapMs = lapMs;
-    }
-
-    // posicionamento no traçado
-    const idx = Math.floor(car.progress * (n - 1));
-    const p = pts[idx];
-    if (!p) continue;
-
-    // cars-layer cobre o SVG com viewBox 0..1000 x 0..600
-    // Para posicionar corretamente, usamos % relativo do viewBox
-    // Convertendo (x,y) do viewBox -> %:
-    const leftPct = (p.x / 1000) * 100;
-    const topPct = (p.y / 600) * 100;
-
-    car.el.style.left = `${leftPct}%`;
-    car.el.style.top = `${topPct}%`;
+    safeSetText(elSessionStatus, "Treino Livre");
   }
 
-  updateUI();
-  requestAnimationFrame(tick);
-}
+  function buildPathPoints(pathEl, samples) {
+    const len = pathEl.getTotalLength();
+    const pts = [];
+    for (let i = 0; i < samples; i++) {
+      const p = pathEl.getPointAtLength((i / samples) * len);
+      pts.push({ x: p.x, y: p.y });
+    }
+    return pts;
+  }
 
-/* ===============================
-   BOOTSTRAP
-   =============================== */
-(async function boot() {
-  const ok = await loadTrackSvgAndBuildPoints();
-  if (!ok) return;
+  function buildCurvature(pts) {
+    const curv = new Array(pts.length).fill(0);
+    for (let i = 2; i < pts.length - 2; i++) {
+      const a = pts[i - 2], b = pts[i], c = pts[i + 2];
+      const abx = b.x - a.x, aby = b.y - a.y;
+      const bcx = c.x - b.x, bcy = c.y - b.y;
+      const ab = Math.hypot(abx, aby) || 1;
+      const bc = Math.hypot(bcx, bcy) || 1;
 
-  // Corrige o problema do seu print: “PISTA — Carregando...” nunca sai
-  // (se houver algum elemento específico, você pode alterar aqui; mantemos neutro)
+      const dot = (abx * bcx + aby * bcy) / (ab * bc);
+      const ang = Math.acos(clamp(dot, -1, 1)); // 0 reto, ~pi curva forte
+      const norm = clamp(ang / 2.6, 0, 1); // normaliza
+      curv[i] = norm;
+    }
+    // suaviza
+    for (let k = 0; k < 3; k++) {
+      for (let i = 1; i < curv.length - 1; i++) {
+        curv[i] = (curv[i - 1] + curv[i] + curv[i + 1]) / 3;
+      }
+    }
+    return curv;
+  }
 
-  buildUserCars();
+  /* ===============================
+     STATE
+     =============================== */
+  const state = {
+    running: true,
+    speedMultiplier: 1,
 
-  // Se o HTML tem botões 1x/2x/4x sem data-speed (onclick), já está via window.setSpeed.
-  // Se tem data-speed, já bindamos também.
-  window.setSpeed(1);
+    sessionSeconds: 60 * 60, // 60:00
+    lastFrame: performance.now(),
 
-  practice.ready = true;
-  practice.lastNow = performance.now();
-  requestAnimationFrame(tick);
+    trackLengthKm: TRACK_LENGTH_KM[trackKey] || 5.0,
 
-  console.log("✅ practice.js inicializado (SVG + pathPoints + carros + velocidade OK)");
+    // cars
+    cars: [],
+    telemetryTargetIndex: 0, // 0 = carro 1, 1 = carro 2
+
+    // sparkline
+    spark: {
+      buf: new Array(180).fill(0),
+      idx: 0
+    }
+  };
+
+  /* ===============================
+     CAR FACTORY (SVG circle)
+     =============================== */
+  function createCar(driver, slotIndex) {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("r", "9");
+    circle.setAttribute("fill", driver.color);
+    circle.setAttribute("stroke", "#000");
+    circle.setAttribute("stroke-width", "2");
+    circle.style.filter = "drop-shadow(0 0 6px rgba(0,0,0,.55))";
+    carsLayer.appendChild(circle);
+
+    // base top speed km/h (prática: ~260–330 conforme curva/mode/setup)
+    const baseTop = 290 + (driver.rating - 88) * 2.2; // rating 88->290 / 98->312 aprox
+    // base pace multipliers
+    const baseGrip = 0.92 + (driver.rating - 88) * 0.006;
+
+    return {
+      slot: slotIndex, // 1 ou 2
+      driver,
+      el: circle,
+
+      mode: "normal", // eco|normal|attack
+      ers: 0.90,       // 0..1
+      fuel: 1.00,      // 0..1
+      tyreWear: 0.06,  // 0..1 (quanto maior, pior)
+      tyreTemp: 88,    // °C
+      tyrePress: 22.0, // PSI
+
+      engineTemp: 92,  // °C
+      stress: 12,      // 0..200
+
+      progress: slotIndex === 1 ? 0.10 : 0.13, // start separado
+      lapStart: performance.now(),
+      lastLap: 0,
+      bestLap: 0,
+
+      // telemetria instantânea
+      speedKmh: 0,
+      rpm: 0,
+      gear: 1,
+      gforce: 0,
+      throttle: 0,
+      brake: 0,
+      traction: 0,
+      grip: 0,
+      stability: 0,
+      delta: 0,
+
+      // performance base
+      baseTopSpeedKmh: baseTop,
+      baseGrip,
+
+      // setores (simulado por progress)
+      s1: 0, s2: 0, s3: 0,
+      s1t: 0, s2t: 0, s3t: 0,
+    };
+  }
+
+  /* ===============================
+     USER CARDS (faces/names)
+     =============================== */
+  function applyUserCards() {
+    const d1 = state.cars[0]?.driver || userDrivers[0];
+    const d2 = state.cars[1]?.driver || userDrivers[1];
+
+    if (elP1Face) elP1Face.src = d1?.face || "";
+    if (elP2Face) elP2Face.src = d2?.face || "";
+
+    safeSetText(elP1Name, d1?.name || "Piloto 1");
+    safeSetText(elP2Name, d2?.name || "Piloto 2");
+
+    safeSetText(elP1Team, d1?.teamName || userTeam);
+    safeSetText(elP2Team, d2?.teamName || userTeam);
+
+    // fallback de imagem (não quebra layout)
+    const fallback = "assets/ui/driver_placeholder.png";
+    if (elP1Face) elP1Face.onerror = () => { elP1Face.src = fallback; };
+    if (elP2Face) elP2Face.onerror = () => { elP2Face.src = fallback; };
+  }
+
+  /* ===============================
+     GLOBAL FUNCS (HTML onclick)
+     =============================== */
+  window.setMode = (slot, mode) => {
+    const car = state.cars.find(c => c.slot === Number(slot));
+    if (!car) return;
+    car.mode = mode === "eco" ? "eco" : (mode === "attack" ? "attack" : "normal");
+  };
+
+  window.pitStop = (slot) => {
+    const car = state.cars.find(c => c.slot === Number(slot));
+    if (!car) return;
+
+    // pit: recupera pneus/temperatura/ers, custa tempo (simulado por queda instantânea de progress)
+    car.tyreWear = clamp(car.tyreWear - 0.20, 0.02, 0.85);
+    car.tyreTemp = clamp(car.tyreTemp - 10, 75, 115);
+    car.ers = clamp(car.ers + 0.35, 0, 1);
+    car.fuel = clamp(car.fuel + 0.08, 0, 1);
+
+    // “tempo de pit” (sem pit lane completo aqui): perde posição no traçado um pouco
+    car.progress = (car.progress + 0.02) % 1;
+  };
+
+  /* ===============================
+     TELEMETRY TARGET (clique nos cards)
+     =============================== */
+  function hookTelemetryTarget() {
+    const card1 = document.getElementById("p1name")?.closest(".practice-user-card") || null;
+    const card2 = document.getElementById("p2name")?.closest(".practice-user-card") || null;
+
+    if (card1) card1.addEventListener("click", () => state.telemetryTargetIndex = 0);
+    if (card2) card2.addEventListener("click", () => state.telemetryTargetIndex = 1);
+  }
+
+  /* ===============================
+     SIM: SPEED MODEL (realista)
+     =============================== */
+  function modeFactors(mode) {
+    if (mode === "eco") return { pace: 0.90, wear: 0.85, fuel: 0.88, ersUse: 0.60 };
+    if (mode === "attack") return { pace: 1.05, wear: 1.25, fuel: 1.18, ersUse: 1.25 };
+    return { pace: 1.00, wear: 1.00, fuel: 1.00, ersUse: 1.00 };
+  }
+
+  function computeInstantSpeed(car, idx, setupFactors) {
+    // severidade de curva em idx
+    const turn = curvature[idx] || 0; // 0..1
+    // em curvas fortes, speed cai até ~65% dependendo do grip/stability
+    const cornerFloor = clamp(0.60 + (setupFactors.gripFactor - 1.0) * 0.10 + (car.baseGrip - 1.0) * 0.10, 0.58, 0.72);
+    const cornerFactor = lerp(1.0, cornerFloor, turn);
+
+    const mf = modeFactors(car.mode);
+
+    // ERS: reduz gradualmente conforme uso; ataca mais => usa mais
+    const ersBoost = car.ers > 0.15 ? (0.015 * mf.ersUse) : 0; // +1.5% aprox se tiver energia
+    const tyrePenalty = clamp(1.0 - car.tyreWear * 0.22, 0.78, 1.0);
+    const enginePenalty = clamp(1.0 - (car.stress / 220) * 0.10, 0.86, 1.0);
+
+    const top = car.baseTopSpeedKmh * setupFactors.topSpeedFactor * mf.pace * tyrePenalty * enginePenalty * (1 + ersBoost);
+    const v = top * cornerFactor;
+
+    // limita teto por pista (prática: Albert Park ~ 330 km/h)
+    const cap = (trackKey === "australia") ? 332 : 340;
+    return clamp(v, 110, cap);
+  }
+
+  function speedKmhToProgressPerSec(speedKmh) {
+    const ms = speedKmh / 3.6;
+    const trackM = (state.trackLengthKm || 5.0) * 1000;
+    return ms / trackM; // fração de volta por segundo
+  }
+
+  /* ===============================
+     TELEMETRY: SPARKLINE
+     =============================== */
+  function pushSpark(value01) {
+    const s = state.spark;
+    s.buf[s.idx] = clamp(value01, 0, 1);
+    s.idx = (s.idx + 1) % s.buf.length;
+  }
+
+  function drawSpark() {
+    if (!elTelemetrySpark) return;
+    const ctx = elTelemetrySpark.getContext("2d");
+    if (!ctx) return;
+
+    const w = elTelemetrySpark.width;
+    const h = elTelemetrySpark.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // fundo leve
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "rgba(0,0,0,0.15)";
+    ctx.fillRect(0, 0, w, h);
+
+    // linha
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(0,210,255,0.95)";
+    ctx.beginPath();
+
+    const buf = state.spark.buf;
+    const n = buf.length;
+    const start = state.spark.idx; // desenha do mais antigo pro mais novo
+
+    for (let i = 0; i < n; i++) {
+      const v = buf[(start + i) % n];
+      const x = (i / (n - 1)) * w;
+      const y = h - (v * (h * 0.82) + h * 0.09);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // baseline
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.beginPath();
+    ctx.moveTo(0, h - 1);
+    ctx.lineTo(w, h - 1);
+    ctx.stroke();
+  }
+
+  /* ===============================
+     UI UPDATES
+     =============================== */
+  function updateSessionClock() {
+    const txt = formatClock(state.sessionSeconds);
+    safeSetText(elTimeRemaining, txt);
+    safeSetText(elHudClock, txt);
+  }
+
+  function updateRankingPanel() {
+    if (!elDriversOnTrack) return;
+
+    const sorted = [...state.cars].sort((a, b) => {
+      const la = a.bestLap > 0 ? a.bestLap : 9999;
+      const lb = b.bestLap > 0 ? b.bestLap : 9999;
+      return la - lb;
+    });
+
+    const best = sorted[0]?.bestLap || 0;
+    safeSetText(elBestLapValue, formatLap(best));
+    safeSetText(elBestLapValue2, formatLap(best));
+
+    const html = sorted.map((c, i) => {
+      const lap = (c.bestLap > 0) ? formatLap(c.bestLap) : "--:--.---";
+      const v = Math.round(c.speedKmh || 0);
+      const dot = `<span class="dot" style="background:${c.driver.color}"></span>`;
+      return `
+        <div class="practice-row">
+          <div class="pos">${i + 1}</div>
+          <div class="who">${dot}<div class="nm">${c.driver.name}</div><div class="tm">${c.driver.teamName} · ${c.mode.toUpperCase()}</div></div>
+          <div class="meta">V${v} · ${lap}</div>
+        </div>
+      `;
+    }).join("");
+
+    elDriversOnTrack.innerHTML = html;
+  }
+
+  function updateUserCards() {
+    const c1 = state.cars[0];
+    const c2 = state.cars[1];
+    if (!c1 || !c2) return;
+
+    const t1 = (c1.lastLap > 0) ? formatLap(c1.lastLap) : "--:--.---";
+    const t2 = (c2.lastLap > 0) ? formatLap(c2.lastLap) : "--:--.---";
+
+    safeSetText(elP1Info, `Modo: ${c1.mode.toUpperCase()} · Pneus: ${Math.round((1 - c1.tyreWear) * 100)}% · ERS: ${Math.round(c1.ers * 100)}% · Última: ${t1}`);
+    safeSetText(elP2Info, `Modo: ${c2.mode.toUpperCase()} · Pneus: ${Math.round((1 - c2.tyreWear) * 100)}% · ERS: ${Math.round(c2.ers * 100)}% · Última: ${t2}`);
+  }
+
+  function updateTelemetry() {
+    const car = state.cars[state.telemetryTargetIndex] || state.cars[0];
+    if (!car) return;
+
+    safeSetText(elTelemetrySource, car.driver.name);
+    safeSetText(elTelemetryMode, car.mode.toUpperCase());
+    safeSetText(elTelemetryERS, `${Math.round(car.ers * 100)}%`);
+
+    safeSetText(elTelSpeed, `${Math.round(car.speedKmh)} km/h`);
+    safeSetBar(elBarSpeed, (car.speedKmh / 340) * 100);
+
+    safeSetText(elTelGear, String(car.gear));
+    safeSetText(elTelRPM, String(Math.round(car.rpm)));
+    safeSetText(elTelG, String(car.gforce.toFixed(0)));
+
+    safeSetText(elTelThrottle, `${Math.round(car.throttle)}%`);
+    safeSetBar(elBarThrottle, car.throttle);
+
+    safeSetText(elTelBrake, `${Math.round(car.brake)}%`);
+    safeSetBar(elBarBrake, car.brake);
+
+    safeSetText(elTelTraction, String(Math.round(car.traction)));
+    safeSetText(elTelGrip, String(Math.round(car.grip)));
+
+    safeSetText(elTelStability, String(Math.round(car.stability)));
+    safeSetText(elTelDelta, (car.delta >= 0 ? "+" : "") + car.delta.toFixed(1));
+
+    safeSetText(elTelTyreWear, `${Math.round((1 - car.tyreWear) * 100)}%`);
+    safeSetBar(elBarTyre, (1 - car.tyreWear) * 100);
+
+    safeSetText(elTelTyreTemp, `${Math.round(car.tyreTemp)}°C`);
+    safeSetText(elTelTyrePress, `${car.tyrePress.toFixed(1)}`);
+
+    safeSetText(elTelFuel, `${Math.round(car.fuel * 100)}%`);
+    safeSetBar(elBarFuel, car.fuel * 100);
+
+    safeSetText(elTelConsumption, car.mode === "attack" ? "ALTO" : (car.mode === "eco" ? "BAIXO" : "MÉDIO"));
+    safeSetText(elTelMix, car.mode === "attack" ? "RICH" : (car.mode === "eco" ? "LEAN" : "STD"));
+
+    safeSetText(elTelEngineTemp, `${Math.round(car.engineTemp)}°C`);
+    safeSetBar(elBarEngine, clamp((car.engineTemp - 70) / 60, 0, 1) * 100);
+
+    safeSetText(elTelERS, `${Math.round(car.ers * 100)}%`);
+    safeSetBar(elBarERS, car.ers * 100);
+
+    safeSetText(elTelStress, String(Math.round(car.stress)));
+
+    safeSetText(elTelS1, car.s1t > 0 ? formatLap(car.s1t) : "--:--.---");
+    safeSetText(elTelS2, car.s2t > 0 ? formatLap(car.s2t) : "--:--.---");
+    safeSetText(elTelS3, car.s3t > 0 ? formatLap(car.s3t) : "--:--.---");
+    safeSetText(elTelLap, car.lastLap > 0 ? formatLap(car.lastLap) : "--:--.---");
+
+    // sparkline: usa speed normalizada
+    pushSpark(car.speedKmh / 340);
+    drawSpark();
+  }
+
+  /* ===============================
+     MAIN LOOP
+     =============================== */
+  function tick(now) {
+    const dt = (now - state.lastFrame) / 1000;
+    state.lastFrame = now;
+
+    const simDt = dt * state.speedMultiplier;
+
+    if (state.running) {
+      state.sessionSeconds -= simDt;
+      if (state.sessionSeconds <= 0) {
+        state.sessionSeconds = 0;
+        state.running = false;
+      }
+    }
+
+    // setup influences
+    const setup = readSetup();
+    const setupFactors = setupToFactors(setup);
+
+    // move cars
+    for (const car of state.cars) {
+      const idx = Math.floor(car.progress * pathPoints.length) % pathPoints.length;
+
+      // speed model
+      const v = computeInstantSpeed(car, idx, setupFactors);
+      car.speedKmh = v;
+
+      // throttle/brake from curvature
+      const turn = curvature[idx] || 0;
+      car.throttle = clamp(92 - turn * 70 + (car.mode === "attack" ? 8 : car.mode === "eco" ? -10 : 0), 0, 100);
+      car.brake = clamp(turn * 55 + (car.mode === "attack" ? 5 : 0), 0, 100);
+
+      // gear/rpm (aprox)
+      const gear = clamp(Math.floor(v / 55) + 1, 1, 8);
+      car.gear = gear;
+      car.rpm = clamp(8000 + (v / 340) * 4500 + turn * 1200, 7000, 12900);
+      car.gforce = clamp(2 + turn * 6 + (car.mode === "attack" ? 0.7 : 0), 1, 8);
+
+      // grip/traction/stability (0..100)
+      car.grip = clamp(80 + (setupFactors.gripFactor - 1) * 120 - car.tyreWear * 40, 40, 100);
+      car.traction = clamp(75 + (setupFactors.gripFactor - 1) * 110 - turn * 10 - car.tyreWear * 35, 35, 100);
+      car.stability = clamp(78 + (setupFactors.stabilityFactor - 1) * 120 - turn * 12 - car.tyreWear * 25, 35, 100);
+
+      // delta (sim): negativo é melhor
+      const ideal = 305 - (turn * 95);
+      car.delta = clamp((ideal - v) / 35, -2.5, 3.5);
+
+      // desgaste / combustível / ERS / temperatura / stress
+      const mf = modeFactors(car.mode);
+
+      // consumo e desgaste por simDt (ajustado p/ não explodir)
+      const wearRate = (0.000030 * mf.wear) * setupFactors.tyreWearFactor * (1 + turn * 0.9);
+      car.tyreWear = clamp(car.tyreWear + wearRate * simDt * 60, 0.01, 0.98); // *60 para ficar “vivo” em 60min
+
+      const fuelRate = (0.000018 * mf.fuel) * setupFactors.fuelFactor * (1 + (v / 340) * 0.4);
+      car.fuel = clamp(car.fuel - fuelRate * simDt * 60, 0, 1);
+
+      const ersDrain = (0.000030 * mf.ersUse) * (v / 340);
+      car.ers = clamp(car.ers - ersDrain * simDt * 60, 0, 1);
+
+      // temperaturas (alvo ~90–105)
+      car.tyreTemp = clamp(car.tyreTemp + (turn * 0.18 + (car.mode === "attack" ? 0.10 : -0.03)) * simDt * 60, 72, 118);
+      car.tyrePress = clamp(21.5 + (car.tyreTemp - 88) * 0.035, 20.0, 25.5);
+
+      car.engineTemp = clamp(car.engineTemp + ((car.mode === "attack" ? 0.18 : 0.05) + (v / 340) * 0.10) * simDt * 60, 78, 122);
+
+      // stress: se motor quente e attack, sobe; se eco, desce
+      const stressUp = (car.engineTemp > 110 ? 0.30 : 0.10) + (car.mode === "attack" ? 0.25 : 0.05);
+      const stressDown = (car.mode === "eco" ? 0.35 : 0.10);
+      car.stress = clamp(car.stress + (stressUp - stressDown) * simDt * 6, 0, 220);
+
+      // progresso (fração de volta por segundo)
+      const dProg = speedKmhToProgressPerSec(v) * simDt;
+      car.progress += dProg;
+
+      // setorização (sim por progress)
+      // 0.0–0.33 s1, 0.33–0.66 s2, 0.66–1.0 s3
+      if (car.progress >= 1) {
+        car.progress -= 1;
+
+        const lapSec = (now - car.lapStart) / 1000;
+        car.lapStart = now;
+        car.lastLap = lapSec;
+        if (!car.bestLap || lapSec < car.bestLap) car.bestLap = lapSec;
+
+        // setores (aprox por fração)
+        if (car.s1 > 0 && car.s2 > 0 && car.s3 > 0) {
+          car.s1t = car.s1;
+          car.s2t = car.s2;
+          car.s3t = car.s3;
+        }
+        car.s1 = 0; car.s2 = 0; car.s3 = 0;
+      } else {
+        const prog = car.progress % 1;
+        const lapElapsed = (now - car.lapStart) / 1000;
+        if (prog < 0.33) car.s1 = lapElapsed;
+        else if (prog < 0.66) car.s2 = lapElapsed - car.s1;
+        else car.s3 = lapElapsed - car.s1 - car.s2;
+      }
+
+      // posiciona no SVG
+      const p = pathPoints[idx];
+      if (p) {
+        car.el.setAttribute("cx", String(p.x));
+        car.el.setAttribute("cy", String(p.y));
+      }
+    }
+
+    // UI
+    updateSessionClock();
+    updateRankingPanel();
+    updateUserCards();
+    updateTelemetry();
+
+    requestAnimationFrame(tick);
+  }
+
+  /* ===============================
+     INIT
+     =============================== */
+  async function init() {
+    try {
+      safeSetText(elSessionStatus, "Carregando...");
+      safeSetText(elTrackName, gpName || `GP ${trackKey}`);
+
+      await loadTrackSVG();
+
+      // cria carros com pilotos corretos da equipe escolhida
+      state.cars = [
+        createCar(userDrivers[0], 1),
+        createCar(userDrivers[1], 2),
+      ];
+
+      applyUserCards();
+      hookTelemetryTarget();
+
+      // velocidade inicial 1x
+      setSpeedMultiplier(1);
+
+      // start
+      state.lastFrame = performance.now();
+      requestAnimationFrame(tick);
+
+      console.log("✅ practice.js inicializado (SVG + pathPoints + carros + velocidade OK)");
+    } catch (err) {
+      console.error(err);
+      safeSetText(elSessionStatus, "ERRO ao carregar treino livre");
+    }
+  }
+
+  init();
 })();
