@@ -1,13 +1,17 @@
 /* =========================================================
-   F1 MANAGER 2025 – PRACTICE.CSS (TREINO LIVRE)
-   Layout AAA, tela cheia, compatível com practice.js
-   (ATUALIZADO: SCROLL VERTICAL HABILITADO)
+   F1 MANAGER 2025 – PRACTICE.CSS (TREINO LIVRE) — v6.1
+   Correções:
+   - Barra de rolagem (sem precisar TAB para acessar botões)
+   - Layout grid estável (Mapa à esquerda / Sessão à direita)
+   - SVG responsivo e centralizado (não “explode” na tela)
+   - Fundo: remove 404 de practice_bg.png (usa lobby_bg.png)
+   - Camada de carros sobre o SVG (cars-layer) alinhada
    ========================================================= */
 
-/* RESET BÁSICO */
-*,
-*::before,
-*::after {
+/* =========================
+   RESET / BASE
+   ========================= */
+* {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -17,685 +21,346 @@ html,
 body {
   width: 100%;
   height: 100%;
-  margin: 0;
-  padding: 0;
 }
 
-html {
-  overflow-y: auto; /* libera rolagem vertical */
-}
-
-/* BODY – TELA CHEIA COM FUNDO DO TREINO */
+/* =========================
+   BODY – SCROLL HABILITADO
+   ========================= */
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #ffffff;
+
+  /* ✅ Remove o 404 do console:
+     practice_bg.png não existe no seu assets/ui/ */
   background-color: #000000;
-  background-image: url("assets/ui/practice_bg.png");
+  background-image:
+    radial-gradient(1200px 900px at 20% 15%, rgba(80, 110, 255, 0.18), transparent 55%),
+    radial-gradient(1100px 800px at 80% 25%, rgba(0, 255, 204, 0.10), transparent 55%),
+    linear-gradient(180deg, rgba(0,0,0,.78), rgba(0,0,0,.92)),
+    url("assets/ui/lobby_bg.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  color: #ffffff;
 
+  /* ✅ antes era hidden (travava acesso aos botões) */
+  overflow-y: auto;
   overflow-x: hidden;
-  overflow-y: auto; /* libera rolagem vertical */
+
+  /* espaço para evitar colar no topo */
+  padding: 12px 14px 18px;
 }
 
-/* CAMADA DE ESCURECIMENTO SUTIL (CASO USE WRAPPER NO HTML, OPCIONAL) */
-.practice-overlay {
+/* Scrollbar (Chromium/Edge) */
+body::-webkit-scrollbar {
+  width: 10px;
+}
+body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+}
+body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+}
+body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+/* =========================
+   BOTÃO VOLTAR (topo)
+   ========================= */
+#btnVoltar {
   position: fixed;
-  inset: 0;
-  background: radial-gradient(circle at top, rgba(0, 0, 0, 0.6), #000000 55%);
-  pointer-events: none;
-  z-index: 0;
-}
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
 
-/* RAIZ DO LAYOUT DO TREINO */
-.practice-root {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-height: 100vh;
-  height: auto;
-  padding: 8px 10px 10px;
-}
-
-/* =================
-   HEADER SUPERIOR
-   ================= */
-.practice-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 6px 8px;
-  border-radius: 14px;
   background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 10px 14px;
+  cursor: pointer;
   backdrop-filter: blur(10px);
 }
 
-.practice-brand {
+#btnVoltar:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.70);
+}
+
+/* =========================
+   TOP BAR
+   ========================= */
+#top-bar {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto 12px auto;
+
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 220px;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 12px 14px;
+  border-radius: 18px;
+
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
 }
 
-.practice-team-logo {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  object-fit: contain;
-}
-
-.practice-titleblock {
-  display: flex;
-  flex-direction: column;
+#top-bar .info {
   line-height: 1.15;
 }
 
-.practice-title {
+#trackName {
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.7px;
   font-size: 14px;
   text-transform: uppercase;
 }
 
-.practice-subtitle {
-  font-size: 11px;
-  opacity: 0.9;
-  margin-top: 2px;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: #9ad0ff;
+#top-bar .info:nth-child(2) {
+  text-align: right;
 }
 
-.practice-chip {
+/* =========================
+   CONTAINER PRINCIPAL
+   ========================= */
+#container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 14px;
+
+  /* ✅ garante espaço para os botões sem “sumir” */
+  min-height: calc(100vh - 120px);
+}
+
+/* Responsivo */
+@media (max-width: 1100px) {
+  #container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   CARD BASE
+   ========================= */
+#track-area,
+#sidebar {
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(12px);
+}
+
+/* =========================
+   ÁREA DA PISTA
+   ========================= */
+#track-area {
+  padding: 14px;
+}
+
+#track-area h2 {
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.92;
+  margin-bottom: 10px;
+}
+
+/* Canvas responsivo (mantém proporção do viewBox 1000x600) */
+#track-container {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+
+  /* ✅ mantém proporção estável (1000/600 = 1.6667) */
+  aspect-ratio: 1000 / 600;
+
+  overflow: hidden;
+  background: radial-gradient(800px 500px at 30% 30%, rgba(255,255,255,0.08), transparent 60%),
+              rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+/* SVG preenchendo o container */
+#track-container svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Camada de carros */
+#cars-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Carros (se o JS não sobrescrever) */
+.practice-car {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(-6px, -6px);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.45);
+}
+
+/* =========================
+   SIDEBAR
+   ========================= */
+#sidebar {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Sessão */
+#sidebar h2 {
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.92;
+}
+
+#sessionSummary {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Lista dos carros na pista */
+#driversOnTrack {
+  margin-top: 10px;
+  max-height: 180px;
+  overflow: auto;
+  padding-right: 4px;
+}
+#driversOnTrack::-webkit-scrollbar {
+  width: 8px;
+}
+#driversOnTrack::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+}
+
+/* =========================
+   PILOTOS (cards)
+   ========================= */
+.pilotCard {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: 10px;
+
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pilotFace {
+  width: 68px;
+  height: 68px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.pilotFace img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pilotInfo {
+  white-space: pre-line;
+  font-size: 12px;
+  line-height: 1.25;
+  opacity: 0.92;
+}
+
+/* =========================
+   CONTROLES / BOTÕES
+   ========================= */
+#speedControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+button,
+a.btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  border-radius: 999px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+  backdrop-filter: blur(10px);
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  font-size: 11px;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.practice-left-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.practice-btn-back {
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 999px;
-  padding: 7px 12px;
-  font-size: 11px;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: 0.15s ease;
-}
-
-.practice-btn-back:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.10);
-}
-
-.practice-right-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* =================
-   GRID PRINCIPAL
-   ================= */
-.practice-main {
-  display: grid;
-  grid-template-columns: 1.55fr 1fr;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-/* =================
-   MAPA DA PISTA
-   ================= */
-.practice-track-panel {
-  border-radius: 18px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: 560px;
-}
-
-.practice-track-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-}
-
-.practice-panel-title {
-  font-weight: 800;
-  font-size: 13px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  opacity: 0.95;
-}
-
-.practice-panel-sub {
-  font-size: 11px;
-  opacity: 0.85;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-}
-
-.practice-track-canvas {
-  position: relative;
-  flex: 1;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: radial-gradient(circle at 10% 10%, #2c2c3a, #080812);
-  overflow: hidden;
-}
-
-.practice-svg-host {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.practice-svg-host svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-/* carros (marcadores) */
-.practice-car {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid rgba(0, 0, 0, 0.7);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
-  transform: translate(-50%, -50%);
-  will-change: transform, left, top;
-}
-
-/* bandeira / seta / overlays do mapa */
-.practice-track-flag {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  opacity: 0.95;
-}
-
-/* =================
-   HUD / SESSÃO
-   ================= */
-.practice-hud {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 560px;
-}
-
-.practice-session-panel {
-  border-radius: 18px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: 220px;
-}
-
-.practice-session-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-}
-
-.practice-session-title {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.practice-session-title strong {
-  font-size: 13px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.practice-session-title span {
-  font-size: 11px;
-  opacity: 0.85;
-}
-
-.practice-session-clock {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  font-variant-numeric: tabular-nums;
-}
-
-.practice-live {
-  font-size: 11px;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-  opacity: 0.9;
-}
-
-.practice-time {
-  font-weight: 900;
-  font-size: 18px;
-}
-
-.practice-best {
-  font-size: 11px;
-  opacity: 0.85;
-}
-
-.practice-session-body {
-  flex: 1;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 10px 12px;
-}
-
-.practice-live-list {
-  height: 100%;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 10px;
-  overflow: auto;
-}
-
-.practice-live-row {
-  display: grid;
-  grid-template-columns: 16px 1fr auto;
-  gap: 10px;
-  align-items: center;
-  padding: 8px 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.practice-live-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #ff2c2c;
-  box-shadow: 0 0 0 3px rgba(255, 44, 44, 0.15);
-}
-
-.practice-live-name {
-  font-size: 12px;
-  letter-spacing: 0.2px;
-}
-
-.practice-live-meta {
-  font-size: 11px;
-  opacity: 0.85;
-  font-variant-numeric: tabular-nums;
-}
-
-/* =================
-   TELEMETRIA
-   ================= */
-.practice-telemetry-panel {
-  border-radius: 18px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-}
-
-.practice-telemetry-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-}
-
-.practice-telemetry-header .practice-panel-title {
-  font-size: 12px;
-}
-
-.practice-telemetry-header .practice-panel-sub {
-  opacity: 0.9;
-}
-
-.practice-telemetry-body {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 10px 12px 12px;
-}
-
-.practice-telemetry-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.practice-telemetry-card {
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 10px;
-  min-height: 96px;
-}
-
-.practice-telemetry-card h4 {
-  font-size: 11px;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  opacity: 0.9;
-  margin-bottom: 6px;
-}
-
-.practice-telemetry-value {
-  font-weight: 900;
-  font-size: 18px;
-  font-variant-numeric: tabular-nums;
-}
-
-.practice-telemetry-sub {
-  margin-top: 6px;
-  font-size: 11px;
-  opacity: 0.85;
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.practice-bar {
-  width: 100%;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.10);
-  overflow: hidden;
-  margin-top: 8px;
-}
-
-.practice-bar > i {
-  display: block;
-  height: 100%;
-  width: 50%;
-  background: linear-gradient(90deg, rgba(0, 170, 255, 0.95), rgba(0, 255, 170, 0.9));
-  border-radius: 999px;
-}
-
-/* =================
-   PILOTOS / CARDS
-   ================= */
-.practice-drivers-panel {
-  border-radius: 18px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-}
-
-.practice-drivers-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-}
-
-.practice-drivers-body {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 10px 12px 12px;
-}
-
-.practice-driver-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.practice-driver-card {
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 10px;
-}
-
-.practice-driver-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.practice-driver-face {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-}
-
-.practice-driver-id {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.practice-driver-name {
-  font-weight: 900;
-  font-size: 13px;
-  letter-spacing: 0.2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.practice-driver-team {
-  font-size: 11px;
-  opacity: 0.85;
-  margin-top: 1px;
-}
-
-.practice-driver-stats {
-  margin-top: 8px;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2px;
-  font-size: 11px;
-  opacity: 0.92;
-  font-variant-numeric: tabular-nums;
-}
-
-.practice-driver-actions {
-  margin-top: 10px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.practice-mini-btn {
-  flex: 1;
-  min-width: 86px;
-  border-radius: 999px;
-  padding: 7px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-  font-size: 11px;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: 0.15s ease;
-}
-
-.practice-mini-btn:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.10);
-}
-
-.practice-mini-btn.red {
-  background: rgba(255, 60, 60, 0.22);
-  border-color: rgba(255, 60, 60, 0.35);
-}
-
-.practice-mini-btn.blue {
-  background: rgba(0, 145, 255, 0.22);
-  border-color: rgba(0, 145, 255, 0.35);
-}
-
-.practice-mini-btn.yellow {
-  background: rgba(255, 190, 0, 0.22);
-  border-color: rgba(255, 190, 0, 0.35);
-  color: #ffe9b0;
-}
-
-/* =================
-   CONTROLES INFERIORES
-   ================= */
-.practice-controls {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-.practice-speed {
-  display: flex;
-  align-items: center;
   gap: 8px;
 }
 
-.practice-speed label {
-  font-size: 11px;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  opacity: 0.85;
+button:hover,
+a.btn:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.65);
 }
 
-.practice-speed button {
-  width: 38px;
-  height: 28px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-  cursor: pointer;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  transition: 0.15s ease;
+button:active,
+a.btn:active {
+  transform: translateY(1px);
 }
 
-.practice-speed button:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.10);
+button.active {
+  border-color: rgba(0, 255, 204, 0.50);
+  box-shadow: 0 0 0 3px rgba(0, 255, 204, 0.16);
 }
 
-.practice-speed button.active {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.18);
+/* Botão de oficina destacado */
+#btnOficina {
+  border-color: rgba(0, 255, 204, 0.35);
+  background: rgba(0, 255, 204, 0.12);
+}
+#btnOficina:hover {
+  background: rgba(0, 255, 204, 0.18);
 }
 
-.practice-nav {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
+/* =========================
+   GARANTIA DE ACESSO AO RODAPÉ
+   (evita “sumir” botões no fim)
+   ========================= */
+#sidebar {
+  padding-bottom: 18px;
 }
 
-.practice-nav .practice-cta {
-  border-radius: 999px;
-  padding: 9px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-  font-size: 11px;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: 0.15s ease;
-}
-
-.practice-nav .practice-cta:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.10);
-}
-
-.practice-nav .practice-cta.primary {
-  background: rgba(0, 240, 255, 0.16);
-  border-color: rgba(0, 240, 255, 0.28);
-}
-
-.practice-nav .practice-cta.primary:hover {
-  background: rgba(0, 240, 255, 0.22);
-}
-
-.practice-nav .practice-cta.secondary {
-  background: rgba(0, 145, 255, 0.16);
-  border-color: rgba(0, 145, 255, 0.28);
-}
-
-.practice-nav .practice-cta.secondary:hover {
-  background: rgba(0, 145, 255, 0.22);
-}
-
-/* =================
-   RESPONSIVO
-   ================= */
-@media (max-width: 1180px) {
-  .practice-main {
-    grid-template-columns: 1fr;
-  }
-
-  .practice-track-panel {
-    min-height: 520px;
-  }
-
-  .practice-hud {
-    min-height: auto;
-  }
-}
-
-@media (max-width: 720px) {
-  .practice-driver-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .practice-telemetry-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .practice-title {
-    font-size: 13px;
-  }
-
-  .practice-time {
-    font-size: 16px;
+@media (max-width: 1100px) {
+  body {
+    padding-bottom: 28px;
   }
 }
