@@ -1,16 +1,31 @@
 /* =========================================================
    F1 MANAGER 2025 – PRACTICE.CSS (TREINO LIVRE)
    Layout AAA, tela cheia, compatível com practice.js
-   + TELEMETRIA AO VIVO (novo painel)
+   (ATUALIZADO: SCROLL VERTICAL HABILITADO)
    ========================================================= */
 
 /* RESET BÁSICO */
 *,
 *::before,
-*::after { box-sizing: border-box; margin: 0; padding: 0; }
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-html, body { width: 100%; height: 100%; }
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
 
+html {
+  overflow-y: auto; /* libera rolagem vertical */
+}
+
+/* BODY – TELA CHEIA COM FUNDO DO TREINO */
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background-color: #000000;
@@ -19,557 +34,668 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   color: #ffffff;
-  overflow: hidden;
+
+  overflow-x: hidden;
+  overflow-y: auto; /* libera rolagem vertical */
 }
 
-/* OVERLAY */
+/* CAMADA DE ESCURECIMENTO SUTIL (CASO USE WRAPPER NO HTML, OPCIONAL) */
 .practice-overlay {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at top, rgba(0,0,0,0.55), rgba(0,0,0,0.92) 55%);
+  background: radial-gradient(circle at top, rgba(0, 0, 0, 0.6), #000000 55%);
   pointer-events: none;
+  z-index: 0;
 }
 
+/* RAIZ DO LAYOUT DO TREINO */
 .practice-root {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   padding: 8px 10px 10px;
 }
 
-/* =========================================================
-   HEADER
-   ========================================================= */
-.practice-header {
+/* =================
+   HEADER SUPERIOR
+   ================= */
+.practice-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 18px;
-  background: linear-gradient(145deg, rgba(0,0,0,0.78), rgba(10,10,30,0.78));
-  border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: 0 0 28px rgba(0,0,0,0.85);
+  padding: 6px 8px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
 }
 
-.practice-header-left {
+.practice-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0;
+  min-width: 220px;
 }
 
-.practice-header-logo {
-  width: 40px;
-  height: 40px;
+.practice-team-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  object-fit: contain;
+}
+
+.practice-titleblock {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.practice-title {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.practice-subtitle {
+  font-size: 11px;
+  opacity: 0.9;
+  margin-top: 2px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #9ad0ff;
+}
+
+.practice-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
   border-radius: 999px;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(120,120,120,0.55));
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.practice-left-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.practice-btn-back {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 11px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.practice-btn-back:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.practice-right-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* =================
+   GRID PRINCIPAL
+   ================= */
+.practice-main {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* =================
+   MAPA DA PISTA
+   ================= */
+.practice-track-panel {
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 560px;
+}
+
+.practice-track-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.practice-panel-title {
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.95;
+}
+
+.practice-panel-sub {
+  font-size: 11px;
+  opacity: 0.85;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.practice-track-canvas {
+  position: relative;
+  flex: 1;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(circle at 10% 10%, #2c2c3a, #080812);
+  overflow: hidden;
+}
+
+.practice-svg-host {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255,255,255,0.16);
 }
 
-.practice-header-logo img {
+.practice-svg-host svg {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  display: block;
 }
 
-.practice-header-titleblock { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* carros (marcadores) */
+.practice-car {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.7);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%);
+  will-change: transform, left, top;
+}
 
-.practice-gp-title {
-  font-size: 0.95rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.10em;
-  white-space: nowrap;
+/* bandeira / seta / overlays do mapa */
+.practice-track-flag {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+/* =================
+   HUD / SESSÃO
+   ================= */
+.practice-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 560px;
+}
+
+.practice-session-panel {
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
 }
 
-.practice-track-label {
-  font-size: 0.8rem;
-  color: #bbbbbb;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.practice-session-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
 }
 
-.practice-header-right { display: flex; align-items: center; }
-
-.practice-hud-right {
-  text-align: right;
+.practice-session-title {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.practice-session-label {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
+.practice-session-title strong {
+  font-size: 13px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  color: #8be9ff;
 }
 
-.practice-time-remaining { font-size: 1.1rem; font-weight: 800; }
-
-.practice-lap-info {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.78);
+.practice-session-title span {
+  font-size: 11px;
+  opacity: 0.85;
 }
 
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-.practice-btn {
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.35);
-  color: #fff;
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: transform .08s ease, filter .12s ease, background .12s ease, border-color .12s ease;
-  user-select: none;
-}
-
-.practice-btn:hover { filter: brightness(1.05); border-color: rgba(255,255,255,0.20); }
-.practice-btn:active { transform: translateY(1px); }
-
-.btn-small-ghost { padding: 7px 12px; font-size: 0.75rem; }
-.btn-small-primary {
-  padding: 7px 12px;
-  font-size: 0.75rem;
-  border-color: rgba(0,255,255,0.35);
-  background: linear-gradient(145deg, rgba(0,255,255,0.30), rgba(0,120,255,0.22));
-}
-
-.speed-btn.active {
-  border-color: rgba(255,255,255,0.35);
-  background: rgba(255,255,255,0.14);
-}
-
-/* =========================================================
-   MAIN LAYOUT
-   ========================================================= */
-.practice-main {
-  flex: 1;
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-  min-height: 0;
-}
-
-/* LEFT */
-.practice-left {
-  flex: 1.6;
-  background: radial-gradient(circle at top left, rgba(255,255,255,0.08), rgba(0,0,0,0.95));
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: 0 0 28px rgba(0,0,0,0.85);
-  padding: 10px;
+.practice-session-clock {
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  align-items: flex-end;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
 }
 
-.practice-left-hud {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 2px 2px 8px;
-}
-
-.practice-left-title {
-  font-size: 0.85rem;
-  letter-spacing: 0.12em;
+.practice-live {
+  font-size: 11px;
+  letter-spacing: 0.7px;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.85);
+  opacity: 0.9;
+}
+
+.practice-time {
   font-weight: 900;
+  font-size: 18px;
 }
 
-.practice-left-sub {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.55);
+.practice-best {
+  font-size: 11px;
+  opacity: 0.85;
 }
 
-.practice-track-wrapper {
+.practice-session-body {
   flex: 1;
-  border-radius: 16px;
-  background: radial-gradient(circle at 30% 15%, rgba(255,255,255,0.06), rgba(0,0,0,0.92));
-  border: 1px solid rgba(255,255,255,0.08);
-  overflow: hidden;
-  min-height: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 12px;
 }
 
-.practice-track-wrapper svg {
-  width: 100%;
+.practice-live-list {
   height: 100%;
-  display: block;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px;
+  overflow: auto;
 }
 
-/* RIGHT */
-.practice-right {
-  flex: 1.25;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
+.practice-live-row {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.practice-hud-panel {
-  flex: 1;
+.practice-live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff2c2c;
+  box-shadow: 0 0 0 3px rgba(255, 44, 44, 0.15);
+}
+
+.practice-live-name {
+  font-size: 12px;
+  letter-spacing: 0.2px;
+}
+
+.practice-live-meta {
+  font-size: 11px;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =================
+   TELEMETRIA
+   ================= */
+.practice-telemetry-panel {
   border-radius: 18px;
-  background: linear-gradient(145deg, rgba(9,9,20,0.98), rgba(14,14,40,0.98));
-  border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: 0 0 28px rgba(0,0,0,0.95);
-  padding: 10px 10px 8px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
 }
 
-.practice-hud-header {
+.practice-telemetry-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.practice-telemetry-header .practice-panel-title {
+  font-size: 12px;
+}
+
+.practice-telemetry-header .practice-panel-sub {
+  opacity: 0.9;
+}
+
+.practice-telemetry-body {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 12px 12px;
+}
+
+.practice-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  padding: 2px 2px 8px;
 }
 
-.practice-panel-title {
-  font-weight: 900;
+.practice-telemetry-card {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px;
+  min-height: 96px;
+}
+
+.practice-telemetry-card h4 {
+  font-size: 11px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.86rem;
-}
-
-.practice-panel-subtitle {
-  margin-top: 2px;
-  font-size: 0.76rem;
-  color: rgba(255,255,255,0.65);
-}
-
-.practice-hud-time { font-weight: 900; font-size: 1.05rem; }
-.practice-hud-live {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
+  opacity: 0.9;
   margin-bottom: 6px;
 }
 
-.practice-session-box {
-  border-radius: 16px;
-  background: radial-gradient(circle at 30% 10%, rgba(255,255,255,0.05), rgba(0,0,0,0.78));
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 10px 10px 8px;
-  min-height: 120px;
+.practice-telemetry-value {
+  font-weight: 900;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
 }
 
-.practice-session-topline {
+.practice-telemetry-sub {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.85;
   display: flex;
-  align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  padding-bottom: 8px;
 }
 
-.practice-session-small { font-size: 0.75rem; color: rgba(255,255,255,0.65); }
-.practice-session-best  { font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; }
-
-.practice-session-list {
-  max-height: 120px;
-  overflow: auto;
-  padding-right: 6px;
+.practice-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  overflow: hidden;
+  margin-top: 8px;
 }
 
-.practice-session-list::-webkit-scrollbar { width: 8px; }
-.practice-session-list::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.10);
+.practice-bar > i {
+  display: block;
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(90deg, rgba(0, 170, 255, 0.95), rgba(0, 255, 170, 0.9));
   border-radius: 999px;
 }
 
-.practice-driver-row {
+/* =================
+   PILOTOS / CARDS
+   ================= */
+.practice-drivers-panel {
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.practice-drivers-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 4px 6px;
-  border-radius: 10px;
-  margin-bottom: 3px;
-  background: linear-gradient(90deg, rgba(0,0,0,0.80), rgba(10,10,30,0.80));
-  border: 1px solid rgba(255,255,255,0.04);
+  padding: 10px 12px;
 }
 
-.practice-driver-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.practice-driver-pos { font-weight: 900; font-size: 0.78rem; width: 22px; opacity: .9; }
-.practice-driver-face {
-  width: 30px; height: 30px; border-radius: 999px;
-  object-fit: cover;
-  border: 1px solid rgba(255,255,255,0.18);
-}
-.practice-driver-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.practice-driver-name { font-size: 0.78rem; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.practice-driver-team { font-size: 0.72rem; opacity: 0.65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.practice-driver-right { display: flex; align-items: center; gap: 8px; }
-.practice-driver-stats { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.78rem; opacity: .95; }
-
-/* =========================================================
-   USER PANEL
-   ========================================================= */
-.practice-user-panel {
-  margin-top: 8px;
-  border-radius: 16px;
-  background: radial-gradient(circle at 30% 10%, rgba(255,255,255,0.05), rgba(0,0,0,0.72));
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 10px;
+.practice-drivers-body {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 12px 12px;
 }
 
-.practice-user-panel-title {
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.78rem;
-  opacity: 0.9;
-  margin-bottom: 8px;
-}
-
-.practice-user-row {
+.practice-driver-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
-.practice-user-card {
+.practice-driver-card {
   border-radius: 14px;
-  background: linear-gradient(145deg, rgba(0,0,0,0.75), rgba(20,20,50,0.75));
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 10px;
-  display: grid;
-  grid-template-columns: 46px 1fr;
-  gap: 10px;
-  align-items: center;
 }
 
-.practice-user-face {
-  width: 46px;
-  height: 46px;
-  border-radius: 999px;
+.practice-driver-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.practice-driver-face {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   object-fit: cover;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.06);
-}
-
-.practice-user-main { min-width: 0; }
-.practice-user-name { font-weight: 900; font-size: 0.84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.practice-user-team { font-size: 0.74rem; opacity: 0.65; margin-top: 2px; }
-.practice-user-status-line { font-size: 0.72rem; opacity: 0.85; margin-top: 6px; line-height: 1.25; }
-
-.practice-user-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 8px;
-  justify-content: space-between;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
-
-.practice-controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.practice-controls-left, .practice-controls-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.practice-controls-label {
-  font-size: 0.72rem;
-  opacity: 0.7;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-/* =========================================================
-   TELEMETRIA (NOVO) — mantém a identidade visual atual
-   ========================================================= */
-.practice-telemetry {
-  margin-top: 8px;
-  border-radius: 16px;
-  background: radial-gradient(circle at 30% 10%, rgba(255,255,255,0.06), rgba(0,0,0,0.78));
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 10px;
-}
-
-.practice-telemetry-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  margin-bottom: 10px;
-}
-
-.practice-telemetry-title {
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.78rem;
-  opacity: 0.95;
-}
-
-.practice-telemetry-sub {
-  font-size: 0.72rem;
-  opacity: 0.75;
-}
-
-.practice-telemetry-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
-}
-
-.tel-card {
-  border-radius: 14px;
-  background: linear-gradient(145deg, rgba(0,0,0,0.68), rgba(18,18,48,0.68));
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 10px;
-  min-width: 0;
-}
-
-.tel-label {
-  font-size: 0.72rem;
-  opacity: 0.7;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.tel-value {
-  font-weight: 900;
-  font-size: 1.05rem;
-  letter-spacing: 0.06em;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.tel-unit { font-size: 0.72rem; opacity: 0.65; }
-
-.tel-bar {
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
 
-.tel-bar-fill {
-  height: 100%;
-  width: 0%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(0,255,255,0.75), rgba(0,120,255,0.65));
-  transition: width 120ms linear;
+.practice-driver-id {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.tel-mini {
+.practice-driver-name {
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practice-driver-team {
+  font-size: 11px;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
+.practice-driver-stats {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  font-size: 11px;
+  opacity: 0.92;
+  font-variant-numeric: tabular-nums;
+}
+
+.practice-driver-actions {
+  margin-top: 10px;
   display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.practice-mini-btn {
+  flex: 1;
+  min-width: 86px;
+  border-radius: 999px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.practice-mini-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.practice-mini-btn.red {
+  background: rgba(255, 60, 60, 0.22);
+  border-color: rgba(255, 60, 60, 0.35);
+}
+
+.practice-mini-btn.blue {
+  background: rgba(0, 145, 255, 0.22);
+  border-color: rgba(0, 145, 255, 0.35);
+}
+
+.practice-mini-btn.yellow {
+  background: rgba(255, 190, 0, 0.22);
+  border-color: rgba(255, 190, 0, 0.35);
+  color: #ffe9b0;
+}
+
+/* =================
+   CONTROLES INFERIORES
+   ================= */
+.practice-controls {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.practice-speed {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  margin-top: 8px;
-  font-size: 0.72rem;
+}
+
+.practice-speed label {
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
   opacity: 0.85;
 }
 
-.tel-mini span { opacity: 0.65; }
-.tel-mini b {
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-weight: 900;
-  letter-spacing: 0.04em;
+.practice-speed button {
+  width: 38px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  transition: 0.15s ease;
 }
 
-.practice-telemetry-bottom {
-  margin-top: 10px;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  padding-top: 10px;
+.practice-speed button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.10);
 }
 
-.tel-sectors {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
+.practice-speed button.active {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
-.tel-sector {
-  border-radius: 12px;
-  background: rgba(0,0,0,0.50);
-  border: 1px solid rgba(255,255,255,0.06);
-  padding: 8px 10px;
+.practice-nav {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
   gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.tel-sector span {
-  font-size: 0.72rem;
-  opacity: 0.70;
+.practice-nav .practice-cta {
+  border-radius: 999px;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
-  letter-spacing: 0.10em;
+  cursor: pointer;
+  transition: 0.15s ease;
 }
 
-.tel-sector b {
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-weight: 900;
-  letter-spacing: 0.06em;
+.practice-nav .practice-cta:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.10);
 }
 
-#telemetrySpark {
-  width: 100%;
-  height: 88px;
-  display: block;
-  border-radius: 12px;
-  background: rgba(0,0,0,0.45);
-  border: 1px solid rgba(255,255,255,0.06);
+.practice-nav .practice-cta.primary {
+  background: rgba(0, 240, 255, 0.16);
+  border-color: rgba(0, 240, 255, 0.28);
 }
 
-/* RESPONSIVO */
-@media (max-width: 1100px) {
-  .practice-main { flex-direction: column; }
-  .practice-left { flex: 1; }
-  .practice-right { flex: 1; }
-  .practice-user-row { grid-template-columns: 1fr; }
-  .practice-telemetry-grid { grid-template-columns: 1fr 1fr; }
+.practice-nav .practice-cta.primary:hover {
+  background: rgba(0, 240, 255, 0.22);
 }
 
-@media (max-width: 680px) {
-  .practice-telemetry-grid { grid-template-columns: 1fr; }
-  .tel-sectors { grid-template-columns: 1fr 1fr; }
+.practice-nav .practice-cta.secondary {
+  background: rgba(0, 145, 255, 0.16);
+  border-color: rgba(0, 145, 255, 0.28);
+}
+
+.practice-nav .practice-cta.secondary:hover {
+  background: rgba(0, 145, 255, 0.22);
+}
+
+/* =================
+   RESPONSIVO
+   ================= */
+@media (max-width: 1180px) {
+  .practice-main {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-track-panel {
+    min-height: 520px;
+  }
+
+  .practice-hud {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .practice-driver-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-telemetry-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-title {
+    font-size: 13px;
+  }
+
+  .practice-time {
+    font-size: 16px;
+  }
 }
