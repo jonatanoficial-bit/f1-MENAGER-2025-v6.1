@@ -1,185 +1,261 @@
-/* =========================================================
-   F1 MANAGER 2025 — SPONSORS UI SYSTEM (v6.1)
-   Requer: economySystem.js (window.F1MEconomy)
-   ========================================================= */
+// =======================================================
+// SPONSOR SYSTEM – PATROCÍNIOS E METAS
+// =======================================================
+//
+// Cada patrocínio tem:
+// id, name, logo, upfront, perRace, bonusType, target, bonusValue, contractRaces
+//
+// Tipos de bônus:
+// - position: terminar no top X
+// - points: marcar pontos
+// - podium: top 3
+// - win: vencer
+// =======================================================
 
-(function () {
-  "use strict";
 
-  function $(sel, root = document) { return root.querySelector(sel); }
-  function el(tag, cls) { const n = document.createElement(tag); if (cls) n.className = cls; return n; }
-
-  function formatMoneyEUR(n) {
-    try {
-      return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
-    } catch {
-      return `€ ${Math.round(n).toLocaleString("pt-BR")}`;
-    }
-  }
-
-  function ensureDeps() {
-    if (!window.F1MEconomy) {
-      console.error("SponsorSystem: economySystem.js não carregado.");
-      return false;
-    }
-    return true;
-  }
-
-  function render(container) {
-    if (!ensureDeps()) return;
-
-    const state = window.F1MEconomy.getState();
-    const offers = window.F1MEconomy.genOffers();
-    const mods = window.F1MEconomy.getModifiers();
-
-    container.innerHTML = "";
-
-    const header = el("div", "sponsor-panel__header");
-    header.innerHTML = `
-      <div class="sponsor-kpis">
-        <div class="kpi"><div class="kpi__label">Caixa</div><div class="kpi__value">${formatMoneyEUR(state.economy.cash)}</div></div>
-        <div class="kpi"><div class="kpi__label">Reputação</div><div class="kpi__value">${Math.round(state.economy.reputation)} / 100</div></div>
-        <div class="kpi"><div class="kpi__label">Exposição</div><div class="kpi__value">${Math.round(state.economy.exposure)} / 100</div></div>
-        <div class="kpi"><div class="kpi__label">Marketing</div><div class="kpi__value">${Math.round(state.staff.marketing.level)} / 100</div></div>
-        <div class="kpi"><div class="kpi__label">Boost ofertas</div><div class="kpi__value">x${mods.sponsorOfferMul.toFixed(2)}</div></div>
-      </div>
-      <div class="sponsor-note">
-        Contratos pagam por GP, com bônus/penalidade no fim. Metas variam por equipe, reputação e marketing.
-      </div>
-    `;
-
-    const active = el("div", "sponsor-panel__block");
-    active.innerHTML = `<h3 class="sponsor-panel__title">Contratos ativos</h3>`;
-    const activeList = el("div", "sponsor-list");
-
-    if (!state.sponsors.active.length) {
-      const empty = el("div", "sponsor-empty");
-      empty.textContent = "Nenhum contrato ativo. Assine ofertas abaixo para iniciar fluxo de caixa.";
-      activeList.appendChild(empty);
-    } else {
-      state.sponsors.active.forEach(c => {
-        activeList.appendChild(contractCard(c, { active: true }));
-      });
-    }
-    active.appendChild(activeList);
-
-    const offersBlock = el("div", "sponsor-panel__block");
-    offersBlock.innerHTML = `<h3 class="sponsor-panel__title">Ofertas disponíveis (Rodada ${state.season.round})</h3>`;
-    const offerList = el("div", "sponsor-list");
-
-    offers.forEach(o => {
-      offerList.appendChild(contractCard(o, { active: false }));
-    });
-
-    offersBlock.appendChild(offerList);
-
-    container.appendChild(header);
-    container.appendChild(active);
-    container.appendChild(offersBlock);
-
-    bindActions(container);
-  }
-
-  function contractCard(c, { active }) {
-    const card = el("div", `sponsor-card ${active ? "is-active" : ""}`);
-    const badge = c.type === "MASTER" ? "Máster" : c.type === "OFFICIAL" ? "Oficial" : "Bônus";
-
-    const objective = c.objective
-      ? `${c.objective.label}: <strong>${c.objective.target}</strong>`
-      : "Meta: —";
-
-    const racesLeft = active ? `<div class="meta">Restante: <strong>${c.racesLeft}</strong> GPs</div>` : `<div class="meta">Duração: <strong>${c.durationRaces}</strong> GPs</div>`;
-
-    card.innerHTML = `
-      <div class="sponsor-card__top">
-        <div class="badge">${badge}</div>
-        <div class="name">${c.name}</div>
-      </div>
-
-      <div class="sponsor-card__mid">
-        <div class="meta">Valor anual: <strong>${formatMoneyEUR(c.annualValue)}</strong></div>
-        <div class="meta">Pagamento/GP: <strong>${formatMoneyEUR(c.payPerRace)}</strong></div>
-        ${racesLeft}
-        <div class="meta">${objective}</div>
-        <div class="meta">Bônus: <strong>${formatMoneyEUR(c.bonus)}</strong> • Penalidade: <strong>${formatMoneyEUR(c.penalty)}</strong></div>
-      </div>
-
-      <div class="sponsor-card__actions">
-        ${active
-          ? `<button class="btn-mini btn-mini--ghost" type="button" data-action="details" data-id="${c.id}">Detalhes</button>`
-          : `<button class="btn-mini" type="button" data-action="sign" data-id="${c.id}">Assinar</button>`
+// Inicializa pool se vazio
+if (!gameState.sponsorPool) {
+    gameState.sponsorPool = [
+        {
+            id: "sp01",
+            name: "TechOil",
+            logo: "assets/sponsors/oil.png",
+            upfront: 2000000,
+            perRace: 180000,
+            bonusType: "position",
+            target: 10,
+            bonusValue: 350000,
+            contractRaces: 6,
+            difficulty: 0.6
+        },
+        {
+            id: "sp02",
+            name: "SuperBank",
+            logo: "assets/sponsors/bank.png",
+            upfront: 3500000,
+            perRace: 220000,
+            bonusType: "podium",
+            target: 3,
+            bonusValue: 600000,
+            contractRaces: 4,
+            difficulty: 0.75
+        },
+        {
+            id: "sp03",
+            name: "Red Cola",
+            logo: "assets/sponsors/cola.png",
+            upfront: 1500000,
+            perRace: 120000,
+            bonusType: "points",
+            target: 1,
+            bonusValue: 200000,
+            contractRaces: 8,
+            difficulty: 0.4
         }
-      </div>
-    `;
-    return card;
-  }
+    ];
+}
 
-  function bindActions(root) {
-    root.addEventListener("click", (ev) => {
-      const btn = ev.target.closest("[data-action]");
-      if (!btn) return;
+if (!gameState.activeSponsors) {
+    gameState.activeSponsors = [];
+}
 
-      const action = btn.dataset.action;
-      const id = btn.dataset.id;
 
-      if (!window.F1MEconomy) return;
+// =======================================================
+// MOSTRAR TELA DE PATROCÍNIOS
+// =======================================================
 
-      if (action === "sign") {
-        const offers = window.F1MEconomy.genOffers();
-        const offer = offers.find(o => o.id === id);
-        if (!offer) return alert("Oferta inválida.");
+function mostrarTelaSponsors() {
+    mostrarTela("tela-sponsors");
 
-        const res = window.F1MEconomy.signContract(offer);
-        if (!res.ok) return alert(res.reason || "Não foi possível assinar.");
-        alert("Contrato assinado com sucesso.");
-        render(root);
-      }
+    let divAtivos = document.getElementById("listaSponsorsAtivos");
+    divAtivos.innerHTML = "";
 
-      if (action === "details") {
-        alert("Detalhes avançados (histórico, progresso e cláusulas) podem ser exibidos aqui.");
-      }
+    gameState.activeSponsors.forEach(sp => {
+        divAtivos.innerHTML += cardSponsor(sp, false);
     });
-  }
 
-  // CSS mínimo embutido (não quebra seu layout existente)
-  function injectMiniCSS() {
-    if ($("#sponsor-mini-css")) return;
-    const style = el("style");
-    style.id = "sponsor-mini-css";
-    style.textContent = `
-      .sponsor-panel__header{margin-top:18px;padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(0,0,0,.35);backdrop-filter: blur(8px);}
-      .sponsor-kpis{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:10px;}
-      .kpi{padding:10px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);}
-      .kpi__label{font-size:12px;opacity:.75}
-      .kpi__value{font-size:14px;font-weight:700}
-      .sponsor-note{margin-top:10px;opacity:.85;font-size:12px}
-      .sponsor-panel__block{margin-top:16px}
-      .sponsor-panel__title{margin:0 0 10px 0;font-size:14px;letter-spacing:.04em;text-transform:uppercase;opacity:.9}
-      .sponsor-list{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px}
-      .sponsor-card{padding:12px;border-radius:16px;background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.10);backdrop-filter: blur(8px)}
-      .sponsor-card.is-active{border-color: rgba(0,180,255,.35)}
-      .sponsor-card__top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-      .badge{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10)}
-      .name{font-weight:800;font-size:13px}
-      .sponsor-card__mid{margin-top:10px;display:grid;gap:6px;font-size:12px;opacity:.92}
-      .meta strong{font-weight:800}
-      .sponsor-card__actions{margin-top:10px;display:flex;justify-content:flex-end}
-      .btn-mini{border:0;border-radius:999px;padding:8px 12px;background:rgba(0,180,255,.95);color:#fff;font-weight:800;cursor:pointer}
-      .btn-mini--ghost{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10)}
-      .sponsor-empty{opacity:.85;font-size:12px;padding:10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
-      @media (max-width: 1100px){.sponsor-kpis{grid-template-columns:repeat(2,minmax(140px,1fr));}.sponsor-list{grid-template-columns:1fr}}
+    let divPropostas = document.getElementById("listaSponsorsPropostas");
+    divPropostas.innerHTML = "";
+
+    // oferta de propostas antes de cada GP
+    let propostas = gerarPropostasSponsors();
+
+    propostas.forEach(sp => {
+        divPropostas.innerHTML += cardSponsor(sp, true);
+    });
+}
+
+
+// =======================================================
+// UI helper: cartão de patrocinador
+// =======================================================
+
+function cardSponsor(sp, podeAssinar) {
+
+    let btn = podeAssinar
+        ? `<button onclick="assinarSponsor('${sp.id}')">Assinar</button>`
+        : `<button onclick="cancelarSponsor('${sp.id}')">Cancelar</button>`;
+
+    return `
+    <div class="sponsor-card">
+        <img src="${sp.logo}" class="sponsorLogo">
+        <h3>${sp.name}</h3>
+        <p>Pagamento inicial: $${sp.upfront.toLocaleString()}</p>
+        <p>Por corrida: $${sp.perRace.toLocaleString()}</p>
+        <p>Meta: ${metaSponsorTexto(sp)}</p>
+        <p>Restam: ${sp.contractRaces} corridas</p>
+        ${btn}
+    </div>
     `;
-    document.head.appendChild(style);
-  }
+}
 
-  const SponsorSystem = {
-    renderInto: (selectorOrEl) => {
-      injectMiniCSS();
-      const container = typeof selectorOrEl === "string" ? document.querySelector(selectorOrEl) : selectorOrEl;
-      if (!container) return console.error("SponsorSystem: container não encontrado.");
-      render(container);
+function metaSponsorTexto(sp) {
+    switch (sp.bonusType) {
+        case "position": return `Terminar top ${sp.target}`;
+        case "points": return `Marcar pontos`;
+        case "podium": return `Subir ao pódio`;
+        case "win": return `Vencer`;
+        default: return "";
     }
-  };
+}
 
-  window.SponsorSystem = SponsorSystem;
-})();
+
+// =======================================================
+// GERAR PROPOSTAS DE PATROCÍNIO
+// =======================================================
+
+function gerarPropostasSponsors() {
+
+    // até 3 propostas por GP
+    let lista = [];
+
+    let marketingImpact = getStaffImpact().marketing || 0;
+    let probBonus = marketingImpact / 200; // influencia chance de propostas melhores
+
+    gameState.sponsorPool.forEach(sp => {
+        // sorteio de ofertas
+        if (Math.random() < (0.3 + probBonus)) {
+            lista.push(sp);
+        }
+    });
+
+    // se nenhuma, dar ao menos 1
+    if (lista.length === 0) {
+        lista.push(gameState.sponsorPool[0]);
+    }
+
+    return lista.slice(0, 3);
+}
+
+
+// =======================================================
+// ASSINAR
+// =======================================================
+
+function assinarSponsor(id) {
+
+    let sp = gameState.sponsorPool.find(s => s.id === id);
+    if (!sp) return;
+
+    // pagar upfront
+    gameState.finances.balance += sp.upfront;
+
+    // mover para ativos
+    gameState.activeSponsors.push(sp);
+
+    // remover da pool
+    gameState.sponsorPool = gameState.sponsorPool.filter(s => s.id !== id);
+
+    salvarGame();
+    mostrarTelaSponsors();
+}
+
+
+// =======================================================
+// PAGAMENTOS POR CORRIDA
+// =======================================================
+
+function pagarSponsorsPorCorrida(resultado) {
+
+    gameState.activeSponsors.forEach(sp => {
+
+        // pagamento fixo
+        gameState.finances.balance += sp.perRace;
+
+        gameState.finances.history.push({
+            tipo: "sponsor",
+            valor: sp.perRace,
+            pista: GAME_DATA.tracks[gameState.weekendIndex].name
+        });
+
+        // bônus se meta cumprida
+        if (cumpriuMetaSponsor(sp, resultado)) {
+
+            gameState.finances.balance += sp.bonusValue;
+
+            gameState.finances.history.push({
+                tipo: "bonus",
+                valor: sp.bonusValue,
+                meta: sp.bonusType
+            });
+        }
+
+        // reduzir duração
+        sp.contractRaces--;
+
+    });
+
+    // remover contratos vencidos
+    gameState.activeSponsors = gameState.activeSponsors.filter(sp => sp.contractRaces > 0);
+
+    salvarGame();
+}
+
+
+// =======================================================
+// VERIFICAR META
+// =======================================================
+
+function cumpriuMetaSponsor(sp, resultado) {
+
+    let firstOfTeam = resultado.find(r => r.team === gameState.teamSelected);
+    if (!firstOfTeam) return false;
+
+    switch (sp.bonusType) {
+        case "position": return firstOfTeam.pos <= sp.target;
+        case "points": return firstOfTeam.pos <= 10;
+        case "podium": return firstOfTeam.pos <= 3;
+        case "win": return firstOfTeam.pos === 1;
+        default: return false;
+    }
+}
+
+
+// =======================================================
+// CANCELAR PATROCÍNIO
+// =======================================================
+
+function cancelarSponsor(id) {
+
+    let sp = gameState.activeSponsors.find(s => s.id === id);
+    if (!sp) return;
+
+    // penalidade simples: perder upfront proporcional
+    let multa = sp.upfront * 0.3;
+
+    if (gameState.finances.balance < multa) {
+        alert("Saldo insuficiente para rescindir!");
+        return;
+    }
+
+    gameState.finances.balance -= multa;
+
+    // voltar para pool com tempo zerado
+    sp.contractRaces = 0;
+    gameState.sponsorPool.push(sp);
+
+    gameState.activeSponsors = gameState.activeSponsors.filter(s => s.id !== id);
+
+    salvarGame();
+    mostrarTelaSponsors();
+}
