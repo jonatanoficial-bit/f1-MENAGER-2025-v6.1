@@ -1,216 +1,124 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>F1 Manager 2025 — Patrocínios</title>
+<meta charset="UTF-8">
+<title>F1 Manager 2025 — Patrocínio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Mantém seu ecossistema visual atual -->
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="ui.css" />
-  <link rel="stylesheet" href="ui-screens.css" />
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #fff;
+  background: #000;
+}
 
-  <!-- (Opcional) Se você tiver um CSS específico do race para “shell”, pode manter.
-       Se não existir, pode remover sem problemas. -->
-  <link rel="stylesheet" href="race.css" />
+body {
+  background-image: url("assets/ui/patrocinio_bg.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
 
-  <style>
-    /* ===== Shell AAA (não altera lógica, só estrutura/visual) ===== */
-    html, body { height: 100%; }
-    body { margin: 0; overflow-y: auto; }
+.overlay {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, rgba(10,15,25,0.85), rgba(0,0,0,0.95));
+  padding: 24px;
+}
 
-    .screen-shell {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background: #000;
-    }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
 
-    .screen-bg {
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(1200px 700px at 15% 10%, rgba(60,120,255,.18), transparent 55%),
-        radial-gradient(900px 600px at 85% 15%, rgba(0,255,200,.12), transparent 55%),
-        radial-gradient(900px 600px at 70% 90%, rgba(255,120,0,.10), transparent 55%),
-        url("assets/ui/sponsors_bg.jpg");
-      background-size: cover;
-      background-position: center;
-      filter: saturate(1.05) contrast(1.05);
-      z-index: -2;
-    }
-    .screen-bg::after{
-      content:"";
-      position:absolute; inset:0;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
 
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
+.header-title h1 {
+  font-size: 22px;
+  margin: 0;
+}
 
-    .topbar-glass {
-      border-radius: 18px;
-      background: rgba(10,12,18,.62);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 14px 40px rgba(0,0,0,.35);
-      padding: 12px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-      width: min(1180px, calc(100% - 16px));
-      margin: 0 auto;
-    }
+.section {
+  margin-top: 24px;
+}
 
-    .brand {
-      display:flex; align-items:center; gap: 10px;
-      min-width: 240px;
-    }
-    .brand .badge {
-      width: 34px; height: 34px; border-radius: 10px;
-      display:grid; place-items:center;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.10);
-      overflow:hidden;
-    }
-    .brand .badge img { width: 22px; height: 22px; object-fit: contain; }
-    .brand .titles { line-height: 1.1; }
-    .brand .titles .kicker {
-      font-size: 12px; opacity:.85; letter-spacing:.12em; text-transform: uppercase;
-    }
-    .brand .titles .title {
-      font-size: 14px; font-weight: 700;
-    }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
 
-    .top-actions { display:flex; align-items:center; gap:10px; }
-    .pill {
-      display:inline-flex; align-items:center; gap:10px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.10);
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      user-select: none;
-    }
-    .pill:hover { background: rgba(255,255,255,.09); }
+.card {
+  background: rgba(15,20,35,0.75);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
 
-    .content {
-      width: min(1180px, calc(100% - 16px));
-      margin: 0 auto;
-      padding: 12px 0 28px;
-      display: grid;
-      gap: 14px;
-    }
+.card h3 {
+  margin: 0 0 8px 0;
+}
 
-    .panel {
-      border-radius: 18px;
-      background: rgba(10,12,18,.62);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 14px 40px rgba(0,0,0,.35);
-      padding: 16px;
-    }
+.card p {
+  font-size: 14px;
+  opacity: 0.85;
+}
 
-    /* garante respiro e leitura em telas menores */
-    @media (max-width: 780px) {
-      .brand { min-width: unset; }
-      .brand .titles .title { font-size: 13px; }
-      .topbar-glass { padding: 10px 10px; }
-      .content { padding-bottom: 22px; }
-    }
-  </style>
+.card button {
+  margin-top: 12px;
+}
+</style>
 </head>
 
 <body>
-  <div class="screen-shell">
-    <div class="screen-bg" aria-hidden="true"></div>
+<div class="overlay">
 
-    <!-- Topbar (mesmo “shell” das telas avançadas) -->
-    <div class="topbar">
-      <div class="topbar-glass">
-        <div class="brand">
-          <div class="badge" title="Equipe">
-            <!-- Logo da equipe (preenchido via JS se existir; fallback) -->
-            <img id="teamLogo" src="assets/teams/ferrari.png" alt="Logo da equipe" onerror="this.style.opacity=.25">
-          </div>
-          <div class="titles">
-            <div class="kicker">Patrocínios & Marca</div>
-            <div class="title">Negocie contratos, cumpra metas e converta em performance real.</div>
-          </div>
-        </div>
-
-        <div class="top-actions">
-          <!-- “Manager pill” opcional, se você já exibe isso em outras telas -->
-          <div class="pill" id="managerPill" title="Manager">Manager</div>
-
-          <!-- Voltar (mantém padrão de navegação sem mexer na lógica) -->
-          <button class="pill" id="btnVoltar" type="button">VOLTAR</button>
-        </div>
+  <div class="header">
+    <div class="header-title">
+      <img src="assets/ui/team_logo.png" height="36">
+      <div>
+        <h1>Patrocínios & Marca</h1>
+        <small>Negocie contratos e gere fluxo de caixa</small>
       </div>
     </div>
-
-    <!-- Conteúdo -->
-    <main class="content">
-      <!-- Root onde seu sponsorSystem injeta a UI (LÓGICA NÃO ALTERADA) -->
-      <section class="panel" id="sponsorRoot">
-        <!-- Conteúdo será renderizado pelo sponsorSystem.js -->
-      </section>
-    </main>
+    <button class="btn" onclick="history.back()">VOLTAR</button>
   </div>
 
-  <!-- Loader existente (se você já usa) -->
-  <script src="assets/js/managerBarLoader.js"></script>
+  <div class="section">
+    <div class="cards">
 
-  <!-- Compat: NÃO altera lógica, apenas evita quebra se gameState/salvarGame não existirem -->
-  <script>
-    (function(){
-      const LS_KEY = "f1m2025_save_v6_1";
-      if (!window.gameState) {
-        try { window.gameState = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }
-        catch(e){ window.gameState = {}; }
-      }
-      if (typeof window.salvarGame !== "function") {
-        window.salvarGame = function(){
-          try { localStorage.setItem(LS_KEY, JSON.stringify(window.gameState || {})); } catch(e){}
-        };
-      }
+      <div class="card">
+        <h3>Patrocinador Máster</h3>
+        <p>Contrato de maior valor. Metas de pódio, vitórias e campeonato.</p>
+        <strong>€ 40–80 mi / temporada</strong>
+        <button class="btn">Ver ofertas</button>
+      </div>
 
-      // Botão voltar: tenta voltar para o lobby padrão; se não existir, volta histórico
-      const btn = document.getElementById("btnVoltar");
-      if (btn) btn.addEventListener("click", () => {
-        const p = new URLSearchParams(location.search);
-        const track = p.get("track") || "australia";
-        const gp = p.get("gp") || "GP da Austrália 2025";
-        const userTeam = p.get("userTeam") || "ferrari";
-        const lobby = `lobby.html?track=${encodeURIComponent(track)}&gp=${encodeURIComponent(gp)}&userTeam=${encodeURIComponent(userTeam)}`;
-        // se lobby.html existir no seu build, ótimo. se não, fallback:
-        fetch(lobby, { method: "HEAD" }).then(r => {
-          if (r.ok) location.href = lobby;
-          else history.back();
-        }).catch(()=>history.back());
-      });
+      <div class="card">
+        <h3>Apoiadores Oficiais</h3>
+        <p>Exposição média, contratos estáveis.</p>
+        <strong>Slots disponíveis: 3</strong>
+        <button class="btn">Gerenciar</button>
+      </div>
 
-      // Se tiver estado da equipe, tenta atualizar logo
-      try {
-        const teamKey = (new URLSearchParams(location.search).get("userTeam") || (window.gameState && window.gameState.userTeam) || "ferrari").toLowerCase();
-        const logo = document.getElementById("teamLogo");
-        if (logo) logo.src = `assets/teams/${teamKey}.png`;
-      } catch(e){}
-    })();
-  </script>
+      <div class="card">
+        <h3>Patrocínios Objetivo</h3>
+        <p>Bônus por volta rápida, top 10 ou metas específicas.</p>
+        <strong>Alto risco / alto retorno</strong>
+        <button class="btn">Criar contrato</button>
+      </div>
 
-  <!-- Seus sistemas (mantém a lógica; só garante que eles carreguem) -->
-  <script src="sponsorSystem.js"></script>
+    </div>
+  </div>
+
+</div>
 </body>
 </html>
