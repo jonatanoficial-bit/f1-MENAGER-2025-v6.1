@@ -1,179 +1,217 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>F1 Manager 2025 — Funcionários</title>
+<meta charset="UTF-8">
+<title>F1 Manager 2025 — Funcionários</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="ui.css" />
-  <link rel="stylesheet" href="ui-screens.css" />
-  <link rel="stylesheet" href="race.css" />
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #fff;
+  background: #000;
+}
 
-  <style>
-    html, body { height: 100%; }
-    body { margin: 0; overflow-y: auto; }
+body {
+  background-image: url("assets/ui/funcionarios_bg.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
 
-    .screen-shell { min-height: 100vh; display: flex; flex-direction: column; background:#000; }
+.overlay {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, rgba(10,15,25,0.85), rgba(0,0,0,0.95));
+  padding: 24px;
+}
 
-    .screen-bg {
-      position: fixed; inset: 0;
-      background:
-        radial-gradient(1200px 700px at 15% 10%, rgba(60,120,255,.18), transparent 55%),
-        radial-gradient(900px 600px at 85% 15%, rgba(0,255,200,.12), transparent 55%),
-        radial-gradient(900px 600px at 70% 90%, rgba(255,120,0,.10), transparent 55%),
-        url("assets/ui/staff_bg.jpg");
-      background-size: cover;
-      background-position: center;
-      filter: saturate(1.05) contrast(1.05);
-      z-index: -2;
-    }
-    .screen-bg::after{
-      content:"";
-      position:absolute; inset:0;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
 
-    .topbar {
-      position: sticky; top: 0; z-index: 10;
-      padding: 14px 18px;
-    }
-    .topbar-glass {
-      border-radius: 18px;
-      background: rgba(10,12,18,.62);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 14px 40px rgba(0,0,0,.35);
-      padding: 12px 14px;
-      width: min(1180px, calc(100% - 16px));
-      margin: 0 auto;
-      display:flex; align-items:center; justify-content:space-between; gap: 12px;
-    }
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
 
-    .brand { display:flex; align-items:center; gap: 10px; min-width: 240px; }
-    .brand .badge {
-      width: 34px; height: 34px; border-radius: 10px;
-      display:grid; place-items:center;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.10);
-      overflow:hidden;
-    }
-    .brand .badge img { width: 22px; height: 22px; object-fit: contain; }
+.header-title h1 {
+  font-size: 22px;
+  margin: 0;
+}
 
-    .brand .titles { line-height: 1.1; }
-    .brand .titles .kicker {
-      font-size: 12px; opacity:.85; letter-spacing:.12em; text-transform: uppercase;
-    }
-    .brand .titles .title { font-size: 14px; font-weight: 700; }
+.header small {
+  opacity: 0.75;
+}
 
-    .top-actions { display:flex; align-items:center; gap:10px; }
-    .pill {
-      display:inline-flex; align-items:center; gap:10px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.10);
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      user-select: none;
-    }
-    .pill:hover { background: rgba(255,255,255,.09); }
+.btn {
+  padding: 8px 16px;
+  border-radius: 18px;
+  background: #111;
+  border: 1px solid #333;
+  color: #fff;
+  cursor: pointer;
+}
 
-    .content {
-      width: min(1180px, calc(100% - 16px));
-      margin: 0 auto;
-      padding: 12px 0 28px;
-      display: grid;
-      gap: 14px;
-    }
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
 
-    .panel {
-      border-radius: 18px;
-      background: rgba(10,12,18,.62);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 14px 40px rgba(0,0,0,.35);
-      padding: 16px;
-    }
+.metric {
+  background: rgba(20,25,40,0.65);
+  border-radius: 14px;
+  padding: 14px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.06);
+}
 
-    @media (max-width: 780px) {
-      .brand { min-width: unset; }
-      .brand .titles .title { font-size: 13px; }
-      .topbar-glass { padding: 10px 10px; }
-      .content { padding-bottom: 22px; }
-    }
-  </style>
+.metric span {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.metric strong {
+  display: block;
+  font-size: 18px;
+  margin-top: 6px;
+}
+
+.section {
+  margin-top: 24px;
+}
+
+.section h2 {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: rgba(15,20,35,0.75);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.card h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.bar {
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00c6ff, #0072ff);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.actions button {
+  flex: 1;
+  margin: 0 4px;
+}
+</style>
 </head>
 
 <body>
-  <div class="screen-shell">
-    <div class="screen-bg" aria-hidden="true"></div>
+<div class="overlay">
 
-    <div class="topbar">
-      <div class="topbar-glass">
-        <div class="brand">
-          <div class="badge" title="Equipe">
-            <img id="teamLogo" src="assets/teams/ferrari.png" alt="Logo da equipe" onerror="this.style.opacity=.25">
-          </div>
-          <div class="titles">
-            <div class="kicker">Funcionários & Equipe Técnica</div>
-            <div class="title">Contrate, demita e converta qualidade em pit-stop, pneus e desenvolvimento.</div>
-          </div>
-        </div>
-
-        <div class="top-actions">
-          <div class="pill" id="managerPill" title="Manager">Manager</div>
-          <button class="pill" id="btnVoltar" type="button">VOLTAR</button>
-        </div>
+  <div class="header">
+    <div class="header-title">
+      <img src="assets/ui/team_logo.png" height="36">
+      <div>
+        <h1>Funcionários & Equipe Técnica</h1>
+        <small>Contrate, demita e influencie desempenho real</small>
       </div>
     </div>
-
-    <main class="content">
-      <!-- Root onde seu staffSystem injeta a UI (LÓGICA NÃO ALTERADA) -->
-      <section class="panel" id="staffRoot">
-        <!-- Conteúdo será renderizado pelo staffSystem.js -->
-      </section>
-    </main>
+    <button class="btn" onclick="history.back()">VOLTAR</button>
   </div>
 
-  <script src="assets/js/managerBarLoader.js"></script>
+  <div class="dashboard">
+    <div class="metric"><span>Caixa</span><strong>€ 140.000.000</strong></div>
+    <div class="metric"><span>Custo semanal</span><strong>€ 0</strong></div>
+    <div class="metric"><span>Pit-stop</span><strong>x0.86</strong></div>
+    <div class="metric"><span>Desenvolvimento</span><strong>x1.10</strong></div>
+    <div class="metric"><span>Desgaste pneus</span><strong>x0.93</strong></div>
+  </div>
 
-  <!-- Compat: não altera lógica; só garante gameState/salvarGame se estiverem ausentes -->
-  <script>
-    (function(){
-      const LS_KEY = "f1m2025_save_v6_1";
-      if (!window.gameState) {
-        try { window.gameState = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }
-        catch(e){ window.gameState = {}; }
-      }
-      if (typeof window.salvarGame !== "function") {
-        window.salvarGame = function(){
-          try { localStorage.setItem(LS_KEY, JSON.stringify(window.gameState || {})); } catch(e){}
-        };
-      }
+  <div class="section">
+    <h2>Departamentos</h2>
 
-      const btn = document.getElementById("btnVoltar");
-      if (btn) btn.addEventListener("click", () => {
-        const p = new URLSearchParams(location.search);
-        const track = p.get("track") || "australia";
-        const gp = p.get("gp") || "GP da Austrália 2025";
-        const userTeam = p.get("userTeam") || "ferrari";
-        const lobby = `lobby.html?track=${encodeURIComponent(track)}&gp=${encodeURIComponent(gp)}&userTeam=${encodeURIComponent(userTeam)}`;
-        fetch(lobby, { method: "HEAD" }).then(r => {
-          if (r.ok) location.href = lobby;
-          else history.back();
-        }).catch(()=>history.back());
-      });
+    <div class="cards">
 
-      try {
-        const teamKey = (new URLSearchParams(location.search).get("userTeam") || (window.gameState && window.gameState.userTeam) || "ferrari").toLowerCase();
-        const logo = document.getElementById("teamLogo");
-        if (logo) logo.src = `assets/teams/${teamKey}.png`;
-      } catch(e){}
-    })();
-  </script>
+      <div class="card">
+        <h3>Mecânicos</h3>
+        <small>Pit-stop & confiabilidade</small>
+        <div class="bar"><div class="bar-fill" style="width:77%"></div></div>
+        <strong>77 / 100</strong>
+        <div class="actions">
+          <button class="btn">Demitir</button>
+          <button class="btn">Contratar</button>
+        </div>
+      </div>
 
-  <script src="staffSystem.js"></script>
+      <div class="card">
+        <h3>Engenharia</h3>
+        <small>Ajustes & precisão da oficina</small>
+        <div class="bar"><div class="bar-fill" style="width:74%"></div></div>
+        <strong>74 / 100</strong>
+        <div class="actions">
+          <button class="btn">Demitir</button>
+          <button class="btn">Contratar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Aerodinâmica</h3>
+        <small>Grip & estabilidade</small>
+        <div class="bar"><div class="bar-fill" style="width:68%"></div></div>
+        <strong>68 / 100</strong>
+        <div class="actions">
+          <button class="btn">Demitir</button>
+          <button class="btn">Contratar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Marketing</h3>
+        <small>Exposição & patrocínio</small>
+        <div class="bar"><div class="bar-fill" style="width:59%"></div></div>
+        <strong>59 / 100</strong>
+        <div class="actions">
+          <button class="btn">Demitir</button>
+          <button class="btn">Contratar</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
 </body>
 </html>
