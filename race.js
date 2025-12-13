@@ -1,211 +1,197 @@
-/* ==========================================================
-   F1 MANAGER 2025 – RACE.JS (CORRIDA – ESTÁVEL)
-   ✔ NÃO redeclara DRIVERS / TEAMS
-   ✔ SVG funcional
-   ✔ Mobile OK
-   ✔ Loop real
-   ✔ Pódio funcional
-========================================================== */
+/* =========================================================
+   F1 MANAGER 2025 – RACE SYSTEM (STABLE CORE)
+   Versão segura para restaurar corrida
+   ========================================================= */
 
-(function () {
-  "use strict";
+import { TRACKS_2025 } from "./data.js";
 
-  /* =========================
-     UTILIDADES
-  ========================= */
-  const qs = (s) => document.querySelector(s);
-  const qsa = (s) => [...document.querySelectorAll(s)];
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+/* =========================
+   PARÂMETROS GERAIS
+   ========================= */
 
-  /* =========================
-     PARAMS DA URL
-  ========================= */
-  const params = new URLSearchParams(location.search);
-  const trackKey = (params.get("track") || "australia").toLowerCase();
-  const gpName = params.get("gp") || "GP";
-  const userTeam = params.get("userTeam") || "ferrari";
+const params = new URLSearchParams(window.location.search);
+const trackId = params.get("track") || "australia";
+const gpName = params.get("gp") || "GP";
+const userTeam = params.get("userTeam") || "ferrari";
 
-  /* =========================
-     DADOS GLOBAIS (SEM REDECLARAR)
-  ========================= */
-  if (!window.DRIVERS_2025 || !Array.isArray(window.DRIVERS_2025)) {
-    alert("Erro crítico: DRIVERS_2025 não carregado.");
+const FPS = 60;
+let speedMultiplier = 1;
+
+/* =========================
+   ELEMENTOS DOM
+   ========================= */
+
+const svgContainer = document.getElementById("trackSvg");
+const sessionTitle = document.getElementById("sessionName");
+const pilotsPanel = document.getElementById("driversPanel");
+
+/* =========================
+   ESTADO DA CORRIDA
+   ========================= */
+
+let trackData = null;
+let cars = [];
+let animationId = null;
+let raceFinished = false;
+
+/* =========================
+   PILOTOS (BASE)
+   ========================= */
+
+const DRIVERS = [
+  { id: 1, name: "Leclerc", team: "ferrari" },
+  { id: 2, name: "Sainz", team: "ferrari" },
+  { id: 3, name: "Verstappen", team: "redbull" },
+  { id: 4, name: "Perez", team: "redbull" },
+  { id: 5, name: "Hamilton", team: "mercedes" },
+  { id: 6, name: "Russell", team: "mercedes" }
+];
+
+/* =========================
+   INICIALIZAÇÃO
+   ========================= */
+
+function initRace() {
+  trackData = TRACKS_2025[trackId];
+
+  if (!trackData) {
+    alert("Erro: pista não encontrada.");
     return;
   }
 
-  const DRIVERS = window.DRIVERS_2025;
+  sessionTitle.innerText = gpName + " – Corrida";
 
-  /* =========================
-     ESTADO DA CORRIDA
-  ========================= */
-  const race = {
-    totalLaps: 25,
-    lap: 1,
-    speed: 1,
-    running: true,
-    drivers: [],
-    visuals: [],
-    path: [],
-    lastTime: null,
-    finished: false
-  };
+  loadTrackSVG();
+  createCars();
+  renderDriversPanel();
 
-  /* =========================
-     SVG DA PISTA
-  ========================= */
-  const trackBox = qs("#track-map");
-  trackBox.innerHTML = "";
+  startRaceLoop();
+}
 
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("viewBox", "0 0 1000 600");
-  svg.setAttribute("width", "100%");
-  svg.setAttribute("height", "100%");
-  trackBox.appendChild(svg);
+/* =========================
+   SVG DA PISTA
+   ========================= */
 
-  /* =========================
-     PATH DA PISTA (fallback)
-  ========================= */
-  function generateFallbackPath() {
-    const pts = [];
-    for (let i = 0; i <= 360; i += 3) {
-      const rad = (i * Math.PI) / 180;
-      pts.push({
-        x: 500 + Math.cos(rad) * 220,
-        y: 300 + Math.sin(rad) * 140
-      });
-    }
-    return pts;
-  }
+function loadTrackSVG() {
+  svgContainer.innerHTML = `
+    <svg viewBox="0 0 1000 1000" width="100%" height="100%">
+      <path d="${trackData.svgPath}"
+            fill="none"
+            stroke="#ffffff"
+            stroke-width="6" />
+    </svg>
+  `;
+}
 
-  race.path = window.pathPoints && window.pathPoints.length
-    ? window.pathPoints
-    : generateFallbackPath();
+/* =========================
+   CRIAÇÃO DOS CARROS
+   ========================= */
 
-  /* Desenho da pista */
-  const pathEl = document.createElementNS(svgNS, "path");
-  pathEl.setAttribute(
-    "d",
-    "M " + race.path.map(p => `${p.x} ${p.y}`).join(" L ")
-  );
-  pathEl.setAttribute("fill", "none");
-  pathEl.setAttribute("stroke", "#ffffff");
-  pathEl.setAttribute("stroke-width", "4");
-  svg.appendChild(pathEl);
-
-  /* =========================
-     GRID DE LARGADA
-  ========================= */
-  function loadGrid() {
-    const raw = localStorage.getItem("f1m2025_last_qualy");
-    if (raw) {
-      const ids = JSON.parse(raw);
-      return ids.map(id => DRIVERS.find(d => d.id === id)).filter(Boolean);
-    }
-    return [...DRIVERS].sort((a, b) => b.rating - a.rating);
-  }
-
-  race.drivers = loadGrid().map((d, i) => ({
-    ...d,
-    idx: 0,
-    lap: 1,
-    progress: i * 8,
-    finished: false
+function createCars() {
+  cars = DRIVERS.map((driver, index) => ({
+    ...driver,
+    progress: Math.random(),
+    speed: 0.0004 + Math.random() * 0.0002,
+    element: createCarElement(driver)
   }));
+}
 
-  /* =========================
-     CARROS (SVG)
-  ========================= */
-  race.visuals = race.drivers.map(driver => {
-    const c = document.createElementNS(svgNS, "circle");
-    c.setAttribute("r", "6");
-    c.setAttribute("fill", driver.color || "#fff");
-    svg.appendChild(c);
-    return c;
-  });
+function createCarElement(driver) {
+  const el = document.createElement("div");
+  el.className = "car";
+  el.style.backgroundImage = `url(assets/teams/${driver.team}.png)`;
+  svgContainer.appendChild(el);
+  return el;
+}
 
-  /* =========================
-     LOOP DA CORRIDA
-  ========================= */
-  function tick(t) {
-    if (!race.running) return;
+/* =========================
+   LOOP DE CORRIDA
+   ========================= */
 
-    if (!race.lastTime) race.lastTime = t;
-    const dt = (t - race.lastTime) * race.speed;
-    race.lastTime = t;
+function startRaceLoop() {
+  function loop() {
+    updateCars();
+    renderCars();
 
-    race.drivers.forEach((d, i) => {
-      if (d.finished) return;
-
-      d.progress += dt * (0.00008 + d.rating * 0.000001);
-
-      if (d.progress >= race.path.length) {
-        d.progress = 0;
-        d.lap++;
-
-        if (d.lap > race.totalLaps) {
-          d.finished = true;
-          d.finishTime = performance.now();
-        }
-      }
-
-      const p = race.path[Math.floor(d.progress)];
-      if (p) {
-        race.visuals[i].setAttribute("cx", p.x);
-        race.visuals[i].setAttribute("cy", p.y);
-      }
-    });
-
-    if (race.drivers.every(d => d.finished)) {
-      finishRace();
-      return;
+    if (!raceFinished) {
+      animationId = requestAnimationFrame(loop);
     }
-
-    requestAnimationFrame(tick);
   }
+  loop();
+}
 
-  /* =========================
-     CONTROLE DE VELOCIDADE
-  ========================= */
-  window.setRaceSpeed = (m) => (race.speed = m);
+/* =========================
+   ATUALIZAÇÃO
+   ========================= */
 
-  /* =========================
-     FINAL + PÓDIO
-  ========================= */
-  function finishRace() {
-    race.running = false;
+function updateCars() {
+  cars.forEach(car => {
+    car.progress += car.speed * speedMultiplier;
+    if (car.progress >= 1) {
+      car.progress = 1;
+      raceFinished = true;
+      showPodium();
+    }
+  });
+}
 
-    const results = [...race.drivers]
-      .sort((a, b) => a.finishTime - b.finishTime)
-      .slice(0, 3);
+/* =========================
+   RENDERIZAÇÃO
+   ========================= */
 
-    showPodium(results);
-  }
+function renderCars() {
+  cars.forEach(car => {
+    const point = trackData.pathPoints[
+      Math.floor(car.progress * (trackData.pathPoints.length - 1))
+    ];
+    if (!point) return;
 
-  function showPodium(p) {
-    const modal = qs("#podium-modal");
-    if (!modal) return;
+    car.element.style.transform =
+      `translate(${point.x}px, ${point.y}px)`;
+  });
+}
 
-    ["p1", "p2", "p3"].forEach((k, i) => {
-      const d = p[i];
-      if (!d) return;
-      qs(`#${k}-name`).textContent = d.name;
-      qs(`#${k}-team`).textContent = d.teamName;
-      qs(`#${k}-face`).src = d.face;
-      qs(`#${k}-logo`).src = d.logo;
-    });
+/* =========================
+   PAINEL DE PILOTOS
+   ========================= */
 
-    modal.classList.remove("hidden");
-  }
+function renderDriversPanel() {
+  pilotsPanel.innerHTML = "";
+  cars.forEach(car => {
+    const card = document.createElement("div");
+    card.className = "pilot-card";
+    card.innerHTML = `
+      <strong>${car.name}</strong><br>
+      ${car.team.toUpperCase()}
+    `;
+    pilotsPanel.appendChild(card);
+  });
+}
 
-  window.closePodium = () => {
-    qs("#podium-modal")?.classList.add("hidden");
-    location.href = "calendar.html";
-  };
+/* =========================
+   PODIUM
+   ========================= */
 
-  /* =========================
-     START
-  ========================= */
-  requestAnimationFrame(tick);
+function showPodium() {
+  cancelAnimationFrame(animationId);
 
-})();
+  const podium = [...cars].sort((a, b) => b.progress - a.progress);
+
+  alert(
+    `🏆 Pódio:\n1º ${podium[0].name}\n2º ${podium[1].name}\n3º ${podium[2].name}`
+  );
+}
+
+/* =========================
+   CONTROLES DE VELOCIDADE
+   ========================= */
+
+window.setSpeed = value => {
+  speedMultiplier = value;
+};
+
+/* =========================
+   START
+   ========================= */
+
+initRace();
