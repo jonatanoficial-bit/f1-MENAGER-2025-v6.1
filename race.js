@@ -1,17 +1,62 @@
 /* =========================================================
-   F1 MANAGER 2025 — RACE (STABLE + DOTS + REAL PIT + SC + WEATHER)
-   - Sem imports (compatível com <script src="race.js">)
-   - SVG track via assets/tracks/{track}.svg
-   - Carros como "bolinhas" coloridas (igual sensação TL/Quali)
-   - HUD + 1x/2x/4x + PIT + PÓDIO
-   - Economy + Staff influence (pit/tyre/consistency)
-   - Pit stop com perda realista (pit lane + serviço + erro)
-   - Safety Car randômico
-   - Meteorologia randômica (afeta ritmo/desgaste)
+   F1 MANAGER 2025 — RACE.JS (STABLE + LINK TL/QUALI/RACE)
+   - Consome Season Store (TL/Quali) + Economy Staff
+   - Mantém jogabilidade já construída (apenas liga dados)
    ========================================================= */
 
 (function () {
   "use strict";
+
+  /* =========================
+     SEASON + ECON KEYS
+     ========================= */
+  const SEASON_KEY = "f1m2025_season_state";
+  const ECON_KEY = "f1m2025_economy";
+
+  function deepMerge(base, patch) {
+    if (!patch || typeof patch !== "object") return base;
+    const out = Array.isArray(base) ? base.slice() : { ...(base || {}) };
+    for (const k of Object.keys(patch)) {
+      const pv = patch[k];
+      const bv = out[k];
+      if (pv && typeof pv === "object" && !Array.isArray(pv)) out[k] = deepMerge(bv || {}, pv);
+      else out[k] = pv;
+    }
+    return out;
+  }
+
+  function loadSeason() {
+    try {
+      const raw = localStorage.getItem(SEASON_KEY);
+      if (!raw) return { version: 1, current: {}, setup: {}, practice: {}, qualifying: {}, race: {}, staff: {} };
+      const obj = JSON.parse(raw);
+      return deepMerge({ version: 1, current: {}, setup: {}, practice: {}, qualifying: {}, race: {}, staff: {} }, obj);
+    } catch (e) {
+      return { version: 1, current: {}, setup: {}, practice: {}, qualifying: {}, race: {}, staff: {} };
+    }
+  }
+
+  function loadEconomy() {
+    try {
+      const raw = localStorage.getItem(ECON_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function staffModifiers(staff) {
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+    const pitLevel = clamp(Number(staff?.pitCrewLevel ?? 3), 1, 5);
+    const tyreLevel = clamp(Number(staff?.tyreEngineerLevel ?? 3), 1, 5);
+    const setupLevel = clamp(Number(staff?.setupEngineerLevel ?? 3), 1, 5);
+
+    return {
+      pitTimeFactor: 1.12 - pitLevel * 0.045,
+      tyreWearFactor: 1.08 - tyreLevel * 0.03,
+      consistencyBoost: 0.90 - setupLevel * 0.06
+    };
+  }
 
   /* =========================
      PARAMS / CONSTANTES
@@ -38,7 +83,6 @@
 
   /* =========================
      DADOS BASE (COM BOR)
-     - BOR substitui BOT na Sauber
      ========================= */
   const DRIVERS_2025 = [
     { code: "VER", name: "Verstappen", team: "redbull", rating: 96 },
@@ -65,7 +109,7 @@
     { code: "TSU", name: "Tsunoda", team: "rb", rating: 84 },
     { code: "RIC", name: "Ricciardo", team: "rb", rating: 85 },
 
-    // SAUBER (BOT -> BOR)
+    // SAUBER (BOR no lugar de BOT)
     { code: "BOR", name: "Bortoleto", team: "sauber", rating: 83 },
     { code: "ZHO", name: "Zhou", team: "sauber", rating: 82 },
 
@@ -74,158 +118,20 @@
   ];
 
   const TRACK_BASE_LAP_TIME_MS = {
-    australia: 91500,
-    bahrain: 96500,
-    saudiarabia: 90000,
-    japan: 90500,
-    china: 97500,
-    miami: 93000,
-    imola: 91500,
-    monaco: 75500,
-    canada: 92000,
-    spain: 90500,
-    austria: 67500,
-    britain: 89500,
-    hungary: 78000,
-    belgium: 107000,
-    netherlands: 73000,
-    monza: 80000,
-    singapore: 103000,
-    austin: 96500,
-    mexico: 78500,
-    brazil: 74000,
-    lasvegas: 93000,
-    qatar: 83500,
-    abudhabi: 88500
+    australia: 91500, bahrain: 96500, saudiarabia: 90000, japan: 90500, china: 97500,
+    miami: 93000, imola: 91500, monaco: 75500, canada: 92000, spain: 90500,
+    austria: 67500, britain: 89500, hungary: 78000, belgium: 107000, netherlands: 73000,
+    monza: 80000, singapore: 103000, austin: 96500, mexico: 78500, brazil: 74000,
+    lasvegas: 93000, qatar: 83500, abudhabi: 88500
   };
 
-  const TRACK_RACE_LAPS = {
-    monaco: 18,
-    austria: 16,
-    netherlands: 16,
-    brazil: 16
-  };
+  const TRACK_RACE_LAPS = { monaco: 18, austria: 16, netherlands: 16, brazil: 16 };
 
-  /* =========================
-     CORES DAS EQUIPES (DOTS)
-     ========================= */
   const TEAM_COLOR = {
-    redbull: "#1e4cff",
-    ferrari: "#ff2a2a",
-    mercedes: "#00ffd2",
-    mclaren: "#ff8a00",
-    alpine: "#2aa7ff",
-    astonmartin: "#00a877",
-    haas: "#dcdcdc",
-    rb: "#5a6cff",
-    sauber: "#7cff00",
-    williams: "#00a3ff"
+    redbull: "#1e4cff", ferrari: "#ff2a2a", mercedes: "#00ffd2", mclaren: "#ff8a00",
+    alpine: "#2aa7ff", astonmartin: "#00a877", haas: "#dcdcdc", rb: "#5a6cff",
+    sauber: "#7cff00", williams: "#00a3ff"
   };
-
-  /* =========================
-     ECONOMY (safe embed)
-     ========================= */
-  const F1MEconomy = (function () {
-    const KEY = "f1m2025_economy";
-
-    const defaults = {
-      version: 1,
-      balance: 2500000,
-      week: 1,
-      seasonRaceIndex: 1,
-      sponsor: {
-        name: "Patrocinador Principal",
-        payPerGP: 350000,
-        bonusPodium: 200000,
-        bonusWin: 350000
-      },
-      staff: {
-        pitCrewLevel: 3,
-        tyreEngineerLevel: 3,
-        setupEngineerLevel: 3
-      },
-      manager: {
-        fired: false,
-        fireReason: "",
-        targetAvgPos: 10,
-        evaluatedHalfSeason: false
-      }
-    };
-
-    function load() {
-      try {
-        const raw = localStorage.getItem(KEY);
-        if (!raw) return structuredClone(defaults);
-        const parsed = JSON.parse(raw);
-        return { ...structuredClone(defaults), ...parsed };
-      } catch (e) {
-        return structuredClone(defaults);
-      }
-    }
-
-    function save(state) {
-      try {
-        localStorage.setItem(KEY, JSON.stringify(state));
-      } catch (e) {}
-    }
-
-    function clamp(n, a, b) {
-      return Math.max(a, Math.min(b, n));
-    }
-
-    function weeklyCosts(state) {
-      const pit = 35000 + state.staff.pitCrewLevel * 9000;
-      const tyre = 28000 + state.staff.tyreEngineerLevel * 7000;
-      const setup = 30000 + state.staff.setupEngineerLevel * 8000;
-      const facilities = 60000;
-      return pit + tyre + setup + facilities;
-    }
-
-    function staffModifiers(state) {
-      const pitLevel = clamp(state.staff.pitCrewLevel, 1, 5);
-      const tyreLevel = clamp(state.staff.tyreEngineerLevel, 1, 5);
-      const setupLevel = clamp(state.staff.setupEngineerLevel, 1, 5);
-
-      return {
-        pitTimeFactor: 1.12 - pitLevel * 0.045,
-        tyreWearFactor: 1.08 - tyreLevel * 0.03,
-        consistencyBoost: 0.90 - setupLevel * 0.06
-      };
-    }
-
-    function applyEndOfGP(state, result) {
-      const sponsorPay = state.sponsor?.payPerGP || 0;
-      let bonus = 0;
-
-      const podium = result?.podium || [];
-      if (podium.length) {
-        const win = podium[0];
-        if (win && win.isUserTeam) bonus += state.sponsor?.bonusWin || 0;
-        if (podium.some((p) => p && p.isUserTeam)) bonus += state.sponsor?.bonusPodium || 0;
-      }
-
-      const costs = weeklyCosts(state);
-
-      state.balance = (state.balance || 0) + sponsorPay + bonus - costs;
-      state.week = (state.week || 1) + 1;
-      state.seasonRaceIndex = (state.seasonRaceIndex || 1) + 1;
-
-      const HALF_SEASON = 12;
-      if (!state.manager.evaluatedHalfSeason && state.seasonRaceIndex >= HALF_SEASON) {
-        state.manager.evaluatedHalfSeason = true;
-        const avgPos = result?.userAvgPos ?? 99;
-        if (avgPos > state.manager.targetAvgPos) {
-          state.manager.fired = true;
-          state.manager.fireReason =
-            "Metas não cumpridas após 50% da temporada (demissão automática).";
-        }
-      }
-
-      save(state);
-    }
-
-    return { load, save, staffModifiers, applyEndOfGP };
-  })();
 
   /* =========================
      DOM REFS
@@ -252,11 +158,33 @@
   }
 
   /* =========================
+     LOAD SEASON + STAFF + SETUP + GRID
+     ========================= */
+  const season = loadSeason();
+  const econ = loadEconomy();
+  const staff = econ?.staff || season?.staff || { pitCrewLevel: 3, tyreEngineerLevel: 3, setupEngineerLevel: 3 };
+  const staffMods = staffModifiers(staff);
+
+  // Setup do usuário vindo do TL/Oficina (via Season Store)
+  const userSetup = (season?.setup && season.setup.track === trackKey) ? season.setup : null;
+  const setupFactors = userSetup?.factors || null;
+
+  // Grid vindo da Quali (Season Store) ou fallback do last_qualy
+  function loadGridPayload() {
+    if (season?.qualifying?.grid && season.qualifying.track === trackKey) return season.qualifying;
+    try {
+      const raw = localStorage.getItem("f1m2025_last_qualy");
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (obj && obj.grid && obj.track === trackKey) return obj;
+    } catch (e) {}
+    return null;
+  }
+  const qualyPayload = loadGridPayload();
+
+  /* =========================
      STATE
      ========================= */
-  const economyState = F1MEconomy.load();
-  const staffMods = F1MEconomy.staffModifiers(economyState);
-
   const raceState = {
     trackKey,
     gpName,
@@ -273,29 +201,13 @@
 
     cars: [],
     finished: false,
-    podiumShown: false,
-
-    // Eventos
-    weather: {
-      mode: "dry",           // dry | light_rain | heavy_rain
-      timerMs: 0,
-      nextChangeMs: 35000 + Math.random() * 45000
-    },
-    safetyCar: {
-      active: false,
-      remainingMs: 0,
-      chancePerLap: 0.06,    // chance de entrar por volta (ajuste fino)
-      minMs: 18000,
-      maxMs: 36000
-    }
+    podiumShown: false
   };
 
   /* =========================
      HELPERS
      ========================= */
-  function clamp(n, a, b) {
-    return Math.max(a, Math.min(b, n));
-  }
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
   function formatMs(ms) {
     const m = Math.floor(ms / 60000);
@@ -307,9 +219,7 @@
     return `${mm}:${ss}.${tt}`;
   }
 
-  function safeText(s) {
-    return String(s || "").replace(/[<>]/g, "");
-  }
+  function safeText(s) { return String(s || "").replace(/[<>]/g, ""); }
 
   function markActiveSpeed(btn) {
     speedBtns.forEach((b) => b.classList.remove("active"));
@@ -345,39 +255,6 @@
   }
 
   /* =========================
-     WEATHER / SAFETY CAR (global modifiers)
-     ========================= */
-  function weatherModifiers() {
-    // Sem inventar sistema de pneus: apenas ritmo + desgaste
-    const mode = raceState.weather.mode;
-    if (mode === "light_rain") {
-      return { pace: 0.955, wear: 1.05 };
-    }
-    if (mode === "heavy_rain") {
-      return { pace: 0.915, wear: 1.12 };
-    }
-    return { pace: 1.0, wear: 1.0 };
-  }
-
-  function safetyCarPaceFactor() {
-    return raceState.safetyCar.active ? 0.62 : 1.0;
-  }
-
-  function maybeChangeWeather(dtMs) {
-    raceState.weather.timerMs += dtMs * speedMultiplier;
-    if (raceState.weather.timerMs >= raceState.weather.nextChangeMs) {
-      raceState.weather.timerMs = 0;
-      raceState.weather.nextChangeMs = 35000 + Math.random() * 45000;
-
-      const roll = Math.random();
-      // distribuição estável (maior parte seca)
-      if (roll < 0.70) raceState.weather.mode = "dry";
-      else if (roll < 0.92) raceState.weather.mode = "light_rain";
-      else raceState.weather.mode = "heavy_rain";
-    }
-  }
-
-  /* =========================
      SVG LOAD + PATH SAMPLE
      ========================= */
   async function loadTrackSvg(track) {
@@ -390,7 +267,7 @@
     svg.setAttribute("id", "track-svg");
     svg.setAttribute("width", "100%");
     svg.setAttribute("height", "100%");
-    svg.setAttribute("viewBox", `0 0 ${VIEW_W} ${VIEW_H}`);
+    svg.setAttribute("viewBox", `0 0 1000 600`);
     elTrackContainer.appendChild(svg);
 
     raceState.svg = svg;
@@ -439,8 +316,8 @@
 
     const pad = 22;
     const norm = pts.map((p) => ({
-      x: pad + ((p.x - minX) / w) * (VIEW_W - pad * 2),
-      y: pad + ((p.y - minY) / h) * (VIEW_H - pad * 2)
+      x: pad + ((p.x - minX) / w) * (1000 - pad * 2),
+      y: pad + ((p.y - minY) / h) * (600 - pad * 2)
     }));
 
     raceState.pathPoints = norm;
@@ -495,6 +372,44 @@
     const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
 
     return { x, y, angle };
+  }
+
+  /* =========================
+     GRID APPLY (Quali → Race)
+     - Sem mudar mecânica, apenas ordem inicial
+     ========================= */
+  function applyQualyGridInitialProgress(cars) {
+    if (!qualyPayload?.grid || !Array.isArray(qualyPayload.grid)) return;
+
+    const gridSorted = qualyPayload.grid.slice().sort((a, b) => (a.position || 99) - (b.position || 99));
+    const byNameTeam = new Map();
+    gridSorted.forEach((g) => {
+      const key = `${String(g.name || "").toLowerCase()}|${String(g.teamKey || "").toLowerCase()}`;
+      byNameTeam.set(key, g.position || 99);
+    });
+
+    // mapeia pelo nome+time (qualy não tem code no payload atual)
+    cars.forEach((c) => {
+      const key = `${String(c.name || "").toLowerCase()}|${String(c.team || "").toLowerCase()}`;
+      c.gridPos = byNameTeam.has(key) ? byNameTeam.get(key) : null;
+    });
+
+    const ordered = cars.slice().sort((a, b) => {
+      const pa = a.gridPos || 999;
+      const pb = b.gridPos || 999;
+      return pa - pb;
+    });
+
+    // progresso inicial espaçado (sem alterar física)
+    const base = 0.03;
+    const spacing = 0.0024;
+    ordered.forEach((c, i) => {
+      let p = base - i * spacing;
+      while (p < 0) p += 1;
+      c.progress = p;
+      c.laps = 0;
+      c.lapStartMs = 0;
+    });
   }
 
   /* =========================
@@ -556,9 +471,14 @@
         finished: false,
         finishTimeMs: null,
 
-        dotEl: dot
+        dotEl: dot,
+
+        gridPos: null
       };
     });
+
+    // aplica grid inicial (se existir)
+    applyQualyGridInitialProgress(raceState.cars);
 
     raceState.cars.forEach((c) => (c.lapStartMs = 0));
   }
@@ -635,27 +555,11 @@
           return;
         }
 
-        if (action === "engineUp") {
-          drv.engineMode = clamp(drv.engineMode + 1, 1, 4);
-          flashBtn(btn);
-          return;
-        }
-        if (action === "engineDown") {
-          drv.engineMode = clamp(drv.engineMode - 1, 1, 4);
-          flashBtn(btn);
-          return;
-        }
+        if (action === "engineUp") { drv.engineMode = clamp(drv.engineMode + 1, 1, 4); flashBtn(btn); return; }
+        if (action === "engineDown") { drv.engineMode = clamp(drv.engineMode - 1, 1, 4); flashBtn(btn); return; }
 
-        if (action === "aggrUp") {
-          drv.aggrMode = clamp(drv.aggrMode + 1, 1, 4);
-          flashBtn(btn);
-          return;
-        }
-        if (action === "aggrDown") {
-          drv.aggrMode = clamp(drv.aggrMode - 1, 1, 4);
-          flashBtn(btn);
-          return;
-        }
+        if (action === "aggrUp") { drv.aggrMode = clamp(drv.aggrMode + 1, 1, 4); flashBtn(btn); return; }
+        if (action === "aggrDown") { drv.aggrMode = clamp(drv.aggrMode - 1, 1, 4); flashBtn(btn); return; }
 
         if (action === "ers") {
           drv.ers = clamp(drv.ers + 18, 0, 100);
@@ -668,23 +572,41 @@
   }
 
   /* =========================
+     SETUP APPLY (TL/Oficina → Race)
+     - Apenas para o time do usuário
+     - Efeito controlado (não “reinventa” sensação)
+     ========================= */
+  function userSetupPaceFactor() {
+    if (!setupFactors) return { pace: 1.0, wear: 1.0 };
+    const ts = Number(setupFactors.topSpeedFactor ?? 1);
+    const gr = Number(setupFactors.gripFactor ?? 1);
+    const tw = Number(setupFactors.tyreWearFactor ?? 1);
+
+    const pace = clamp(1.0 + (ts - 1) * 0.55 + (gr - 1) * 0.45, 0.92, 1.06);
+    const wear = clamp(tw, 0.75, 1.45);
+    return { pace, wear };
+  }
+
+  /* =========================
      SIM / TELEMETRIA
      ========================= */
   function updateTelemetryAndWear(car, dtMs) {
-    const weather = weatherModifiers();
-
-    const tyreWearBase = 0.0021 * weather.wear;
+    const baseWear = 0.0021;
     const aggrFactor = 0.85 + car.aggrMode * 0.10;
     const pushFactor = car.pushing ? 1.18 : 1.0;
     const saveFactor = car.saving ? 0.88 : 1.0;
 
+    // aplica setup do usuário no desgaste (somente userTeam)
+    const us = (car.team === userTeamKey) ? userSetupPaceFactor() : { pace: 1.0, wear: 1.0 };
+
     const wear =
       (dtMs / 1000) *
-      tyreWearBase *
+      baseWear *
       aggrFactor *
       pushFactor *
       saveFactor *
-      staffMods.tyreWearFactor;
+      staffMods.tyreWearFactor *
+      us.wear;
 
     car.tyre = clamp(car.tyre - wear * 100, 0, 100);
 
@@ -696,8 +618,6 @@
   }
 
   function computeSpeedFactor(car) {
-    const weather = weatherModifiers();
-
     const engineFactor = 0.88 + car.engineMode * 0.05;
     const tyreFactor = 0.72 + (car.tyre / 100) * 0.35;
     const carFactor = 0.80 + (car.car / 100) * 0.25;
@@ -707,20 +627,14 @@
     const push = car.pushing ? 1.02 : 1.0;
     const save = car.saving ? 0.985 : 1.0;
 
-    const sc = safetyCarPaceFactor();
+    // aplica setup do usuário no ritmo (somente userTeam)
+    const us = (car.team === userTeamKey) ? userSetupPaceFactor() : { pace: 1.0, wear: 1.0 };
 
-    return (engineFactor * tyreFactor * carFactor * push * save + noise) * weather.pace * sc;
+    return (engineFactor * tyreFactor * carFactor * push * save + noise) * us.pace;
   }
 
-  /* =========================
-     PIT STOP REALISTA
-     - Agora é tempo de PIT LANE + serviço + possível erro
-     - Resultado: perde posições de forma consistente
-     ========================= */
   function pitTotalTimeMs() {
-    // Pit lane loss típico: 18s a 24s (varia por pista). Sem map por pista aqui.
-    const pitLane = 18000 + Math.random() * 6000; // 18–24s
-    // serviço: 2.2 a 3.4s
+    const pitLane = 18000 + Math.random() * 6000;
     const service = 2200 + Math.random() * 1200;
     return pitLane + service;
   }
@@ -751,32 +665,21 @@
       car.bestLapMs = car.bestLapMs == null ? lapMs : Math.min(car.bestLapMs, lapMs);
       car.lapStartMs = lapEndMs;
 
-      // Executa PIT exatamente no fechamento da volta (determinístico)
+      // PIT no fechamento de volta (determinístico)
       if (car.pitRequest && !car.inPit) {
         car.inPit = true;
 
-        // tempo total realista com staff
         const base = pitTotalTimeMs();
         let total = base * staffMods.pitTimeFactor;
 
-        // erro aleatório (mais realista)
         const errorRoll = Math.random();
-        if (errorRoll < 0.07) total += 1200 + Math.random() * 2200; // 1.2–3.4s
-        if (errorRoll < 0.02) total += 2500 + Math.random() * 3500; // erro grande raro
+        if (errorRoll < 0.07) total += 1200 + Math.random() * 2200;
+        if (errorRoll < 0.02) total += 2500 + Math.random() * 3500;
 
         car.pitRemainingMs = total;
       }
 
       car.laps += 1;
-
-      // chance de Safety Car no final da volta (event-driven)
-      if (!raceState.safetyCar.active) {
-        if (Math.random() < raceState.safetyCar.chancePerLap) {
-          raceState.safetyCar.active = true;
-          raceState.safetyCar.remainingMs =
-            raceState.safetyCar.minMs + Math.random() * (raceState.safetyCar.maxMs - raceState.safetyCar.minMs);
-        }
-      }
 
       if (car.laps >= raceState.totalLaps) {
         car.finished = true;
@@ -786,24 +689,11 @@
   }
 
   function updateCars(dtMs) {
-    // weather tick
-    maybeChangeWeather(dtMs);
-
-    // safety car countdown
-    if (raceState.safetyCar.active) {
-      raceState.safetyCar.remainingMs -= dtMs * speedMultiplier;
-      if (raceState.safetyCar.remainingMs <= 0) {
-        raceState.safetyCar.active = false;
-        raceState.safetyCar.remainingMs = 0;
-      }
-    }
-
     raceState.cars.forEach((car) => {
       if (car.finished) return;
 
       handlePit(car, dtMs);
 
-      // enquanto está no pit, praticamente não progride
       const pitFactor = car.inPit ? 0.001 : 1.0;
 
       updateTelemetryAndWear(car, dtMs);
@@ -880,12 +770,10 @@
 
       setUserStatus(i, status);
 
-      // atualiza estado dos botões do usuário em tempo real
       setBtnState(getUserButton(i, "push"), drv.pushing ? "active" : null);
       setBtnState(getUserButton(i, "save"), drv.saving ? "active" : null);
       setBtnState(getUserButton(i, "pit"), drv.pitQueued ? "pending" : null);
 
-      // quando termina o pit, remove pending automaticamente
       if (!drv.pitQueued && !drv.pitRequest && !drv.inPit) {
         setBtnState(getUserButton(i, "pit"), null);
       }
@@ -941,13 +829,9 @@
 
       const gapStr = idx === 0 ? "LÍDER" : `+${formatMs(Math.max(0, gap))}`;
 
-      const scStr = raceState.safetyCar.active ? "SC" : "";
-      const wx = raceState.weather.mode === "dry" ? "SEC" : raceState.weather.mode === "light_rain" ? "CHUVA" : "CHUVA+";
-
       stats.innerHTML = `
         <div class="stat-line"><span>${lapStr}</span><span>${gapStr}</span></div>
         <div class="stat-line"><span>Pneu</span><span>${Math.round(car.tyre)}%</span></div>
-        <div class="stat-line"><span>${wx}</span><span>${scStr}</span></div>
       `;
 
       card.appendChild(posEl);
@@ -969,12 +853,7 @@
     updateUserTelemetry();
   }
 
-  /* =========================
-     PÓDIO + ECONOMIA
-     ========================= */
-  function allFinished() {
-    return raceState.cars.every((c) => c.finished);
-  }
+  function allFinished() { return raceState.cars.every((c) => c.finished); }
 
   function buildPodiumModal(podium) {
     if (!elPodiumHost) return;
@@ -1022,46 +901,21 @@
     }
   }
 
-  function applyEconomyAtEnd(podium, order) {
-    const userDrivers = getUserDrivers();
-    const positions = userDrivers.map((ud) => {
-      const idx = order.findIndex((x) => x.code === ud.code);
-      return idx >= 0 ? idx + 1 : 20;
-    });
-    const avgPos = positions.reduce((a, b) => a + b, 0) / positions.length;
-
-    const econ = F1MEconomy.load();
-    F1MEconomy.applyEndOfGP(econ, {
-      userPositions: positions,
-      userAvgPos: avgPos,
-      podium: podium.map((p) => ({
-        code: p.code,
-        team: p.team,
-        isUserTeam: p.team === userTeamKey
-      }))
-    });
-  }
-
   function maybeEndRace() {
     if (raceState.finished) return;
+    if (!allFinished()) return;
 
-    if (allFinished()) {
-      raceState.finished = true;
+    raceState.finished = true;
 
-      const order = computeOrder();
-      const podium = order.slice(0, 3);
+    const order = computeOrder();
+    const podium = order.slice(0, 3);
 
-      if (!raceState.podiumShown) {
-        raceState.podiumShown = true;
-        buildPodiumModal(podium);
-        applyEconomyAtEnd(podium, order);
-      }
+    if (!raceState.podiumShown) {
+      raceState.podiumShown = true;
+      buildPodiumModal(podium);
     }
   }
 
-  /* =========================
-     LOOP
-     ========================= */
   function gameLoop(ts) {
     if (!raceState.lastTs) raceState.lastTs = ts;
     let dt = ts - raceState.lastTs;
@@ -1081,9 +935,6 @@
     if (!raceState.finished) requestAnimationFrame(gameLoop);
   }
 
-  /* =========================
-     INIT
-     ========================= */
   async function initRace() {
     if (!elTrackContainer) {
       console.error("race.html sem #track-container");
@@ -1099,7 +950,6 @@
     speedMultiplier = 1;
     if (speedBtns && speedBtns.length) markActiveSpeed(speedBtns[0]);
 
-    // inicializa visual dos botões do usuário
     updateUserTelemetry();
 
     requestAnimationFrame(gameLoop);
