@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>F1 Manager 2025 — Mercado de Pilotos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link rel="stylesheet" href="pilotMarket.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="app-overlay"></div>
+
+    <div class="app-content">
+      <div class="top-bar">
+        <button class="btn-back" onclick="window.location.href='lobby.html'">Voltar</button>
+
+        <div class="title-pill">
+          <span class="title">Mercado de Pilotos</span>
+          <span class="subtitle" id="seasonInfo">Temporada 2025 • Round 1</span>
+        </div>
+
+        <div class="cash-pill" id="cashPill">
+          Caixa: <strong id="cashValue">R$ 0</strong>
+        </div>
+      </div>
+
+      <div class="layout">
+        <aside class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Equipes</div>
+            <div class="panel-hint">Selecione para ver o elenco e contratos.</div>
+          </div>
+          <div class="team-list" id="teamList"></div>
+        </aside>
+
+        <main class="main">
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-kicker">Elenco</div>
+                <div class="card-title" id="rosterTitle">Equipe</div>
+              </div>
+              <div class="actions">
+                <button class="btn ghost" id="btnRefresh">Atualizar</button>
+              </div>
+            </div>
+            <div class="table" id="rosterTable"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-kicker">Free Agents</div>
+                <div class="card-title">Pilotos disponíveis</div>
+              </div>
+              <div class="actions">
+                <select id="hireYears" class="select">
+                  <option value="1">Contrato: 1 ano</option>
+                  <option value="2" selected>Contrato: 2 anos</option>
+                  <option value="3">Contrato: 3 anos</option>
+                </select>
+              </div>
+            </div>
+            <div class="table" id="freeAgentsTable"></div>
+          </section>
+        </main>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <!-- Dependências do seu jogo (se existirem, mantêm compat) -->
+  <script src="economySystem.js"></script>
+  <script src="data.js"></script>
+  <script src="pilotMarketSystem.js"></script>
+  <script src="pilotMarket.js"></script>
+</body>
+</html>
