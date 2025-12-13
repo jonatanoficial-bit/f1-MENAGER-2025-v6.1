@@ -1,8 +1,12 @@
 /* =========================================================
-   F1 MANAGER 2025 — ECONOMY / CAREER STATE (v6.1)
+   F1 MANAGER 2025 — ECONOMY / CAREER STATE (v6.1+)
    - Estado único de carreira (staff + sponsors + finanças)
    - Modificadores para performance (speed/grip/wear/pit/etc)
    - Payouts por GP, metas, reputação e risco de demissão
+   - CONTRATOS REAIS DO MANAGER:
+     • duração, metas (meia temporada e final), bônus/multa
+     • propostas de outras equipes ao fim da temporada
+     • demissão automática (50% da temporada) se falhar
    ========================================================= */
 
 (function () {
@@ -20,52 +24,119 @@
   function getParams() {
     const p = new URLSearchParams(location.search);
     return {
-      track: (p.get("track") || "australia").toLowerCase(),
-      gp: p.get("gp") || "GP",
-      userTeam: (p.get("userTeam") || "ferrari").toLowerCase(),
+      teamKey: (p.get("userTeam") || p.get("team") || localStorage.getItem("f1m2025_user_team") || localStorage.getItem("F1M_userTeam") || "mclaren").toLowerCase(),
     };
   }
 
   // -----------------------
-  // Team tiers / baseline
+  // Team tiers (simples)
+  // 1 = topo, 4 = fundo (ajuste livre)
   // -----------------------
-  const TEAM_TIERS = {
-    // tier: 1 = top, 2 = upper-mid, 3 = mid, 4 = lower
-    redbull: 1,
-    ferrari: 1,
-    mercedes: 1,
-    mclaren: 2,
-    aston: 2,
-    alpine: 3,
-    rb: 3,
-    williams: 4,
-    sauber: 4,
-    haas: 4,
-  };
-
   function getTeamTier(teamKey) {
-    return TEAM_TIERS[teamKey] || 3;
+    const t = (teamKey || "").toLowerCase();
+    if (["redbull", "rb", "mercedes", "ferrari", "mclaren"].includes(t)) return 1;
+    if (["aston_martin", "astonmartin", "alpine"].includes(t)) return 2;
+    if (["williams", "haas"].includes(t)) return 3;
+    if (["sauber"].includes(t)) return 4;
+    return 3;
   }
 
-  function defaultState(teamKey) {
+  function baseCashForTier(tier) {
+    // valores aproximados, você pode calibrar depois
+    return [0, 85000000, 55000000, 35000000, 22000000][tier] || 35000000;
+  }
+
+  function baseRepForTier(tier) {
+    return [0, 65, 55, 45, 35][tier] || 45;
+  }
+
+  // -----------------------
+  // Manager Contract (REAL)
+  // -----------------------
+  function makeManagerContract(teamKey, year) {
     const tier = getTeamTier(teamKey);
-    // dinheiro e reputação base por tier
-    const baseCash = [0, 140_000_000, 95_000_000, 55_000_000, 30_000_000][tier];
-    const baseRep  = [0, 82, 62, 45, 28][tier];
+
+    // metas coerentes por tier (sem “reinventar” sua economia)
+    // Ajuste livre depois, mas isso já funciona:
+    const targetEndPos = [0, 2, 5, 8, 10][tier] || 8; // posição final no construtores
+    const targetHalfPts = [0, 140, 85, 45, 20][tier] || 45; // mínimo de pts no meio
+    const durationYears = tier === 1 ? 2 : 1; // topo tende a contratos mais longos
+
+    // remuneração: semanal (economia trata “rodada” como semana equivalente)
+    const weeklySalary = Math.round([0, 1400000, 950000, 650000, 420000][tier] || 650000);
+
+    // bônus e multa
+    const seasonBonus = Math.round([0, 18000000, 12000000, 8000000, 5000000][tier] || 8000000);
+    const failPenalty = Math.round([0, 9000000, 6500000, 4500000, 2500000][tier] || 4500000);
 
     return {
+      id: `MC_${teamKey}_${year}_${Math.floor(Math.random() * 1e9)}`,
+      teamKey,
+      startYear: year,
+      endYear: year + durationYears - 1,
+      signedAt: Date.now(),
+
+      salaryWeekly: weeklySalary,
+
+      objectives: {
+        midSeason: { kind: "MIN_CONSTRUCTORS_POINTS", target: targetHalfPts }, // 50% da temporada
+        endSeason: { kind: "MAX_CONSTRUCTORS_POSITION", target: targetEndPos }, // fim da temporada
+      },
+
+      clauses: {
+        autoFireAtHalfSeason: true,
+        allowEndSeasonOffers: true,
+        allowRenewal: true,
+        buyout: Math.round(weeklySalary * 6), // opcional
+      },
+
+      rewards: {
+        bonusOnSuccess: seasonBonus,
+        penaltyOnFail: failPenalty,
+      },
+
+      status: {
+        active: true,
+        terminated: false,
+        terminatedReason: "",
+      },
+    };
+  }
+
+  function evaluateContractObjective(kind, target, ctx) {
+    // ctx: { round, halfRound, constructorsPoints, constructorsPosition, racesTotal }
+    if (kind === "MIN_CONSTRUCTORS_POINTS") return (ctx.constructorsPoints || 0) >= target;
+    if (kind === "MAX_CONSTRUCTORS_POSITION") return (ctx.constructorsPosition || 99) <= target;
+    return true;
+  }
+
+  // -----------------------
+  // Default state
+  // -----------------------
+  function makeDefaultState(teamKey) {
+    const tier = getTeamTier(teamKey);
+    const baseCash = baseCashForTier(tier);
+    const baseRep = baseRepForTier(tier);
+
+    const year = 2025;
+
+    const st = {
       version: "v6.1",
       createdAt: Date.now(),
       teamKey,
+
       season: {
-        year: 2025,
+        year,
         round: 1,
         racesTotal: 24,
         points: 0,
         constructorsPoints: 0,
+        constructorsPosition: 10, // será atualizado quando você tiver standings reais
         fired: false,
         firedReason: "",
+        endSeasonResolved: false,
       },
+
       economy: {
         cash: baseCash,
         reputation: baseRep, // 0..100
@@ -73,271 +144,398 @@
         weeklyCost: 0,       // calculado via staff
         lastPayoutAtRound: 0,
       },
+
       staff: {
-        // 0..100 cada área
         mechanics: { level: clamp(45 + (5 - tier) * 8, 25, 78), salary: 0 },
         engineering:{ level: clamp(42 + (5 - tier) * 8, 22, 76), salary: 0 },
         aero:       { level: clamp(40 + (5 - tier) * 7, 20, 74), salary: 0 },
         strategy:   { level: clamp(38 + (5 - tier) * 7, 18, 72), salary: 0 },
         marketing:  { level: clamp(35 + (5 - tier) * 6, 15, 70), salary: 0 },
-        contracts: [] // contratações individuais (opcional)
+        contracts: [] // contratos individuais (opcional)
       },
+
       sponsors: {
-        active: [],   // contratos assinados
+        active: [],
         offersSeed: Math.floor(Math.random() * 1e9),
       },
+
       garage: {
-        // ajustes globais (a sua oficina já salva; aqui só conectamos)
         lastSetup: null,
         devPoints: 0,
       },
+
+      // ✅ CONTRATO REAL DO MANAGER + ofertas de equipes
+      manager: {
+        contract: makeManagerContract(teamKey, year),
+        offers: [],
+        lastOffersYear: 0,
+      },
     };
+
+    calcStaffSalaries(st);
+    return st;
   }
 
+  // -----------------------
+  // Load / Save + Migration
+  // -----------------------
   function load() {
-    const { userTeam } = getParams();
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultState(userTeam);
+      if (!raw) {
+        const { teamKey } = getParams();
+        const st = makeDefaultState(teamKey);
+        save(st);
+        return st;
+      }
 
-      const parsed = JSON.parse(raw);
+      const st = JSON.parse(raw);
 
-      // migração simples (se mudar de equipe, preserva, mas atualiza teamKey se vazio)
-      if (!parsed.teamKey) parsed.teamKey = userTeam;
+      // migrações leves (não quebra saves antigos)
+      if (!st.version) st.version = "v6.1";
+      if (!st.season) st.season = { year: 2025, round: 1, racesTotal: 24, points: 0, constructorsPoints: 0, constructorsPosition: 10, fired: false, firedReason: "", endSeasonResolved: false };
+      if (!st.economy) st.economy = { cash: 35000000, reputation: 45, exposure: 35, weeklyCost: 0, lastPayoutAtRound: 0 };
+      if (!st.staff) st.staff = makeDefaultState(st.teamKey || "mclaren").staff;
+      if (!st.sponsors) st.sponsors = { active: [], offersSeed: Math.floor(Math.random() * 1e9) };
+      if (!st.garage) st.garage = { lastSetup: null, devPoints: 0 };
 
-      // se mudou equipe e usuário quer carreira por equipe: descomente a linha abaixo
-      // if (parsed.teamKey !== userTeam) return defaultState(userTeam);
+      // ✅ manager contract (se save antigo não tiver)
+      if (!st.manager) st.manager = { contract: makeManagerContract(st.teamKey || "mclaren", st.season.year || 2025), offers: [], lastOffersYear: 0 };
+      if (!st.manager.contract) st.manager.contract = makeManagerContract(st.teamKey || "mclaren", st.season.year || 2025);
+      if (!Array.isArray(st.manager.offers)) st.manager.offers = [];
+      if (typeof st.manager.lastOffersYear !== "number") st.manager.lastOffersYear = 0;
 
-      return parsed;
-    } catch {
-      return defaultState(userTeam);
+      calcStaffSalaries(st);
+      return st;
+    } catch (e) {
+      const { teamKey } = getParams();
+      const st = makeDefaultState(teamKey);
+      save(st);
+      return st;
     }
   }
 
   function save(state) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    return state;
-  }
-
-  function getState() {
-    return load();
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.warn("Falha ao salvar economia:", e);
+    }
   }
 
   // -----------------------
-  // Staff — salários e efeitos
+  // Staff salaries + weekly cost
   // -----------------------
+  function staffSalary(level) {
+    // salário escala suave
+    return Math.round(80000 + level * 12000);
+  }
+
   function calcStaffSalaries(state) {
-    const tier = getTeamTier(state.teamKey);
-    // salários anuais base por tier (valores "game-like" em €)
-    const base = [0, 12_000_000, 8_500_000, 5_500_000, 3_800_000][tier];
+    const s = state.staff;
 
-    const areas = ["mechanics", "engineering", "aero", "strategy", "marketing"];
+    const areas = ["mechanics","engineering","aero","strategy","marketing"];
     let total = 0;
 
     for (const a of areas) {
-      const lvl = clamp(state.staff[a].level, 0, 100);
-      // curva: nível alto custa bem mais
-      const cost = base * (0.55 + (lvl / 100) * 0.95);
-      state.staff[a].salary = Math.round(cost);
-      total += cost;
+      const lvl = clamp(s[a]?.level ?? 0, 0, 100);
+      const sal = staffSalary(lvl);
+      s[a].salary = sal;
+      total += sal;
     }
 
-    // custo semanal aproximado
-    state.economy.weeklyCost = Math.round(total / 52);
+    state.economy.weeklyCost = total;
   }
 
+  // -----------------------
+  // Modifiers (staff → performance)
+  // -----------------------
   function getModifiers(state) {
-    // normaliza 0..1
-    const m = clamp(state.staff.mechanics.level / 100, 0, 1);
-    const e = clamp(state.staff.engineering.level / 100, 0, 1);
-    const a = clamp(state.staff.aero.level / 100, 0, 1);
-    const s = clamp(state.staff.strategy.level / 100, 0, 1);
-    const k = clamp(state.staff.marketing.level / 100, 0, 1);
+    const mech = clamp(state.staff.mechanics.level, 0, 100) / 100;
+    const eng  = clamp(state.staff.engineering.level, 0, 100) / 100;
+    const aero = clamp(state.staff.aero.level, 0, 100) / 100;
+    const strat= clamp(state.staff.strategy.level, 0, 100) / 100;
 
-    // Modificadores (multiplicadores)
-    const pitTimeMul     = 1.00 - (m * 0.18); // até -18%
-    const setupEffectMul = 1.00 + (e * 0.14); // até +14% (amplifica efeito da oficina)
-    const gripMul        = 1.00 + (a * 0.06); // até +6%
-    const stabilityMul   = 1.00 + (a * 0.05); // até +5%
-    const tireWearMul    = 1.00 - (s * 0.10); // até -10% desgaste
-    const fuelUseMul     = 1.00 - (s * 0.06); // até -6% consumo
-    const incidentMul    = 1.00 - (s * 0.05); // até -5% incidentes por decisão
-    const sponsorOfferMul= 1.00 + (k * 0.22); // até +22% valor/oferta
+    // pitTimeMul: menor é melhor (mecânicos fortes)
+    const pitTimeMul = clamp(1.15 - mech * 0.25, 0.82, 1.15);
 
-    // reputação/exposição entram no funil
-    const rep = clamp(state.economy.reputation / 100, 0, 1);
-    const exp = clamp(state.economy.exposure / 100, 0, 1);
+    // desgaste: menor é melhor
+    const tireWearMul = clamp(1.12 - eng * 0.20 - aero * 0.10, 0.80, 1.12);
 
-    return {
-      pitTimeMul,
-      setupEffectMul,
-      gripMul,
-      stabilityMul,
-      tireWearMul,
-      fuelUseMul,
-      incidentMul,
-      sponsorOfferMul,
-      rep,
-      exp,
+    // combustível: menor é melhor
+    const fuelUseMul = clamp(1.10 - strat * 0.18, 0.82, 1.10);
+
+    // setup: maior é melhor
+    const setupEffectMul = clamp(0.95 + eng * 0.14 + aero * 0.06, 0.95, 1.10);
+
+    return { pitTimeMul, tireWearMul, fuelUseMul, setupEffectMul };
+  }
+
+  // -----------------------
+  // Sponsors — ofertas e assinatura (já existia)
+  // -----------------------
+  function mulberry32(a) {
+    return function () {
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
 
-  // -----------------------
-  // Sponsors — geração, metas e pagamentos
-  // -----------------------
-  const SPONSOR_NAMES = [
-    "Orion Dynamics", "Vanta Energy", "Helios Finance", "NovaTel", "Kairo Foods",
-    "Apex Logistics", "Zenith Wear", "Solstice Bank", "Altair Systems", "PolarTech",
-    "Nebula Media", "Vertex Tools", "Aurora Insurance", "Raven Security"
-  ];
-
-  const SPONSOR_TYPES = [
-    { type: "MASTER", slots: 1, base: 22_000_000, risk: 0.65 },
-    { type: "OFFICIAL", slots: 3, base: 7_500_000, risk: 0.40 },
-    { type: "BONUS", slots: 2, base: 3_500_000, risk: 0.30 },
-  ];
-
-  function getMaxSlots(type) {
-    const t = SPONSOR_TYPES.find(x => x.type === type);
-    return t ? t.slots : 0;
-  }
-
-  function makeObjective(tier, rep, exp) {
-    // tier baixo = metas mais fáceis, tier alto = metas mais agressivas
-    // rep/exp altos lembram "marca forte": aumenta exigência e paga mais.
-    const difficulty = clamp((1.15 - tier * 0.12) + rep * 0.22 + exp * 0.12, 0.55, 1.25);
-
-    const objPool = [
-      { kind: "POINTS_PER_RACE", label: "Somar pontos por GP", base: 6 },
-      { kind: "FINISH_TOP", label: "Chegar no Top X", base: 10 },
-      { kind: "PODIUMS", label: "Conquistar pódios", base: 1 },
-      { kind: "BEST_LAP", label: "Melhor volta (1x por contrato)", base: 1 },
-      { kind: "NO_DNF", label: "Evitar abandonos", base: 0 },
-    ];
-
-    const chosen = pick(objPool);
-
-    if (chosen.kind === "POINTS_PER_RACE") {
-      const target = Math.round(chosen.base * difficulty);
-      return { kind: chosen.kind, label: chosen.label, target: clamp(target, 3, 18) };
-    }
-    if (chosen.kind === "FINISH_TOP") {
-      const t = Math.round(chosen.base / difficulty);
-      return { kind: chosen.kind, label: chosen.label, target: clamp(t, 4, 14) };
-    }
-    if (chosen.kind === "PODIUMS") {
-      const t = Math.round(chosen.base * difficulty);
-      return { kind: chosen.kind, label: chosen.label, target: clamp(t, 1, 4) };
-    }
-    if (chosen.kind === "BEST_LAP") {
-      return { kind: chosen.kind, label: chosen.label, target: 1 };
-    }
-    if (chosen.kind === "NO_DNF") {
-      return { kind: chosen.kind, label: chosen.label, target: 0 };
-    }
-    return { kind: "POINTS_PER_RACE", label: "Somar pontos por GP", target: 6 };
-  }
-
-  function genOffers(state) {
-    // determinístico por seed e round para não "pular" ofertas
+  function generateSponsorOffers(state, count = 3) {
     const seed = state.sponsors.offersSeed + state.season.round * 99991;
     const rng = mulberry32(seed);
 
     const tier = getTeamTier(state.teamKey);
-    const mod = getModifiers(state);
+    const rep = state.economy.reputation;
+    const exposure = state.economy.exposure;
+
+    const types = [
+      { type: "POINTS_PER_RACE", base: 3000000 },
+      { type: "PODIUMS",        base: 4500000 },
+      { type: "EXPOSURE",       base: 2500000 },
+    ];
 
     const offers = [];
+    for (let i = 0; i < count; i++) {
+      const t = types[Math.floor(rng() * types.length)];
 
-    for (const t of SPONSOR_TYPES) {
-      for (let i = 0; i < t.slots; i++) {
-        const name = SPONSOR_NAMES[Math.floor(rng() * SPONSOR_NAMES.length)];
-        const repBoost = (0.75 + mod.rep * 0.85);
-        const expBoost = (0.80 + mod.exp * 0.65);
-        const staffBoost = mod.sponsorOfferMul;
+      const strength = clamp(0.6 + (rep / 120) + (exposure / 200) + (0.10 * (5 - tier)), 0.6, 1.6);
+      const ann = Math.round(t.base * strength * (0.85 + rng() * 0.35));
 
-        // base anual ajustado
-        const annual = Math.round(
-          t.base *
-          repBoost *
-          expBoost *
-          staffBoost *
-          (0.95 + rng() * 0.15) *
-          (tier <= 2 ? 1.12 : tier === 3 ? 1.0 : 0.88)
-        );
+      const objective = (() => {
+        if (t.type === "POINTS_PER_RACE") return { kind: "POINTS_PER_RACE", target: Math.round(1 + rng() * (tier === 1 ? 4 : 3)) };
+        if (t.type === "PODIUMS") return { kind: "PODIUMS", target: Math.round(rng() * (tier === 1 ? 6 : 3)) };
+        if (t.type === "EXPOSURE") return { kind: "EXPOSURE", target: Math.round(40 + rng() * 40) };
+        return null;
+      })();
 
-        const obj = makeObjective(tier, mod.rep, mod.exp);
-        const bonus = Math.round(annual * (0.06 + rng() * 0.10));
-        const penalty = Math.round(annual * (0.04 + rng() * 0.08));
+      const races = Math.round(6 + rng() * 8);
 
-        offers.push({
-          id: `SP_${t.type}_${state.season.round}_${i}_${Math.floor(rng() * 1e6)}`,
-          type: t.type,
-          name,
-          annualValue: annual,
-          payPerRace: Math.round(annual / state.season.racesTotal),
-          objective: obj,
-          bonus,
-          penalty,
-          risk: clamp(t.risk + (rng() * 0.12 - 0.06), 0.15, 0.90),
-          durationRaces: clamp(Math.round(10 + rng() * 12), 8, state.season.racesTotal),
-        });
-      }
+      const payPerRace = Math.round((ann / state.season.racesTotal) * (0.70 + rng() * 0.35));
+      const bonus = Math.round(ann * (0.18 + rng() * 0.22));
+      const penalty = Math.round(ann * (0.06 + rng() * 0.08));
+
+      const namePool = ["Apex", "Nova", "Vortex", "Orion", "Pulse", "Titan", "Vertex", "Helios", "Umbra", "Eon"];
+      const name = `${pick(namePool)} ${t.type === "PODIUMS" ? "Performance" : "Group"}`;
+
+      offers.push({
+        id: `SP_${t.type}_${state.season.round}_${i}_${Math.floor(rng() * 1e6)}`,
+        type: t.type,
+        name,
+        annualValue: ann,
+        races,
+        payPerRace,
+        bonus,
+        penalty,
+        objective,
+      });
     }
 
     return offers;
   }
 
-  function signContract(state, offer) {
-    const activeSameType = state.sponsors.active.filter(c => c.type === offer.type);
-    const max = getMaxSlots(offer.type);
-    if (activeSameType.length >= max) {
-      return { ok: false, reason: `Sem slots disponíveis para ${offer.type}.` };
-    }
+  function evaluateSponsorObjective(obj, prog) {
+    if (!obj) return true;
+    if (obj.kind === "POINTS_PER_RACE") return prog.points >= obj.target * 10; // ~10 GPs
+    if (obj.kind === "PODIUMS") return prog.podiums >= obj.target;
+    if (obj.kind === "EXPOSURE") return prog.exposure >= obj.target;
+    return true;
+  }
 
-    state.sponsors.active.push({
-      ...offer,
-      signedAtRound: state.season.round,
-      racesLeft: offer.durationRaces,
+  function signSponsorContract(state, offer) {
+    const contract = {
+      id: offer.id,
+      name: offer.name,
+      type: offer.type,
+      racesLeft: offer.races,
+      payPerRace: offer.payPerRace,
+      bonus: offer.bonus,
+      penalty: offer.penalty,
+      objective: offer.objective,
       progress: {
         points: 0,
         podiums: 0,
-        bestLap: 0,
-        dnfs: 0,
+        exposure: state.economy.exposure,
         fulfilled: false,
         failed: false,
       }
-    });
+    };
 
-    // reputação sobe ao fechar (leve)
-    state.economy.reputation = clamp(state.economy.reputation + 1, 0, 100);
+    state.sponsors.active.push(contract);
+
+    // sinal (pequeno)
+    const signOn = Math.round(offer.annualValue * 0.05);
+    state.economy.cash = Math.round(state.economy.cash + signOn);
+
     save(state);
-    return { ok: true };
+    return { ok: true, signOn };
   }
 
+  // -----------------------
+  // MANAGER — Ofertas de Equipe (fim de temporada)
+  // -----------------------
+  function generateManagerOffers(state) {
+    const year = state.season.year;
+
+    if (state.manager.lastOffersYear === year) return state.manager.offers;
+
+    const rep = clamp(state.economy.reputation, 0, 100);
+    const pts = Math.max(0, state.season.constructorsPoints || 0);
+    const tierNow = getTeamTier(state.teamKey);
+
+    // score para “atração de mercado”
+    const marketScore = clamp((rep * 0.6) + (pts * 0.15), 0, 200);
+
+    const teams = [
+      "redbull","mercedes","ferrari","mclaren",
+      "aston_martin","alpine",
+      "williams","haas",
+      "sauber","rb"
+    ];
+
+    const offers = [];
+
+    // regra: no mínimo 2 ofertas se não estiver fired, 3 se estiver fired
+    const desired = state.season.fired ? 3 : 2;
+
+    const rng = mulberry32((state.sponsors.offersSeed || 123456) + year * 7777 + Math.floor(marketScore * 1000));
+
+    // escolhe times com probabilidade ponderada por tier e score
+    const candidates = teams
+      .filter(t => t !== state.teamKey) // não oferece o mesmo time (renovação é outro fluxo)
+      .map(t => {
+        const tier = getTeamTier(t);
+        const tierWeight = (tierNow - tier) * 12; // se você está bem, times melhores pesam mais
+        const base = 30 + (tier === 1 ? 28 : tier === 2 ? 18 : tier === 3 ? 10 : 6);
+        const w = clamp(base + tierWeight + marketScore * 0.25, 5, 140);
+        return { teamKey: t, w, tier };
+      });
+
+    // sorteio sem repetição
+    let guard = 0;
+    while (offers.length < desired && guard++ < 200) {
+      const sum = candidates.reduce((acc, c) => acc + c.w, 0);
+      let r = rng() * sum;
+      let chosen = null;
+      for (const c of candidates) {
+        r -= c.w;
+        if (r <= 0) { chosen = c; break; }
+      }
+      if (!chosen) chosen = candidates[candidates.length - 1];
+
+      if (offers.some(o => o.teamKey === chosen.teamKey)) continue;
+
+      const tier = chosen.tier;
+
+      const durationYears = tier === 1 ? 2 : 1 + (rng() < 0.20 ? 1 : 0);
+      const salaryWeekly = Math.round([0, 1550000, 1050000, 720000, 480000][tier] || 720000);
+      const signOnBonus = Math.round([0, 22000000, 14000000, 9000000, 5500000][tier] || 9000000);
+
+      const targetEndPos = [0, 2, 5, 8, 10][tier] || 8;
+      const targetHalfPts = [0, 140, 85, 45, 20][tier] || 45;
+
+      offers.push({
+        id: `TEAM_OFFER_${chosen.teamKey}_${year}_${Math.floor(rng() * 1e9)}`,
+        teamKey: chosen.teamKey,
+        year,
+        durationYears,
+        salaryWeekly,
+        signOnBonus,
+        objectives: {
+          midSeason: { kind: "MIN_CONSTRUCTORS_POINTS", target: targetHalfPts },
+          endSeason: { kind: "MAX_CONSTRUCTORS_POSITION", target: targetEndPos },
+        },
+        clauses: {
+          autoFireAtHalfSeason: true,
+          buyout: Math.round(salaryWeekly * 6),
+        }
+      });
+    }
+
+    state.manager.offers = offers;
+    state.manager.lastOffersYear = year;
+    save(state);
+    return offers;
+  }
+
+  function acceptManagerOffer(state, offerId) {
+    const offer = (state.manager.offers || []).find(o => o.id === offerId);
+    if (!offer) return { ok: false, reason: "Oferta não encontrada." };
+
+    // muda equipe do manager
+    state.teamKey = offer.teamKey;
+
+    // aplica bônus de assinatura
+    state.economy.cash = Math.round(state.economy.cash + (offer.signOnBonus || 0));
+
+    // cria novo contrato manager
+    state.manager.contract = {
+      id: `MC_${offer.teamKey}_${state.season.year}_${Math.floor(Math.random() * 1e9)}`,
+      teamKey: offer.teamKey,
+      startYear: state.season.year,
+      endYear: state.season.year + offer.durationYears - 1,
+      signedAt: Date.now(),
+      salaryWeekly: offer.salaryWeekly,
+      objectives: offer.objectives,
+      clauses: offer.clauses,
+      rewards: {
+        bonusOnSuccess: Math.round((offer.signOnBonus || 0) * 0.35),
+        penaltyOnFail: Math.round((offer.signOnBonus || 0) * 0.18),
+      },
+      status: { active: true, terminated: false, terminatedReason: "" }
+    };
+
+    // zera estado de “demitido”
+    state.season.fired = false;
+    state.season.firedReason = "";
+
+    // limpa ofertas
+    state.manager.offers = [];
+
+    save(state);
+    return { ok: true, teamKey: state.teamKey };
+  }
+
+  // -----------------------
+  // Corrida → payouts + contrato manager (meia temp / fim)
+  // -----------------------
   function settlePayoutsForRound(state, roundResult) {
     // roundResult esperado:
-    // { teamPoints, podiums, bestLap, dnfs, avgFinish, finishedTopX }
-    // Você pode chamar isso ao final da corrida.
+    // { teamPoints, podiums, bestLap, dnfs, avgFinish, finishedTopX, constructorsPoints, constructorsPosition, round, year, racesTotal }
 
     let deltaCash = 0;
 
+    // Atualiza round/year se vierem do race system (opcional)
+    if (typeof roundResult?.round === "number") state.season.round = roundResult.round;
+    if (typeof roundResult?.year === "number") state.season.year = roundResult.year;
+    if (typeof roundResult?.racesTotal === "number") state.season.racesTotal = roundResult.racesTotal;
+
+    // Atualiza construtores (se vierem)
+    if (typeof roundResult?.constructorsPoints === "number") state.season.constructorsPoints = roundResult.constructorsPoints;
+    if (typeof roundResult?.constructorsPosition === "number") state.season.constructorsPosition = roundResult.constructorsPosition;
+
+    // --- Sponsors (já existia)
     for (const c of state.sponsors.active) {
       if (c.racesLeft <= 0 || c.progress.failed) continue;
 
-      // pagamento por GP
       deltaCash += c.payPerRace;
 
-      // progresso de metas
       if (typeof roundResult?.teamPoints === "number") c.progress.points += roundResult.teamPoints;
       if (typeof roundResult?.podiums === "number") c.progress.podiums += roundResult.podiums;
-      if (typeof roundResult?.bestLap === "number") c.progress.bestLap += roundResult.bestLap;
-      if (typeof roundResult?.dnfs === "number") c.progress.dnfs += roundResult.dnfs;
+
+      // exposure “orgânico”
+      if (typeof roundResult?.finishedTopX === "number") {
+        state.economy.exposure = clamp(state.economy.exposure + (roundResult.finishedTopX ? 2 : 0), 0, 100);
+      }
+
+      c.progress.exposure = state.economy.exposure;
 
       c.racesLeft -= 1;
 
-      // checagem de meta ao acabar contrato
       if (c.racesLeft <= 0) {
-        const ok = evaluateObjective(c.objective, c.progress);
+        const ok = evaluateSponsorObjective(c.objective, c.progress);
         if (ok) {
           deltaCash += c.bonus;
           c.progress.fulfilled = true;
@@ -352,27 +550,25 @@
       }
     }
 
-    // custo semanal/GP (staff) — simplificado: 1 “semana equivalente” por rodada
+    // ✅ Salário do Manager (contrato real) — por rodada como “semana equivalente”
+    if (state.manager?.contract?.status?.active && !state.season.fired) {
+      deltaCash -= Math.round(state.manager.contract.salaryWeekly || 0);
+    }
+
+    // ✅ Custo staff (já existia)
     calcStaffSalaries(state);
     deltaCash -= state.economy.weeklyCost;
 
     state.economy.cash = Math.max(0, Math.round(state.economy.cash + deltaCash));
 
-    // risco de demissão (meia temporada)
+    // ✅ Demissão (meia temporada) agora baseada no CONTRATO REAL
     checkFiringRisk(state);
+
+    // ✅ Fim de temporada: gera ofertas e resolve bônus/multa de contrato
+    checkEndSeason(state);
 
     save(state);
     return { deltaCash };
-  }
-
-  function evaluateObjective(obj, prog) {
-    if (!obj) return true;
-    if (obj.kind === "POINTS_PER_RACE") return prog.points >= obj.target * 10; // contrato ~10 GPs médio
-    if (obj.kind === "FINISH_TOP") return true; // avalie via dados reais, aqui fica “OK” (placeholder)
-    if (obj.kind === "PODIUMS") return prog.podiums >= obj.target;
-    if (obj.kind === "BEST_LAP") return prog.bestLap >= 1;
-    if (obj.kind === "NO_DNF") return prog.dnfs === 0;
-    return true;
   }
 
   function checkFiringRisk(state) {
@@ -381,16 +577,84 @@
 
     if (state.season.fired) return;
 
-    if (round >= half) {
-      // meta mínima por tier (pontos de equipe)
-      const tier = getTeamTier(state.teamKey);
-      const minPts = [0, 140, 85, 45, 20][tier];
+    const mc = state.manager?.contract;
+    if (!mc || !mc.status?.active) return;
 
-      if (state.season.constructorsPoints < minPts) {
+    if (mc.clauses?.autoFireAtHalfSeason && round >= half) {
+      const ctx = {
+        round,
+        halfRound: half,
+        constructorsPoints: state.season.constructorsPoints,
+        constructorsPosition: state.season.constructorsPosition,
+        racesTotal: state.season.racesTotal,
+      };
+
+      const ok = evaluateContractObjective(
+        mc.objectives?.midSeason?.kind,
+        mc.objectives?.midSeason?.target,
+        ctx
+      );
+
+      if (!ok) {
         state.season.fired = true;
-        state.season.firedReason = `Demitido por performance abaixo da meta mínima no meio da temporada (meta: ${minPts} pts).`;
+        state.season.firedReason =
+          `Demitido por não cumprir meta de meia temporada do contrato (mínimo: ${mc.objectives.midSeason.target} pts no construtores).`;
+        mc.status.active = false;
+        mc.status.terminated = true;
+        mc.status.terminatedReason = state.season.firedReason;
+
+        // penalidade de reputação
+        state.economy.reputation = clamp(state.economy.reputation - 10, 0, 100);
       }
     }
+  }
+
+  function checkEndSeason(state) {
+    if (state.season.endSeasonResolved) return;
+
+    const round = state.season.round;
+    const total = state.season.racesTotal;
+
+    // fim de temporada quando round >= total (você pode setar round corretamente no fluxo)
+    if (round < total) return;
+
+    const mc = state.manager?.contract;
+    if (!mc) { state.season.endSeasonResolved = true; return; }
+
+    const ctx = {
+      round,
+      halfRound: Math.floor(total * 0.5),
+      constructorsPoints: state.season.constructorsPoints,
+      constructorsPosition: state.season.constructorsPosition,
+      racesTotal: total,
+    };
+
+    const okEnd = evaluateContractObjective(
+      mc.objectives?.endSeason?.kind,
+      mc.objectives?.endSeason?.target,
+      ctx
+    );
+
+    if (!state.season.fired) {
+      if (okEnd) {
+        // bônus por sucesso
+        const bonus = Math.round(mc.rewards?.bonusOnSuccess || 0);
+        state.economy.cash = Math.round(state.economy.cash + bonus);
+        state.economy.reputation = clamp(state.economy.reputation + 6, 0, 100);
+      } else {
+        // multa por falha (se não foi demitido no meio)
+        const pen = Math.round(mc.rewards?.penaltyOnFail || 0);
+        state.economy.cash = Math.max(0, Math.round(state.economy.cash - pen));
+        state.economy.reputation = clamp(state.economy.reputation - 6, 0, 100);
+      }
+    }
+
+    // gera ofertas ao final da temporada (se habilitado)
+    if (mc.clauses?.allowEndSeasonOffers) {
+      generateManagerOffers(state);
+    }
+
+    state.season.endSeasonResolved = true;
   }
 
   // -----------------------
@@ -401,62 +665,61 @@
 
     const old = state.staff[area].level;
     const next = clamp(old + delta, 0, 100);
-
-    // custo para aumentar (assinatura/bonificação) — sobe com nível
-    const tier = getTeamTier(state.teamKey);
-    const signBase = [0, 8_000_000, 5_000_000, 2_800_000, 1_600_000][tier];
-    const upgradeCost = delta > 0 ? Math.round(signBase * (0.35 + next / 120)) : 0;
-
-    // demitir reduz custo (mas penaliza reputação)
-    const firePenaltyRep = delta < 0 ? 1 : 0;
-
-    if (upgradeCost > 0 && state.economy.cash < upgradeCost) {
-      return { ok: false, reason: "Caixa insuficiente para melhoria do quadro." };
-    }
-
     state.staff[area].level = next;
-
-    if (upgradeCost > 0) state.economy.cash -= upgradeCost;
-    if (firePenaltyRep > 0) state.economy.reputation = clamp(state.economy.reputation - firePenaltyRep, 0, 100);
 
     calcStaffSalaries(state);
     save(state);
-    return { ok: true, upgradeCost };
-  }
-
-  // -----------------------
-  // Deterministic RNG (mulberry32)
-  // -----------------------
-  function mulberry32(a) {
-    return function () {
-      let t = a += 0x6D2B79F5;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
+    return { ok: true, old, next };
   }
 
   // -----------------------
   // Public API
   // -----------------------
   const F1MEconomy = {
-    STORAGE_KEY,
-    getParams,
-    getState,
+    load,
     save,
-    getModifiers: () => getModifiers(load()),
-    genOffers: () => genOffers(load()),
-    signContract: (offer) => {
-      const st = load();
-      return signContract(st, offer);
-    },
-    settlePayoutsForRound: (roundResult) => {
-      const st = load();
-      return settlePayoutsForRound(st, roundResult);
-    },
+
+    // staff/performance
+    getModifiers: (st) => getModifiers(st || load()),
     adjustStaffLevel: (area, delta) => {
       const st = load();
       return adjustStaffLevel(st, area, delta);
+    },
+
+    // sponsors
+    generateOffers: (count = 3) => {
+      const st = load();
+      const offers = generateSponsorOffers(st, count);
+      return offers;
+    },
+    signContract: (offer) => {
+      const st = load();
+      return signSponsorContract(st, offer);
+    },
+
+    // ✅ manager contract API
+    getManagerContract: () => {
+      const st = load();
+      return st.manager?.contract || null;
+    },
+    getManagerOffers: () => {
+      const st = load();
+      return st.manager?.offers || [];
+    },
+    generateManagerOffers: () => {
+      const st = load();
+      const offers = generateManagerOffers(st);
+      return offers;
+    },
+    acceptManagerOffer: (offerId) => {
+      const st = load();
+      return acceptManagerOffer(st, offerId);
+    },
+
+    // GP payouts (chame no fim da corrida)
+    settlePayoutsForRound: (roundResult) => {
+      const st = load();
+      return settlePayoutsForRound(st, roundResult);
     },
   };
 
