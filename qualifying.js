@@ -1,7 +1,7 @@
 // ==========================================================
 // F1 MANAGER 2025 – QUALIFYING.JS (Q1 / Q2 / Q3)
-// Corrigido: normalização do SVG + fallback de pilotos + visuais por fase
-// Ajuste EXTRA: tower/list com imagens dimensionadas (mobile)
+// FIX: contador de volta (UI) + labels de fase sempre atualizados
+// NÃO muda mecânica: apenas sincroniza UI com simulação real.
 // ==========================================================
 
 // ------------------------------
@@ -106,8 +106,8 @@ function getRuntimeDrivers() {
           id: p.id,
           code: code || (preset?.code || String(p.id).toUpperCase()),
           name: p.name || preset?.name || p.id,
-          teamKey: p.teamKey || preset?.teamKey || team,
-          teamName: p.teamName || preset?.teamName || String(team).toUpperCase(),
+          teamKey: (p.teamKey || preset?.teamKey || team),
+          teamName: (p.teamName || preset?.teamName || String(team).toUpperCase()),
           rating: Number(p.rating ?? preset?.rating ?? 75),
           color: p.color || preset?.color || "#ffffff",
           logo: p.logo || preset?.logo || `assets/logos/${String(p.teamKey || team)}.png`
@@ -149,6 +149,7 @@ const qualyState = {
   userTeam: "ferrari",
   baseLapMs: 90000,
 
+  currentLapUI: 1, // <-- UI sincronizado com maxLaps
   drivers: [],
   visuals: [],
   pathPoints: [],
@@ -179,6 +180,9 @@ async function initQualifying() {
   initDrivers();
   await loadTrackSvg();
 
+  qualyState.currentLapUI = 1;
+  updateHeaderUI();
+
   qualyState.lastFrame = performance.now();
   requestAnimationFrame(loop);
 }
@@ -198,7 +202,7 @@ function initDrivers() {
       ...d,
       index: idx,
       progress: Math.random(),
-      speed: 1 / Math.max(60000, lapTarget),
+      speed: 1 / Math.max(60000, lapTarget), // 1 volta em ~lapTarget ms
       laps: 0,
       simLapMs: 0,
       bestLap: null,
@@ -323,6 +327,8 @@ function rebuildVisuals() {
 // LOOP
 // ------------------------------
 function loop(ts) {
+  if (qualyState.lastFrame == null) qualyState.lastFrame = ts;
+
   const dt = (ts - qualyState.lastFrame) * (qualyState.speedMultiplier || 1);
   qualyState.lastFrame = ts;
 
@@ -357,7 +363,15 @@ function update(dt) {
     }
   }
 
+  // ---- FIX: atualiza UI da volta com base na corrida real (maxLaps)
   const maxLaps = Math.max(...qualyState.drivers.map(d => d.laps));
+  const lapUI = clamp(maxLaps + 1, 1, phase.totalLaps); // exibe "volta atual"
+  if (lapUI !== qualyState.currentLapUI) {
+    qualyState.currentLapUI = lapUI;
+    updateHeaderUI();
+  }
+
+  // finaliza fase quando alguém completa totalLaps
   if (maxLaps >= phase.totalLaps) finalizarFase();
 }
 
@@ -381,7 +395,30 @@ function render() {
 }
 
 // ------------------------------
-// LISTA (corrigido: classes + tamanhos fixos)
+// HEADER UI (compatível com ids diferentes)
+// ------------------------------
+function updateHeaderUI() {
+  const phase = QUALY_PHASES[qualyState.phaseIndex] || QUALY_PHASES[0];
+
+  // possíveis ids usados no seu HTML (várias versões)
+  const elPhaseA = document.getElementById("qualy-phase-label");
+  const elLapA   = document.getElementById("qualy-lap-label");
+
+  const elPhaseB = document.getElementById("phaseName");
+  const elLapB   = document.getElementById("lapCounter");
+
+  const phaseText = `${phase.id} · ELIMINADOS AO FINAL: ${phase.eliminated} PILOTOS`;
+  const lapText   = `Volta ${qualyState.currentLapUI} / ${phase.totalLaps}`;
+
+  if (elPhaseA) elPhaseA.textContent = phaseText;
+  if (elLapA) elLapA.textContent = lapText;
+
+  if (elPhaseB) elPhaseB.textContent = phase.id;
+  if (elLapB) elLapB.textContent = `${qualyState.currentLapUI}/${phase.totalLaps}`;
+}
+
+// ------------------------------
+// LISTA (UI estável no mobile)
 // ------------------------------
 function atualizarLista() {
   const list = document.getElementById("drivers-list");
@@ -438,6 +475,8 @@ function finalizarFase() {
     qualyState.drivers = ordenado.slice(0, ordenado.length - phase.eliminated);
 
     qualyState.phaseIndex++;
+    qualyState.currentLapUI = 1;
+
     qualyState.drivers.forEach(d => {
       d.laps = 0;
       d.simLapMs = 0;
@@ -448,6 +487,7 @@ function finalizarFase() {
 
     rebuildVisuals();
     preencherPilotosDaEquipe();
+    updateHeaderUI();
 
     qualyState.running = true;
     return;
