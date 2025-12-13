@@ -1,6 +1,7 @@
 // ==========================================================
 // F1 MANAGER 2025 – QUALIFYING.JS (Q1 / Q2 / Q3)
 // Corrigido: normalização do SVG + fallback de pilotos + visuais por fase
+// Ajuste EXTRA: tower/list com imagens dimensionadas (mobile)
 // ==========================================================
 
 // ------------------------------
@@ -40,7 +41,6 @@ const TRACK_BASE_LAP_TIME_MS = {
 
 // ------------------------------
 // PILOTOS BASE (fallback)
-// (mantenha sua lista real aqui; abaixo é exemplo mínimo se Market falhar)
 // ------------------------------
 const DRIVERS_2025 = [
   { id: "verstappen", code: "VER", name: "Max Verstappen", teamKey: "redbull", teamName: "Red Bull Racing", rating: 98, color: "#ffb300", logo: "assets/logos/redbull.png" },
@@ -156,7 +156,6 @@ const qualyState = {
   lastFrame: null,
   finalGrid: null,
 
-  // internals do svg
   _svgEl: null,
   _polyEl: null
 };
@@ -177,10 +176,8 @@ async function initQualifying() {
   if (title) title.textContent = qualyState.gp;
 
   setupSpeedControls();
-
   initDrivers();
-
-  await loadTrackSvg(); // cria pathPoints normalizado + svg
+  await loadTrackSvg();
 
   qualyState.lastFrame = performance.now();
   requestAnimationFrame(loop);
@@ -213,7 +210,7 @@ function initDrivers() {
 }
 
 // ------------------------------
-// SVG TRACK (com NORMALIZAÇÃO p/ 1000x600)
+// SVG TRACK (normalizado p/ 1000x600)
 // ------------------------------
 async function loadTrackSvg() {
   const container = document.getElementById("track-container");
@@ -234,7 +231,6 @@ async function loadTrackSvg() {
 
   const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
 
-  // pega o path mais longo (mais robusto)
   const paths = Array.from(doc.querySelectorAll("path"));
   let bestPath = null;
   let bestLen = 0;
@@ -255,16 +251,14 @@ async function loadTrackSvg() {
   }
 
   const len = bestPath.getTotalLength();
-
-  // amostra pontos no espaço original do SVG
   const raw = [];
   const samples = 420;
+
   for (let i = 0; i < samples; i++) {
     const pt = bestPath.getPointAtLength((len * i) / samples);
     raw.push({ x: pt.x, y: pt.y });
   }
 
-  // NORMALIZA p/ viewBox 0 0 1000 600
   const xs = raw.map(p => p.x);
   const ys = raw.map(p => p.y);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
@@ -277,14 +271,12 @@ async function loadTrackSvg() {
     y: ((p.y - minY) / h) * 600
   }));
 
-  // cria SVG de exibição
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 1000 600");
   svg.setAttribute("width", "100%");
   svg.setAttribute("height", "100%");
   container.appendChild(svg);
 
-  // pista
   const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
   poly.setAttribute("points", qualyState.pathPoints.map(p => `${p.x},${p.y}`).join(" "));
   poly.setAttribute("stroke", "#777");
@@ -294,24 +286,18 @@ async function loadTrackSvg() {
   poly.setAttribute("stroke-linejoin", "round");
   svg.appendChild(poly);
 
-  // guarda refs
   qualyState._svgEl = svg;
   qualyState._polyEl = poly;
 
-  // cria visuais dos carros (bolinhas)
   rebuildVisuals();
 }
 
 function rebuildVisuals() {
   if (!qualyState._svgEl) return;
 
-  // remove visuais anteriores
-  qualyState.visuals.forEach(v => {
-    try { v.g.remove(); } catch {}
-  });
+  qualyState.visuals.forEach(v => { try { v.g.remove(); } catch {} });
   qualyState.visuals = [];
 
-  // cria novos
   qualyState.visuals = qualyState.drivers.map(d => {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -321,7 +307,6 @@ function rebuildVisuals() {
     c.setAttribute("stroke-width", "1.5");
     g.appendChild(c);
 
-    // destaque do usuário (mantém visual simples)
     if ((d.teamKey || "").toLowerCase() === qualyState.userTeam) {
       const tri = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
       tri.setAttribute("points", "0,-11 7,0 -7,0");
@@ -396,7 +381,7 @@ function render() {
 }
 
 // ------------------------------
-// LISTA
+// LISTA (corrigido: classes + tamanhos fixos)
 // ------------------------------
 function atualizarLista() {
   const list = document.getElementById("drivers-list");
@@ -410,14 +395,32 @@ function atualizarLista() {
       const row = document.createElement("div");
       row.className = "driver-row";
 
+      const faceSrc = `assets/faces/${d.code}.png`;
+
       row.innerHTML = `
-        <div>${i + 1}</div>
-        <img src="assets/faces/${d.code}.png" onerror="this.onerror=null;this.src='assets/faces/default.png';" />
-        <div>${d.name}</div>
-        <div>${formatLapTime(d.bestLap)}</div>
+        <div class="driver-pos">${i + 1}</div>
+
+        <img
+          class="driver-face"
+          src="${faceSrc}"
+          alt="${d.name}"
+          width="44"
+          height="44"
+          loading="lazy"
+          decoding="async"
+          onerror="this.onerror=null;this.src='assets/faces/default.png';"
+          style="width:44px;height:44px;object-fit:cover;border-radius:8px;"
+        />
+
+        <div class="driver-name">${d.name}</div>
+
+        <div class="driver-time">${formatLapTime(d.bestLap)}</div>
       `;
 
-      if ((d.teamKey || "").toLowerCase() === qualyState.userTeam) row.classList.add("user-team-row");
+      if ((d.teamKey || "").toLowerCase() === qualyState.userTeam) {
+        row.classList.add("user-team-row");
+      }
+
       list.appendChild(row);
     });
 }
@@ -434,7 +437,6 @@ function finalizarFase() {
   if (phase.eliminated > 0) {
     qualyState.drivers = ordenado.slice(0, ordenado.length - phase.eliminated);
 
-    // próxima fase: zera métricas e recria visuais
     qualyState.phaseIndex++;
     qualyState.drivers.forEach(d => {
       d.laps = 0;
@@ -451,7 +453,6 @@ function finalizarFase() {
     return;
   }
 
-  // Q3 final
   qualyState.finalGrid = ordenado;
   salvarGrid();
 
@@ -526,12 +527,11 @@ function preencherPilotosDaEquipe() {
   });
 }
 
-// Se o seu HTML tiver botão OK chamando window.onQualyModalAction()
+// modal OK (se seu HTML usa)
 function onQualyModalAction() {
   const modal = document.getElementById("qualy-modal");
   if (modal) modal.classList.add("hidden");
 
-  // segue para race mantendo params
   const next = new URL("race.html", location.href);
   next.searchParams.set("track", qualyState.track);
   next.searchParams.set("gp", qualyState.gp);
