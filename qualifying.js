@@ -1,6 +1,6 @@
 // ==========================================================
 // F1 MANAGER 2025 – QUALIFYING.JS (Q1 / Q2 / Q3)
-// Versão FINAL corrigida (tempo simulado + mercado + speed real)
+// Corrigido: normalização do SVG + fallback de pilotos + visuais por fase
 // ==========================================================
 
 // ------------------------------
@@ -39,6 +39,42 @@ const TRACK_BASE_LAP_TIME_MS = {
 };
 
 // ------------------------------
+// PILOTOS BASE (fallback)
+// (mantenha sua lista real aqui; abaixo é exemplo mínimo se Market falhar)
+// ------------------------------
+const DRIVERS_2025 = [
+  { id: "verstappen", code: "VER", name: "Max Verstappen", teamKey: "redbull", teamName: "Red Bull Racing", rating: 98, color: "#ffb300", logo: "assets/logos/redbull.png" },
+  { id: "perez",      code: "PER", name: "Sergio Pérez",   teamKey: "redbull", teamName: "Red Bull Racing", rating: 94, color: "#ffb300", logo: "assets/logos/redbull.png" },
+
+  { id: "leclerc", code: "LEC", name: "Charles Leclerc", teamKey: "ferrari", teamName: "Ferrari", rating: 95, color: "#ff0000", logo: "assets/logos/ferrari.png" },
+  { id: "sainz",   code: "SAI", name: "Carlos Sainz",   teamKey: "ferrari", teamName: "Ferrari", rating: 93, color: "#ff0000", logo: "assets/logos/ferrari.png" },
+
+  { id: "hamilton", code: "HAM", name: "Lewis Hamilton", teamKey: "mercedes", teamName: "Mercedes", rating: 95, color: "#00e5ff", logo: "assets/logos/mercedes.png" },
+  { id: "russell",  code: "RUS", name: "George Russell", teamKey: "mercedes", teamName: "Mercedes", rating: 93, color: "#00e5ff", logo: "assets/logos/mercedes.png" },
+
+  { id: "norris",  code: "NOR", name: "Lando Norris",  teamKey: "mclaren", teamName: "McLaren", rating: 94, color: "#ff8c1a", logo: "assets/logos/mclaren.png" },
+  { id: "piastri", code: "PIA", name: "Oscar Piastri", teamKey: "mclaren", teamName: "McLaren", rating: 92, color: "#ff8c1a", logo: "assets/logos/mclaren.png" },
+
+  { id: "alonso", code: "ALO", name: "Fernando Alonso", teamKey: "aston_martin", teamName: "Aston Martin", rating: 94, color: "#00b894", logo: "assets/logos/aston_martin.png" },
+  { id: "stroll", code: "STR", name: "Lance Stroll",   teamKey: "aston_martin", teamName: "Aston Martin", rating: 88, color: "#00b894", logo: "assets/logos/aston_martin.png" },
+
+  { id: "gasly", code: "GAS", name: "Pierre Gasly", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", logo: "assets/logos/alpine.png" },
+  { id: "ocon",  code: "OCO", name: "Esteban Ocon", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", logo: "assets/logos/alpine.png" },
+
+  { id: "tsunoda", code: "TSU", name: "Yuki Tsunoda", teamKey: "rb", teamName: "RB", rating: 89, color: "#7f00ff", logo: "assets/logos/rb.png" },
+  { id: "lawson",  code: "LAW", name: "Liam Lawson",  teamKey: "rb", teamName: "RB", rating: 88, color: "#7f00ff", logo: "assets/logos/rb.png" },
+
+  { id: "hulkenberg", code: "HUL", name: "Nico Hülkenberg",   teamKey: "sauber", teamName: "Sauber", rating: 89, color: "#00cec9", logo: "assets/logos/sauber.png" },
+  { id: "bortoleto",  code: "BOR", name: "Gabriel Bortoleto", teamKey: "sauber", teamName: "Sauber", rating: 88, color: "#00cec9", logo: "assets/logos/sauber.png" },
+
+  { id: "magnussen", code: "MAG", name: "Kevin Magnussen", teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", logo: "assets/logos/haas.png" },
+  { id: "bearman",   code: "BEA", name: "Oliver Bearman",  teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", logo: "assets/logos/haas.png" },
+
+  { id: "albon",    code: "ALB", name: "Alex Albon",     teamKey: "williams", teamName: "Williams", rating: 89, color: "#0984e3", logo: "assets/logos/williams.png" },
+  { id: "sargeant", code: "SAR", name: "Logan Sargeant", teamKey: "williams", teamName: "Williams", rating: 86, color: "#0984e3", logo: "assets/logos/williams.png" }
+];
+
+// ------------------------------
 // HELPERS
 // ------------------------------
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -55,37 +91,49 @@ function formatLapTime(ms) {
 // MERCADO / RUNTIME DRIVERS
 // ------------------------------
 function getRuntimeDrivers() {
-  if (!window.PilotMarketSystem) return [];
+  try {
+    if (!window.PilotMarketSystem) return DRIVERS_2025.slice();
 
-  PilotMarketSystem.init();
-  const list = [];
+    PilotMarketSystem.init();
+    const list = [];
 
-  PilotMarketSystem.getTeams().forEach(team => {
-    PilotMarketSystem.getActiveDriversForTeam(team).forEach(p => {
-      list.push({
-        id: p.id,
-        code: p.code || p.id.toUpperCase(),
-        name: p.name,
-        teamKey: p.teamKey,
-        teamName: p.teamName,
-        rating: p.rating || 75,
-        color: p.color || "#fff",
-        logo: p.logo || ""
+    PilotMarketSystem.getTeams().forEach(team => {
+      PilotMarketSystem.getActiveDriversForTeam(team).forEach(p => {
+        const code = (p.code || p.id || "").toString().toUpperCase();
+        const preset = DRIVERS_2025.find(x => x.code === code) || null;
+
+        list.push({
+          id: p.id,
+          code: code || (preset?.code || String(p.id).toUpperCase()),
+          name: p.name || preset?.name || p.id,
+          teamKey: p.teamKey || preset?.teamKey || team,
+          teamName: p.teamName || preset?.teamName || String(team).toUpperCase(),
+          rating: Number(p.rating ?? preset?.rating ?? 75),
+          color: p.color || preset?.color || "#ffffff",
+          logo: p.logo || preset?.logo || `assets/logos/${String(p.teamKey || team)}.png`
+        });
       });
     });
-  });
 
-  return list;
+    return list.length ? list : DRIVERS_2025.slice();
+  } catch (e) {
+    console.warn("PilotMarketSystem falhou. Usando DRIVERS_2025.", e);
+    return DRIVERS_2025.slice();
+  }
 }
 
 function getPerfMultiplier(driverId) {
-  if (!window.PilotMarketSystem) return 1;
-  const p = PilotMarketSystem.getPilot(driverId);
-  if (!p) return 1;
+  try {
+    if (!window.PilotMarketSystem) return 1;
+    const p = PilotMarketSystem.getPilot(driverId);
+    if (!p) return 1;
 
-  const ratingMul = 1 + (clamp(p.rating, 40, 99) - 92) * 0.0025;
-  const formMul = 1 + (clamp(p.form, 0, 100) - 55) * 0.0012;
-  return clamp(ratingMul * formMul, 0.9, 1.08);
+    const ratingMul = 1 + (clamp(p.rating || 75, 40, 99) - 92) * 0.0025;
+    const formMul = 1 + (clamp(p.form || 55, 0, 100) - 55) * 0.0012;
+    return clamp(ratingMul * formMul, 0.9, 1.08);
+  } catch {
+    return 1;
+  }
 }
 
 // ------------------------------
@@ -93,18 +141,24 @@ function getPerfMultiplier(driverId) {
 // ------------------------------
 const qualyState = {
   phaseIndex: 0,
-  currentLap: 1,
   running: true,
   speedMultiplier: 1,
+
   track: "australia",
   gp: "GP 2025",
   userTeam: "ferrari",
   baseLapMs: 90000,
+
   drivers: [],
   visuals: [],
   pathPoints: [],
+
   lastFrame: null,
-  finalGrid: null
+  finalGrid: null,
+
+  // internals do svg
+  _svgEl: null,
+  _polyEl: null
 };
 
 // ------------------------------
@@ -114,16 +168,20 @@ window.addEventListener("DOMContentLoaded", initQualifying);
 
 async function initQualifying() {
   const params = new URLSearchParams(location.search);
-  qualyState.track = params.get("track") || "australia";
+  qualyState.track = (params.get("track") || "australia").toLowerCase();
   qualyState.gp = params.get("gp") || "GP 2025";
-  qualyState.userTeam = params.get("userTeam") || "ferrari";
+  qualyState.userTeam = (params.get("userTeam") || "ferrari").toLowerCase();
   qualyState.baseLapMs = TRACK_BASE_LAP_TIME_MS[qualyState.track] || 90000;
 
-  document.getElementById("qualy-title-gp").textContent = qualyState.gp;
+  const title = document.getElementById("qualy-title-gp");
+  if (title) title.textContent = qualyState.gp;
 
   setupSpeedControls();
+
   initDrivers();
-  await loadTrackSvg();
+
+  await loadTrackSvg(); // cria pathPoints normalizado + svg
+
   qualyState.lastFrame = performance.now();
   requestAnimationFrame(loop);
 }
@@ -135,15 +193,15 @@ function initDrivers() {
   const runtime = getRuntimeDrivers();
 
   qualyState.drivers = runtime.map((d, idx) => {
-    const skill = 1 - (d.rating - 92) * 0.006;
+    const skill = 1 - (Number(d.rating || 75) - 92) * 0.006;
     const perf = getPerfMultiplier(d.id);
-    const lapTarget = qualyState.baseLapMs * skill / perf;
+    const lapTarget = (qualyState.baseLapMs * skill) / (perf || 1);
 
     return {
       ...d,
       index: idx,
       progress: Math.random(),
-      speed: 1 / lapTarget,
+      speed: 1 / Math.max(60000, lapTarget),
       laps: 0,
       simLapMs: 0,
       bestLap: null,
@@ -155,43 +213,123 @@ function initDrivers() {
 }
 
 // ------------------------------
-// SVG TRACK
+// SVG TRACK (com NORMALIZAÇÃO p/ 1000x600)
 // ------------------------------
 async function loadTrackSvg() {
   const container = document.getElementById("track-container");
+  if (!container) {
+    console.error("Qualy: #track-container não encontrado no HTML.");
+    return;
+  }
   container.innerHTML = "";
 
-  const svgText = await fetch(`assets/tracks/${qualyState.track}.svg`).then(r => r.text());
-  const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
-  const path = doc.querySelector("path");
-  const len = path.getTotalLength();
-
-  const pts = [];
-  for (let i = 0; i < 400; i++) {
-    const p = path.getPointAtLength((len * i) / 400);
-    pts.push({ x: p.x, y: p.y });
+  let svgText = "";
+  try {
+    const res = await fetch(`assets/tracks/${qualyState.track}.svg`, { cache: "no-store" });
+    svgText = await res.text();
+  } catch (e) {
+    console.error("Erro ao carregar SVG:", e);
+    return;
   }
 
-  qualyState.pathPoints = pts;
+  const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
 
+  // pega o path mais longo (mais robusto)
+  const paths = Array.from(doc.querySelectorAll("path"));
+  let bestPath = null;
+  let bestLen = 0;
+
+  for (const p of paths) {
+    try {
+      const len = p.getTotalLength();
+      if (len > bestLen) {
+        bestLen = len;
+        bestPath = p;
+      }
+    } catch {}
+  }
+
+  if (!bestPath) {
+    console.error("Qualy: SVG sem <path> utilizável.");
+    return;
+  }
+
+  const len = bestPath.getTotalLength();
+
+  // amostra pontos no espaço original do SVG
+  const raw = [];
+  const samples = 420;
+  for (let i = 0; i < samples; i++) {
+    const pt = bestPath.getPointAtLength((len * i) / samples);
+    raw.push({ x: pt.x, y: pt.y });
+  }
+
+  // NORMALIZA p/ viewBox 0 0 1000 600
+  const xs = raw.map(p => p.x);
+  const ys = raw.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const w = Math.max(1, maxX - minX);
+  const h = Math.max(1, maxY - minY);
+
+  qualyState.pathPoints = raw.map(p => ({
+    x: ((p.x - minX) / w) * 1000,
+    y: ((p.y - minY) / h) * 600
+  }));
+
+  // cria SVG de exibição
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 1000 600");
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "100%");
   container.appendChild(svg);
 
+  // pista
   const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-  poly.setAttribute("points", pts.map(p => `${p.x},${p.y}`).join(" "));
-  poly.setAttribute("stroke", "#555");
+  poly.setAttribute("points", qualyState.pathPoints.map(p => `${p.x},${p.y}`).join(" "));
+  poly.setAttribute("stroke", "#777");
   poly.setAttribute("stroke-width", "16");
   poly.setAttribute("fill", "none");
+  poly.setAttribute("stroke-linecap", "round");
+  poly.setAttribute("stroke-linejoin", "round");
   svg.appendChild(poly);
 
+  // guarda refs
+  qualyState._svgEl = svg;
+  qualyState._polyEl = poly;
+
+  // cria visuais dos carros (bolinhas)
+  rebuildVisuals();
+}
+
+function rebuildVisuals() {
+  if (!qualyState._svgEl) return;
+
+  // remove visuais anteriores
+  qualyState.visuals.forEach(v => {
+    try { v.g.remove(); } catch {}
+  });
+  qualyState.visuals = [];
+
+  // cria novos
   qualyState.visuals = qualyState.drivers.map(d => {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     c.setAttribute("r", 6);
-    c.setAttribute("fill", d.color);
+    c.setAttribute("fill", d.color || "#fff");
+    c.setAttribute("stroke", "#000");
+    c.setAttribute("stroke-width", "1.5");
     g.appendChild(c);
-    svg.appendChild(g);
+
+    // destaque do usuário (mantém visual simples)
+    if ((d.teamKey || "").toLowerCase() === qualyState.userTeam) {
+      const tri = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      tri.setAttribute("points", "0,-11 7,0 -7,0");
+      tri.setAttribute("fill", d.color || "#fff");
+      g.appendChild(tri);
+    }
+
+    qualyState._svgEl.appendChild(g);
     return { id: d.id, g };
   });
 }
@@ -200,7 +338,7 @@ async function loadTrackSvg() {
 // LOOP
 // ------------------------------
 function loop(ts) {
-  const dt = (ts - qualyState.lastFrame) * qualyState.speedMultiplier;
+  const dt = (ts - qualyState.lastFrame) * (qualyState.speedMultiplier || 1);
   qualyState.lastFrame = ts;
 
   if (qualyState.running) update(dt);
@@ -214,21 +352,25 @@ function loop(ts) {
 // ------------------------------
 function update(dt) {
   const phase = QUALY_PHASES[qualyState.phaseIndex];
+  if (!phase) return;
 
-  qualyState.drivers.forEach(d => {
+  for (const d of qualyState.drivers) {
     const noise = 1 + (Math.random() - 0.5) * 0.04;
     const delta = d.speed * noise * dt;
+
     d.progress += delta;
     d.simLapMs += dt;
 
     if (d.progress >= 1) {
       d.progress -= 1;
       d.laps++;
+
       d.lastLap = d.simLapMs;
       if (!d.bestLap || d.simLapMs < d.bestLap) d.bestLap = d.simLapMs;
+
       d.simLapMs = 0;
     }
-  });
+  }
 
   const maxLaps = Math.max(...qualyState.drivers.map(d => d.laps));
   if (maxLaps >= phase.totalLaps) finalizarFase();
@@ -238,12 +380,17 @@ function update(dt) {
 // RENDER
 // ------------------------------
 function render() {
-  qualyState.visuals.forEach(v => {
+  const pts = qualyState.pathPoints;
+  if (!pts.length) return;
+
+  for (const v of qualyState.visuals) {
     const d = qualyState.drivers.find(x => x.id === v.id);
-    const idx = Math.floor(d.progress * (qualyState.pathPoints.length - 1));
-    const p = qualyState.pathPoints[idx];
+    if (!d) continue;
+
+    const idx = Math.floor(d.progress * (pts.length - 1));
+    const p = pts[idx] || pts[0];
     v.g.setAttribute("transform", `translate(${p.x},${p.y})`);
-  });
+  }
 
   atualizarLista();
 }
@@ -253,6 +400,8 @@ function render() {
 // ------------------------------
 function atualizarLista() {
   const list = document.getElementById("drivers-list");
+  if (!list) return;
+
   list.innerHTML = "";
 
   [...qualyState.drivers]
@@ -260,13 +409,15 @@ function atualizarLista() {
     .forEach((d, i) => {
       const row = document.createElement("div");
       row.className = "driver-row";
+
       row.innerHTML = `
         <div>${i + 1}</div>
-        <img src="assets/faces/${d.code}.png" />
+        <img src="assets/faces/${d.code}.png" onerror="this.onerror=null;this.src='assets/faces/default.png';" />
         <div>${d.name}</div>
         <div>${formatLapTime(d.bestLap)}</div>
       `;
-      if (d.teamKey === qualyState.userTeam) row.classList.add("user-team-row");
+
+      if ((d.teamKey || "").toLowerCase() === qualyState.userTeam) row.classList.add("user-team-row");
       list.appendChild(row);
     });
 }
@@ -282,52 +433,66 @@ function finalizarFase() {
 
   if (phase.eliminated > 0) {
     qualyState.drivers = ordenado.slice(0, ordenado.length - phase.eliminated);
-  } else {
-    qualyState.finalGrid = ordenado;
-    salvarGrid();
-    document.getElementById("qualy-modal").classList.remove("hidden");
+
+    // próxima fase: zera métricas e recria visuais
+    qualyState.phaseIndex++;
+    qualyState.drivers.forEach(d => {
+      d.laps = 0;
+      d.simLapMs = 0;
+      d.bestLap = null;
+      d.lastLap = null;
+      d.progress = Math.random();
+    });
+
+    rebuildVisuals();
+    preencherPilotosDaEquipe();
+
+    qualyState.running = true;
     return;
   }
 
-  qualyState.phaseIndex++;
-  qualyState.currentLap = 1;
-  qualyState.drivers.forEach(d => {
-    d.laps = 0;
-    d.simLapMs = 0;
-    d.bestLap = null;
-  });
+  // Q3 final
+  qualyState.finalGrid = ordenado;
+  salvarGrid();
 
-  qualyState.running = true;
+  const modal = document.getElementById("qualy-modal");
+  if (modal) modal.classList.remove("hidden");
 }
 
 // ------------------------------
 // SALVAR GRID
 // ------------------------------
 function salvarGrid() {
-  localStorage.setItem("f1m2025_last_qualy", JSON.stringify({
-    track: qualyState.track,
-    gp: qualyState.gp,
-    grid: qualyState.finalGrid.map((d, i) => ({
-      id: d.id,
-      name: d.name,
-      teamKey: d.teamKey,
-      position: i + 1,
-      bestLap: d.bestLap
-    }))
-  }));
+  try {
+    localStorage.setItem("f1m2025_last_qualy", JSON.stringify({
+      track: qualyState.track,
+      gp: qualyState.gp,
+      grid: (qualyState.finalGrid || []).map((d, i) => ({
+        id: d.id,
+        code: d.code,
+        name: d.name,
+        teamKey: d.teamKey,
+        teamName: d.teamName,
+        position: i + 1,
+        bestLap: d.bestLap
+      }))
+    }));
+  } catch (e) {
+    console.warn("Falha ao salvar grid da qualy:", e);
+  }
 }
 
 // ------------------------------
 // UI
 // ------------------------------
 function setQualySpeed(v) {
-  qualyState.speedMultiplier = v;
+  qualyState.speedMultiplier = Number(v) || 1;
 }
 
 function setupSpeedControls() {
   document.querySelectorAll(".speed-btn").forEach(btn => {
     btn.onclick = () => {
-      setQualySpeed(Number(btn.dataset.speed));
+      setQualySpeed(Number(btn.dataset.speed || "1"));
       document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
     };
@@ -335,16 +500,44 @@ function setupSpeedControls() {
 }
 
 function preencherPilotosDaEquipe() {
-  const teamDrivers = qualyState.drivers.filter(d => d.teamKey === qualyState.userTeam).slice(0, 2);
+  const teamDrivers = qualyState.drivers
+    .filter(d => (d.teamKey || "").toLowerCase() === qualyState.userTeam)
+    .slice(0, 2);
+
   teamDrivers.forEach((d, i) => {
     const card = document.getElementById(`user-driver-${i + 1}`);
     if (!card) return;
-    card.querySelector(".user-face").src = `assets/faces/${d.code}.png`;
-    card.querySelector(".user-name").textContent = d.name;
-    card.querySelector(".user-team").textContent = d.teamName;
-    card.querySelector(".user-logo").src = d.logo;
+
+    const face = card.querySelector(".user-face");
+    const name = card.querySelector(".user-name");
+    const team = card.querySelector(".user-team");
+    const logo = card.querySelector(".user-logo");
+
+    if (face) {
+      face.src = `assets/faces/${d.code}.png`;
+      face.onerror = () => {
+        face.onerror = null;
+        face.src = "assets/faces/default.png";
+      };
+    }
+    if (name) name.textContent = d.name || "";
+    if (team) team.textContent = d.teamName || "";
+    if (logo) logo.src = d.logo || "";
   });
 }
 
-// export
+// Se o seu HTML tiver botão OK chamando window.onQualyModalAction()
+function onQualyModalAction() {
+  const modal = document.getElementById("qualy-modal");
+  if (modal) modal.classList.add("hidden");
+
+  // segue para race mantendo params
+  const next = new URL("race.html", location.href);
+  next.searchParams.set("track", qualyState.track);
+  next.searchParams.set("gp", qualyState.gp);
+  next.searchParams.set("userTeam", qualyState.userTeam);
+  location.href = next.toString();
+}
+
 window.setQualySpeed = setQualySpeed;
+window.onQualyModalAction = onQualyModalAction;
