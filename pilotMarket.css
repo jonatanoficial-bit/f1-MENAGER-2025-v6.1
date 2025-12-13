@@ -1,0 +1,205 @@
+/* =========================================================
+   PILOT MARKET — Visual alinhado ao Lobby (dark / cards)
+   Não “reinventa” o estilo: mantém o DNA do projeto.
+========================================================= */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #fff;
+  background: #000;
+  overflow: hidden;
+}
+
+.app-shell { position: relative; width: 100%; height: 100%; }
+.app-overlay {
+  position: absolute; inset: 0;
+  background: radial-gradient(1200px 800px at 20% 10%, rgba(255, 69, 102, 0.14), transparent 60%),
+              radial-gradient(900px 700px at 80% 90%, rgba(68, 205, 255, 0.10), transparent 55%),
+              linear-gradient(180deg, rgba(0,0,0,0.92), rgba(0,0,0,0.96));
+}
+.app-content { position: relative; z-index: 2; width: 100%; height: 100%; padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+
+.top-bar {
+  display: grid;
+  grid-template-columns: 110px 1fr 210px;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-back {
+  border: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-back:active { transform: translateY(1px); }
+
+.title-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+.title { font-size: 15px; font-weight: 800; letter-spacing: 0.2px; }
+.subtitle { font-size: 12px; opacity: 0.86; }
+
+.cash-pill {
+  text-align: right;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.10);
+  font-size: 12px;
+}
+.cash-pill strong { font-size: 13px; }
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 14px;
+  min-height: 0;
+}
+
+.panel {
+  border-radius: 18px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.panel-header { padding: 14px 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.10); }
+.panel-title { font-weight: 900; font-size: 13px; }
+.panel-hint { margin-top: 4px; font-size: 12px; opacity: 0.78; }
+
+.team-list { padding: 10px; overflow: auto; }
+.team-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  cursor: pointer;
+  padding: 10px 10px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #fff;
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+.team-item small { display: block; font-weight: 600; opacity: 0.75; margin-top: 2px; }
+.team-item.active {
+  background: rgba(255, 69, 102, 0.22);
+  border-color: rgba(255, 69, 102, 0.45);
+}
+
+.main { display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow: hidden; }
+
+.card {
+  border-radius: 18px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.card-head {
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+.card-kicker { font-size: 11px; opacity: 0.78; }
+.card-title { font-size: 14px; font-weight: 900; }
+.actions { display: flex; gap: 8px; align-items: center; }
+
+.btn {
+  border: 0;
+  padding: 9px 10px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  color: #fff;
+  background: rgba(255,255,255,0.10);
+}
+.btn.ghost { background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.10); }
+.btn.danger { background: rgba(255, 69, 102, 0.24); border: 1px solid rgba(255, 69, 102, 0.45); }
+.btn.primary { background: rgba(68, 205, 255, 0.18); border: 1px solid rgba(68, 205, 255, 0.40); }
+
+.select {
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #fff;
+  font-weight: 800;
+}
+
+.table { padding: 10px; overflow: auto; }
+.row {
+  display: grid;
+  grid-template-columns: 56px 1.2fr 0.9fr 0.8fr 0.9fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 8px;
+}
+.row.header {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+  font-weight: 900;
+  opacity: 0.92;
+}
+.cell small { display: block; font-size: 11px; opacity: 0.75; margin-top: 2px; }
+.pill {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+.pill.free { background: rgba(255, 69, 102, 0.18); border-color: rgba(255, 69, 102, 0.40); }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  min-width: 220px;
+  max-width: min(560px, calc(100vw - 20px));
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.80);
+  border: 1px solid rgba(255,255,255,0.10);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+  font-weight: 800;
+  font-size: 12px;
+}
+.toast.show { opacity: 1; }
+
+@media (max-width: 920px) {
+  .top-bar { grid-template-columns: 92px 1fr; grid-template-rows: auto auto; }
+  .cash-pill { grid-column: 1 / -1; text-align: left; }
+  .layout { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 1fr; }
+}
