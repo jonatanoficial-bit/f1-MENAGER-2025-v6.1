@@ -1,10 +1,13 @@
 /* =========================================================
-   F1 MANAGER 2025 — RACE (DOTS SAME FEEL AS PRACTICE/QUALI)
+   F1 MANAGER 2025 — RACE (STABLE + DOTS + REAL PIT + SC + WEATHER)
    - Sem imports (compatível com <script src="race.js">)
    - SVG track via assets/tracks/{track}.svg
-   - Carros como "bolinhas" coloridas (não PNG) no mesmo estilo do TL/Quali
+   - Carros como "bolinhas" coloridas (igual sensação TL/Quali)
    - HUD + 1x/2x/4x + PIT + PÓDIO
-   - Economy (F1MEconomy) embutida de forma segura (não quebra corrida)
+   - Economy + Staff influence (pit/tyre/consistency)
+   - Pit stop com perda realista (pit lane + serviço + erro)
+   - Safety Car randômico
+   - Meteorologia randômica (afeta ritmo/desgaste)
    ========================================================= */
 
 (function () {
@@ -34,7 +37,8 @@
   let speedMultiplier = 1;
 
   /* =========================
-     DADOS BASE
+     DADOS BASE (COM BOR)
+     - BOR substitui BOT na Sauber
      ========================= */
   const DRIVERS_2025 = [
     { code: "VER", name: "Verstappen", team: "redbull", rating: 96 },
@@ -61,7 +65,8 @@
     { code: "TSU", name: "Tsunoda", team: "rb", rating: 84 },
     { code: "RIC", name: "Ricciardo", team: "rb", rating: 85 },
 
-    { code: "BOT", name: "Bottas", team: "sauber", rating: 83 },
+    // SAUBER (BOT -> BOR)
+    { code: "BOR", name: "Bortoleto", team: "sauber", rating: 83 },
     { code: "ZHO", name: "Zhou", team: "sauber", rating: 82 },
 
     { code: "MAG", name: "Magnussen", team: "haas", rating: 82 },
@@ -103,7 +108,6 @@
 
   /* =========================
      CORES DAS EQUIPES (DOTS)
-     - Ajuste fino se você quiser as cores exatas do seu padrão
      ========================= */
   const TEAM_COLOR = {
     redbull: "#1e4cff",
@@ -240,13 +244,9 @@
 
   if (elGpTitle) elGpTitle.textContent = gpName;
 
-  // Mantém logo do topo como estava no seu layout (não muda UI)
   if (elTeamLogoTop) {
-    // Seu asset real é aston_martin.png mas o userTeam vem "astonmartin"
-    // Aqui deixo só o básico sem forçar – se o arquivo não existir, não quebra.
     elTeamLogoTop.src = `assets/teams/${userTeamKey}.png`;
     elTeamLogoTop.onerror = () => {
-      // tenta correção comum
       if (userTeamKey === "astonmartin") elTeamLogoTop.src = "assets/teams/aston_martin.png";
     };
   }
@@ -273,7 +273,21 @@
 
     cars: [],
     finished: false,
-    podiumShown: false
+    podiumShown: false,
+
+    // Eventos
+    weather: {
+      mode: "dry",           // dry | light_rain | heavy_rain
+      timerMs: 0,
+      nextChangeMs: 35000 + Math.random() * 45000
+    },
+    safetyCar: {
+      active: false,
+      remainingMs: 0,
+      chancePerLap: 0.06,    // chance de entrar por volta (ajuste fino)
+      minMs: 18000,
+      maxMs: 36000
+    }
   };
 
   /* =========================
@@ -312,6 +326,55 @@
     if (!card) return;
     const statusEl = card.querySelector(".user-status");
     if (statusEl) statusEl.textContent = text;
+  }
+
+  function getUserButton(index, action) {
+    return document.querySelector(`.user-btn[data-index="${index}"][data-action="${action}"]`);
+  }
+
+  function setBtnState(btn, state) {
+    if (!btn) return;
+    btn.classList.remove("active", "pending", "flash");
+    if (state) btn.classList.add(state);
+  }
+
+  function flashBtn(btn) {
+    if (!btn) return;
+    btn.classList.add("flash");
+    setTimeout(() => btn && btn.classList.remove("flash"), 180);
+  }
+
+  /* =========================
+     WEATHER / SAFETY CAR (global modifiers)
+     ========================= */
+  function weatherModifiers() {
+    // Sem inventar sistema de pneus: apenas ritmo + desgaste
+    const mode = raceState.weather.mode;
+    if (mode === "light_rain") {
+      return { pace: 0.955, wear: 1.05 };
+    }
+    if (mode === "heavy_rain") {
+      return { pace: 0.915, wear: 1.12 };
+    }
+    return { pace: 1.0, wear: 1.0 };
+  }
+
+  function safetyCarPaceFactor() {
+    return raceState.safetyCar.active ? 0.62 : 1.0;
+  }
+
+  function maybeChangeWeather(dtMs) {
+    raceState.weather.timerMs += dtMs * speedMultiplier;
+    if (raceState.weather.timerMs >= raceState.weather.nextChangeMs) {
+      raceState.weather.timerMs = 0;
+      raceState.weather.nextChangeMs = 35000 + Math.random() * 45000;
+
+      const roll = Math.random();
+      // distribuição estável (maior parte seca)
+      if (roll < 0.70) raceState.weather.mode = "dry";
+      else if (roll < 0.92) raceState.weather.mode = "light_rain";
+      else raceState.weather.mode = "heavy_rain";
+    }
   }
 
   /* =========================
@@ -382,7 +445,6 @@
 
     raceState.pathPoints = norm;
 
-    // Track “broadcast”
     svg.innerHTML = "";
 
     const polyOuter = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
@@ -403,7 +465,6 @@
     polyInner.setAttribute("stroke-linejoin", "round");
     svg.appendChild(polyInner);
 
-    // layer para dots dos carros (acima da pista)
     const carsLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
     carsLayer.setAttribute("id", "cars-layer");
     svg.appendChild(carsLayer);
@@ -456,23 +517,14 @@
       const targetLapMs = raceState.baseLapMs * skillFactor;
       const speedBase = 1 / targetLapMs;
 
-      // DOT
       const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       dot.setAttribute("class", "car-dot");
-      dot.setAttribute("r", "6");
+      dot.setAttribute("r", d.team === userTeamKey ? "7" : "6");
       dot.setAttribute("fill", TEAM_COLOR[d.team] || "#ffffff");
-      dot.setAttribute("stroke", "rgba(0,0,0,0.55)");
+      dot.setAttribute("stroke", d.team === userTeamKey ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.55)");
       dot.setAttribute("stroke-width", "2");
       dot.setAttribute("opacity", "0.98");
       carsLayer.appendChild(dot);
-
-      // pequeno “halo” para o carro do usuário (não muda mecânica; só legibilidade)
-      // Se você não quiser, basta remover este bloco.
-      if (d.team === userTeamKey) {
-        dot.setAttribute("r", "7");
-        dot.setAttribute("stroke", "rgba(255,255,255,0.7)");
-        dot.setAttribute("stroke-width", "2");
-      }
 
       return {
         ...d,
@@ -493,6 +545,7 @@
         saving: false,
 
         pitRequest: false,
+        pitQueued: false,
         inPit: false,
         pitRemainingMs: 0,
 
@@ -557,32 +610,56 @@
 
         if (action === "pit") {
           drv.pitRequest = true;
+          drv.pitQueued = true;
           setUserStatus(idx, "PIT solicitado");
+          setBtnState(getUserButton(idx, "pit"), "pending");
+          flashBtn(getUserButton(idx, "pit"));
           return;
         }
 
         if (action === "push") {
-          drv.pushing = true;
-          drv.saving = false;
-          setUserStatus(idx, "Ataque");
+          drv.pushing = !drv.pushing;
+          if (drv.pushing) drv.saving = false;
+          setBtnState(getUserButton(idx, "push"), drv.pushing ? "active" : null);
+          setBtnState(getUserButton(idx, "save"), drv.saving ? "active" : null);
+          setUserStatus(idx, drv.pushing ? "Ataque" : "Normal");
           return;
         }
 
         if (action === "save") {
-          drv.saving = true;
-          drv.pushing = false;
-          setUserStatus(idx, "Economizar");
+          drv.saving = !drv.saving;
+          if (drv.saving) drv.pushing = false;
+          setBtnState(getUserButton(idx, "save"), drv.saving ? "active" : null);
+          setBtnState(getUserButton(idx, "push"), drv.pushing ? "active" : null);
+          setUserStatus(idx, drv.saving ? "Economizar" : "Normal");
           return;
         }
 
-        if (action === "engineUp") drv.engineMode = clamp(drv.engineMode + 1, 1, 4);
-        if (action === "engineDown") drv.engineMode = clamp(drv.engineMode - 1, 1, 4);
+        if (action === "engineUp") {
+          drv.engineMode = clamp(drv.engineMode + 1, 1, 4);
+          flashBtn(btn);
+          return;
+        }
+        if (action === "engineDown") {
+          drv.engineMode = clamp(drv.engineMode - 1, 1, 4);
+          flashBtn(btn);
+          return;
+        }
 
-        if (action === "aggrUp") drv.aggrMode = clamp(drv.aggrMode + 1, 1, 4);
-        if (action === "aggrDown") drv.aggrMode = clamp(drv.aggrMode - 1, 1, 4);
+        if (action === "aggrUp") {
+          drv.aggrMode = clamp(drv.aggrMode + 1, 1, 4);
+          flashBtn(btn);
+          return;
+        }
+        if (action === "aggrDown") {
+          drv.aggrMode = clamp(drv.aggrMode - 1, 1, 4);
+          flashBtn(btn);
+          return;
+        }
 
         if (action === "ers") {
-          drv.ers = clamp(drv.ers + 15, 0, 100);
+          drv.ers = clamp(drv.ers + 18, 0, 100);
+          flashBtn(btn);
           setUserStatus(idx, "ERS Boost");
           return;
         }
@@ -594,7 +671,9 @@
      SIM / TELEMETRIA
      ========================= */
   function updateTelemetryAndWear(car, dtMs) {
-    const tyreWearBase = 0.0021;
+    const weather = weatherModifiers();
+
+    const tyreWearBase = 0.0021 * weather.wear;
     const aggrFactor = 0.85 + car.aggrMode * 0.10;
     const pushFactor = car.pushing ? 1.18 : 1.0;
     const saveFactor = car.saving ? 0.88 : 1.0;
@@ -617,6 +696,8 @@
   }
 
   function computeSpeedFactor(car) {
+    const weather = weatherModifiers();
+
     const engineFactor = 0.88 + car.engineMode * 0.05;
     const tyreFactor = 0.72 + (car.tyre / 100) * 0.35;
     const carFactor = 0.80 + (car.car / 100) * 0.25;
@@ -626,19 +707,33 @@
     const push = car.pushing ? 1.02 : 1.0;
     const save = car.saving ? 0.985 : 1.0;
 
-    return engineFactor * tyreFactor * carFactor * push * save + noise;
+    const sc = safetyCarPaceFactor();
+
+    return (engineFactor * tyreFactor * carFactor * push * save + noise) * weather.pace * sc;
+  }
+
+  /* =========================
+     PIT STOP REALISTA
+     - Agora é tempo de PIT LANE + serviço + possível erro
+     - Resultado: perde posições de forma consistente
+     ========================= */
+  function pitTotalTimeMs() {
+    // Pit lane loss típico: 18s a 24s (varia por pista). Sem map por pista aqui.
+    const pitLane = 18000 + Math.random() * 6000; // 18–24s
+    // serviço: 2.2 a 3.4s
+    const service = 2200 + Math.random() * 1200;
+    return pitLane + service;
   }
 
   function handlePit(car, dtMs) {
     if (car.finished) return;
-
-    if (!car.inPit && car.pitRequest) return;
 
     if (car.inPit) {
       car.pitRemainingMs = Math.max(0, car.pitRemainingMs - dtMs * speedMultiplier);
       if (car.pitRemainingMs <= 0) {
         car.inPit = false;
         car.pitRequest = false;
+        car.pitQueued = false;
         car.tyre = 100;
         car.car = clamp(car.car + 6, 0, 100);
       }
@@ -656,14 +751,32 @@
       car.bestLapMs = car.bestLapMs == null ? lapMs : Math.min(car.bestLapMs, lapMs);
       car.lapStartMs = lapEndMs;
 
+      // Executa PIT exatamente no fechamento da volta (determinístico)
       if (car.pitRequest && !car.inPit) {
         car.inPit = true;
-        const basePit = 2600 + Math.random() * 700;
-        car.pitRemainingMs = basePit * staffMods.pitTimeFactor;
-        if (Math.random() < 0.06) car.pitRemainingMs += 900 + Math.random() * 600;
+
+        // tempo total realista com staff
+        const base = pitTotalTimeMs();
+        let total = base * staffMods.pitTimeFactor;
+
+        // erro aleatório (mais realista)
+        const errorRoll = Math.random();
+        if (errorRoll < 0.07) total += 1200 + Math.random() * 2200; // 1.2–3.4s
+        if (errorRoll < 0.02) total += 2500 + Math.random() * 3500; // erro grande raro
+
+        car.pitRemainingMs = total;
       }
 
       car.laps += 1;
+
+      // chance de Safety Car no final da volta (event-driven)
+      if (!raceState.safetyCar.active) {
+        if (Math.random() < raceState.safetyCar.chancePerLap) {
+          raceState.safetyCar.active = true;
+          raceState.safetyCar.remainingMs =
+            raceState.safetyCar.minMs + Math.random() * (raceState.safetyCar.maxMs - raceState.safetyCar.minMs);
+        }
+      }
 
       if (car.laps >= raceState.totalLaps) {
         car.finished = true;
@@ -673,18 +786,30 @@
   }
 
   function updateCars(dtMs) {
+    // weather tick
+    maybeChangeWeather(dtMs);
+
+    // safety car countdown
+    if (raceState.safetyCar.active) {
+      raceState.safetyCar.remainingMs -= dtMs * speedMultiplier;
+      if (raceState.safetyCar.remainingMs <= 0) {
+        raceState.safetyCar.active = false;
+        raceState.safetyCar.remainingMs = 0;
+      }
+    }
+
     raceState.cars.forEach((car) => {
       if (car.finished) return;
 
       handlePit(car, dtMs);
 
+      // enquanto está no pit, praticamente não progride
       const pitFactor = car.inPit ? 0.001 : 1.0;
 
       updateTelemetryAndWear(car, dtMs);
 
       const factor = computeSpeedFactor(car) * pitFactor;
 
-      const prev = car.progress;
       const delta = dtMs * car.speedBase * speedMultiplier * factor;
 
       let next = car.progress + delta;
@@ -723,9 +848,7 @@
       const pos = getPositionOnTrack(car.progress);
       car.dotEl.setAttribute("cx", String(pos.x));
       car.dotEl.setAttribute("cy", String(pos.y));
-
       car.dotEl.setAttribute("opacity", car.inPit ? "0.55" : "0.98");
-      // Se quiser “efeito fantasma” no pit, já está aqui sem mudar mecânica.
     });
   }
 
@@ -747,12 +870,25 @@
 
       const status = drv.inPit
         ? "No PIT"
+        : drv.pitQueued
+        ? "PIT pendente"
         : drv.pushing
         ? "Ataque"
         : drv.saving
         ? "Economizar"
         : "Normal";
+
       setUserStatus(i, status);
+
+      // atualiza estado dos botões do usuário em tempo real
+      setBtnState(getUserButton(i, "push"), drv.pushing ? "active" : null);
+      setBtnState(getUserButton(i, "save"), drv.saving ? "active" : null);
+      setBtnState(getUserButton(i, "pit"), drv.pitQueued ? "pending" : null);
+
+      // quando termina o pit, remove pending automaticamente
+      if (!drv.pitQueued && !drv.pitRequest && !drv.inPit) {
+        setBtnState(getUserButton(i, "pit"), null);
+      }
     });
   }
 
@@ -775,13 +911,11 @@
       posEl.className = "driver-pos";
       posEl.textContent = String(idx + 1);
 
-      // mantém seus assets existentes (se falhar, não quebra)
       const teamLogo = document.createElement("img");
       teamLogo.className = "driver-team-logo";
       teamLogo.src = `assets/teams/${car.team}.png`;
       teamLogo.alt = car.team;
       teamLogo.onerror = () => {
-        // correções comuns (não muda mecânica)
         if (car.team === "astonmartin") teamLogo.src = "assets/teams/aston_martin.png";
       };
 
@@ -807,9 +941,13 @@
 
       const gapStr = idx === 0 ? "LÍDER" : `+${formatMs(Math.max(0, gap))}`;
 
+      const scStr = raceState.safetyCar.active ? "SC" : "";
+      const wx = raceState.weather.mode === "dry" ? "SEC" : raceState.weather.mode === "light_rain" ? "CHUVA" : "CHUVA+";
+
       stats.innerHTML = `
         <div class="stat-line"><span>${lapStr}</span><span>${gapStr}</span></div>
         <div class="stat-line"><span>Pneu</span><span>${Math.round(car.tyre)}%</span></div>
+        <div class="stat-line"><span>${wx}</span><span>${scStr}</span></div>
       `;
 
       card.appendChild(posEl);
@@ -855,7 +993,9 @@
           <div class="podium-name">${safeText(c.name)}</div>
           <div class="podium-team">${safeText(c.team).toUpperCase()}</div>
           <div style="margin-top:6px;">
-            <img src="assets/teams/${c.team}.png" onerror="if('${c.team}'==='astonmartin'){this.src='assets/teams/aston_martin.png'}" alt="${safeText(c.team)}"
+            <img src="assets/teams/${c.team}.png"
+                 onerror="if('${c.team}'==='astonmartin'){this.src='assets/teams/aston_martin.png'}"
+                 alt="${safeText(c.team)}"
                  style="height:18px; width:auto; object-fit:contain; opacity:.95;" />
           </div>
         </div>
@@ -958,6 +1098,9 @@
 
     speedMultiplier = 1;
     if (speedBtns && speedBtns.length) markActiveSpeed(speedBtns[0]);
+
+    // inicializa visual dos botões do usuário
+    updateUserTelemetry();
 
     requestAnimationFrame(gameLoop);
   }
