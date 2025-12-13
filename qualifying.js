@@ -1,7 +1,7 @@
 // ==========================================================
 // F1 MANAGER 2025 – QUALIFYING.JS (Q1 / Q2 / Q3)
-// FIX: contador de volta (UI) + labels de fase sempre atualizados
-// NÃO muda mecânica: apenas sincroniza UI com simulação real.
+// FIX: Modal de eliminados em cada fase + Grid final antes da corrida
+// NÃO muda mecânica: apenas pausa e exibe informações no fim de cada fase.
 // ==========================================================
 
 // ------------------------------
@@ -87,6 +87,15 @@ function formatLapTime(ms) {
   return `${m}:${String(s).padStart(2, "0")}.${String(msr).padStart(3, "0")}`;
 }
 
+function esc(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 // ------------------------------
 // MERCADO / RUNTIME DRIVERS
 // ------------------------------
@@ -149,7 +158,8 @@ const qualyState = {
   userTeam: "ferrari",
   baseLapMs: 90000,
 
-  currentLapUI: 1, // <-- UI sincronizado com maxLaps
+  currentLapUI: 1,
+
   drivers: [],
   visuals: [],
   pathPoints: [],
@@ -158,7 +168,12 @@ const qualyState = {
   finalGrid: null,
 
   _svgEl: null,
-  _polyEl: null
+  _polyEl: null,
+
+  // --- MODAL FLOW
+  modalMode: null,            // "phase" | "final"
+  pendingNextDrivers: null,   // array
+  pendingEliminated: null     // array
 };
 
 // ------------------------------
@@ -202,7 +217,7 @@ function initDrivers() {
       ...d,
       index: idx,
       progress: Math.random(),
-      speed: 1 / Math.max(60000, lapTarget), // 1 volta em ~lapTarget ms
+      speed: 1 / Math.max(60000, lapTarget),
       laps: 0,
       simLapMs: 0,
       bestLap: null,
@@ -234,7 +249,6 @@ async function loadTrackSvg() {
   }
 
   const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
-
   const paths = Array.from(doc.querySelectorAll("path"));
   let bestPath = null;
   let bestLen = 0;
@@ -304,6 +318,7 @@ function rebuildVisuals() {
 
   qualyState.visuals = qualyState.drivers.map(d => {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     c.setAttribute("r", 6);
     c.setAttribute("fill", d.color || "#fff");
@@ -363,15 +378,13 @@ function update(dt) {
     }
   }
 
-  // ---- FIX: atualiza UI da volta com base na corrida real (maxLaps)
   const maxLaps = Math.max(...qualyState.drivers.map(d => d.laps));
-  const lapUI = clamp(maxLaps + 1, 1, phase.totalLaps); // exibe "volta atual"
+  const lapUI = clamp(maxLaps + 1, 1, phase.totalLaps);
   if (lapUI !== qualyState.currentLapUI) {
     qualyState.currentLapUI = lapUI;
     updateHeaderUI();
   }
 
-  // finaliza fase quando alguém completa totalLaps
   if (maxLaps >= phase.totalLaps) finalizarFase();
 }
 
@@ -395,12 +408,11 @@ function render() {
 }
 
 // ------------------------------
-// HEADER UI (compatível com ids diferentes)
+// HEADER UI
 // ------------------------------
 function updateHeaderUI() {
   const phase = QUALY_PHASES[qualyState.phaseIndex] || QUALY_PHASES[0];
 
-  // possíveis ids usados no seu HTML (várias versões)
   const elPhaseA = document.getElementById("qualy-phase-label");
   const elLapA   = document.getElementById("qualy-lap-label");
 
@@ -418,7 +430,7 @@ function updateHeaderUI() {
 }
 
 // ------------------------------
-// LISTA (UI estável no mobile)
+// LISTA
 // ------------------------------
 function atualizarLista() {
   const list = document.getElementById("drivers-list");
@@ -432,15 +444,12 @@ function atualizarLista() {
       const row = document.createElement("div");
       row.className = "driver-row";
 
-      const faceSrc = `assets/faces/${d.code}.png`;
-
       row.innerHTML = `
         <div class="driver-pos">${i + 1}</div>
-
         <img
           class="driver-face"
-          src="${faceSrc}"
-          alt="${d.name}"
+          src="assets/faces/${esc(d.code)}.png"
+          alt="${esc(d.name)}"
           width="44"
           height="44"
           loading="lazy"
@@ -448,9 +457,7 @@ function atualizarLista() {
           onerror="this.onerror=null;this.src='assets/faces/default.png';"
           style="width:44px;height:44px;object-fit:cover;border-radius:8px;"
         />
-
-        <div class="driver-name">${d.name}</div>
-
+        <div class="driver-name">${esc(d.name)}</div>
         <div class="driver-time">${formatLapTime(d.bestLap)}</div>
       `;
 
@@ -463,27 +470,117 @@ function atualizarLista() {
 }
 
 // ------------------------------
+// MODAL (FIM DE FASE / GRID FINAL)
+// ------------------------------
+function openQualyModal(title, bodyHtml) {
+  const modal = document.getElementById("qualy-modal");
+  const t = document.getElementById("qualy-modal-title");
+  const b = document.getElementById("qualy-modal-body");
+  if (!modal || !t || !b) return;
+
+  t.textContent = title;
+  b.innerHTML = bodyHtml || "";
+  modal.classList.remove("hidden");
+}
+
+function closeQualyModal() {
+  const modal = document.getElementById("qualy-modal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function buildPhaseModalBody(phaseId, classified, eliminated) {
+  const cls = classified || [];
+  const elim = eliminated || [];
+
+  let html = `<p><strong>${esc(phaseId)} encerrada.</strong></p>`;
+
+  html += `<p><strong>Classificados (${cls.length}):</strong></p>`;
+  html += `<ol>`;
+  cls.forEach((d, idx) => {
+    html += `<li>${idx + 1}º — ${esc(d.name)} (${esc(d.teamName)}) — <strong>${formatLapTime(d.bestLap)}</strong></li>`;
+  });
+  html += `</ol>`;
+
+  html += `<p><strong>Eliminados (${elim.length}):</strong></p>`;
+  html += `<ol>`;
+  elim.forEach((d, idx) => {
+    const pos = cls.length + idx + 1;
+    html += `<li>${pos}º — ${esc(d.name)} (${esc(d.teamName)}) — <strong>${formatLapTime(d.bestLap)}</strong></li>`;
+  });
+  html += `</ol>`;
+
+  html += `<p>Clique em <strong>OK</strong> para iniciar a próxima fase.</p>`;
+  return html;
+}
+
+function buildFinalGridModalBody(grid) {
+  const g = grid || [];
+  let html = `<p><strong>GRID FINAL (Q3)</strong></p>`;
+  html += `<ol>`;
+  g.forEach((d, i) => {
+    html += `<li>${i + 1}º — ${esc(d.name)} (${esc(d.teamName)}) — <strong>${formatLapTime(d.bestLap)}</strong></li>`;
+  });
+  html += `</ol>`;
+  html += `<p>Clique em <strong>OK</strong> para ir para a corrida.</p>`;
+  return html;
+}
+
+// ------------------------------
 // FINALIZA FASE
 // ------------------------------
 function finalizarFase() {
   qualyState.running = false;
 
   const phase = QUALY_PHASES[qualyState.phaseIndex];
-  const ordenado = [...qualyState.drivers].sort((a, b) => (a.bestLap ?? 9999999) - (b.bestLap ?? 9999999));
+  const ordered = [...qualyState.drivers].sort((a, b) => (a.bestLap ?? 9999999) - (b.bestLap ?? 9999999));
 
+  // --- Q1 / Q2: mostrar classificados + eliminados
   if (phase.eliminated > 0) {
-    qualyState.drivers = ordenado.slice(0, ordenado.length - phase.eliminated);
+    const cut = ordered.length - phase.eliminated;
+    const classified = ordered.slice(0, cut);
+    const eliminated = ordered.slice(cut);
+
+    qualyState.modalMode = "phase";
+    qualyState.pendingNextDrivers = classified;
+    qualyState.pendingEliminated = eliminated;
+
+    openQualyModal(`${phase.id} encerrada`, buildPhaseModalBody(phase.id, classified, eliminated));
+    return;
+  }
+
+  // --- Q3: grid final (20)
+  qualyState.finalGrid = ordered;
+  salvarGridFinal();
+
+  qualyState.modalMode = "final";
+  openQualyModal(`Classificação final — Grid de largada`, buildFinalGridModalBody(ordered));
+}
+
+// ------------------------------
+// OK DO MODAL
+// ------------------------------
+function onQualyModalAction() {
+  // FIM DE FASE (Q1/Q2)
+  if (qualyState.modalMode === "phase") {
+    closeQualyModal();
 
     qualyState.phaseIndex++;
     qualyState.currentLapUI = 1;
 
-    qualyState.drivers.forEach(d => {
-      d.laps = 0;
-      d.simLapMs = 0;
-      d.bestLap = null;
-      d.lastLap = null;
-      d.progress = Math.random();
-    });
+    // aplica classificados como novo grid da fase, reseta voltas (mantém mecânica)
+    const next = Array.isArray(qualyState.pendingNextDrivers) ? qualyState.pendingNextDrivers : [];
+    qualyState.drivers = next.map(d => ({
+      ...d,
+      laps: 0,
+      simLapMs: 0,
+      bestLap: null,
+      lastLap: null,
+      progress: Math.random()
+    }));
+
+    qualyState.pendingNextDrivers = null;
+    qualyState.pendingEliminated = null;
+    qualyState.modalMode = null;
 
     rebuildVisuals();
     preencherPilotosDaEquipe();
@@ -493,21 +590,29 @@ function finalizarFase() {
     return;
   }
 
-  qualyState.finalGrid = ordenado;
-  salvarGrid();
+  // GRID FINAL (Q3) -> IR PARA CORRIDA
+  if (qualyState.modalMode === "final") {
+    closeQualyModal();
+    qualyState.modalMode = null;
 
-  const modal = document.getElementById("qualy-modal");
-  if (modal) modal.classList.remove("hidden");
+    const next = new URL("race.html", location.href);
+    next.searchParams.set("track", qualyState.track);
+    next.searchParams.set("gp", qualyState.gp);
+    next.searchParams.set("userTeam", qualyState.userTeam);
+    location.href = next.toString();
+  }
 }
 
 // ------------------------------
-// SALVAR GRID
+// SALVAR GRID FINAL (para a corrida usar)
 // ------------------------------
-function salvarGrid() {
+function salvarGridFinal() {
   try {
     localStorage.setItem("f1m2025_last_qualy", JSON.stringify({
       track: qualyState.track,
       gp: qualyState.gp,
+      userTeamKey: qualyState.userTeam,
+      timestamp: Date.now(),
       grid: (qualyState.finalGrid || []).map((d, i) => ({
         id: d.id,
         code: d.code,
@@ -515,16 +620,16 @@ function salvarGrid() {
         teamKey: d.teamKey,
         teamName: d.teamName,
         position: i + 1,
-        bestLap: d.bestLap
+        bestLapTime: d.bestLap
       }))
     }));
   } catch (e) {
-    console.warn("Falha ao salvar grid da qualy:", e);
+    console.warn("Falha ao salvar grid final da qualy:", e);
   }
 }
 
 // ------------------------------
-// UI
+// UI — SPEED
 // ------------------------------
 function setQualySpeed(v) {
   qualyState.speedMultiplier = Number(v) || 1;
@@ -540,6 +645,9 @@ function setupSpeedControls() {
   });
 }
 
+// ------------------------------
+// PILOTOS DA SUA EQUIPE (cards)
+// ------------------------------
 function preencherPilotosDaEquipe() {
   const teamDrivers = qualyState.drivers
     .filter(d => (d.teamKey || "").toLowerCase() === qualyState.userTeam)
@@ -567,17 +675,6 @@ function preencherPilotosDaEquipe() {
   });
 }
 
-// modal OK (se seu HTML usa)
-function onQualyModalAction() {
-  const modal = document.getElementById("qualy-modal");
-  if (modal) modal.classList.add("hidden");
-
-  const next = new URL("race.html", location.href);
-  next.searchParams.set("track", qualyState.track);
-  next.searchParams.set("gp", qualyState.gp);
-  next.searchParams.set("userTeam", qualyState.userTeam);
-  location.href = next.toString();
-}
-
+// export (HTML usa onclick)
 window.setQualySpeed = setQualySpeed;
 window.onQualyModalAction = onQualyModalAction;
