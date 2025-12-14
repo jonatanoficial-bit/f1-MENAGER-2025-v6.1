@@ -1,396 +1,283 @@
-/* =========================================================
-   F1 MANAGER 2025 – RACE SYSTEM (STABLE CORE + MARKET LINK)
-   - Mantém mecânica atual (progress por speed)
-   - Liga Mercado de Pilotos (2 pilotos por equipe)
-   - Rating + Form influenciam speed (leve)
-   - Contratos: salário/bônus/multa aplicados no fim do GP
-   ========================================================= */
+// ==========================================================
+// F1 MANAGER 2025 – RACE.JS
+// Corrida Oficial – Versão Estável v6.1
+// ==========================================================
 
-import { TRACKS_2025 } from "./data.js";
-
-/* =========================
-   PARÂMETROS GERAIS
-   ========================= */
-
-const params = new URLSearchParams(window.location.search);
-const trackId = (params.get("track") || "australia").toLowerCase();
-const gpName = params.get("gp") || "GP";
-const userTeam = (params.get("userTeam") || "ferrari").toLowerCase();
-
-const FPS = 60;
-let speedMultiplier = 1;
-
-/* =========================
-   ELEMENTOS DOM
-   ========================= */
-
-const svgContainer = document.getElementById("trackSvg");
-const sessionTitle = document.getElementById("sessionName");
-const pilotsPanel = document.getElementById("driversPanel");
-
-/* =========================
-   ESTADO DA CORRIDA
-   ========================= */
-
-let trackData = null;
-let cars = [];
-let animationId = null;
-let raceFinished = false;
-let resultsCommitted = false;
-
-/* =========================
-   PILOTOS (FALLBACK)
-   ========================= */
-
-const FALLBACK_DRIVERS = [
-  { id: "LEC", name: "Leclerc", team: "ferrari" },
-  { id: "SAI", name: "Sainz", team: "ferrari" },
-  { id: "VER", name: "Verstappen", team: "redbull" },
-  { id: "PER", name: "Perez", team: "redbull" },
-  { id: "HAM", name: "Hamilton", team: "mercedes" },
-  { id: "RUS", name: "Russell", team: "mercedes" },
-  { id: "NOR", name: "Norris", team: "mclaren" },
-  { id: "PIA", name: "Piastri", team: "mclaren" },
-  { id: "ALO", name: "Alonso", team: "aston_martin" },
-  { id: "STR", name: "Stroll", team: "aston_martin" },
-  { id: "GAS", name: "Gasly", team: "alpine" },
-  { id: "OCO", name: "Ocon", team: "alpine" },
-  { id: "ALB", name: "Albon", team: "williams" },
-  { id: "SAR", name: "Sargeant", team: "williams" },
-  { id: "HUL", name: "Hulkenberg", team: "haas" },
-  { id: "MAG", name: "Magnussen", team: "haas" },
-  // ✅ Sauber com BOR garantido
-  { id: "BOR", name: "Bortoleto", team: "sauber" },
-  { id: "ZHO", name: "Zhou", team: "sauber" }
-];
-
-/* =========================
-   HELPERS
-   ========================= */
-
-function getRoundContext() {
-  try {
-    const ss = JSON.parse(localStorage.getItem("f1m2025_season_state")) || {};
-    const round = Number(ss?.current?.round) || Number(localStorage.getItem("F1M_round")) || 1;
-    const year = Number(ss?.current?.year) || 2025;
-    return { year, round };
-  } catch {
-    return { year: 2025, round: Number(localStorage.getItem("F1M_round")) || 1 };
+// ------------------------------
+// CONFIGURAÇÃO GERAL
+// ------------------------------
+const RACE_CONFIG = {
+  totalLaps: 58,
+  baseLapTimeMs: {
+    australia: 80000,
+    bahrain: 91000,
+    jeddah: 88000,
+    imola: 76000,
+    monaco: 72000,
+    canada: 77000,
+    spain: 78000,
+    austria: 65000,
+    silverstone: 83000,
+    hungary: 77000,
+    spa: 115000,
+    zandvoort: 74000,
+    monza: 78000,
+    singapore: 100000,
+    suzuka: 82000,
+    qatar: 87000,
+    austin: 89000,
+    mexico: 77000,
+    brazil: 70000,
+    abu_dhabi: 84000
   }
+};
+
+// ------------------------------
+// HELPERS
+// ------------------------------
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+function formatLap(ms) {
+  if (!ms || !isFinite(ms)) return "--:--.---";
+  const m = Math.floor(ms / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  const msr = Math.floor(ms % 1000);
+  return `${m}:${String(s).padStart(2, "0")}.${String(msr).padStart(3, "0")}`;
 }
 
-function clamp(v, a, b) {
-  return Math.max(a, Math.min(b, v));
-}
+// ------------------------------
+// ESTADO DA CORRIDA
+// ------------------------------
+const raceState = {
+  track: "australia",
+  gp: "GP 2025",
+  userTeam: "ferrari",
 
-function ptsForPos(pos) {
-  const table = [25,18,15,12,10,8,6,4,2,1];
-  return (pos >= 1 && pos <= 10) ? table[pos - 1] : 0;
-}
+  baseLapMs: 90000,
+  totalLaps: 58,
 
-function tryGetMarketDrivers() {
-  // Se PilotMarketSystem estiver disponível (tela/versão com mercado), usa 2 pilotos por equipe
-  try {
-    if (typeof window.PilotMarketSystem === "undefined") return null;
-    if (typeof window.PilotMarketSystem.init === "function") window.PilotMarketSystem.init();
+  drivers: [],
+  visuals: [],
+  pathPoints: [],
 
-    const teams = (typeof window.PilotMarketSystem.getTeams === "function")
-      ? window.PilotMarketSystem.getTeams()
-      : null;
+  speedMultiplier: 1,
+  running: true,
+  lastFrame: null
+};
 
-    if (!teams || !teams.length) return null;
-
-    const drivers = [];
-    for (const t of teams) {
-      const active = window.PilotMarketSystem.getActiveDriversForTeam(t) || [];
-      for (const p of active) {
-        drivers.push({
-          id: String(p.id || "").toUpperCase(),
-          name: p.name || p.id,
-          team: String(p.teamKey || t).toLowerCase(),
-          rating: clamp(Number(p.rating || 75), 40, 99),
-          form: clamp(Number(p.form || 55), 0, 100)
-        });
-      }
-    }
-
-    return drivers.length ? drivers : null;
-  } catch {
-    return null;
-  }
-}
-
-function getDriverMetaFromMarket(driverId) {
-  try {
-    if (typeof window.PilotMarketSystem === "undefined") return null;
-    const p = window.PilotMarketSystem.getPilot(driverId);
-    if (!p) return null;
-    return {
-      rating: clamp(Number(p.rating || 75), 40, 99),
-      form: clamp(Number(p.form || 55), 0, 100),
-      face: p.face || null,
-      name: p.name || driverId
-    };
-  } catch {
-    return null;
-  }
-}
-
-/* =========================
-   INIT
-   ========================= */
+// ------------------------------
+// INIT
+// ------------------------------
+window.addEventListener("DOMContentLoaded", initRace);
 
 async function initRace() {
-  sessionTitle.textContent = `Corrida — ${gpName}`;
+  const params = new URLSearchParams(location.search);
+  raceState.track = params.get("track") || "australia";
+  raceState.gp = params.get("gp") || "GP 2025";
+  raceState.userTeam = params.get("userTeam") || "ferrari";
 
-  const track = TRACKS_2025[trackId];
-  if (!track) {
-    console.error("Track não encontrada:", trackId);
+  raceState.baseLapMs =
+    RACE_CONFIG.baseLapTimeMs[raceState.track] || 90000;
+
+  raceState.totalLaps = RACE_CONFIG.totalLaps;
+
+  initDriversFromQualy();
+  await loadTrackSvg();
+
+  setupSpeedControls();
+
+  raceState.lastFrame = performance.now();
+  requestAnimationFrame(gameLoop);
+}
+
+// ------------------------------
+// PILOTOS (GRID DA QUALI)
+// ------------------------------
+function initDriversFromQualy() {
+  let grid;
+
+  try {
+    const raw = localStorage.getItem("f1m2025_last_qualy");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      grid = parsed.grid;
+    }
+  } catch {}
+
+  // Fallback absoluto
+  if (!Array.isArray(grid) || !grid.length) {
+    console.warn("Grid da qualificação não encontrado. Usando fallback.");
+    grid = [];
+  }
+
+  raceState.drivers = grid.map((d, idx) => {
+    const base = raceState.baseLapMs;
+    const skill = 1 - ((d.rating || 85) - 92) * 0.006;
+
+    return {
+      ...d,
+      index: idx,
+      position: idx + 1,
+      progress: idx * -0.02,
+      speed: 1 / (base * skill),
+      laps: 0,
+      simLapMs: 0,
+      lastLap: null,
+      bestLap: null
+    };
+  });
+}
+
+// ------------------------------
+// SVG DA PISTA (NORMALIZADO)
+// ------------------------------
+async function loadTrackSvg() {
+  const container = document.getElementById("track-container");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const svgText = await fetch(
+    `assets/tracks/${raceState.track}.svg`
+  ).then(r => r.text());
+
+  const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+
+  const path =
+    doc.querySelector("path") ||
+    doc.querySelector("polyline") ||
+    doc.querySelector("polygon");
+
+  if (!path) {
+    console.error("SVG da pista sem path válido.");
     return;
   }
 
-  // SVG + pontos do traçado
-  trackData = await loadTrack(track.svg);
-  if (!trackData) return;
+  const len = path.getTotalLength();
+  const samples = 500;
+  const pts = [];
 
-  renderTrack(trackData.svgText);
-
-  // Drivers: Mercado (preferência) ou fallback
-  const marketDrivers = tryGetMarketDrivers();
-  const drivers = marketDrivers || FALLBACK_DRIVERS;
-
-  cars = drivers.map((d, index) => createCar(d, index));
-
-  renderDriversPanel();
-  startRaceLoop();
-}
-
-/* =========================
-   TRACK LOADER
-   ========================= */
-
-async function loadTrack(svgPath) {
-  try {
-    const res = await fetch(svgPath);
-    const svgText = await res.text();
-
-    const pathPoints = extractPathPoints(svgText);
-    if (!pathPoints || pathPoints.length < 10) {
-      console.error("Falha ao extrair pathPoints do SVG:", svgPath);
-      return null;
-    }
-
-    return { svgText, pathPoints };
-  } catch (err) {
-    console.error("Erro carregando pista:", err);
-    return null;
-  }
-}
-
-function renderTrack(svgText) {
-  svgContainer.innerHTML = svgText;
-}
-
-function extractPathPoints(svgText) {
-  // Procura a primeira path com d=
-  const match = svgText.match(/<path[^>]*d="([^"]+)"/i);
-  if (!match) return [];
-
-  const d = match[1];
-
-  // amostragem simples: pontos interpolados a partir de números do path
-  // (mantém seu estilo e evita reescrever parse avançado)
-  const nums = d.match(/-?\d+(\.\d+)?/g);
-  if (!nums || nums.length < 10) return [];
-
-  const points = [];
-  for (let i = 0; i < nums.length - 1; i += 2) {
-    const x = Number(nums[i]);
-    const y = Number(nums[i + 1]);
-    if (Number.isFinite(x) && Number.isFinite(y)) points.push({ x, y });
+  for (let i = 0; i < samples; i++) {
+    const p = path.getPointAtLength((len * i) / samples);
+    pts.push({ x: p.x, y: p.y });
   }
 
-  // reduz/normaliza densidade
-  const sampled = [];
-  const step = Math.max(1, Math.floor(points.length / 800));
-  for (let i = 0; i < points.length; i += step) sampled.push(points[i]);
+  // NORMALIZA
+  const xs = pts.map(p => p.x);
+  const ys = pts.map(p => p.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
 
-  return sampled.length ? sampled : points;
-}
+  const w = maxX - minX || 1;
+  const h = maxY - minY || 1;
 
-/* =========================
-   CAR FACTORY
-   ========================= */
-
-function createCar(driver, idx) {
-  const id = String(driver.id || "").toUpperCase();
-  const team = String(driver.team || "").toLowerCase();
-
-  // base speed (mantida)
-  const baseSpeed = 0.00075 + (Math.random() * 0.0002);
-
-  // rating + form (leve, sem quebrar mecânica)
-  const meta = getDriverMetaFromMarket(id);
-  const rating = meta ? meta.rating : clamp(Number(driver.rating || 75), 40, 99);
-  const form = meta ? meta.form : clamp(Number(driver.form || 55), 0, 100);
-
-  // ajuste suave:
-  // rating: até ±1.2%
-  // form: até ±0.8%
-  const ratingMul = 1 + ((rating - 75) * 0.0004);  // ~ (99-75)*0.0004 ≈ +0.96%
-  const formMul = 1 + ((form - 55) * 0.00025);     // ~ (100-55)*0.00025 ≈ +1.125% (clamp abaixo)
-
-  const perfMul = clamp(ratingMul * formMul, 0.985, 1.02);
-
-  const car = {
-    driverId: id,
-    name: meta?.name || driver.name || id,
-    team,
-    progress: 0,
-    speed: baseSpeed * perfMul,
-    isUserTeam: team === userTeam
-  };
-
-  // Elemento “bolinha” (igual treino/quali: simples e estável)
-  car.el = document.createElement("div");
-  car.el.className = "car-dot";
-  car.el.style.width = "10px";
-  car.el.style.height = "10px";
-  car.el.style.borderRadius = "50%";
-  car.el.style.position = "absolute";
-  car.el.style.transform = "translate(-50%, -50%)";
-  car.el.style.background = getTeamColor(team);
-  car.el.style.boxShadow = "0 0 10px rgba(0,0,0,0.55)";
-  svgContainer.appendChild(car.el);
-
-  return car;
-}
-
-function getTeamColor(team) {
-  // cores rápidas; você pode casar com o seu theme depois
-  const map = {
-    ferrari: "#ff1e1e",
-    redbull: "#1a2cff",
-    mercedes: "#00ffe1",
-    mclaren: "#ff8a00",
-    aston_martin: "#00a86b",
-    alpine: "#1ec8ff",
-    williams: "#2b6bff",
-    haas: "#d9d9d9",
-    sauber: "#00ff5a",
-    rb: "#4b6cff"
-  };
-  return map[team] || "#ffffff";
-}
-
-/* =========================
-   LOOP DE CORRIDA
-   ========================= */
-
-function startRaceLoop() {
-  function loop() {
-    updateCars();
-    renderCars();
-
-    if (!raceFinished) {
-      animationId = requestAnimationFrame(loop);
-    }
-  }
-  loop();
-}
-
-function updateCars() {
-  cars.forEach(car => {
-    car.progress += car.speed * speedMultiplier;
-
-    if (car.progress >= 1 && !raceFinished) {
-      car.progress = 1;
-      raceFinished = true;
-      showPodium();
-    }
-  });
-}
-
-/* =========================
-   RENDERIZAÇÃO
-   ========================= */
-
-function renderCars() {
-  cars.forEach(car => {
-    const point = trackData.pathPoints[
-      Math.floor(car.progress * (trackData.pathPoints.length - 1))
-    ];
-    if (!point) return;
-
-    car.el.style.left = point.x + "px";
-    car.el.style.top = point.y + "px";
-  });
-}
-
-/* =========================
-   PAINEL DE PILOTOS
-   ========================= */
-
-function renderDriversPanel() {
-  if (!pilotsPanel) return;
-
-  pilotsPanel.innerHTML = "";
-  cars.forEach(car => {
-    const card = document.createElement("div");
-    card.className = "pilot-card";
-    card.innerHTML = `
-      <strong>${car.name}</strong><br>
-      ${car.team.toUpperCase()}
-    `;
-    pilotsPanel.appendChild(card);
-  });
-}
-
-/* =========================
-   PÓDIO + APLICA CONTRATOS
-   ========================= */
-
-function showPodium() {
-  cancelAnimationFrame(animationId);
-
-  const podium = [...cars].sort((a, b) => b.progress - a.progress);
-
-  // ✅ resultados do GP (ordem final)
-  const results = podium.map((c, i) => ({
-    driverId: c.driverId,
-    teamKey: c.team,
-    position: i + 1,
-    points: ptsForPos(i + 1),
-    dnf: false
+  raceState.pathPoints = pts.map(p => ({
+    x: ((p.x - minX) / w) * 1000,
+    y: ((p.y - minY) / h) * 600
   }));
 
-  // ✅ aplica contratos UMA VEZ
-  if (!resultsCommitted && typeof window.PilotMarketSystem !== "undefined" && typeof window.PilotMarketSystem.applyRaceResults === "function") {
-    resultsCommitted = true;
-    const ctx = getRoundContext();
-    window.PilotMarketSystem.applyRaceResults({
-      year: ctx.year,
-      round: ctx.round,
-      userTeamKey: userTeam,
-      results
-    });
-  }
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 1000 600");
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "100%");
+  container.appendChild(svg);
 
-  alert(
-    `🏆 Pódio:\n1º ${podium[0].name}\n2º ${podium[1].name}\n3º ${podium[2].name}`
+  const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+  poly.setAttribute(
+    "points",
+    raceState.pathPoints.map(p => `${p.x},${p.y}`).join(" ")
   );
+  poly.setAttribute("stroke", "#666");
+  poly.setAttribute("stroke-width", "18");
+  poly.setAttribute("fill", "none");
+  svg.appendChild(poly);
+
+  raceState.visuals = raceState.drivers.map(d => {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("r", 6);
+    c.setAttribute("fill", "#fff");
+    g.appendChild(c);
+    svg.appendChild(g);
+    return { id: d.id, g };
+  });
 }
 
-/* =========================
-   CONTROLES DE VELOCIDADE
-   ========================= */
+// ------------------------------
+// LOOP PRINCIPAL
+// ------------------------------
+function gameLoop(ts) {
+  const dt =
+    (ts - raceState.lastFrame) * raceState.speedMultiplier;
+  raceState.lastFrame = ts;
 
-window.setSpeed = value => {
-  speedMultiplier = value;
-};
+  if (raceState.running) updateRace(dt);
+  renderRace();
 
-/* =========================
-   START
-   ========================= */
+  requestAnimationFrame(gameLoop);
+}
 
-initRace();
+// ------------------------------
+// UPDATE
+// ------------------------------
+function updateRace(dt) {
+  raceState.drivers.forEach(d => {
+    const noise = 1 + (Math.random() - 0.5) * 0.03;
+    d.progress += d.speed * noise * dt;
+    d.simLapMs += dt;
+
+    if (d.progress >= 1) {
+      d.progress -= 1;
+      d.laps++;
+      d.lastLap = d.simLapMs;
+      if (!d.bestLap || d.simLapMs < d.bestLap) {
+        d.bestLap = d.simLapMs;
+      }
+      d.simLapMs = 0;
+    }
+  });
+}
+
+// ------------------------------
+// RENDER
+// ------------------------------
+function renderRace() {
+  raceState.visuals.forEach(v => {
+    const d = raceState.drivers.find(x => x.id === v.id);
+    if (!d) return;
+
+    const idx = Math.floor(
+      d.progress * (raceState.pathPoints.length - 1)
+    );
+    const p = raceState.pathPoints[idx];
+    if (!p) return;
+
+    v.g.setAttribute(
+      "transform",
+      `translate(${p.x},${p.y})`
+    );
+  });
+}
+
+// ------------------------------
+// UI – VELOCIDADE
+// ------------------------------
+function setRaceSpeed(v) {
+  raceState.speedMultiplier = v;
+}
+
+function setupSpeedControls() {
+  document.querySelectorAll(".speed-btn").forEach(btn => {
+    btn.onclick = () => {
+      setRaceSpeed(Number(btn.dataset.speed || 1));
+      document
+        .querySelectorAll(".speed-btn")
+        .forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    };
+  });
+}
+
+window.setRaceSpeed = setRaceSpeed;
