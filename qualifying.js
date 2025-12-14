@@ -1,21 +1,14 @@
 // ==========================================================
 // F1 MANAGER 2025 – QUALIFYING.JS (Q1 / Q2 / Q3)
-// FIX: Modal de eliminados em cada fase + Grid final antes da corrida
-// NÃO muda mecânica: apenas pausa e exibe informações no fim de cada fase.
+// Corrigido: avisos de eliminados por fase + grid final antes da corrida
 // ==========================================================
 
-// ------------------------------
-// CONFIG DAS FASES
-// ------------------------------
 const QUALY_PHASES = [
   { id: "Q1", totalLaps: 6, eliminated: 5 },
   { id: "Q2", totalLaps: 5, eliminated: 5 },
   { id: "Q3", totalLaps: 4, eliminated: 0 }
 ];
 
-// ------------------------------
-// TEMPO BASE POR PISTA (ms)
-// ------------------------------
 const TRACK_BASE_LAP_TIME_MS = {
   australia: 80000,
   bahrain: 91000,
@@ -36,47 +29,10 @@ const TRACK_BASE_LAP_TIME_MS = {
   austin: 89000,
   mexico: 77000,
   brazil: 70000,
-  abu_dhabi: 84000
+  abu_dhabi: 84000,
+  las_vegas: 88000
 };
 
-// ------------------------------
-// PILOTOS BASE (fallback)
-// ------------------------------
-const DRIVERS_2025 = [
-  { id: "verstappen", code: "VER", name: "Max Verstappen", teamKey: "redbull", teamName: "Red Bull Racing", rating: 98, color: "#ffb300", logo: "assets/logos/redbull.png" },
-  { id: "perez",      code: "PER", name: "Sergio Pérez",   teamKey: "redbull", teamName: "Red Bull Racing", rating: 94, color: "#ffb300", logo: "assets/logos/redbull.png" },
-
-  { id: "leclerc", code: "LEC", name: "Charles Leclerc", teamKey: "ferrari", teamName: "Ferrari", rating: 95, color: "#ff0000", logo: "assets/logos/ferrari.png" },
-  { id: "sainz",   code: "SAI", name: "Carlos Sainz",   teamKey: "ferrari", teamName: "Ferrari", rating: 93, color: "#ff0000", logo: "assets/logos/ferrari.png" },
-
-  { id: "hamilton", code: "HAM", name: "Lewis Hamilton", teamKey: "mercedes", teamName: "Mercedes", rating: 95, color: "#00e5ff", logo: "assets/logos/mercedes.png" },
-  { id: "russell",  code: "RUS", name: "George Russell", teamKey: "mercedes", teamName: "Mercedes", rating: 93, color: "#00e5ff", logo: "assets/logos/mercedes.png" },
-
-  { id: "norris",  code: "NOR", name: "Lando Norris",  teamKey: "mclaren", teamName: "McLaren", rating: 94, color: "#ff8c1a", logo: "assets/logos/mclaren.png" },
-  { id: "piastri", code: "PIA", name: "Oscar Piastri", teamKey: "mclaren", teamName: "McLaren", rating: 92, color: "#ff8c1a", logo: "assets/logos/mclaren.png" },
-
-  { id: "alonso", code: "ALO", name: "Fernando Alonso", teamKey: "aston_martin", teamName: "Aston Martin", rating: 94, color: "#00b894", logo: "assets/logos/aston_martin.png" },
-  { id: "stroll", code: "STR", name: "Lance Stroll",   teamKey: "aston_martin", teamName: "Aston Martin", rating: 88, color: "#00b894", logo: "assets/logos/aston_martin.png" },
-
-  { id: "gasly", code: "GAS", name: "Pierre Gasly", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", logo: "assets/logos/alpine.png" },
-  { id: "ocon",  code: "OCO", name: "Esteban Ocon", teamKey: "alpine", teamName: "Alpine", rating: 90, color: "#4c6fff", logo: "assets/logos/alpine.png" },
-
-  { id: "tsunoda", code: "TSU", name: "Yuki Tsunoda", teamKey: "rb", teamName: "RB", rating: 89, color: "#7f00ff", logo: "assets/logos/rb.png" },
-  { id: "lawson",  code: "LAW", name: "Liam Lawson",  teamKey: "rb", teamName: "RB", rating: 88, color: "#7f00ff", logo: "assets/logos/rb.png" },
-
-  { id: "hulkenberg", code: "HUL", name: "Nico Hülkenberg",   teamKey: "sauber", teamName: "Sauber", rating: 89, color: "#00cec9", logo: "assets/logos/sauber.png" },
-  { id: "bortoleto",  code: "BOR", name: "Gabriel Bortoleto", teamKey: "sauber", teamName: "Sauber", rating: 88, color: "#00cec9", logo: "assets/logos/sauber.png" },
-
-  { id: "magnussen", code: "MAG", name: "Kevin Magnussen", teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", logo: "assets/logos/haas.png" },
-  { id: "bearman",   code: "BEA", name: "Oliver Bearman",  teamKey: "haas", teamName: "Haas", rating: 87, color: "#ffffff", logo: "assets/logos/haas.png" },
-
-  { id: "albon",    code: "ALB", name: "Alex Albon",     teamKey: "williams", teamName: "Williams", rating: 89, color: "#0984e3", logo: "assets/logos/williams.png" },
-  { id: "sargeant", code: "SAR", name: "Logan Sargeant", teamKey: "williams", teamName: "Williams", rating: 86, color: "#0984e3", logo: "assets/logos/williams.png" }
-];
-
-// ------------------------------
-// HELPERS
-// ------------------------------
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 function formatLapTime(ms) {
@@ -87,98 +43,64 @@ function formatLapTime(ms) {
   return `${m}:${String(s).padStart(2, "0")}.${String(msr).padStart(3, "0")}`;
 }
 
-function esc(str) {
-  return String(str ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 // ------------------------------
 // MERCADO / RUNTIME DRIVERS
 // ------------------------------
 function getRuntimeDrivers() {
-  try {
-    if (!window.PilotMarketSystem) return DRIVERS_2025.slice();
+  if (!window.PilotMarketSystem) return [];
 
-    PilotMarketSystem.init();
-    const list = [];
+  PilotMarketSystem.init();
+  const list = [];
 
-    PilotMarketSystem.getTeams().forEach(team => {
-      PilotMarketSystem.getActiveDriversForTeam(team).forEach(p => {
-        const code = (p.code || p.id || "").toString().toUpperCase();
-        const preset = DRIVERS_2025.find(x => x.code === code) || null;
-
-        list.push({
-          id: p.id,
-          code: code || (preset?.code || String(p.id).toUpperCase()),
-          name: p.name || preset?.name || p.id,
-          teamKey: (p.teamKey || preset?.teamKey || team),
-          teamName: (p.teamName || preset?.teamName || String(team).toUpperCase()),
-          rating: Number(p.rating ?? preset?.rating ?? 75),
-          color: p.color || preset?.color || "#ffffff",
-          logo: p.logo || preset?.logo || `assets/logos/${String(p.teamKey || team)}.png`
-        });
+  PilotMarketSystem.getTeams().forEach(team => {
+    PilotMarketSystem.getActiveDriversForTeam(team).forEach(p => {
+      list.push({
+        id: p.id,
+        code: p.code || p.id.toUpperCase(),
+        name: p.name,
+        teamKey: (p.teamKey || "").toLowerCase(),
+        teamName: p.teamName,
+        rating: p.rating || 75,
+        color: p.color || "#fff",
+        logo: p.logo || ""
       });
     });
+  });
 
-    return list.length ? list : DRIVERS_2025.slice();
-  } catch (e) {
-    console.warn("PilotMarketSystem falhou. Usando DRIVERS_2025.", e);
-    return DRIVERS_2025.slice();
-  }
+  return list;
 }
 
 function getPerfMultiplier(driverId) {
-  try {
-    if (!window.PilotMarketSystem) return 1;
-    const p = PilotMarketSystem.getPilot(driverId);
-    if (!p) return 1;
+  if (!window.PilotMarketSystem) return 1;
+  const p = PilotMarketSystem.getPilot(driverId);
+  if (!p) return 1;
 
-    const ratingMul = 1 + (clamp(p.rating || 75, 40, 99) - 92) * 0.0025;
-    const formMul = 1 + (clamp(p.form || 55, 0, 100) - 55) * 0.0012;
-    return clamp(ratingMul * formMul, 0.9, 1.08);
-  } catch {
-    return 1;
-  }
+  const ratingMul = 1 + (clamp(p.rating, 40, 99) - 92) * 0.0025;
+  const formMul = 1 + (clamp(p.form, 0, 100) - 55) * 0.0012;
+  return clamp(ratingMul * formMul, 0.9, 1.08);
 }
 
 // ------------------------------
-// ESTADO DA QUALY
+// ESTADO
 // ------------------------------
 const qualyState = {
   phaseIndex: 0,
   running: true,
   speedMultiplier: 1,
-
   track: "australia",
   gp: "GP 2025",
   userTeam: "ferrari",
   baseLapMs: 90000,
-
-  currentLapUI: 1,
-
   drivers: [],
   visuals: [],
   pathPoints: [],
-
   lastFrame: null,
   finalGrid: null,
 
-  _svgEl: null,
-  _polyEl: null,
-
-  // --- MODAL FLOW
-  modalMode: null,            // "phase" | "final"
-  pendingNextDrivers: null,   // array
-  pendingEliminated: null     // array
+  // UI
+  pendingPhaseModal: null
 };
 
-// ------------------------------
-// INIT
-// ------------------------------
 window.addEventListener("DOMContentLoaded", initQualifying);
 
 async function initQualifying() {
@@ -188,18 +110,36 @@ async function initQualifying() {
   qualyState.userTeam = (params.get("userTeam") || "ferrari").toLowerCase();
   qualyState.baseLapMs = TRACK_BASE_LAP_TIME_MS[qualyState.track] || 90000;
 
-  const title = document.getElementById("qualy-title-gp");
-  if (title) title.textContent = qualyState.gp;
+  const gpEl = document.getElementById("qualy-title-gp");
+  if (gpEl) gpEl.textContent = qualyState.gp;
+
+  injectQualyStyles();
 
   setupSpeedControls();
   initDrivers();
   await loadTrackSvg();
 
-  qualyState.currentLapUI = 1;
-  updateHeaderUI();
-
   qualyState.lastFrame = performance.now();
   requestAnimationFrame(loop);
+}
+
+function injectQualyStyles() {
+  if (document.getElementById("qualy-extra-styles")) return;
+  const s = document.createElement("style");
+  s.id = "qualy-extra-styles";
+  s.textContent = `
+    #qualy-modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.65); z-index:999; }
+    #qualy-modal.hidden{ display:none; }
+    #qualy-modal .qualy-modal-card{ width:min(640px,92vw); max-height:82vh; overflow:auto; border-radius:16px; padding:14px; background:rgba(10,14,28,0.92); border:1px solid rgba(255,255,255,0.12); color:#fff; }
+    #qualy-modal .qualy-modal-list{ display:grid; gap:8px; margin-top:10px; }
+    #qualy-modal .qualy-modal-row{ display:grid; grid-template-columns:42px 42px 1fr auto; gap:10px; align-items:center; padding:8px; border-radius:14px; background:rgba(255,255,255,0.06); }
+    #qualy-modal .qpos{ font-weight:800; text-align:center; }
+    #qualy-modal .qface{ width:42px; height:42px; object-fit:cover; border-radius:12px; }
+    #qualy-modal .qname{ font-weight:700; }
+    #qualy-modal .qlap{ opacity:0.9; font-variant-numeric:tabular-nums; }
+    #qualy-modal .qualy-modal-btn{ padding:10px 12px; border-radius:12px; background:#ffffff; border:none; font-weight:800; cursor:pointer; color:#000; }
+  `;
+  document.head.appendChild(s);
 }
 
 // ------------------------------
@@ -207,17 +147,20 @@ async function initQualifying() {
 // ------------------------------
 function initDrivers() {
   const runtime = getRuntimeDrivers();
+  if (!runtime.length) {
+    console.warn("PilotMarketSystem não encontrado ou vazio. Qualy precisa do mercado para lista completa.");
+  }
 
   qualyState.drivers = runtime.map((d, idx) => {
-    const skill = 1 - (Number(d.rating || 75) - 92) * 0.006;
+    const skill = 1 - (d.rating - 92) * 0.006; // maior rating => menor
     const perf = getPerfMultiplier(d.id);
-    const lapTarget = (qualyState.baseLapMs * skill) / (perf || 1);
+    const lapTarget = qualyState.baseLapMs * clamp(skill, 0.78, 1.22) / perf;
 
     return {
       ...d,
       index: idx,
       progress: Math.random(),
-      speed: 1 / Math.max(60000, lapTarget),
+      speed: 1 / clamp(lapTarget, 58000, 140000),
       laps: 0,
       simLapMs: 0,
       bestLap: null,
@@ -229,62 +172,35 @@ function initDrivers() {
 }
 
 // ------------------------------
-// SVG TRACK (normalizado p/ 1000x600)
+// SVG TRACK
 // ------------------------------
 async function loadTrackSvg() {
   const container = document.getElementById("track-container");
-  if (!container) {
-    console.error("Qualy: #track-container não encontrado no HTML.");
-    return;
-  }
+  if (!container) return;
   container.innerHTML = "";
 
-  let svgText = "";
-  try {
-    const res = await fetch(`assets/tracks/${qualyState.track}.svg`, { cache: "no-store" });
-    svgText = await res.text();
-  } catch (e) {
-    console.error("Erro ao carregar SVG:", e);
-    return;
-  }
-
+  const svgText = await fetch(`assets/tracks/${qualyState.track}.svg`, { cache: "no-store" }).then(r => r.text());
   const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
-  const paths = Array.from(doc.querySelectorAll("path"));
-  let bestPath = null;
-  let bestLen = 0;
+  const path = doc.querySelector("path");
+  if (!path) return;
 
-  for (const p of paths) {
-    try {
-      const len = p.getTotalLength();
-      if (len > bestLen) {
-        bestLen = len;
-        bestPath = p;
-      }
-    } catch {}
-  }
+  const len = path.getTotalLength();
 
-  if (!bestPath) {
-    console.error("Qualy: SVG sem <path> utilizável.");
-    return;
-  }
-
-  const len = bestPath.getTotalLength();
-  const raw = [];
+  const pts = [];
   const samples = 420;
-
   for (let i = 0; i < samples; i++) {
-    const pt = bestPath.getPointAtLength((len * i) / samples);
-    raw.push({ x: pt.x, y: pt.y });
+    const p = path.getPointAtLength((len * i) / samples);
+    pts.push({ x: p.x, y: p.y });
   }
 
-  const xs = raw.map(p => p.x);
-  const ys = raw.map(p => p.y);
+  // normaliza para viewBox 1000x600
+  const xs = pts.map(p => p.x);
+  const ys = pts.map(p => p.y);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
   const minY = Math.min(...ys), maxY = Math.max(...ys);
-  const w = Math.max(1, maxX - minX);
-  const h = Math.max(1, maxY - minY);
-
-  qualyState.pathPoints = raw.map(p => ({
+  const w = (maxX - minX) || 1;
+  const h = (maxY - minY) || 1;
+  qualyState.pathPoints = pts.map(p => ({
     x: ((p.x - minX) / w) * 1000,
     y: ((p.y - minY) / h) * 600
   }));
@@ -297,33 +213,32 @@ async function loadTrackSvg() {
 
   const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
   poly.setAttribute("points", qualyState.pathPoints.map(p => `${p.x},${p.y}`).join(" "));
-  poly.setAttribute("stroke", "#777");
+  poly.setAttribute("stroke", "#555");
   poly.setAttribute("stroke-width", "16");
-  poly.setAttribute("fill", "none");
   poly.setAttribute("stroke-linecap", "round");
   poly.setAttribute("stroke-linejoin", "round");
+  poly.setAttribute("fill", "none");
   svg.appendChild(poly);
 
-  qualyState._svgEl = svg;
-  qualyState._polyEl = poly;
-
-  rebuildVisuals();
-}
-
-function rebuildVisuals() {
-  if (!qualyState._svgEl) return;
-
-  qualyState.visuals.forEach(v => { try { v.g.remove(); } catch {} });
-  qualyState.visuals = [];
+  // bolinhas brancas do traçado
+  for (let i = 0; i < qualyState.pathPoints.length; i += 10) {
+    const p = qualyState.pathPoints[i];
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", p.x);
+    c.setAttribute("cy", p.y);
+    c.setAttribute("r", "2.5");
+    c.setAttribute("fill", "#ffffff");
+    c.setAttribute("opacity", "0.35");
+    svg.appendChild(c);
+  }
 
   qualyState.visuals = qualyState.drivers.map(d => {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    c.setAttribute("r", 6);
+    c.setAttribute("r", 6.5);
     c.setAttribute("fill", d.color || "#fff");
     c.setAttribute("stroke", "#000");
-    c.setAttribute("stroke-width", "1.5");
+    c.setAttribute("stroke-width", "1.4");
     g.appendChild(c);
 
     if ((d.teamKey || "").toLowerCase() === qualyState.userTeam) {
@@ -333,7 +248,7 @@ function rebuildVisuals() {
       g.appendChild(tri);
     }
 
-    qualyState._svgEl.appendChild(g);
+    svg.appendChild(g);
     return { id: d.id, g };
   });
 }
@@ -342,9 +257,7 @@ function rebuildVisuals() {
 // LOOP
 // ------------------------------
 function loop(ts) {
-  if (qualyState.lastFrame == null) qualyState.lastFrame = ts;
-
-  const dt = (ts - qualyState.lastFrame) * (qualyState.speedMultiplier || 1);
+  const dt = (ts - qualyState.lastFrame) * qualyState.speedMultiplier;
   qualyState.lastFrame = ts;
 
   if (qualyState.running) update(dt);
@@ -358,32 +271,26 @@ function loop(ts) {
 // ------------------------------
 function update(dt) {
   const phase = QUALY_PHASES[qualyState.phaseIndex];
-  if (!phase) return;
 
-  for (const d of qualyState.drivers) {
+  qualyState.drivers.forEach(d => {
     const noise = 1 + (Math.random() - 0.5) * 0.04;
     const delta = d.speed * noise * dt;
-
     d.progress += delta;
     d.simLapMs += dt;
 
     if (d.progress >= 1) {
       d.progress -= 1;
       d.laps++;
-
       d.lastLap = d.simLapMs;
       if (!d.bestLap || d.simLapMs < d.bestLap) d.bestLap = d.simLapMs;
-
       d.simLapMs = 0;
     }
-  }
+  });
 
+  // evita travar em "volta 1": usa a volta do líder (mais avançado)
   const maxLaps = Math.max(...qualyState.drivers.map(d => d.laps));
-  const lapUI = clamp(maxLaps + 1, 1, phase.totalLaps);
-  if (lapUI !== qualyState.currentLapUI) {
-    qualyState.currentLapUI = lapUI;
-    updateHeaderUI();
-  }
+  const lapEl = document.getElementById("qualy-lap");
+  if (lapEl) lapEl.textContent = `Volta ${Math.max(1, Math.min(phase.totalLaps, maxLaps + 1))} / ${phase.totalLaps}`;
 
   if (maxLaps >= phase.totalLaps) finalizarFase();
 }
@@ -392,41 +299,15 @@ function update(dt) {
 // RENDER
 // ------------------------------
 function render() {
-  const pts = qualyState.pathPoints;
-  if (!pts.length) return;
-
-  for (const v of qualyState.visuals) {
+  qualyState.visuals.forEach(v => {
     const d = qualyState.drivers.find(x => x.id === v.id);
-    if (!d) continue;
-
-    const idx = Math.floor(d.progress * (pts.length - 1));
-    const p = pts[idx] || pts[0];
+    if (!d) return;
+    const idx = Math.floor(d.progress * (qualyState.pathPoints.length - 1));
+    const p = qualyState.pathPoints[idx];
     v.g.setAttribute("transform", `translate(${p.x},${p.y})`);
-  }
+  });
 
   atualizarLista();
-}
-
-// ------------------------------
-// HEADER UI
-// ------------------------------
-function updateHeaderUI() {
-  const phase = QUALY_PHASES[qualyState.phaseIndex] || QUALY_PHASES[0];
-
-  const elPhaseA = document.getElementById("qualy-phase-label");
-  const elLapA   = document.getElementById("qualy-lap-label");
-
-  const elPhaseB = document.getElementById("phaseName");
-  const elLapB   = document.getElementById("lapCounter");
-
-  const phaseText = `${phase.id} · ELIMINADOS AO FINAL: ${phase.eliminated} PILOTOS`;
-  const lapText   = `Volta ${qualyState.currentLapUI} / ${phase.totalLaps}`;
-
-  if (elPhaseA) elPhaseA.textContent = phaseText;
-  if (elLapA) elLapA.textContent = lapText;
-
-  if (elPhaseB) elPhaseB.textContent = phase.id;
-  if (elLapB) elLapB.textContent = `${qualyState.currentLapUI}/${phase.totalLaps}`;
 }
 
 // ------------------------------
@@ -435,7 +316,6 @@ function updateHeaderUI() {
 function atualizarLista() {
   const list = document.getElementById("drivers-list");
   if (!list) return;
-
   list.innerHTML = "";
 
   [...qualyState.drivers]
@@ -443,86 +323,15 @@ function atualizarLista() {
     .forEach((d, i) => {
       const row = document.createElement("div");
       row.className = "driver-row";
-
       row.innerHTML = `
-        <div class="driver-pos">${i + 1}</div>
-        <img
-          class="driver-face"
-          src="assets/faces/${esc(d.code)}.png"
-          alt="${esc(d.name)}"
-          width="44"
-          height="44"
-          loading="lazy"
-          decoding="async"
-          onerror="this.onerror=null;this.src='assets/faces/default.png';"
-          style="width:44px;height:44px;object-fit:cover;border-radius:8px;"
-        />
-        <div class="driver-name">${esc(d.name)}</div>
-        <div class="driver-time">${formatLapTime(d.bestLap)}</div>
+        <div>${i + 1}</div>
+        <img src="assets/faces/${d.code}.png" onerror="this.src='assets/faces/default.png'" />
+        <div>${d.name}</div>
+        <div>${formatLapTime(d.bestLap)}</div>
       `;
-
-      if ((d.teamKey || "").toLowerCase() === qualyState.userTeam) {
-        row.classList.add("user-team-row");
-      }
-
+      if ((d.teamKey || "").toLowerCase() === qualyState.userTeam) row.classList.add("user-team-row");
       list.appendChild(row);
     });
-}
-
-// ------------------------------
-// MODAL (FIM DE FASE / GRID FINAL)
-// ------------------------------
-function openQualyModal(title, bodyHtml) {
-  const modal = document.getElementById("qualy-modal");
-  const t = document.getElementById("qualy-modal-title");
-  const b = document.getElementById("qualy-modal-body");
-  if (!modal || !t || !b) return;
-
-  t.textContent = title;
-  b.innerHTML = bodyHtml || "";
-  modal.classList.remove("hidden");
-}
-
-function closeQualyModal() {
-  const modal = document.getElementById("qualy-modal");
-  if (modal) modal.classList.add("hidden");
-}
-
-function buildPhaseModalBody(phaseId, classified, eliminated) {
-  const cls = classified || [];
-  const elim = eliminated || [];
-
-  let html = `<p><strong>${esc(phaseId)} encerrada.</strong></p>`;
-
-  html += `<p><strong>Classificados (${cls.length}):</strong></p>`;
-  html += `<ol>`;
-  cls.forEach((d, idx) => {
-    html += `<li>${idx + 1}º — ${esc(d.name)} (${esc(d.teamName)}) — <strong>${formatLapTime(d.bestLap)}</strong></li>`;
-  });
-  html += `</ol>`;
-
-  html += `<p><strong>Eliminados (${elim.length}):</strong></p>`;
-  html += `<ol>`;
-  elim.forEach((d, idx) => {
-    const pos = cls.length + idx + 1;
-    html += `<li>${pos}º — ${esc(d.name)} (${esc(d.teamName)}) — <strong>${formatLapTime(d.bestLap)}</strong></li>`;
-  });
-  html += `</ol>`;
-
-  html += `<p>Clique em <strong>OK</strong> para iniciar a próxima fase.</p>`;
-  return html;
-}
-
-function buildFinalGridModalBody(grid) {
-  const g = grid || [];
-  let html = `<p><strong>GRID FINAL (Q3)</strong></p>`;
-  html += `<ol>`;
-  g.forEach((d, i) => {
-    html += `<li>${i + 1}º — ${esc(d.name)} (${esc(d.teamName)}) — <strong>${formatLapTime(d.bestLap)}</strong></li>`;
-  });
-  html += `</ol>`;
-  html += `<p>Clique em <strong>OK</strong> para ir para a corrida.</p>`;
-  return html;
 }
 
 // ------------------------------
@@ -532,131 +341,161 @@ function finalizarFase() {
   qualyState.running = false;
 
   const phase = QUALY_PHASES[qualyState.phaseIndex];
-  const ordered = [...qualyState.drivers].sort((a, b) => (a.bestLap ?? 9999999) - (b.bestLap ?? 9999999));
+  const ordenado = [...qualyState.drivers].sort((a, b) => (a.bestLap ?? 9999999) - (b.bestLap ?? 9999999));
 
-  // --- Q1 / Q2: mostrar classificados + eliminados
+  const eliminated = [];
   if (phase.eliminated > 0) {
-    const cut = ordered.length - phase.eliminated;
-    const classified = ordered.slice(0, cut);
-    const eliminated = ordered.slice(cut);
+    const keep = ordenado.slice(0, ordenado.length - phase.eliminated);
+    const drop = ordenado.slice(ordenado.length - phase.eliminated);
 
-    qualyState.modalMode = "phase";
-    qualyState.pendingNextDrivers = classified;
-    qualyState.pendingEliminated = eliminated;
+    eliminated.push(...drop);
+    qualyState.drivers = keep;
 
-    openQualyModal(`${phase.id} encerrada`, buildPhaseModalBody(phase.id, classified, eliminated));
+    showPhaseModal(phase.id, eliminated, () => {
+      // próxima fase
+      qualyState.phaseIndex++;
+      qualyState.drivers.forEach(d => {
+        d.laps = 0;
+        d.simLapMs = 0;
+        d.bestLap = null;
+        d.lastLap = null;
+      });
+      qualyState.running = true;
+    });
+
     return;
   }
 
-  // --- Q3: grid final (20)
-  qualyState.finalGrid = ordered;
-  salvarGridFinal();
-
-  qualyState.modalMode = "final";
-  openQualyModal(`Classificação final — Grid de largada`, buildFinalGridModalBody(ordered));
+  // Q3 finaliza
+  qualyState.finalGrid = ordenado;
+  salvarGrid();
+  showFinalGridModal(ordenado);
 }
 
 // ------------------------------
-// OK DO MODAL
+// MODAIS
 // ------------------------------
-function onQualyModalAction() {
-  // FIM DE FASE (Q1/Q2)
-  if (qualyState.modalMode === "phase") {
-    closeQualyModal();
-
-    qualyState.phaseIndex++;
-    qualyState.currentLapUI = 1;
-
-    // aplica classificados como novo grid da fase, reseta voltas (mantém mecânica)
-    const next = Array.isArray(qualyState.pendingNextDrivers) ? qualyState.pendingNextDrivers : [];
-    qualyState.drivers = next.map(d => ({
-      ...d,
-      laps: 0,
-      simLapMs: 0,
-      bestLap: null,
-      lastLap: null,
-      progress: Math.random()
-    }));
-
-    qualyState.pendingNextDrivers = null;
-    qualyState.pendingEliminated = null;
-    qualyState.modalMode = null;
-
-    rebuildVisuals();
-    preencherPilotosDaEquipe();
-    updateHeaderUI();
-
-    qualyState.running = true;
-    return;
+function ensureModalHost() {
+  let host = document.getElementById("qualy-modal");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "qualy-modal";
+    host.className = "hidden";
+    document.body.appendChild(host);
   }
+  return host;
+}
 
-  // GRID FINAL (Q3) -> IR PARA CORRIDA
-  if (qualyState.modalMode === "final") {
-    closeQualyModal();
-    qualyState.modalMode = null;
+function showPhaseModal(phaseId, eliminated, onContinue) {
+  const host = ensureModalHost();
+  host.innerHTML = `
+    <div class="qualy-modal-card">
+      <h2>${phaseId} encerrado</h2>
+      <p>Eliminados (${eliminated.length}):</p>
+      <div class="qualy-modal-list">
+        ${eliminated.map((d, i) => `
+          <div class="qualy-modal-row">
+            <div class="qpos">${(i + 1)}</div>
+            <img class="qface" src="assets/faces/${d.code}.png" onerror="this.src='assets/faces/default.png'"/>
+            <div class="qname">${d.name}</div>
+            <div class="qlap">${formatLapTime(d.bestLap)}</div>
+          </div>
+        `).join("")}
+      </div>
+      <button class="qualy-modal-btn" id="qualy-continue-btn">Continuar</button>
+    </div>
+  `;
+  host.classList.remove("hidden");
 
-    const next = new URL("race.html", location.href);
-    next.searchParams.set("track", qualyState.track);
-    next.searchParams.set("gp", qualyState.gp);
-    next.searchParams.set("userTeam", qualyState.userTeam);
-    location.href = next.toString();
+  const btn = document.getElementById("qualy-continue-btn");
+  if (btn) {
+    btn.onclick = () => {
+      host.classList.add("hidden");
+      host.innerHTML = "";
+      onContinue && onContinue();
+    };
+  }
+}
+
+function showFinalGridModal(grid) {
+  const host = ensureModalHost();
+  host.innerHTML = `
+    <div class="qualy-modal-card">
+      <h2>Grid final definido</h2>
+      <p>Posição final (Q3):</p>
+      <div class="qualy-modal-list">
+        ${grid.map((d, i) => `
+          <div class="qualy-modal-row">
+            <div class="qpos">${i + 1}</div>
+            <img class="qface" src="assets/faces/${d.code}.png" onerror="this.src='assets/faces/default.png'"/>
+            <div class="qname">${d.name}</div>
+            <div class="qlap">${formatLapTime(d.bestLap)}</div>
+          </div>
+        `).join("")}
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px;">
+        <button class="qualy-modal-btn" id="qualy-close-btn">Fechar</button>
+        <button class="qualy-modal-btn" id="qualy-go-race-btn">Ir para a corrida</button>
+      </div>
+    </div>
+  `;
+  host.classList.remove("hidden");
+
+  const close = document.getElementById("qualy-close-btn");
+  if (close) close.onclick = () => host.classList.add("hidden");
+
+  const go = document.getElementById("qualy-go-race-btn");
+  if (go) {
+    go.onclick = () => {
+      const url = `race.html?track=${encodeURIComponent(qualyState.track)}&gp=${encodeURIComponent(qualyState.gp)}&userTeam=${encodeURIComponent(qualyState.userTeam)}`;
+      location.href = url;
+    };
   }
 }
 
 // ------------------------------
-// SALVAR GRID FINAL (para a corrida usar)
+// SALVAR GRID
 // ------------------------------
-function salvarGridFinal() {
-  try {
-    localStorage.setItem("f1m2025_last_qualy", JSON.stringify({
-      track: qualyState.track,
-      gp: qualyState.gp,
-      userTeamKey: qualyState.userTeam,
-      timestamp: Date.now(),
-      grid: (qualyState.finalGrid || []).map((d, i) => ({
-        id: d.id,
-        code: d.code,
-        name: d.name,
-        teamKey: d.teamKey,
-        teamName: d.teamName,
-        position: i + 1,
-        bestLapTime: d.bestLap
-      }))
-    }));
-  } catch (e) {
-    console.warn("Falha ao salvar grid final da qualy:", e);
-  }
+function salvarGrid() {
+  localStorage.setItem("f1m2025_last_qualy", JSON.stringify({
+    track: qualyState.track,
+    gp: qualyState.gp,
+    grid: qualyState.finalGrid.map((d, i) => ({
+      id: d.id,
+      code: d.code,
+      name: d.name,
+      teamKey: d.teamKey,
+      teamName: d.teamName,
+      color: d.color,
+      rating: d.rating,
+      position: i + 1,
+      bestLap: d.bestLap
+    }))
+  }));
 }
 
 // ------------------------------
-// UI — SPEED
+// UI SPEED
 // ------------------------------
 function setQualySpeed(v) {
-  qualyState.speedMultiplier = Number(v) || 1;
+  qualyState.speedMultiplier = v;
 }
 
 function setupSpeedControls() {
   document.querySelectorAll(".speed-btn").forEach(btn => {
     btn.onclick = () => {
-      setQualySpeed(Number(btn.dataset.speed || "1"));
+      setQualySpeed(Number(btn.dataset.speed));
       document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
     };
   });
 }
 
-// ------------------------------
-// PILOTOS DA SUA EQUIPE (cards)
-// ------------------------------
 function preencherPilotosDaEquipe() {
-  const teamDrivers = qualyState.drivers
-    .filter(d => (d.teamKey || "").toLowerCase() === qualyState.userTeam)
-    .slice(0, 2);
-
+  const teamDrivers = qualyState.drivers.filter(d => (d.teamKey || "").toLowerCase() === qualyState.userTeam).slice(0, 2);
   teamDrivers.forEach((d, i) => {
     const card = document.getElementById(`user-driver-${i + 1}`);
     if (!card) return;
-
     const face = card.querySelector(".user-face");
     const name = card.querySelector(".user-name");
     const team = card.querySelector(".user-team");
@@ -664,17 +503,13 @@ function preencherPilotosDaEquipe() {
 
     if (face) {
       face.src = `assets/faces/${d.code}.png`;
-      face.onerror = () => {
-        face.onerror = null;
-        face.src = "assets/faces/default.png";
-      };
+      face.onerror = () => { face.onerror = null; face.src = "assets/faces/default.png"; };
     }
-    if (name) name.textContent = d.name || "";
-    if (team) team.textContent = d.teamName || "";
-    if (logo) logo.src = d.logo || "";
+    if (name) name.textContent = d.name;
+    if (team) team.textContent = d.teamName;
+    if (logo) logo.src = d.logo || `assets/teams/${d.teamKey}.png`;
   });
 }
 
-// export (HTML usa onclick)
+// export
 window.setQualySpeed = setQualySpeed;
-window.onQualyModalAction = onQualyModalAction;
