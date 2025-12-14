@@ -1,13 +1,14 @@
 // ==========================================================
 // F1 MANAGER 2025 – RACE.JS
-// Corrida Oficial – Versão Estável v6.1
+// Corrida Oficial – Grid parado na largada (v6.1 estável)
 // ==========================================================
 
 // ------------------------------
-// CONFIGURAÇÃO GERAL
+// CONFIGURAÇÃO
 // ------------------------------
 const RACE_CONFIG = {
   totalLaps: 58,
+  gridSpacing: 0.006, // distância entre carros no grid
   baseLapTimeMs: {
     australia: 80000,
     bahrain: 91000,
@@ -83,7 +84,6 @@ async function initRace() {
 
   initDriversFromQualy();
   await loadTrackSvg();
-
   setupSpeedControls();
 
   raceState.lastFrame = performance.now();
@@ -91,35 +91,35 @@ async function initRace() {
 }
 
 // ------------------------------
-// PILOTOS (GRID DA QUALI)
+// PILOTOS – GRID DA QUALI
 // ------------------------------
 function initDriversFromQualy() {
-  let grid;
+  let grid = [];
 
   try {
     const raw = localStorage.getItem("f1m2025_last_qualy");
     if (raw) {
       const parsed = JSON.parse(raw);
-      grid = parsed.grid;
+      if (Array.isArray(parsed.grid)) grid = parsed.grid;
     }
   } catch {}
 
-  // Fallback absoluto
-  if (!Array.isArray(grid) || !grid.length) {
-    console.warn("Grid da qualificação não encontrado. Usando fallback.");
-    grid = [];
+  if (!grid.length) {
+    console.warn("Grid da qualificação não encontrado.");
+    return;
   }
 
   raceState.drivers = grid.map((d, idx) => {
-    const base = raceState.baseLapMs;
     const skill = 1 - ((d.rating || 85) - 92) * 0.006;
+    const baseSpeed = 1 / (raceState.baseLapMs * skill);
 
     return {
       ...d,
       index: idx,
       position: idx + 1,
-      progress: idx * -0.02,
-      speed: 1 / (base * skill),
+      // GRID PARADO NA LARGADA
+      progress: clamp(1 - idx * RACE_CONFIG.gridSpacing, 0, 1),
+      speed: baseSpeed,
       laps: 0,
       simLapMs: 0,
       lastLap: null,
@@ -162,7 +162,7 @@ async function loadTrackSvg() {
     pts.push({ x: p.x, y: p.y });
   }
 
-  // NORMALIZA
+  // NORMALIZA PARA VIEWBOX
   const xs = pts.map(p => p.x);
   const ys = pts.map(p => p.y);
   const minX = Math.min(...xs);
@@ -198,7 +198,7 @@ async function loadTrackSvg() {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     c.setAttribute("r", 6);
-    c.setAttribute("fill", "#fff");
+    c.setAttribute("fill", "#ffffff");
     g.appendChild(c);
     svg.appendChild(g);
     return { id: d.id, g };
@@ -209,8 +209,7 @@ async function loadTrackSvg() {
 // LOOP PRINCIPAL
 // ------------------------------
 function gameLoop(ts) {
-  const dt =
-    (ts - raceState.lastFrame) * raceState.speedMultiplier;
+  const dt = (ts - raceState.lastFrame) * raceState.speedMultiplier;
   raceState.lastFrame = ts;
 
   if (raceState.running) updateRace(dt);
@@ -232,9 +231,7 @@ function updateRace(dt) {
       d.progress -= 1;
       d.laps++;
       d.lastLap = d.simLapMs;
-      if (!d.bestLap || d.simLapMs < d.bestLap) {
-        d.bestLap = d.simLapMs;
-      }
+      if (!d.bestLap || d.simLapMs < d.bestLap) d.bestLap = d.simLapMs;
       d.simLapMs = 0;
     }
   });
@@ -248,16 +245,16 @@ function renderRace() {
     const d = raceState.drivers.find(x => x.id === v.id);
     if (!d) return;
 
-    const idx = Math.floor(
-      d.progress * (raceState.pathPoints.length - 1)
+    const idx = clamp(
+      Math.floor(d.progress * (raceState.pathPoints.length - 1)),
+      0,
+      raceState.pathPoints.length - 1
     );
+
     const p = raceState.pathPoints[idx];
     if (!p) return;
 
-    v.g.setAttribute(
-      "transform",
-      `translate(${p.x},${p.y})`
-    );
+    v.g.setAttribute("transform", `translate(${p.x},${p.y})`);
   });
 }
 
@@ -272,9 +269,7 @@ function setupSpeedControls() {
   document.querySelectorAll(".speed-btn").forEach(btn => {
     btn.onclick = () => {
       setRaceSpeed(Number(btn.dataset.speed || 1));
-      document
-        .querySelectorAll(".speed-btn")
-        .forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
     };
   });
