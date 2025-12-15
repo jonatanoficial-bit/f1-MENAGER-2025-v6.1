@@ -10,13 +10,20 @@
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_+|_+$/g, "");
   }
-  function normTeamKey(team) { return slug(team); }
+  function slugDash(s) {
+    return (s || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
   function initials(name) {
     const p = (name || "").trim().split(/\s+/).filter(Boolean);
     if (!p.length) return "??";
     if (p.length === 1) return p[0].slice(0, 2).toUpperCase();
     return (p[0][0] + p[p.length - 1][0]).toUpperCase();
   }
+  function normTeamKey(team) { return slug(team); }
 
   // ====== DOM ======
   const canvas = document.getElementById("mapCanvas");
@@ -34,7 +41,7 @@
   const elHudWeather = document.getElementById("hudWeather");
   const elHudTrackTemp = document.getElementById("hudTrackTemp");
 
-  // ====== Parâmetros ======
+  // ====== Params ======
   const trackKey = (qs("track") || "australia").toLowerCase();
   const gpName = qs("gp") || "GP";
   const userTeam = (qs("userTeam") || "ferrari").toLowerCase();
@@ -48,7 +55,6 @@
   elHudTrackTemp.textContent = `${trackTemp}°C`;
   elGpMeta.textContent = `Volta 1 · Clima: ${weather} · Pista: ${trackTemp}°C`;
 
-  // Flag (não quebra se não existir)
   elGpFlag.src = `assets/flags/${trackKey}.png`;
   elGpFlag.onerror = () => { elGpFlag.src = ""; elGpFlag.style.background = "rgba(255,255,255,0.10)"; };
 
@@ -66,8 +72,7 @@
     });
   });
 
-  // ====== LEITURA REAL de SAVE/SETUP/STAFF ======
-  // Isso evita “piorar” quando existirem seus sistemas.
+  // ====== Save / Setup / Staff robust ======
   function tryLocalKeys(keys) {
     for (const k of keys) {
       try {
@@ -79,13 +84,8 @@
     }
     return null;
   }
-
   function readGameState() {
-    // 1) se seu saveSystem expõe algo no window, usa
-    // (nomes diferentes não quebram; tentamos vários)
     const w = window;
-
-    // Tentativas comuns
     const candidates = [
       w.saveSystem?.get?.bind(w.saveSystem),
       w.saveSystem?.load?.bind(w.saveSystem),
@@ -101,8 +101,6 @@
         if (s && typeof s === "object") return s;
       } catch {}
     }
-
-    // 2) fallback em chaves
     return tryLocalKeys([
       "F1M_CAREER","F1M_SAVE","F1_MANAGER_SAVE","careerSave","saveGame","f1_manager_save"
     ]) || {};
@@ -113,7 +111,6 @@
   const STAFF = SAVE.staff || tryLocalKeys(["F1M_STAFF","staffSave","teamStaff"]) || {};
   const QUALI = SAVE.quali || tryLocalKeys(["F1M_QUALI","qualiResult","qualifyingSave"]) || null;
 
-  // ====== Setup + Staff -> bônus ======
   function num(v, def=0){ v = Number(v); return Number.isFinite(v) ? v : def; }
   function computeBonuses(setup, staff){
     const aero = num(setup.aero, num(setup.asa, 50));
@@ -137,7 +134,7 @@
   }
   const BON = computeBonuses(SETUP, STAFF);
 
-  // ====== Cores ======
+  // ====== Colors ======
   const TEAM_COLORS = {
     ferrari:"#d90429", mclaren:"#ff7a00", mercedes:"#00d2be",
     red_bull:"#1e41ff", red_bull_racing:"#1e41ff",
@@ -150,7 +147,7 @@
     return TEAM_COLORS[k] || "#ffffff";
   }
 
-  // ====== Grid (usa quali se existir) ======
+  // ====== Grid ======
   const DEFAULT_GRID = [
     { id:"leclerc", name:"Charles Leclerc", team:"Ferrari" },
     { id:"sainz", name:"Carlos Sainz", team:"Ferrari" },
@@ -178,6 +175,7 @@
     if (Array.isArray(QUALI?.grid) && QUALI.grid.length >= 10) {
       return QUALI.grid.slice(0,20).map(p => ({
         id: p.id || p.driverId || p.code || slug(p.name || "driver"),
+        code: p.code || p.short || "",
         name: p.name || p.driverName || "Piloto",
         team: p.team || p.teamName || "Equipe"
       }));
@@ -185,47 +183,72 @@
     if (Array.isArray(SAVE?.drivers) && SAVE.drivers.length >= 10) {
       return SAVE.drivers.slice(0,20).map(p => ({
         id: p.id || p.driverId || p.code || slug(p.name || "driver"),
+        code: p.code || p.short || "",
         name: p.name || "Piloto",
         team: p.team || "Equipe"
       }));
     }
-    return DEFAULT_GRID.slice(0,20);
+    return DEFAULT_GRID.slice(0,20).map(d => ({...d, code:""}));
   }
-
   const grid = getGrid();
 
-  // ====== Faces/Logos: resolver robusto (tentando variações) ======
+  // ====== FACE/LOGO loader (sem HEAD) ======
   const FACE_EXTS = ["png","jpg","jpeg","webp"];
   const LOGO_EXTS = ["png","jpg","jpeg","webp"];
 
   function faceCandidates(driver){
     const id = slug(driver.id);
-    const nm = slug(driver.name);
-    const arr = [];
+    const nmU = slug(driver.name);
+    const nmD = slugDash(driver.name);
+    const parts = (driver.name || "").trim().split(/\s+/).filter(Boolean);
+    const last = parts.length ? slug(parts[parts.length-1]) : "";
+    const first = parts.length ? slug(parts[0]) : "";
+    const code = (driver.code || "").toString().trim().toLowerCase();
+
+    const candidates = new Set();
+
     for (const ext of FACE_EXTS) {
-      arr.push(`assets/faces/${id}.${ext}`);
-      arr.push(`assets/faces/${nm}.${ext}`);
-      arr.push(`assets/faces/${id}_face.${ext}`);
-      arr.push(`assets/faces/face_${id}.${ext}`);
+      // padrões comuns
+      candidates.add(`assets/faces/${id}.${ext}`);
+      candidates.add(`assets/faces/${nmU}.${ext}`);
+      candidates.add(`assets/faces/${nmD}.${ext}`);
+      candidates.add(`assets/faces/${first}_${last}.${ext}`);
+      candidates.add(`assets/faces/${last}.${ext}`);
+      candidates.add(`assets/faces/${id}_face.${ext}`);
+      candidates.add(`assets/faces/face_${id}.${ext}`);
+
+      // iniciais / code
+      if (code) candidates.add(`assets/faces/${code}.${ext}`);
+      candidates.add(`assets/faces/${initials(driver.name).toLowerCase()}.${ext}`);
+      candidates.add(`assets/faces/${initials(driver.name)}.${ext}`);
     }
-    return arr;
-  }
-  function logoCandidates(team){
-    const k = normTeamKey(team);
-    const arr = [];
-    for (const ext of LOGO_EXTS) {
-      arr.push(`assets/logos/${k}.${ext}`);
-      arr.push(`assets/logos/logo_${k}.${ext}`);
-    }
-    return arr;
+
+    return [...candidates];
   }
 
-  async function pickFirstExisting(urls){
+  function logoCandidates(team){
+    const k = normTeamKey(team);
+    const candidates = new Set();
+    for (const ext of LOGO_EXTS) {
+      candidates.add(`assets/logos/${k}.${ext}`);
+      candidates.add(`assets/logos/logo_${k}.${ext}`);
+    }
+    return [...candidates];
+  }
+
+  function loadImage(url){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(url);
+      img.onerror = () => reject(new Error("not found"));
+      // evita cache “enganar” em deploy
+      img.src = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+    });
+  }
+
+  async function pickFirstImage(urls){
     for (const u of urls) {
-      try {
-        const r = await fetch(u, { method:"HEAD", cache:"no-store" });
-        if (r.ok) return u;
-      } catch {}
+      try { return await loadImage(u); } catch {}
     }
     return null;
   }
@@ -280,9 +303,11 @@
   }
 
   function project(pt){
-    const pad = 22; // ajustado p/ pista ocupar melhor no mobile
     const w = canvas.getBoundingClientRect().width;
     const h = canvas.getBoundingClientRect().height;
+
+    // padding dinâmico: melhora o “zoom” no mobile
+    const pad = Math.max(14, Math.min(w, h) * 0.06);
 
     const bw = bounds.maxX - bounds.minX;
     const bh = bounds.maxY - bounds.minY;
@@ -309,6 +334,7 @@
   const cars = grid.map((d,i)=>({
     idx:i,
     driverId: slug(d.id),
+    code: (d.code || "").toString(),
     name:d.name,
     team:d.team,
     color: teamColor(d.team),
@@ -397,14 +423,20 @@
 
       const av=document.createElement("div");
       av.className="av";
-      const img=document.createElement("img");
-      img.alt=c.name;
-      img.src = c.faceUrl || "";
-      img.onerror=()=>{ av.innerHTML=""; av.textContent=initials(c.name); };
-      if (img.src) av.appendChild(img); else { av.textContent = initials(c.name); }
+
+      if (c.faceUrl) {
+        const img=document.createElement("img");
+        img.alt=c.name;
+        img.src = c.faceUrl;
+        img.onerror=()=>{ av.innerHTML=""; av.textContent=initials(c.name); };
+        av.appendChild(img);
+      } else {
+        av.textContent = initials(c.name);
+      }
 
       const name=document.createElement("div");
       name.className="name";
+
       const n=document.createElement("div");
       n.className="n"; n.textContent=c.name;
 
@@ -527,7 +559,7 @@
     [...elYourDrivers.children].forEach(card => card._update && card._update());
   }
 
-  // ====== Render pista (1 pista só) ======
+  // ====== Render ======
   function draw(){
     const w = canvas.getBoundingClientRect().width;
     const h = canvas.getBoundingClientRect().height;
@@ -600,7 +632,7 @@
     });
   }
 
-  // ====== Simulação ======
+  // ====== Sim ======
   let raceState="Correndo";
   let lastTs=performance.now();
 
@@ -659,7 +691,6 @@
       if (prev > 0.96 && c.progress < 0.04) {
         c.laps += 1;
         c.time += (66 + Math.random()*0.9) * (1 + (c.tyreWear*0.10)/100 + (c.engineWear*0.08)/100) / (1 + BON.paceBonus*12);
-
         if (c.laps >= lapsTotal) c.finished = true;
       } else {
         c.time += k*0.09;
@@ -696,10 +727,10 @@
     try {
       resizeCanvas();
 
-      // resolve faces/logos antes de montar cards
+      // resolve faces/logos por preload real de imagem
       await Promise.all(cars.map(async c => {
-        c.faceUrl = await pickFirstExisting(faceCandidates({ id:c.driverId, name:c.name })) || null;
-        c.logoUrl = await pickFirstExisting(logoCandidates(c.team)) || null;
+        c.faceUrl = await pickFirstImage(faceCandidates({ id:c.driverId, name:c.name, code:c.code })) || null;
+        c.logoUrl = await pickFirstImage(logoCandidates(c.team)) || null;
       }));
 
       const track = await loadTrackSVG(trackKey);
