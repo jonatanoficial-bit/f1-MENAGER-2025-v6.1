@@ -5,42 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>F1 MANAGER 2025 — CORRIDA</title>
 
-  <!-- Mantém seus CSS globais (mas o Race vai se proteger deles) -->
+  <!-- Seus CSS -->
   <link rel="stylesheet" href="ui.css">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="race.css">
 
   <style>
-    /* ====== HARD RESET do Race (evita “camadas” cobrindo a tela) ====== */
+    /* ====== Blindagem contra camadas por cima (PC) ====== */
     html, body { height:100%; margin:0; overflow:hidden; background:#000; }
     body { position:relative; }
 
-    /* Camada de background sempre ATRÁS (resolve “MANAGER” por cima no PC) */
     .race-bg {
       position:fixed; inset:0;
-      background: #000;
-      background-image: url("assets/ui/capa_bg.png");
-      background-size: cover;
-      background-position: center;
-      opacity: 0.20;
-      z-index: 0;
-      pointer-events: none;
-      filter: saturate(1.1) contrast(1.05);
+      background:#000;
+      background-image:url("assets/ui/capa_bg.png");
+      background-size:cover;
+      background-position:center;
+      opacity:0.20;
+      z-index:0;
+      pointer-events:none;
+      filter:saturate(1.1) contrast(1.05);
     }
-    /* Conteúdo sempre acima */
-    .race-shell { position:relative; z-index: 1; height:100%; display:flex; flex-direction:column; }
+    .race-shell { position:relative; z-index:1; height:100%; display:flex; flex-direction:column; }
 
-    .topbar {
-      display:flex; align-items:center; justify-content:space-between;
-      gap:12px; padding:14px 14px 10px 14px;
-    }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 14px 10px; }
     .pill {
       display:flex; align-items:center; gap:10px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.10);
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.10);
       padding:10px 12px; border-radius:18px;
-      backdrop-filter: blur(10px);
+      backdrop-filter:blur(10px);
       color:#fff;
-      min-width: 260px;
+      min-width:260px;
     }
     .flag { width:28px; height:28px; border-radius:8px; object-fit:cover; background:#111; }
     .tt { display:flex; flex-direction:column; line-height:1.1; min-width:0; }
@@ -49,43 +45,38 @@
 
     .speed {
       display:flex; align-items:center; gap:10px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.10);
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.10);
       padding:10px 12px; border-radius:18px;
-      backdrop-filter: blur(10px);
+      backdrop-filter:blur(10px);
       color:#fff;
     }
     .speed .lbl { opacity:0.8; font-size:12px; }
     .speed .btns { display:flex; gap:8px; }
     .sbtn {
       border:1px solid rgba(255,255,255,0.12);
-      background: rgba(0,0,0,0.25);
+      background:rgba(0,0,0,0.25);
       color:#fff; padding:8px 12px;
       border-radius:999px; cursor:pointer;
       font-weight:900; min-width:52px;
     }
-    .sbtn.active { border-color: rgba(255,0,80,0.55); box-shadow: 0 0 0 2px rgba(255,0,80,0.12) inset; }
+    .sbtn.active { border-color:rgba(255,0,80,0.55); box-shadow:0 0 0 2px rgba(255,0,80,0.12) inset; }
 
-    .lobby {
-      border:0; cursor:pointer; font-weight:1000;
-      padding:12px 18px; border-radius:999px;
-      background:#fff; color:#111;
-    }
+    .lobby { border:0; cursor:pointer; font-weight:1000; padding:12px 18px; border-radius:999px; background:#fff; color:#111; }
 
     .content {
       flex:1; min-height:0;
       display:grid;
       grid-template-columns: 1.1fr 0.9fr;
       gap:14px;
-      padding:0 14px 14px 14px;
+      padding:0 14px 14px;
     }
-
     .panel {
-      background: rgba(255,255,255,0.04);
+      background:rgba(255,255,255,0.04);
       border:1px solid rgba(255,255,255,0.10);
       border-radius:18px;
       overflow:hidden;
-      backdrop-filter: blur(12px);
+      backdrop-filter:blur(12px);
       min-height:0;
       position:relative;
     }
@@ -93,7 +84,7 @@
       display:flex; align-items:center; justify-content:space-between;
       padding:12px 14px;
       border-bottom:1px solid rgba(255,255,255,0.10);
-      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
+      background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
       color:#fff;
       font-weight:1000;
       font-size:12px;
@@ -102,19 +93,14 @@
     }
     .ph .sub { font-weight:700; text-transform:none; letter-spacing:0; opacity:0.75; font-size:12px; }
 
-    /* MAPA */
-    .map {
-      height:100%; display:flex; flex-direction:column; min-height:0;
-    }
-    .stage {
-      position:relative; flex:1; min-height:0;
-      padding:10px;
-    }
-    canvas#mapCanvas{
+    .map { height:100%; display:flex; flex-direction:column; min-height:0; }
+    .stage { position:relative; flex:1; min-height:0; padding:10px; }
+    canvas#mapCanvas {
       width:100%; height:100%;
       border-radius:14px;
       background:#000;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      display:block;
     }
     .hud {
       display:grid;
@@ -126,16 +112,16 @@
     .hb {
       border-radius:14px;
       padding:10px 12px;
-      background: rgba(255,255,255,0.05);
+      background:rgba(255,255,255,0.05);
       border:1px solid rgba(255,255,255,0.10);
       color:#fff;
     }
     .hb .k { font-size:11px; opacity:0.75; }
     .hb .v { margin-top:4px; font-size:14px; font-weight:1000; }
 
-    /* DIREITA */
     .right { height:100%; display:grid; grid-template-rows: 1fr 1.1fr; gap:14px; min-height:0; }
     .list { overflow:auto; padding:10px; min-height:0; }
+
     .row {
       display:grid;
       grid-template-columns: 44px 1fr 90px;
@@ -144,7 +130,7 @@
       padding:10px;
       margin-bottom:10px;
       border-radius:14px;
-      background: rgba(0,0,0,0.22);
+      background:rgba(0,0,0,0.22);
       border:1px solid rgba(255,255,255,0.10);
       color:#fff;
     }
@@ -153,11 +139,12 @@
       display:flex; align-items:center; justify-content:center;
       font-weight:1000;
       border:1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.04);
+      background:rgba(255,255,255,0.04);
       position:relative;
       overflow:hidden;
     }
     .pos .bar { position:absolute; left:0; top:0; bottom:0; width:5px; opacity:0.95; }
+
     .who { display:flex; flex-direction:column; gap:2px; min-width:0; }
     .who .n { font-weight:1000; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .who .t { font-size:11px; opacity:0.70; text-transform:uppercase; letter-spacing:0.4px; }
@@ -169,7 +156,7 @@
     .card {
       border-radius:16px;
       border:1px solid rgba(255,255,255,0.10);
-      background: rgba(0,0,0,0.22);
+      background:rgba(0,0,0,0.22);
       padding:12px;
       position:relative;
       overflow:hidden;
@@ -179,7 +166,7 @@
     .ch { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
     .av {
       width:40px; height:40px; border-radius:12px;
-      background: rgba(255,255,255,0.08);
+      background:rgba(255,255,255,0.08);
       border:1px solid rgba(255,255,255,0.12);
       overflow:hidden;
       display:flex; align-items:center; justify-content:center;
@@ -191,52 +178,26 @@
     .name .t { font-size:11px; opacity:0.70; text-transform:uppercase; letter-spacing:0.4px; display:flex; gap:8px; align-items:center; }
     .logo {
       width:18px; height:18px; border-radius:6px; object-fit:cover;
-      background: rgba(255,255,255,0.10);
+      background:rgba(255,255,255,0.10);
       border:1px solid rgba(255,255,255,0.10);
     }
 
     .stats { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
-    .sp {
-      padding:7px 10px; border-radius:999px;
-      background: rgba(255,255,255,0.06);
-      border:1px solid rgba(255,255,255,0.10);
-      font-weight:1000; font-size:11px;
-    }
+    .sp { padding:7px 10px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); font-weight:1000; font-size:11px; }
+
     .ctrls { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .btn {
       border-radius:999px;
       padding:10px 12px;
       font-weight:1000;
       border:1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.06);
+      background:rgba(255,255,255,0.06);
       color:#fff;
       cursor:pointer;
     }
-    .btn.green { background: rgba(0,200,120,0.16); border-color: rgba(0,200,120,0.30); }
-    .btn.red { background: rgba(255,0,80,0.16); border-color: rgba(255,0,80,0.30); }
-    .sel {
-      grid-column: 1 / -1;
-      border-radius:999px;
-      padding:10px 12px;
-      border:1px solid rgba(255,255,255,0.12);
-      background: rgba(0,0,0,0.30);
-      color:#fff;
-      font-weight:1000;
-      outline:none;
-    }
-
-    /* PÓDIO */
-    .modal { position:fixed; inset:0; background: rgba(0,0,0,0.72); display:none; align-items:center; justify-content:center; z-index:9999; padding:16px; }
-    .modal.show { display:flex; }
-    .pod { width:min(980px, 96vw); border-radius:20px; border:1px solid rgba(255,255,255,0.12); background: rgba(20,20,24,0.92); backdrop-filter: blur(14px); overflow:hidden; color:#fff; }
-    .podh { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.12); font-weight:1000; }
-    .podb { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; padding:14px; }
-    .p { border-radius:16px; border:1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); padding:12px; text-align:center; }
-    .p .rank { font-size:12px; opacity:0.8; font-weight:1000; letter-spacing:0.5px; text-transform:uppercase; }
-    .p .nm { margin-top:6px; font-weight:1000; font-size:16px; }
-    .p .tm { margin-top:6px; font-weight:1000; font-size:13px; opacity:0.9; }
-    .p .img { width:90px; height:90px; border-radius:18px; margin:10px auto 0 auto; overflow:hidden; border:1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-weight:1000; }
-    .p .img img { width:100%; height:100%; object-fit:cover; display:block; }
+    .btn.green { background:rgba(0,200,120,0.16); border-color:rgba(0,200,120,0.30); }
+    .btn.red { background:rgba(255,0,80,0.16); border-color:rgba(255,0,80,0.30); }
+    .sel { grid-column: 1 / -1; border-radius:999px; padding:10px 12px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.30); color:#fff; font-weight:1000; outline:none; }
 
     @media (max-width: 980px){
       .content { grid-template-columns: 1fr; }
@@ -250,7 +211,6 @@
   <div class="race-bg"></div>
 
   <div class="race-shell">
-
     <div class="topbar">
       <div class="pill">
         <img id="gpFlag" class="flag" alt="">
@@ -273,7 +233,6 @@
     </div>
 
     <div class="content">
-      <!-- MAPA -->
       <div class="panel map">
         <div class="ph">
           <div>MAPA DA PISTA</div>
@@ -292,7 +251,6 @@
         </div>
       </div>
 
-      <!-- DIREITA -->
       <div class="right">
         <div class="panel">
           <div class="ph"><div>SESSÃO</div><div class="sub">Tempo real</div></div>
@@ -309,16 +267,12 @@
     </div>
   </div>
 
-  <!-- PÓDIO -->
-  <div class="modal" id="podiumModal" aria-hidden="true">
-    <div class="pod">
-      <div class="podh">
-        <div id="podiumTitle">PÓDIO</div>
-        <button id="podiumClose" class="btn">FECHAR</button>
-      </div>
-      <div class="podb" id="podiumBody"></div>
-    </div>
-  </div>
+  <!-- IMPORTANTE: carregar seus sistemas ANTES do race.js -->
+  <script src="data.js"></script>
+  <script src="saveSystem.js"></script>
+  <script src="careerSystem.js"></script>
+  <script src="setupSystem.js"></script>
+  <script src="staffSystem.js"></script>
 
   <script src="race.js"></script>
 </body>
