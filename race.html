@@ -3,465 +3,979 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>F1 Manager 2025 — Corrida</title>
-
-  <!-- Se você já usa ui.css no projeto, mantenha. -->
-  <link rel="stylesheet" href="ui.css" />
+  <title>F1 MANAGER 2025 — CORRIDA</title>
 
   <style>
     :root{
-      --bg1:#070a14;
-      --bg2:#0b1230;
-      --panel:rgba(255,255,255,.06);
-      --stroke:rgba(255,255,255,.12);
-      --txt:#fff;
-      --muted:rgba(255,255,255,.72);
-      --muted2:rgba(255,255,255,.55);
-      --good:#33d17a;
-      --warn:#ffb000;
-      --bad:#ff4d4d;
-      --chip:rgba(0,0,0,.35);
+      --bg0:#05070c;
+      --bg1:#0a0f1f;
+      --panel: rgba(18, 24, 40, 0.72);
+      --panel2: rgba(18, 24, 40, 0.55);
+      --line: rgba(255,255,255,.15);
+      --text:#e9eefc;
+      --muted: rgba(233,238,252,.7);
+      --accent:#ff2a2a;
+      --ok:#2ee59d;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      color:var(--txt);
-      background: radial-gradient(1200px 700px at 30% 10%, #0c1a4a 0%, var(--bg2) 35%, var(--bg1) 80%);
-      overflow:hidden;
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{ height:100%; background: radial-gradient(1200px 900px at 70% 0%, #17214b 0%, var(--bg0) 55%, #000 100%); color:var(--text); font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; overflow:hidden; }
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding:10px 10px 12px 10px;
     }
 
+    /* TOP BAR */
     .topbar{
-      height:58px;
-      padding:10px 12px;
+      height:56px;
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
-      border-bottom:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(0,0,0,.28), rgba(0,0,0,.08));
+      padding:10px 12px;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(8,12,26,.72), rgba(8,12,26,.42));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
     }
 
     .leftTitle{
-      display:flex; align-items:center; gap:10px; min-width:0;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 260px;
     }
+    .teamBadge{
+      width:26px;height:26px;border-radius:8px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      display:flex;align-items:center;justify-content:center;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .teamBadge img{ width:100%;height:100%;object-fit:cover; display:block; }
+    .titleBlock{ display:flex; flex-direction:column; line-height:1.05; }
+    .titleBlock .t1{ font-weight:800; letter-spacing:.4px; font-size:13px; }
+    .titleBlock .t2{ font-size:12px; color:var(--muted); margin-top:2px; }
 
-    .teamLogo{
-      width:26px; height:26px; border-radius:7px;
-      background:rgba(255,255,255,.08);
-      border:1px solid var(--stroke);
-      object-fit:contain;
+    .midControls{
+      display:flex; align-items:center; gap:10px;
     }
-
-    .titleBlock{min-width:0}
-    .titleLine{
-      font-weight:900; letter-spacing:.3px;
-      font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    .speedGroup{
+      display:flex; gap:8px; align-items:center;
+      padding:6px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
     }
-    .subLine{
-      font-size:12px; color:var(--muted2);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-
-    .rightControls{
-      display:flex; align-items:center; gap:10px; flex-wrap:nowrap;
-    }
-    .speedWrap{
-      display:flex; gap:6px; padding:4px;
-      background:rgba(255,255,255,.06);
-      border:1px solid var(--stroke);
-      border-radius:999px;
-    }
-    .chipBtn{
-      border:0; cursor:pointer;
+    .speedBtn{
+      border:none;
+      color:var(--text);
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
       padding:6px 10px;
-      border-radius:999px;
-      background:transparent;
-      color:var(--muted);
-      font-weight:800;
-      font-size:12px;
-    }
-    .chipBtn.active{
-      background:rgba(255,80,80,.22);
-      color:#fff;
-      border:1px solid rgba(255,80,80,.45);
-    }
-    .pill{
-      padding:8px 12px;
-      border-radius:999px;
-      border:1px solid var(--stroke);
-      background:rgba(255,255,255,.06);
-      color:#fff;
-      font-weight:800;
+      border-radius: 999px;
+      font-weight:700;
       font-size:12px;
       cursor:pointer;
-      white-space:nowrap;
+    }
+    .speedBtn.active{
+      background: rgba(255,42,42,.22);
+      border-color: rgba(255,42,42,.45);
+      box-shadow: 0 10px 28px rgba(255,42,42,.18);
     }
 
-    .layout{
-      height:calc(100% - 58px);
+    .btnLobby{
+      border:none;
+      cursor:pointer;
+      padding:10px 14px;
+      border-radius: 999px;
+      font-weight:800;
+      color: #0c1020;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.2);
+    }
+
+    /* MAIN GRID */
+    .main{
+      flex:1;
       display:grid;
-      grid-template-columns: 1.35fr 0.85fr;
+      grid-template-columns: 1.45fr 1fr;
       gap:12px;
-      padding:12px;
+      min-height:0;
     }
 
     .panel{
-      border:1px solid var(--stroke);
-      background:rgba(0,0,0,.18);
-      border-radius:16px;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(0,0,0,.40), rgba(0,0,0,.18));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
       overflow:hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      position:relative;
+      min-height:0;
     }
 
+    /* LEFT: TRACK */
+    .trackPanel{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+    }
     .panelHeader{
       display:flex;
-      justify-content:space-between;
       align-items:center;
+      justify-content:space-between;
       padding:10px 12px;
-      border-bottom:1px solid var(--stroke);
-      background:rgba(255,255,255,.04);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
     }
-    .panelHeader .hTitle{
-      font-weight:900;
-      letter-spacing:.25px;
-      font-size:12px;
-      color:#fff;
-    }
-    .panelHeader .hMeta{
-      font-size:12px;
-      color:var(--muted2);
-      white-space:nowrap;
-    }
+    .panelHeader .hTitle{ font-weight:900; font-size:12px; letter-spacing:.6px; opacity:.95; }
+    .panelHeader .hSub{ font-size:11px; color:var(--muted); }
 
-    /* MAPA */
-    .mapBody{
-      height:calc(100% - 44px);
+    .trackStage{
       position:relative;
+      flex:1;
+      min-height:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px;
       background: rgba(0,0,0,.35);
     }
-    .mapViewport{
-      position:absolute; inset:0;
-      display:flex; align-items:stretch; justify-content:stretch;
-    }
-    #svgHost{
+    .trackFrame{
+      width:100%;
+      height:100%;
+      border-radius: 16px;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.06);
       position:relative;
-      width:100%; height:100%;
       overflow:hidden;
     }
-    #svgHost svg{
+
+    /* CANVAS OVER SVG */
+    #raceCanvas{
+      position:absolute;
+      inset:0;
       width:100%;
       height:100%;
       display:block;
+      z-index:3;
+      pointer-events:none;
+    }
+    .svgHost{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:2;
+      opacity:1;
+    }
+    .svgHost svg{
+      width:92%;
+      height:92%;
+      display:block;
+      overflow:visible;
     }
 
-    /* Painel de sessão */
-    .sessionBody{
-      height:calc(100% - 44px);
+    .loadingOverlay{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.60);
+      z-index:5;
+      color: var(--muted);
+      font-weight:700;
+      letter-spacing:.3px;
+    }
+
+    /* RIGHT: SESSION */
+    .sessionPanel{
       display:flex;
       flex-direction:column;
-      gap:10px;
-      padding:10px;
+      min-height:0;
     }
+
+    .sessionHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .sessionHeader .hTitle{ font-weight:900; font-size:12px; letter-spacing:.6px; }
+    .sessionHeader .hSub{ font-size:11px; color:var(--muted); }
 
     .sessionList{
       flex:1;
+      min-height:0;
       overflow:auto;
-      padding-right:4px;
+      padding:10px 10px 6px 10px;
     }
     .row{
       display:grid;
-      grid-template-columns: 28px 1fr 60px;
+      grid-template-columns: 28px 1fr 74px;
       gap:10px;
       align-items:center;
       padding:10px 10px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.05);
+      border-radius: 14px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.06);
       margin-bottom:8px;
     }
     .pos{
-      width:28px;height:28px;
-      border-radius:10px;
-      display:flex;align-items:center;justify-content:center;
       font-weight:900;
-      background:rgba(0,0,0,.30);
-      border:1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.85);
+      text-align:center;
     }
-    .mini{
-      display:flex; gap:10px; align-items:center; min-width:0;
-    }
-    .miniFace{
-      width:28px;height:28px;border-radius:9px;
-      border:1px solid rgba(255,255,255,.14);
-      object-fit:cover;
-      background:rgba(255,255,255,.06);
-      flex:0 0 auto;
-    }
-    .who{min-width:0}
-    .who .name{
-      font-weight:900;
-      font-size:12px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .who .team{
-      font-size:11px;
-      color:var(--muted2);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .delta{
-      text-align:right;
-      font-variant-numeric:tabular-nums;
-      font-size:12px;
-      color:var(--muted);
-    }
-    .delta .tag{
-      display:inline-block;
-      padding:2px 8px;
-      border-radius:999px;
-      background:rgba(0,0,0,.25);
-      border:1px solid rgba(255,255,255,.12);
-      font-weight:900;
-      color:#fff;
-      font-size:11px;
-    }
-
-    /* Seus pilotos */
-    .myHeader{
-      font-weight:900;
-      font-size:12px;
-      color:#fff;
-      padding:4px 2px 0;
-      display:flex; align-items:center; justify-content:space-between;
-    }
-    .myCards{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-    .card{
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.18);
-      border-radius:16px;
-      padding:10px;
+    .nameBlock{
+      display:flex; flex-direction:column; gap:2px;
       overflow:hidden;
     }
-    .cardTop{
-      display:flex; gap:10px; align-items:center; min-width:0;
+    .nameBlock .n1{ font-weight:900; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .nameBlock .n2{ font-size:11px; color: var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .delta{
+      text-align:right;
+      font-weight:900;
+      font-size:12px;
+      color: rgba(255,255,255,.85);
     }
-    .cardFace{
-      width:34px;height:34px;border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      object-fit:cover;
-      background:rgba(255,255,255,.06);
+    .delta.muted{ color: rgba(255,255,255,.55); font-weight:800; }
+
+    /* BOTTOM: YOUR DRIVERS */
+    .yourDrivers{
+      padding:10px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+    }
+    .yourTitle{ font-weight:900; font-size:12px; letter-spacing:.6px; margin-bottom:8px; opacity:.95; }
+
+    .cards{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+
+    .card{
+      border-radius: 16px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      padding:10px;
+      min-height: 124px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.25);
+    }
+    .cardTop{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    .avatar{
+      width:42px; height:42px; border-radius: 14px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      overflow:hidden;
       flex:0 0 auto;
     }
-    .cardInfo{min-width:0}
-    .cardInfo .n{
-      font-weight:900; font-size:13px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    .avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .cName{
+      display:flex; flex-direction:column; line-height:1.05;
+      min-width:0;
     }
-    .cardInfo .t{
-      font-size:12px; color:var(--muted2);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .stats{
-      display:flex; flex-wrap:wrap; gap:10px;
-      margin-top:8px;
-      font-size:12px;
-      color:var(--muted);
-    }
-    .stats b{color:#fff}
+    .cName .p1{ font-weight:900; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cName .p2{ font-size:11px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-    .actions{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      margin-top:10px;
+    .stats{
+      display:flex; gap:10px; flex-wrap:wrap;
+      font-size:11px; color: var(--muted);
+      margin-bottom:8px;
     }
-    .btn{
-      padding:7px 10px;
+    .pill{
+      padding:6px 10px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.06);
-      color:#fff;
-      font-weight:900;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      font-weight:800;
       font-size:11px;
+      color: rgba(255,255,255,.88);
       cursor:pointer;
+      user-select:none;
     }
-    .btn.primary{
-      border-color:rgba(255,80,80,.45);
-      background:rgba(255,80,80,.18);
+    .pill.red{
+      background: rgba(255,42,42,.14);
+      border-color: rgba(255,42,42,.28);
     }
-    .btn.good{
-      border-color:rgba(50,210,120,.45);
-      background:rgba(50,210,120,.14);
+    .pill.green{
+      background: rgba(46,229,157,.14);
+      border-color: rgba(46,229,157,.28);
     }
-    .select{
-      padding:7px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.18);
-      color:#fff;
-      font-weight:900;
+
+    .rowBtns{
+      display:flex; gap:8px; flex-wrap:wrap;
+      align-items:center;
+    }
+    select{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.92);
+      padding:6px 10px;
+      border-radius: 999px;
+      font-weight:800;
       font-size:11px;
       outline:none;
     }
 
-    /* Mobile */
+    /* MOBILE */
     @media (max-width: 980px){
-      body{overflow:auto}
-      .layout{
-        height:auto;
-        grid-template-columns:1fr;
-      }
-      .panel{height:70vh}
-      .sessionBody{height:auto}
+      .main{ grid-template-columns: 1fr; }
+      .leftTitle{ min-width:unset; }
+      body{ overflow:auto; }
+      html,body{ height:auto; }
+      .app{ height:auto; min-height:100vh; overflow:visible; }
+      .main{ min-height: 820px; }
+      .panel{ min-height: 520px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="topbar">
-    <div class="leftTitle">
-      <img id="teamLogoTop" class="teamLogo" src="" alt="Logo">
-      <div class="titleBlock">
-        <div class="titleLine" id="topTitle">F1 MANAGER 2025 — CORRIDA</div>
-        <div class="subLine" id="topSub">Volta 1 • Clima: Seco • Pista: 26°C</div>
-      </div>
-    </div>
-
-    <div class="rightControls">
-      <div class="speedWrap">
-        <button class="chipBtn active" data-speed="1">1x</button>
-        <button class="chipBtn" data-speed="2">2x</button>
-        <button class="chipBtn" data-speed="4">4x</button>
-      </div>
-      <button class="pill" id="btnLobby">VOLTAR AO LOBBY</button>
-    </div>
-  </div>
-
-  <div class="layout">
-    <!-- MAPA -->
-    <div class="panel" id="mapPanel">
-      <div class="panelHeader">
-        <div class="hTitle">MAPA DA PISTA</div>
-        <div class="hMeta" id="mapMeta">SVG • pathPoints • 60fps</div>
-      </div>
-      <div class="mapBody">
-        <div class="mapViewport">
-          <div id="svgHost" aria-label="Mapa"></div>
+  <div class="app">
+    <div class="topbar">
+      <div class="leftTitle">
+        <div class="teamBadge" title="Equipe">
+          <img id="teamLogoTop" alt="" />
+        </div>
+        <div class="titleBlock">
+          <div class="t1" id="topTitle">F1 MANAGER 2025 — CORRIDA</div>
+          <div class="t2" id="topSub">Volta 1 • Clima: — • Pista: —°C</div>
         </div>
       </div>
-    </div>
 
-    <!-- SESSÃO + SEUS PILOTOS -->
-    <div class="panel" id="sessionPanel">
-      <div class="panelHeader">
-        <div class="hTitle">SESSÃO</div>
-        <div class="hMeta" id="timeMeta">TEMPO REAL</div>
-      </div>
-
-      <div class="sessionBody">
-        <div class="sessionList" id="driversList"></div>
-
-        <div class="myHeader">
-          <span>SEUS PILOTOS</span>
-          <span id="myMeta" style="color:rgba(255,255,255,.55); font-size:12px;">—</span>
+      <div class="midControls">
+        <div class="speedGroup" aria-label="Velocidade">
+          <button class="speedBtn active" data-mult="1">1x</button>
+          <button class="speedBtn" data-mult="2">2x</button>
+          <button class="speedBtn" data-mult="4">4x</button>
         </div>
 
-        <div class="myCards">
-          <div class="card" id="userCard0">
-            <div class="cardTop">
-              <img class="cardFace" id="userFace0" src="" alt="Piloto 1">
-              <div class="cardInfo">
-                <div class="n" id="userName0">Piloto 1</div>
-                <div class="t" id="userTeam0">Equipe</div>
-              </div>
-            </div>
+        <button class="btnLobby" id="btnLobby">VOLTAR AO LOBBY</button>
+      </div>
+    </div>
 
-            <div class="stats">
-              <div>Carro: <b id="userCar0">100%</b></div>
-              <div>Pneu: <b id="userTyre0">100%</b></div>
-              <div>Pneu: <b id="userCompound0">M</b></div>
-              <div>Motor: <b id="userEngine0">M2</b></div>
-              <div>Agress.: <b id="userAggr0">A2</b></div>
-              <div>ERS: <b id="userERS0">50%</b></div>
-            </div>
+    <div class="main">
+      <!-- TRACK -->
+      <div class="panel trackPanel">
+        <div class="panelHeader">
+          <div class="hTitle">MAPA DA PISTA</div>
+          <div class="hSub" id="trackInfo">SVG • pathPoints • 60fps</div>
+        </div>
 
-            <div class="actions">
-              <button class="btn primary" data-ui="pit" data-i="0">PIT</button>
-
-              <select class="select" data-ui="compound" data-i="0">
-                <option value="S">S (Soft)</option>
-                <option value="M" selected>M (Medium)</option>
-                <option value="H">H (Hard)</option>
-                <option value="I">I (Inter)</option>
-                <option value="W">W (Wet)</option>
-              </select>
-
-              <button class="btn" data-ui="mode" data-i="0" data-mode="save">ECONOMIZAR</button>
-              <button class="btn good" data-ui="mode" data-i="0" data-mode="push">ATAQUE</button>
-
-              <button class="btn" data-ui="engine" data-i="0" data-d="-1">MOTOR -</button>
-              <button class="btn" data-ui="engine" data-i="0" data-d="1">MOTOR +</button>
-
-              <button class="btn" data-ui="aggr" data-i="0" data-d="-1">AGRESS -</button>
-              <button class="btn" data-ui="aggr" data-i="0" data-d="1">AGRESS +</button>
-
-              <button class="btn" data-ui="ers" data-i="0">ERS BOOST</button>
-            </div>
+        <div class="trackStage">
+          <div class="trackFrame" id="trackFrame">
+            <div class="svgHost" id="svgHost"></div>
+            <canvas id="raceCanvas"></canvas>
+            <div class="loadingOverlay" id="loadingOverlay">Carregando pista…</div>
           </div>
+        </div>
+      </div>
 
-          <div class="card" id="userCard1">
-            <div class="cardTop">
-              <img class="cardFace" id="userFace1" src="" alt="Piloto 2">
-              <div class="cardInfo">
-                <div class="n" id="userName1">Piloto 2</div>
-                <div class="t" id="userTeam1">Equipe</div>
-              </div>
-            </div>
+      <!-- SESSION -->
+      <div class="panel sessionPanel">
+        <div class="sessionHeader">
+          <div class="hTitle">SESSÃO</div>
+          <div class="hSub">TEMPO REAL</div>
+        </div>
 
-            <div class="stats">
-              <div>Carro: <b id="userCar1">100%</b></div>
-              <div>Pneu: <b id="userTyre1">100%</b></div>
-              <div>Pneu: <b id="userCompound1">M</b></div>
-              <div>Motor: <b id="userEngine1">M2</b></div>
-              <div>Agress.: <b id="userAggr1">A2</b></div>
-              <div>ERS: <b id="userERS1">50%</b></div>
-            </div>
+        <div class="sessionList" id="sessionList"></div>
 
-            <div class="actions">
-              <button class="btn primary" data-ui="pit" data-i="1">PIT</button>
-
-              <select class="select" data-ui="compound" data-i="1">
-                <option value="S">S (Soft)</option>
-                <option value="M" selected>M (Medium)</option>
-                <option value="H">H (Hard)</option>
-                <option value="I">I (Inter)</option>
-                <option value="W">W (Wet)</option>
-              </select>
-
-              <button class="btn" data-ui="mode" data-i="1" data-mode="save">ECONOMIZAR</button>
-              <button class="btn good" data-ui="mode" data-i="1" data-mode="push">ATAQUE</button>
-
-              <button class="btn" data-ui="engine" data-i="1" data-d="-1">MOTOR -</button>
-              <button class="btn" data-ui="engine" data-i="1" data-d="1">MOTOR +</button>
-
-              <button class="btn" data-ui="aggr" data-i="1" data-d="-1">AGRESS -</button>
-              <button class="btn" data-ui="aggr" data-i="1" data-d="1">AGRESS +</button>
-
-              <button class="btn" data-ui="ers" data-i="1">ERS BOOST</button>
-            </div>
+        <div class="yourDrivers">
+          <div class="yourTitle">SEUS PILOTOS</div>
+          <div class="cards">
+            <div class="card" id="card1"></div>
+            <div class="card" id="card2"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="race.js"></script>
+<script>
+/* ============================================================
+   RACE.HTML (SELF-CONTAINED)
+   - Corrige erro: assets/tracks/<track>.json (não usa mais)
+   - Carrega: assets/tracks/<track>.svg
+   - Gera pathPoints via getTotalLength/getPointAtLength
+   - Desenha pista (linha branca/cinza) e carros “colados” na pista
+   ============================================================ */
+
+(function(){
+  "use strict";
+
+  // ---------- Helpers
+  const $ = (s, el=document) => el.querySelector(s);
+  const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
+
+  function getParam(name, fallback=""){
+    const u = new URL(location.href);
+    return u.searchParams.get(name) ?? fallback;
+  }
+
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+  function safeJSONParse(str, fallback){
+    try{ return JSON.parse(str); }catch(e){ return fallback; }
+  }
+
+  // ---------- State
+  const state = {
+    track: (getParam("track","australia") || "australia").toLowerCase(),
+    gp: decodeURIComponent(getParam("gp","GP da Austrália 2025")),
+    userTeam: (getParam("userTeam","ferrari") || "ferrari").toLowerCase(),
+    speedMult: 1,
+    loaded: false,
+    points: [],
+    bbox: {minX:0,minY:0,maxX:1,maxY:1},
+    cars: [],
+    lastT: performance.now(),
+    lapCountTarget: 5,
+    weather: { type:"Seco", temp:26 },
+  };
+
+  // ---------- UI refs
+  const teamLogoTop = $("#teamLogoTop");
+  const topTitle = $("#topTitle");
+  const topSub = $("#topSub");
+  const svgHost = $("#svgHost");
+  const canvas = $("#raceCanvas");
+  const ctx = canvas.getContext("2d");
+  const overlay = $("#loadingOverlay");
+  const sessionList = $("#sessionList");
+  const card1 = $("#card1");
+  const card2 = $("#card2");
+  const btnLobby = $("#btnLobby");
+
+  // ---------- Topbar
+  topTitle.textContent = state.gp;
+  btnLobby.addEventListener("click", () => {
+    // mantém seu fluxo atual: volta para index/lobby
+    // Ajuste se seu lobby tiver outro nome
+    location.href = "index.html";
+  });
+
+  // speed buttons
+  $$(".speedBtn").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      $$(".speedBtn").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      state.speedMult = Number(b.dataset.mult || "1") || 1;
+    });
+  });
+
+  // ---------- Assets paths (mantém padrão “assets/...”)
+  function teamLogoPath(team){
+    // ajuste se seu logo estiver em outro lugar
+    // fallback: tenta png em assets/teams/<team>/logo.png
+    return `assets/teams/${team}/logo.png`;
+  }
+
+  function driverAvatarPath(driver){
+    // ajuste se seu avatar estiver em outro lugar
+    // fallback: assets/drivers/<slug>.png
+    return `assets/drivers/${driver.slug}.png`;
+  }
+
+  // ---------- Rosters / Grid
+  function defaultRoster(){
+    // fallback estável (sem depender do seu storage)
+    const list = [
+      ["Max Verstappen","redbull"],["Sergio Pérez","redbull"],
+      ["Lewis Hamilton","mercedes"],["George Russell","mercedes"],
+      ["Charles Leclerc","ferrari"],["Carlos Sainz","ferrari"],
+      ["Lando Norris","mclaren"],["Oscar Piastri","mclaren"],
+      ["Fernando Alonso","astonmartin"],["Lance Stroll","astonmartin"],
+      ["Esteban Ocon","alpine"],["Pierre Gasly","alpine"],
+      ["Alex Albon","williams"],["Logan Sargeant","williams"],
+      ["Kevin Magnussen","haas"],["Nico Hülkenberg","haas"],
+      ["Yuki Tsunoda","rb"],["Liam Lawson","rb"],
+      ["Guanyu Zhou","sauber"],["Gabriel Bortoleto","sauber"]
+    ];
+    return list.map(([name,team])=>{
+      const slug = name.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+        .replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+      return { name, team, slug };
+    });
+  }
+
+  function loadRoster(){
+    // Tenta aproveitar seu ecossistema (se existir) sem quebrar.
+    // Se não existir nada, usa fallback.
+    const keys = [
+      "f1m_roster",
+      "drivers",
+      "f1_manager_drivers",
+      "roster"
+    ];
+    for(const k of keys){
+      const raw = localStorage.getItem(k);
+      if(raw){
+        const parsed = safeJSONParse(raw, null);
+        if(Array.isArray(parsed) && parsed.length >= 10){
+          return parsed.map(d=>{
+            const name = d.name || d.driverName || d.nome || "Piloto";
+            const team = (d.team || d.equipe || "team").toLowerCase();
+            const slug = (d.slug || d.id || name).toString().toLowerCase()
+              .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+              .replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+            return { name, team, slug };
+          });
+        }
+      }
+    }
+    return defaultRoster();
+  }
+
+  function loadGrid(roster){
+    // prioridade: grid da classificação (Q3) se existir
+    const gridKeys = [
+      "q3_results",
+      "qualifyingResultsQ3",
+      "qualifying_results",
+      "race_grid",
+      "grid"
+    ];
+    for(const k of gridKeys){
+      const raw = localStorage.getItem(k);
+      if(raw){
+        const parsed = safeJSONParse(raw, null);
+        if(Array.isArray(parsed) && parsed.length >= 10){
+          // normaliza para {name,team,slug}
+          const map = new Map(roster.map(r=>[r.slug, r]));
+          const out = [];
+          for(const it of parsed){
+            const name = it.name || it.driverName || it.nome;
+            const team = (it.team || it.equipe || "").toLowerCase();
+            const slug = (it.slug || it.id || name || "").toString().toLowerCase()
+              .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+              .replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+            out.push(map.get(slug) || { name: name||"Piloto", team: team||"team", slug: slug||("piloto-"+out.length) });
+          }
+          // garante 20 se possível
+          if(out.length >= 10) return out.slice(0, 20);
+        }
+      }
+    }
+    // fallback: roster ordenado
+    return roster.slice(0,20);
+  }
+
+  // ---------- Your team pilots
+  function pickYourDrivers(grid){
+    const yours = grid.filter(d => (d.team||"").toLowerCase() === state.userTeam);
+    if(yours.length >= 2) return [yours[0], yours[1]];
+    if(yours.length === 1) return [yours[0], grid.find(d=>d!==yours[0]) || grid[1]];
+    return [grid[0], grid[1]];
+  }
+
+  // ---------- Track loading from SVG (NO JSON)
+  async function loadTrackSVG(track){
+    const svgUrl = `assets/tracks/${track}.svg`;
+    const res = await fetch(svgUrl, { cache:"no-store" });
+    if(!res.ok) throw new Error(`Falha ao carregar: ${svgUrl}`);
+    const text = await res.text();
+
+    svgHost.innerHTML = text;
+
+    // tenta achar um path “principal”
+    const svg = svgHost.querySelector("svg");
+    if(!svg) throw new Error("SVG inválido (sem <svg>).");
+
+    // se o SVG vier com width/height fixos, deixamos responsivo
+    svg.removeAttribute("width");
+    svg.removeAttribute("height");
+    svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+
+    // pega o primeiro path “grande”
+    const paths = Array.from(svg.querySelectorAll("path"));
+    if(!paths.length) throw new Error("SVG sem <path>.");
+
+    let main = paths[0];
+    let bestLen = 0;
+    for(const p of paths){
+      try{
+        const len = p.getTotalLength();
+        if(len > bestLen){
+          bestLen = len; main = p;
+        }
+      }catch(e){}
+    }
+
+    // estilo da pista (garante linha branca/cinza)
+    paths.forEach(p=>{
+      p.setAttribute("fill","none");
+      p.setAttribute("stroke","rgba(255,255,255,.16)");
+      p.setAttribute("stroke-width","10");
+      p.setAttribute("stroke-linecap","round");
+      p.setAttribute("stroke-linejoin","round");
+      p.style.filter = "drop-shadow(0 0 10px rgba(255,255,255,.15))";
+    });
+    // pista principal mais forte
+    main.setAttribute("stroke","rgba(255,255,255,.75)");
+    main.setAttribute("stroke-width","12");
+
+    // gera pontos
+    const total = main.getTotalLength();
+    const sampleN = 950; // quanto maior, mais “colado” na pista
+    const pts = [];
+    let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+
+    for(let i=0;i<sampleN;i++){
+      const t = (i/(sampleN-1)) * total;
+      const pt = main.getPointAtLength(t);
+      const x = pt.x, y = pt.y;
+      pts.push({x,y});
+      if(x<minX) minX=x; if(y<minY) minY=y;
+      if(x>maxX) maxX=x; if(y>maxY) maxY=y;
+    }
+
+    // salva no state
+    state.points = pts;
+    state.bbox = {minX,minY,maxX,maxY};
+    return true;
+  }
+
+  function fallbackOvalTrack(){
+    // fallback seguro caso o svg falhe — pelo menos não quebra a corrida
+    svgHost.innerHTML = "";
+    const pts = [];
+    const cx=0, cy=0, rx=220, ry=140;
+    for(let i=0;i<900;i++){
+      const a = (i/900) * Math.PI*2;
+      pts.push({ x: cx + Math.cos(a)*rx, y: cy + Math.sin(a)*ry });
+    }
+    state.points = pts;
+    state.bbox = {minX:-rx, minY:-ry, maxX:rx, maxY:ry};
+  }
+
+  // ---------- Canvas resize / transform
+  function resizeCanvas(){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  function worldToCanvas(pt){
+    // converte pontos do SVG para coordenadas dentro do canvas
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
+
+    const bx = state.bbox;
+    const bw = Math.max(1e-6, bx.maxX - bx.minX);
+    const bh = Math.max(1e-6, bx.maxY - bx.minY);
+
+    const pad = 30;
+    const scale = Math.min((w - pad*2)/bw, (h - pad*2)/bh);
+
+    const x = (pt.x - bx.minX) * scale + (w - bw*scale)/2;
+    const y = (pt.y - bx.minY) * scale + (h - bh*scale)/2;
+
+    return {x,y};
+  }
+
+  // ---------- Cars
+  function buildCars(grid){
+    // carros com progresso inicial escalonado para não “explodir” fora da pista
+    const cars = grid.map((d, i)=>{
+      const seed = (i+1)*997;
+      const baseSpeed = 0.022 + ((seed % 17)/1000); // velocidade base em “voltas por segundo”
+      return {
+        driver: d,
+        idx: i,
+        prog: (i * 0.008) % 1,
+        speed: baseSpeed,
+        laps: 0,
+        tyre: "M",
+        status: "NORMAL",
+        pitQueued: false,
+        pitTimer: 0,
+        delta: 0
+      };
+    });
+    state.cars = cars;
+  }
+
+  // ---------- Session UI
+  function renderSession(){
+    // ordena por progresso total (laps + prog)
+    const sorted = [...state.cars].sort((a,b)=>{
+      const ta = a.laps + a.prog;
+      const tb = b.laps + b.prog;
+      return tb - ta;
+    });
+
+    sessionList.innerHTML = "";
+    sorted.forEach((c, i)=>{
+      const row = document.createElement("div");
+      row.className = "row";
+
+      const pos = document.createElement("div");
+      pos.className = "pos";
+      pos.textContent = (i+1);
+
+      const nb = document.createElement("div");
+      nb.className = "nameBlock";
+      const n1 = document.createElement("div");
+      n1.className = "n1";
+      n1.textContent = c.driver.name;
+
+      const n2 = document.createElement("div");
+      n2.className = "n2";
+      n2.textContent = `${(c.driver.team||"").toUpperCase()} • Voltas: ${c.laps} • Pneu: ${c.tyre}`;
+
+      nb.appendChild(n1);
+      nb.appendChild(n2);
+
+      const d = document.createElement("div");
+      d.className = "delta";
+      d.textContent = (i===0) ? "LEADER" : "+0.000";
+      if(i===0) d.classList.add("muted");
+
+      row.appendChild(pos);
+      row.appendChild(nb);
+      row.appendChild(d);
+      sessionList.appendChild(row);
+    });
+  }
+
+  // ---------- Your cards
+  function buildDriverCard(el, car){
+    const d = car.driver;
+
+    el.innerHTML = `
+      <div class="cardTop">
+        <div class="avatar"><img alt="" /></div>
+        <div class="cName">
+          <div class="p1">${d.name}</div>
+          <div class="p2">${(d.team||"Equipe").toUpperCase()} • ${car.status}</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div>Pneu: <b style="color:rgba(255,255,255,.9)">${car.tyre}</b></div>
+        <div>Carro: <b style="color:rgba(255,255,255,.9)">100%</b></div>
+        <div>ERS: <b style="color:rgba(255,255,255,.9)">50%</b></div>
+      </div>
+
+      <div class="rowBtns">
+        <div class="pill red" data-action="pit">PIT</div>
+        <select data-action="tyre">
+          <option value="S">S (Soft)</option>
+          <option value="M" selected>M (Medium)</option>
+          <option value="H">H (Hard)</option>
+          <option value="W">W (Wet)</option>
+          <option value="I">I (Inter)</option>
+        </select>
+
+        <div class="pill" data-action="eco">ECONOMIZAR</div>
+        <div class="pill green" data-action="atk">ATAQUE</div>
+        <div class="pill" data-action="m-">MOTOR -</div>
+        <div class="pill" data-action="m+">MOTOR +</div>
+        <div class="pill" data-action="a-">AGRESS -</div>
+        <div class="pill" data-action="a+">AGRESS +</div>
+        <div class="pill" data-action="ers">ERS BOOST</div>
+      </div>
+    `;
+
+    // avatar (sem “piscar”/quebrar)
+    const img = el.querySelector(".avatar img");
+    img.src = driverAvatarPath(d);
+    img.onerror = () => {
+      img.removeAttribute("src");
+      img.style.display = "none";
+    };
+
+    // handlers
+    el.querySelector('[data-action="pit"]').addEventListener("click", ()=>{
+      // pit real você quer depois; aqui é “fila + troca de pneu” sem quebrar nada
+      car.pitQueued = true;
+    });
+
+    el.querySelector('select[data-action="tyre"]').addEventListener("change", (ev)=>{
+      car.tyre = ev.target.value;
+    });
+
+    el.querySelector('[data-action="eco"]').addEventListener("click", ()=>{
+      car.status = "ECO";
+      car.speed = Math.max(0.010, car.speed - 0.004);
+      buildDriverCard(el, car);
+    });
+
+    el.querySelector('[data-action="atk"]').addEventListener("click", ()=>{
+      car.status = "ATAQUE";
+      car.speed = Math.min(0.060, car.speed + 0.004);
+      buildDriverCard(el, car);
+    });
+
+    // ajustes finos (não muda UI, só altera comportamento)
+    const bump = (delta)=>{ car.speed = clamp(car.speed + delta, 0.008, 0.070); };
+
+    el.querySelector('[data-action="m-"]').addEventListener("click", ()=> bump(-0.002));
+    el.querySelector('[data-action="m+"]').addEventListener("click", ()=> bump(+0.002));
+    el.querySelector('[data-action="a-"]').addEventListener("click", ()=> bump(-0.001));
+    el.querySelector('[data-action="a+"]').addEventListener("click", ()=> bump(+0.001));
+    el.querySelector('[data-action="ers"]').addEventListener("click", ()=> bump(+0.003));
+  }
+
+  function renderYourDrivers(yourCars){
+    buildDriverCard(card1, yourCars[0]);
+    buildDriverCard(card2, yourCars[1]);
+  }
+
+  // ---------- Weather (simples por enquanto, estável)
+  function initWeather(){
+    // se você tiver sistema de meteo em storage, pode plugar depois
+    const types = ["Seco","Seco","Seco","Chuva","Seco"];
+    const pick = types[Math.floor(Math.random()*types.length)];
+    state.weather.type = pick;
+    state.weather.temp = (pick==="Chuva") ? 21 : 26;
+    topSub.textContent = `Volta 1 • Clima: ${state.weather.type} • Pista: ${state.weather.temp}°C`;
+  }
+
+  // ---------- Team logo
+  function initTeamLogo(){
+    teamLogoTop.src = teamLogoPath(state.userTeam);
+    teamLogoTop.onerror = ()=>{ teamLogoTop.style.display="none"; };
+  }
+
+  // ---------- Animation / Drawing
+  function draw(){
+    // limpa
+    const rect = canvas.getBoundingClientRect();
+    ctx.clearRect(0,0,rect.width, rect.height);
+
+    // desenha carros como pontos/círculos (colados na pista)
+    const pts = state.points;
+    if(!pts || pts.length < 10) return;
+
+    for(const car of state.cars){
+      const i = Math.floor(car.prog * (pts.length-1));
+      const p = pts[i];
+      if(!p) continue;
+
+      const c = worldToCanvas(p);
+
+      // “pinta” carro (ponto)
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 4.2, 0, Math.PI*2);
+      ctx.fillStyle = "rgba(255,255,255,.92)";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 8.8, 0, Math.PI*2);
+      ctx.strokeStyle = "rgba(255,42,42,.12)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  function step(t){
+    const dt = Math.min(0.05, (t - state.lastT)/1000);
+    state.lastT = t;
+
+    if(state.loaded){
+      // update cars
+      for(const car of state.cars){
+        // PIT (simples, mas funcional — não quebra nada)
+        if(car.pitQueued && car.pitTimer <= 0){
+          // “entra no pit” por 3.2s
+          car.pitQueued = false;
+          car.pitTimer = 3.2;
+        }
+
+        if(car.pitTimer > 0){
+          car.pitTimer -= dt * state.speedMult;
+          // durante pit, “anda devagar”
+          car.prog += dt * state.speedMult * (car.speed * 0.15);
+        }else{
+          car.prog += dt * state.speedMult * car.speed;
+        }
+
+        // voltas
+        if(car.prog >= 1){
+          car.prog -= 1;
+          car.laps += 1;
+        }
+      }
+
+      renderSession();
+      draw();
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  // ---------- Boot
+  async function boot(){
+    initTeamLogo();
+    initWeather();
+
+    // Ajusta título
+    $("#topTitle").textContent = state.gp;
+
+    // monta roster + grid
+    const roster = loadRoster();
+    const grid = loadGrid(roster);
+
+    // monta carros + pilotos do usuário
+    buildCars(grid);
+    const yourDrivers = pickYourDrivers(grid);
+    const yourCars = state.cars.filter(c => yourDrivers.some(d => d.slug === c.driver.slug));
+    if(yourCars.length >= 2){
+      renderYourDrivers([yourCars[0], yourCars[1]]);
+    }else{
+      renderYourDrivers([state.cars[0], state.cars[1]]);
+    }
+
+    // tenta carregar SVG da pista
+    overlay.textContent = "Carregando pista…";
+    overlay.style.display = "flex";
+
+    try{
+      await loadTrackSVG(state.track);
+      overlay.style.display = "none";
+      state.loaded = true;
+    }catch(err){
+      // fallback: não trava — evita “tela vazia”
+      console.warn(err);
+      overlay.textContent = `Erro na corrida: Falha ao carregar: assets/tracks/${state.track}.svg`;
+      // se você preferir SEM overlay, comente a linha abaixo:
+      // overlay.style.display = "none";
+      fallbackOvalTrack();
+      state.loaded = true;
+      // mantém overlay para você ver o erro, mas a corrida não quebra.
+    }
+
+    // canvas
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    // primeira render
+    renderSession();
+    draw();
+
+    requestAnimationFrame(step);
+  }
+
+  boot();
+})();
+</script>
 </body>
 </html>
