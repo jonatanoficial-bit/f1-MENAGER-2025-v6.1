@@ -1,7 +1,7 @@
 // ==========================================================
 // F1 MANAGER 2025 – RACE.JS (Corrida)
-// FIX: lista da sessão com fotos gigantes + card 2 "Piloto" fallback
-// ETAPA 1: Pit Stop + Pneus + Motor + Meteorologia + Grid do Q3
+// FIX: equipe errada no grid (ex: Max como ferrari) + "Seus pilotos" errando
+// Mantém: mapa + lista sessão + controles + pit + pneus + clima
 // ==========================================================
 
 (() => {
@@ -19,6 +19,45 @@
     canada: 77000, spain: 78000, austria: 65000, silverstone: 83000, hungary: 77000,
     spa: 115000, zandvoort: 74000, monza: 78000, singapore: 100000, suzuka: 82000,
     qatar: 87000, austin: 89000, mexico: 77000, brazil: 70000, abu_dhabi: 84000
+  };
+
+  // ====== OVERRIDES IMPORTANTES (corrige grid salvo com teamKey errado) ======
+  // Se no seu save você usa outras equipes/nomes, me diga e eu adiciono.
+  const DRIVER_TEAM_OVERRIDES = {
+    "Max Verstappen": "redbull",
+    "Sergio Pérez": "redbull",
+    "Lewis Hamilton": "mercedes",
+    "George Russell": "mercedes",
+    "Charles Leclerc": "ferrari",
+    "Carlos Sainz": "ferrari",
+    "Lando Norris": "mclaren",
+    "Oscar Piastri": "mclaren",
+    "Fernando Alonso": "astonmartin",
+    "Lance Stroll": "astonmartin",
+    "Pierre Gasly": "alpine",
+    "Esteban Ocon": "alpine",
+    "Kevin Magnussen": "haas",
+    "Oliver Bearman": "haas",
+    "Alex Albon": "williams",
+    "Logan Sargeant": "williams",
+    "Yuki Tsunoda": "rb",
+    "Liam Lawson": "rb",
+    "Daniel Ricciardo": "rb",
+    "Nico Hülkenberg": "haas"
+  };
+
+  // Preferência para escolher “SEUS PILOTOS” por time (evita pegar piloto errado)
+  const TEAM_DRIVER_PREFS = {
+    ferrari: ["Charles Leclerc", "Carlos Sainz", "Lewis Hamilton"],
+    mercedes: ["Lewis Hamilton", "George Russell"],
+    redbull: ["Max Verstappen", "Sergio Pérez"],
+    mclaren: ["Lando Norris", "Oscar Piastri"],
+    astonmartin: ["Fernando Alonso", "Lance Stroll"],
+    alpine: ["Pierre Gasly", "Esteban Ocon"],
+    haas: ["Nico Hülkenberg", "Kevin Magnussen", "Oliver Bearman"],
+    williams: ["Alex Albon", "Logan Sargeant"],
+    rb: ["Yuki Tsunoda", "Liam Lawson", "Daniel Ricciardo"],
+    sauber: ["Valtteri Bottas", "Zhou Guanyu"]
   };
 
   const TYRES = {
@@ -101,7 +140,7 @@
   window.addEventListener("DOMContentLoaded", initRace);
 
   async function initRace() {
-    injectRaceStyles(); // <<< FIX DO SEU PRINT (fotos gigantes)
+    injectRaceStyles();
 
     const params = new URLSearchParams(location.search);
     state.track = params.get("track") || "australia";
@@ -118,9 +157,6 @@
     state.grid = buildGridFromQualyOrFallback();
     state.drivers = buildDriversFromGrid(state.grid);
 
-    // FIX: garante 2 pilotos reais no card do usuário (sem "Piloto")
-    forceUserTeamPair();
-
     fillUserCards();
 
     await loadTrackAndBuildVisuals();
@@ -134,7 +170,6 @@
     const st = document.createElement("style");
     st.id = "race-js-injected-styles";
     st.textContent = `
-      /* ===== FIX LISTA SESSÃO (fotos gigantes / layout quebrado) ===== */
       .driver-row{
         display:flex; align-items:center; gap:10px;
         padding:10px 10px; margin:8px 0;
@@ -142,15 +177,11 @@
         background: rgba(255,255,255,0.06);
         border: 1px solid rgba(255,255,255,0.08);
       }
-      .driver-row .pos{
-        width:28px; text-align:center; font-weight:700; opacity:0.9;
-      }
+      .driver-row .pos{ width:28px; text-align:center; font-weight:700; opacity:0.9; }
       .driver-row img.face{
         width:44px !important; height:44px !important;
         max-width:44px !important; max-height:44px !important;
-        border-radius:999px;
-        object-fit:cover;
-        flex:0 0 auto;
+        border-radius:999px; object-fit:cover; flex:0 0 auto;
         background: rgba(0,0,0,0.25);
       }
       .driver-row .meta{ flex:1; min-width:0; }
@@ -165,8 +196,6 @@
         border-color: rgba(255,255,255,0.22);
         background: rgba(255,255,255,0.10);
       }
-
-      /* garante scroll na lista da sessão */
       #drivers-list, #session-list, .session-list, [data-session-list]{
         overflow-y:auto;
         max-height: calc(100vh - 190px);
@@ -207,7 +236,6 @@
     ].filter(Boolean);
 
     setTextIf(state.el.title, state.gp);
-
     if (state.el.subtitle) {
       state.el.subtitle.textContent = `Volta 1 • Clima: ${state.weather.name} • Pista: ${state.trackTempC}°C`;
     }
@@ -227,15 +255,6 @@
       });
       const one = btns.find(b => String(b.dataset.speed) === "1");
       if (one) one.classList.add("active");
-    } else {
-      const b1 = document.getElementById("speed-1");
-      const b2 = document.getElementById("speed-2");
-      const b4 = document.getElementById("speed-4");
-      [b1, b2, b4].forEach((b, i) => {
-        if (!b) return;
-        const v = [1, 2, 4][i];
-        b.addEventListener("click", () => (state.speedMultiplier = v));
-      });
     }
   }
 
@@ -295,21 +314,35 @@
           .map((x, i) => ({
             id: x.id || `d_${i}`,
             name: x.name || `Piloto ${i + 1}`,
-            teamKey: (x.teamKey || "unknown"),
+            teamKey: (x.teamKey || x.team || x.teamName || "unknown"),
             position: i + 1,
             bestLap: x.bestLap ?? null
           }));
       }
     }
 
-    // fallback final: 20 genéricos (NUNCA 2)
     return Array.from({ length: 20 }, (_, i) => ({
       id: `gen_${i + 1}`,
       name: `Piloto ${i + 1}`,
-      teamKey: i < 2 ? state.userTeam : "unknown",
+      teamKey: "unknown",
       position: i + 1,
       bestLap: null
     }));
+  }
+
+  function normalizeTeamKey(teamKey) {
+    const k = String(teamKey || "unknown").toLowerCase();
+    if (k.includes("red bull") || k.includes("redbull")) return "redbull";
+    if (k.includes("aston")) return "astonmartin";
+    if (k.includes("kick") || k.includes("sauber") || k.includes("audi")) return "sauber";
+    if (k === "rb" || k.includes("visa") || k.includes("racing bulls")) return "rb";
+    if (k.includes("mercedes")) return "mercedes";
+    if (k.includes("ferrari")) return "ferrari";
+    if (k.includes("mclaren")) return "mclaren";
+    if (k.includes("alpine")) return "alpine";
+    if (k.includes("haas")) return "haas";
+    if (k.includes("williams")) return "williams";
+    return k || "unknown";
   }
 
   function buildDriversFromGrid(grid) {
@@ -321,17 +354,20 @@
 
     return grid.map((g, idx) => {
       const name = g.name || `Piloto ${idx + 1}`;
-      const teamKey = String(g.teamKey || "unknown").toLowerCase();
-      const teamName = teamKey || "Equipe";
-      const rating = 75;
-      const form = 55;
 
+      // ===== FIX PRINCIPAL: override por nome (corrige Max = ferrari, etc) =====
+      const override = DRIVER_TEAM_OVERRIDES[name];
+      let teamKey = normalizeTeamKey(override || g.teamKey || "unknown");
+
+      const teamName = teamKey;
       const color = teamColorFromKey(teamKey);
       const logo = teamLogoFromKey(teamKey);
       const code = nameToCode3(name);
 
-      let tyre = "M";
-      if (state.weather.wet) tyre = "I";
+      let tyre = state.weather.wet ? "I" : "M";
+
+      const rating = 75;
+      const form = 55;
 
       const rMul = 1 + (clamp(rating, 40, 99) - 92) * 0.0025;
       const fMul = 1 + (clamp(form, 0, 100) - 55) * 0.0012;
@@ -358,8 +394,6 @@
         progress: clamp((idx * 0.012) + Math.random() * 0.01, 0, 0.25),
         targetLapMs,
 
-        lastLapMs: null,
-        bestLapMs: null,
         totalTimeMs: 0,
         gapToLeaderMs: 0,
 
@@ -377,42 +411,18 @@
     });
   }
 
-  function forceUserTeamPair() {
-    // FIX: se só existir 1 piloto da sua equipe, pega o "companheiro" pelo teamKey do primeiro encontrado
-    const team = state.userTeam;
-    let ours = state.drivers.filter(d => d.teamKey === team);
-
-    if (ours.length >= 2) return;
-
-    // tenta: achar alguém que tenha o mesmo teamKey do piloto mais próximo do usuário no grid
-    const first = ours[0] || state.drivers.find(d => d.teamKey === team) || null;
-    if (!first) return;
-
-    const teammate = state.drivers.find(d => d.teamKey === first.teamKey && d.id !== first.id);
-    if (teammate) return;
-
-    // fallback: força o 2º do grid a ser mesma equipe (evita "Piloto")
-    const candidate = state.drivers.find(d => d.id !== first.id);
-    if (candidate) {
-      candidate.teamKey = first.teamKey;
-      candidate.teamName = first.teamName;
-      candidate.color = first.color;
-      candidate.logo = first.logo;
-    }
-  }
-
   function teamColorFromKey(teamKey) {
     const k = String(teamKey || "").toLowerCase();
-    if (k.includes("ferrari")) return "#e10600";
-    if (k.includes("redbull") || k.includes("bull")) return "#1e41ff";
-    if (k.includes("mercedes")) return "#00d2be";
-    if (k.includes("mclaren")) return "#ff8700";
-    if (k.includes("aston")) return "#006f62";
-    if (k.includes("alpine")) return "#2293d1";
-    if (k.includes("haas")) return "#b6babd";
-    if (k.includes("williams")) return "#00a0de";
-    if (k.includes("sauber") || k.includes("kick")) return "#52e252";
-    if (k.includes("rb")) return "#2b4562";
+    if (k === "ferrari") return "#e10600";
+    if (k === "redbull") return "#1e41ff";
+    if (k === "mercedes") return "#00d2be";
+    if (k === "mclaren") return "#ff8700";
+    if (k === "astonmartin") return "#006f62";
+    if (k === "alpine") return "#2293d1";
+    if (k === "haas") return "#b6babd";
+    if (k === "williams") return "#00a0de";
+    if (k === "sauber") return "#52e252";
+    if (k === "rb") return "#2b4562";
     return "#ffffff";
   }
 
@@ -638,7 +648,6 @@
       const row = document.createElement("div");
       row.className = "driver-row";
 
-      // IMPORTANTE: aqui usamos avatar pequeno (não foto gigante)
       const faceSrc = `assets/faces/${d.code}.png`;
       const tyreTxt = d.tyre || "M";
       const gapTxt = idx === 0 ? "LEADER" : formatGapMs(d.gapToLeaderMs);
@@ -661,12 +670,21 @@
   }
 
   function getUserDrivers() {
+    const prefs = TEAM_DRIVER_PREFS[state.userTeam] || [];
+    const byName = [];
+
+    prefs.forEach(n => {
+      const found = state.drivers.find(d => d.name === n);
+      if (found) byName.push(found);
+    });
+
+    if (byName.length >= 2) return byName.slice(0, 2);
+
     const ours = state.drivers.filter(d => d.teamKey === state.userTeam);
-    if (ours.length >= 2) return ours.slice(0, 2);
-    if (ours.length === 1) {
-      const teammate = state.drivers.find(d => d.teamKey === ours[0].teamKey && d.id !== ours[0].id);
-      return teammate ? [ours[0], teammate] : [ours[0], state.drivers[1] || ours[0]];
-    }
+    const merged = [...byName, ...ours.filter(d => !byName.includes(d))];
+
+    if (merged.length >= 2) return merged.slice(0, 2);
+
     // fallback extremo
     return [state.drivers[0], state.drivers[1] || state.drivers[0]];
   }
