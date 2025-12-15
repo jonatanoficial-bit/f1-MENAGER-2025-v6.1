@@ -3,116 +3,458 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>F1 MANAGER 2025 — Corrida</title>
-  <link rel="stylesheet" href="race.css" />
+  <title>F1 Manager 2025 — Corrida</title>
+
+  <!-- Se você já usa ui.css no projeto, mantenha. -->
+  <link rel="stylesheet" href="ui.css" />
+
+  <style>
+    :root{
+      --bg1:#070a14;
+      --bg2:#0b1230;
+      --panel:rgba(255,255,255,.06);
+      --stroke:rgba(255,255,255,.12);
+      --txt:#fff;
+      --muted:rgba(255,255,255,.72);
+      --muted2:rgba(255,255,255,.55);
+      --good:#33d17a;
+      --warn:#ffb000;
+      --bad:#ff4d4d;
+      --chip:rgba(0,0,0,.35);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--txt);
+      background: radial-gradient(1200px 700px at 30% 10%, #0c1a4a 0%, var(--bg2) 35%, var(--bg1) 80%);
+      overflow:hidden;
+    }
+
+    .topbar{
+      height:58px;
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(0,0,0,.28), rgba(0,0,0,.08));
+    }
+
+    .leftTitle{
+      display:flex; align-items:center; gap:10px; min-width:0;
+    }
+
+    .teamLogo{
+      width:26px; height:26px; border-radius:7px;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--stroke);
+      object-fit:contain;
+    }
+
+    .titleBlock{min-width:0}
+    .titleLine{
+      font-weight:900; letter-spacing:.3px;
+      font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .subLine{
+      font-size:12px; color:var(--muted2);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+
+    .rightControls{
+      display:flex; align-items:center; gap:10px; flex-wrap:nowrap;
+    }
+    .speedWrap{
+      display:flex; gap:6px; padding:4px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--stroke);
+      border-radius:999px;
+    }
+    .chipBtn{
+      border:0; cursor:pointer;
+      padding:6px 10px;
+      border-radius:999px;
+      background:transparent;
+      color:var(--muted);
+      font-weight:800;
+      font-size:12px;
+    }
+    .chipBtn.active{
+      background:rgba(255,80,80,.22);
+      color:#fff;
+      border:1px solid rgba(255,80,80,.45);
+    }
+    .pill{
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      font-weight:800;
+      font-size:12px;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .layout{
+      height:calc(100% - 58px);
+      display:grid;
+      grid-template-columns: 1.35fr 0.85fr;
+      gap:12px;
+      padding:12px;
+    }
+
+    .panel{
+      border:1px solid var(--stroke);
+      background:rgba(0,0,0,.18);
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      position:relative;
+    }
+
+    .panelHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 12px;
+      border-bottom:1px solid var(--stroke);
+      background:rgba(255,255,255,.04);
+    }
+    .panelHeader .hTitle{
+      font-weight:900;
+      letter-spacing:.25px;
+      font-size:12px;
+      color:#fff;
+    }
+    .panelHeader .hMeta{
+      font-size:12px;
+      color:var(--muted2);
+      white-space:nowrap;
+    }
+
+    /* MAPA */
+    .mapBody{
+      height:calc(100% - 44px);
+      position:relative;
+      background: rgba(0,0,0,.35);
+    }
+    .mapViewport{
+      position:absolute; inset:0;
+      display:flex; align-items:stretch; justify-content:stretch;
+    }
+    #svgHost{
+      position:relative;
+      width:100%; height:100%;
+      overflow:hidden;
+    }
+    #svgHost svg{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    /* Painel de sessão */
+    .sessionBody{
+      height:calc(100% - 44px);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:10px;
+    }
+
+    .sessionList{
+      flex:1;
+      overflow:auto;
+      padding-right:4px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 28px 1fr 60px;
+      gap:10px;
+      align-items:center;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.05);
+      margin-bottom:8px;
+    }
+    .pos{
+      width:28px;height:28px;
+      border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;
+      background:rgba(0,0,0,.30);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .mini{
+      display:flex; gap:10px; align-items:center; min-width:0;
+    }
+    .miniFace{
+      width:28px;height:28px;border-radius:9px;
+      border:1px solid rgba(255,255,255,.14);
+      object-fit:cover;
+      background:rgba(255,255,255,.06);
+      flex:0 0 auto;
+    }
+    .who{min-width:0}
+    .who .name{
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .who .team{
+      font-size:11px;
+      color:var(--muted2);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .delta{
+      text-align:right;
+      font-variant-numeric:tabular-nums;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .delta .tag{
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:900;
+      color:#fff;
+      font-size:11px;
+    }
+
+    /* Seus pilotos */
+    .myHeader{
+      font-weight:900;
+      font-size:12px;
+      color:#fff;
+      padding:4px 2px 0;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .myCards{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .card{
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      border-radius:16px;
+      padding:10px;
+      overflow:hidden;
+    }
+    .cardTop{
+      display:flex; gap:10px; align-items:center; min-width:0;
+    }
+    .cardFace{
+      width:34px;height:34px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      object-fit:cover;
+      background:rgba(255,255,255,.06);
+      flex:0 0 auto;
+    }
+    .cardInfo{min-width:0}
+    .cardInfo .n{
+      font-weight:900; font-size:13px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .cardInfo .t{
+      font-size:12px; color:var(--muted2);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .stats{
+      display:flex; flex-wrap:wrap; gap:10px;
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .stats b{color:#fff}
+
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:10px;
+    }
+    .btn{
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      font-weight:900;
+      font-size:11px;
+      cursor:pointer;
+    }
+    .btn.primary{
+      border-color:rgba(255,80,80,.45);
+      background:rgba(255,80,80,.18);
+    }
+    .btn.good{
+      border-color:rgba(50,210,120,.45);
+      background:rgba(50,210,120,.14);
+    }
+    .select{
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+      color:#fff;
+      font-weight:900;
+      font-size:11px;
+      outline:none;
+    }
+
+    /* Mobile */
+    @media (max-width: 980px){
+      body{overflow:auto}
+      .layout{
+        height:auto;
+        grid-template-columns:1fr;
+      }
+      .panel{height:70vh}
+      .sessionBody{height:auto}
+    }
+  </style>
 </head>
 
 <body>
-  <div class="topbar" style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 14px;">
-    <div style="display:flex; align-items:center; gap:10px;">
-      <img id="teamLogoTop" src="" alt="Equipe" style="height:32px; width:auto; object-fit:contain; filter:drop-shadow(0 2px 10px rgba(0,0,0,.45));" />
-      <div style="display:flex; flex-direction:column;">
-        <div id="gp-title" style="font-weight:900; letter-spacing:.5px;">F1 MANAGER 2025 — CORRIDA</div>
-        <div style="opacity:.85; font-size:12px;">
-          <span id="race-lap-label">Volta 1</span>
-          <span style="margin:0 8px; opacity:.55;">•</span>
-          <span id="weather-label">Clima: Seco</span>
-          <span style="margin:0 8px; opacity:.55;">•</span>
-          <span id="tracktemp-label">Pista: 26°C</span>
+  <div class="topbar">
+    <div class="leftTitle">
+      <img id="teamLogoTop" class="teamLogo" src="" alt="Logo">
+      <div class="titleBlock">
+        <div class="titleLine" id="topTitle">F1 MANAGER 2025 — CORRIDA</div>
+        <div class="subLine" id="topSub">Volta 1 • Clima: Seco • Pista: 26°C</div>
+      </div>
+    </div>
+
+    <div class="rightControls">
+      <div class="speedWrap">
+        <button class="chipBtn active" data-speed="1">1x</button>
+        <button class="chipBtn" data-speed="2">2x</button>
+        <button class="chipBtn" data-speed="4">4x</button>
+      </div>
+      <button class="pill" id="btnLobby">VOLTAR AO LOBBY</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- MAPA -->
+    <div class="panel" id="mapPanel">
+      <div class="panelHeader">
+        <div class="hTitle">MAPA DA PISTA</div>
+        <div class="hMeta" id="mapMeta">SVG • pathPoints • 60fps</div>
+      </div>
+      <div class="mapBody">
+        <div class="mapViewport">
+          <div id="svgHost" aria-label="Mapa"></div>
         </div>
       </div>
     </div>
 
-    <div style="display:flex; align-items:center; gap:10px;">
-      <div class="speedbar" style="display:flex; gap:8px; align-items:center;">
-        <span style="opacity:.85; font-size:12px;">Velocidade</span>
-        <button class="speed-btn active" data-speed="1">1x</button>
-        <button class="speed-btn" data-speed="2">2x</button>
-        <button class="speed-btn" data-speed="4">4x</button>
+    <!-- SESSÃO + SEUS PILOTOS -->
+    <div class="panel" id="sessionPanel">
+      <div class="panelHeader">
+        <div class="hTitle">SESSÃO</div>
+        <div class="hMeta" id="timeMeta">TEMPO REAL</div>
       </div>
 
-      <button id="btnBackLobby" class="btn" style="padding:10px 14px; border-radius:12px;">VOLTAR AO LOBBY</button>
-    </div>
-  </div>
+      <div class="sessionBody">
+        <div class="sessionList" id="driversList"></div>
 
-  <div class="race-layout" style="display:grid; grid-template-columns: 1.25fr .85fr; gap:14px; padding:12px 14px; height: calc(100vh - 66px);">
-    <div class="panel" style="border-radius:18px; overflow:hidden; position:relative;">
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px;">
-        <div style="font-weight:900; letter-spacing:.6px;">MAPA DA PISTA</div>
-        <div style="opacity:.75; font-size:12px;">SVG • pathPoints • 60fps</div>
-      </div>
-      <div id="track-container" class="track-container" style="width:100%; height: calc(100% - 44px);"></div>
-    </div>
+        <div class="myHeader">
+          <span>SEUS PILOTOS</span>
+          <span id="myMeta" style="color:rgba(255,255,255,.55); font-size:12px;">—</span>
+        </div>
 
-    <div class="hud panel" style="border-radius:18px; overflow:hidden; display:flex; flex-direction:column;">
-      <div style="padding:12px 12px 8px 12px; display:flex; align-items:center; justify-content:space-between;">
-        <div style="font-weight:900; letter-spacing:.6px;">SESSÃO</div>
-        <div style="opacity:.8; font-size:12px;">TEMPO REAL</div>
-      </div>
-
-      <div id="drivers-list" style="padding: 0 12px 10px 12px; overflow:auto; flex: 1 1 auto;"></div>
-
-      <div style="padding:12px; border-top:1px solid rgba(255,255,255,.08);">
-        <div style="font-weight:900; letter-spacing:.6px; margin-bottom:10px;">SEUS PILOTOS</div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          <div class="user-driver-card" id="user-driver-card-0" style="border-radius:16px; padding:10px;">
-            <div style="display:flex; gap:10px; align-items:center;">
-              <img class="user-face" src="" alt="Piloto" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,.18);" />
-              <div style="min-width:0;">
-                <div class="user-name" style="font-weight:900; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Piloto</div>
-                <div class="user-team" style="opacity:.8; font-size:12px;">Equipe</div>
-                <div class="user-status" style="opacity:.9; font-size:12px; margin-top:2px;">Normal</div>
+        <div class="myCards">
+          <div class="card" id="userCard0">
+            <div class="cardTop">
+              <img class="cardFace" id="userFace0" src="" alt="Piloto 1">
+              <div class="cardInfo">
+                <div class="n" id="userName0">Piloto 1</div>
+                <div class="t" id="userTeam0">Equipe</div>
               </div>
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:10px; opacity:.9; font-size:12px; flex-wrap:wrap;">
-              <div>Carro: <b id="user-car-0">--%</b></div>
-              <div>Pneu: <b id="user-tyre-0">--%</b></div>
-              <div>Motor: <b id="user-engine-0">M2</b></div>
-              <div>Agress.: <b id="user-aggr-0">A2</b></div>
-              <div>ERS: <b id="user-ers-0">50%</b></div>
+            <div class="stats">
+              <div>Carro: <b id="userCar0">100%</b></div>
+              <div>Pneu: <b id="userTyre0">100%</b></div>
+              <div>Pneu: <b id="userCompound0">M</b></div>
+              <div>Motor: <b id="userEngine0">M2</b></div>
+              <div>Agress.: <b id="userAggr0">A2</b></div>
+              <div>ERS: <b id="userERS0">50%</b></div>
             </div>
 
-            <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
-              <button class="user-btn" data-index="0" data-action="pit">PIT</button>
-              <button class="user-btn" data-index="0" data-action="push">ATAQUE</button>
-              <button class="user-btn" data-index="0" data-action="save">ECONOMIZAR</button>
-              <button class="user-btn" data-index="0" data-action="engineUp">MOTOR +</button>
-              <button class="user-btn" data-index="0" data-action="engineDown">MOTOR -</button>
-              <button class="user-btn" data-index="0" data-action="aggrUp">AGRESS +</button>
-              <button class="user-btn" data-index="0" data-action="aggrDown">AGRESS -</button>
-              <button class="user-btn" data-index="0" data-action="ers">ERS BOOST</button>
+            <div class="actions">
+              <button class="btn primary" data-ui="pit" data-i="0">PIT</button>
+
+              <select class="select" data-ui="compound" data-i="0">
+                <option value="S">S (Soft)</option>
+                <option value="M" selected>M (Medium)</option>
+                <option value="H">H (Hard)</option>
+                <option value="I">I (Inter)</option>
+                <option value="W">W (Wet)</option>
+              </select>
+
+              <button class="btn" data-ui="mode" data-i="0" data-mode="save">ECONOMIZAR</button>
+              <button class="btn good" data-ui="mode" data-i="0" data-mode="push">ATAQUE</button>
+
+              <button class="btn" data-ui="engine" data-i="0" data-d="-1">MOTOR -</button>
+              <button class="btn" data-ui="engine" data-i="0" data-d="1">MOTOR +</button>
+
+              <button class="btn" data-ui="aggr" data-i="0" data-d="-1">AGRESS -</button>
+              <button class="btn" data-ui="aggr" data-i="0" data-d="1">AGRESS +</button>
+
+              <button class="btn" data-ui="ers" data-i="0">ERS BOOST</button>
             </div>
           </div>
 
-          <div class="user-driver-card" id="user-driver-card-1" style="border-radius:16px; padding:10px;">
-            <div style="display:flex; gap:10px; align-items:center;">
-              <img class="user-face" src="" alt="Piloto" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,.18);" />
-              <div style="min-width:0;">
-                <div class="user-name" style="font-weight:900; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Piloto</div>
-                <div class="user-team" style="opacity:.8; font-size:12px;">Equipe</div>
-                <div class="user-status" style="opacity:.9; font-size:12px; margin-top:2px;">Normal</div>
+          <div class="card" id="userCard1">
+            <div class="cardTop">
+              <img class="cardFace" id="userFace1" src="" alt="Piloto 2">
+              <div class="cardInfo">
+                <div class="n" id="userName1">Piloto 2</div>
+                <div class="t" id="userTeam1">Equipe</div>
               </div>
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:10px; opacity:.9; font-size:12px; flex-wrap:wrap;">
-              <div>Carro: <b id="user-car-1">--%</b></div>
-              <div>Pneu: <b id="user-tyre-1">--%</b></div>
-              <div>Motor: <b id="user-engine-1">M2</b></div>
-              <div>Agress.: <b id="user-aggr-1">A2</b></div>
-              <div>ERS: <b id="user-ers-1">50%</b></div>
+            <div class="stats">
+              <div>Carro: <b id="userCar1">100%</b></div>
+              <div>Pneu: <b id="userTyre1">100%</b></div>
+              <div>Pneu: <b id="userCompound1">M</b></div>
+              <div>Motor: <b id="userEngine1">M2</b></div>
+              <div>Agress.: <b id="userAggr1">A2</b></div>
+              <div>ERS: <b id="userERS1">50%</b></div>
             </div>
 
-            <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
-              <button class="user-btn" data-index="1" data-action="pit">PIT</button>
-              <button class="user-btn" data-index="1" data-action="push">ATAQUE</button>
-              <button class="user-btn" data-index="1" data-action="save">ECONOMIZAR</button>
-              <button class="user-btn" data-index="1" data-action="engineUp">MOTOR +</button>
-              <button class="user-btn" data-index="1" data-action="engineDown">MOTOR -</button>
-              <button class="user-btn" data-index="1" data-action="aggrUp">AGRESS +</button>
-              <button class="user-btn" data-index="1" data-action="aggrDown">AGRESS -</button>
-              <button class="user-btn" data-index="1" data-action="ers">ERS BOOST</button>
+            <div class="actions">
+              <button class="btn primary" data-ui="pit" data-i="1">PIT</button>
+
+              <select class="select" data-ui="compound" data-i="1">
+                <option value="S">S (Soft)</option>
+                <option value="M" selected>M (Medium)</option>
+                <option value="H">H (Hard)</option>
+                <option value="I">I (Inter)</option>
+                <option value="W">W (Wet)</option>
+              </select>
+
+              <button class="btn" data-ui="mode" data-i="1" data-mode="save">ECONOMIZAR</button>
+              <button class="btn good" data-ui="mode" data-i="1" data-mode="push">ATAQUE</button>
+
+              <button class="btn" data-ui="engine" data-i="1" data-d="-1">MOTOR -</button>
+              <button class="btn" data-ui="engine" data-i="1" data-d="1">MOTOR +</button>
+
+              <button class="btn" data-ui="aggr" data-i="1" data-d="-1">AGRESS -</button>
+              <button class="btn" data-ui="aggr" data-i="1" data-d="1">AGRESS +</button>
+
+              <button class="btn" data-ui="ers" data-i="1">ERS BOOST</button>
             </div>
           </div>
         </div>
@@ -120,9 +462,6 @@
     </div>
   </div>
 
-  <div id="podium-modal" style="display:none;"></div>
-
-  <!-- IMPORTANTE: o JS deve estar aqui, e race.html não pode conter JS "cru" -->
   <script src="race.js"></script>
 </body>
 </html>
