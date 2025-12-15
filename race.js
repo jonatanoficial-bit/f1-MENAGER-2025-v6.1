@@ -1,9 +1,11 @@
 // ==========================================================
-// F1 MANAGER 2025 — RACE.JS (SVG + HUD + GRID + CONTROLES)
-// Etapa 1: corrigir HUD/GRID + logo + piloto 2 (robusto)
-// - Mantém compatibilidade com o seu race.html atual (IDs)
-// - Usa grid salvo da Qualy (localStorage f1m2025_last_qualy)
-// - Fallback se PilotMarketSystem ou assets faltarem
+// F1 MANAGER 2025 — RACE.JS (ETAPA 2)
+// Mantém o que já existe (SVG + HUD + GRID) e adiciona:
+// - Pit stop real (troca de pneus + tempo + penalidade)
+// - Meteorologia (seco/chuva + temp pista dinâmica)
+// - Modos: Motor (ECO/NORMAL/ATK) e Pneus (ECO/NORMAL/ATK)
+// - Integração com Setup (lê setup salvo no localStorage)
+// - Grid da corrida = grid final do Q3 (localStorage f1m2025_last_qualy)
 // ==========================================================
 
 (() => {
@@ -35,8 +37,46 @@
     abu_dhabi: 84000
   };
 
-  const DEFAULT_TOTAL_LAPS = 15; // pode ajustar depois
+  const DEFAULT_TOTAL_LAPS = 18;
   const PATH_SAMPLES = 420;
+
+  // desgaste base por volta (ajustado por clima e modo)
+  const TYRE_WEAR_PER_LAP = {
+    S: 0.085,
+    M: 0.060,
+    H: 0.040,
+    I: 0.070, // intermediário
+    W: 0.060  // wet
+  };
+
+  // “desgaste” reduz grip e aumenta tempo
+  function wearToGrip(wear01) {
+    // 0 = novo, 1 = morto
+    // queda suave até 60%, depois cai mais
+    const x = Math.max(0, Math.min(1, wear01));
+    if (x <= 0.6) return 1 - (x * 0.18);
+    return 1 - (0.6 * 0.18) - ((x - 0.6) * 0.55);
+  }
+
+  // Aderência por pneu no clima
+  function tyreWeatherGripFactor(tyre, weather) {
+    if (weather === 'CHUVA') {
+      if (tyre === 'W') return 1.04;
+      if (tyre === 'I') return 1.02;
+      // slick na chuva = ruim
+      if (tyre === 'S') return 0.82;
+      if (tyre === 'M') return 0.86;
+      if (tyre === 'H') return 0.90;
+    } else {
+      // seco
+      if (tyre === 'S') return 1.03;
+      if (tyre === 'M') return 1.00;
+      if (tyre === 'H') return 0.985;
+      if (tyre === 'I') return 0.92;
+      if (tyre === 'W') return 0.88;
+    }
+    return 1.0;
+  }
 
   // ------------------------------
   // HELPERS
@@ -73,17 +113,19 @@
   }
 
   function writeJSON(key, obj) {
-    try {
-      localStorage.setItem(key, JSON.stringify(obj));
-    } catch {}
+    try { localStorage.setItem(key, JSON.stringify(obj)); } catch {}
   }
 
   function getQuery() {
     return new URLSearchParams(location.search);
   }
 
+  function nowMs() {
+    return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  }
+
   // ------------------------------
-  // DOM (IDs do seu race.html)
+  // DOM (IDs esperados no seu race.html)
   // ------------------------------
   const dom = {
     teamLogoTop: null,
@@ -115,7 +157,7 @@
   }
 
   // ------------------------------
-  // PILOTS / RUNTIME LIST
+  // FALLBACK DRIVERS (se mercado não estiver carregado)
   // ------------------------------
   const FALLBACK_DRIVERS = [
     { id: 'VER', code: 'VER', name: 'Max Verstappen', teamKey: 'redbull', teamName: 'Red Bull Racing', rating: 98, color: '#ffb300', logo: 'assets/logos/redbull.png' },
@@ -145,7 +187,6 @@
 
     try {
       if (typeof window.PilotMarketSystem === 'undefined') return fallback;
-
       if (typeof window.PilotMarketSystem.init === 'function') window.PilotMarketSystem.init();
 
       const teams = (typeof window.PilotMarketSystem.getTeams === 'function')
@@ -163,7 +204,6 @@
         active.forEach(p => {
           const code = String(p.code || p.id || '').toUpperCase();
           if (!code) return;
-
           const preset = byCode[code];
 
           list.push({
@@ -206,6 +246,59 @@
   }
 
   // ------------------------------
+  // SETUP (integração sem exigir mudanças agora)
+  // Aceita várias chaves possíveis
+  // ------------------------------
+  function readTeamSetup(teamKey) {
+    const keysToTry = [
+      `f1m2025_setup_${teamKey}`,
+      `f1m2025_car_setup_${teamKey}`,
+      `f1m2025_setup`,
+      `f1m2025_car_setup`,
+      `f1m2025_last_setup`
+    ];
+
+    for (const k of keysToTry) {
+      const s = readJSON(k);
+      if (s && typeof s === 'object') return s;
+    }
+
+    // default neutro
+    return {
+      aero: 50,
+      suspension: 50,
+      engine: 50,
+      balance: 50
+    };
+  }
+
+  // converte setup em multiplicadores
+  function setupToMultipliers(setup) {
+    const aero = clamp(Number(setup?.aero ?? 50), 0, 100);
+    const sus = clamp(Number(setup?.suspension ?? 50), 0, 100);
+    const eng = clamp(Number(setup?.engine ?? 50), 0, 100);
+    const bal = clamp(Number(setup?.balance ?? 50), 0, 100);
+
+    // simplificado: melhor setup => melhora ritmo e reduz desgaste
+    const paceMul =
+      1 +
+      ((aero - 50) * 0.0008) +
+      ((sus - 50) * 0.0005) +
+      ((eng - 50) * 0.0009) +
+      ((bal - 50) * 0.0004);
+
+    const wearMul =
+      1 -
+      ((bal - 50) * 0.0008) -
+      ((sus - 50) * 0.0005);
+
+    return {
+      paceMul: clamp(paceMul, 0.94, 1.06),
+      wearMul: clamp(wearMul, 0.88, 1.10)
+    };
+  }
+
+  // ------------------------------
   // STATE
   // ------------------------------
   const state = {
@@ -215,8 +308,8 @@
     baseLapMs: 90000,
     totalLaps: DEFAULT_TOTAL_LAPS,
 
-    weather: 'Seco',
-    trackTemp: 26,
+    weather: 'SECO', // 'SECO' | 'CHUVA'
+    trackTemp: 26,   // varia
 
     pathPoints: [],
     visuals: [],
@@ -226,8 +319,9 @@
     lastFrame: null,
 
     lapNumber: 1,
+    lastWeatherTick: 0,
 
-    drivers: [] // runtime state
+    drivers: []
   };
 
   // ------------------------------
@@ -276,8 +370,6 @@
     }
 
     const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
-
-    // tenta path, depois polyline, depois polygon
     let pathEl = doc.querySelector('path');
     let polyEl = doc.querySelector('polyline, polygon');
 
@@ -342,7 +434,7 @@
     innerLine.setAttribute('stroke-linejoin', 'round');
     svg.appendChild(innerLine);
 
-    // bolinhas brancas (traçado)
+    // pontos brancos
     state.pathPoints.forEach(p => {
       const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       c.setAttribute('cx', p.x);
@@ -363,7 +455,7 @@
     flag.textContent = '🏁';
     svg.appendChild(flag);
 
-    // cria carros (visuais)
+    // cria carros
     state.visuals = state.drivers.map(d => {
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
@@ -374,6 +466,7 @@
       body.setAttribute('fill', d.color || '#ffffff');
       g.appendChild(body);
 
+      // destaque do time do usuário
       if (String(d.teamKey).toLowerCase() === String(state.userTeam).toLowerCase()) {
         const tri = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
         tri.setAttribute('points', '0,-10 6,0 -6,0');
@@ -387,16 +480,15 @@
   }
 
   // ------------------------------
-  // GRID (usa Qualy se existir)
+  // GRID: usa o Q3 final salvo
   // ------------------------------
   function buildStartingGrid(runtimeDrivers) {
     const qualy = readJSON('f1m2025_last_qualy');
 
-    // se existir grid salvo e bater com pista, usa ele
     if (qualy && Array.isArray(qualy.grid) && qualy.track && String(qualy.track) === String(state.track)) {
       const byId = new Map();
       runtimeDrivers.forEach(d => byId.set(String(d.id), d));
-      runtimeDrivers.forEach(d => byId.set(String(d.code), d)); // fallback por code
+      runtimeDrivers.forEach(d => byId.set(String(d.code), d));
 
       const ordered = [];
       qualy.grid
@@ -407,7 +499,6 @@
           if (hit) ordered.push(hit);
         });
 
-      // completa se faltar gente
       runtimeDrivers.forEach(d => {
         if (!ordered.find(x => String(x.id) === String(d.id))) ordered.push(d);
       });
@@ -415,7 +506,7 @@
       return ordered.slice(0, 20);
     }
 
-    // sem qualy: retorna ordem por rating (desc) com ruído leve
+    // fallback
     return runtimeDrivers
       .slice()
       .sort((a, b) => (b.rating || 0) - (a.rating || 0) + (Math.random() - 0.5) * 2)
@@ -423,64 +514,263 @@
   }
 
   // ------------------------------
-  // INIT DRIVERS STATE
+  // Meteo: inicial + variação
+  // ------------------------------
+  function initWeather() {
+    // Se treino/quali já tiver salvo clima, você pode padronizar depois.
+    // Por enquanto: chance de chuva (15%) em pistas “de chuva” (ex: spa, brazil etc)
+    const rainyTracks = new Set(['spa', 'brazil', 'silverstone', 'hungary', 'monza', 'australia']);
+    const baseChance = rainyTracks.has(state.track) ? 0.18 : 0.10;
+    state.weather = (Math.random() < baseChance) ? 'CHUVA' : 'SECO';
+
+    // temp base
+    const baseTemp = 24 + Math.random() * 6;
+    state.trackTemp = baseTemp + (state.weather === 'CHUVA' ? -4 : +1);
+  }
+
+  function tickWeather(dtMs) {
+    state.lastWeatherTick += dtMs;
+    if (state.lastWeatherTick < 12000) return; // a cada ~12s
+    state.lastWeatherTick = 0;
+
+    // pequena oscilação de temp
+    const drift = (Math.random() - 0.5) * 1.6;
+    state.trackTemp = clamp(state.trackTemp + drift, 12, 46);
+
+    // chance de virar chuva/secar (baixa)
+    const flipChance = (state.weather === 'SECO') ? 0.03 : 0.04;
+    if (Math.random() < flipChance) {
+      state.weather = (state.weather === 'SECO') ? 'CHUVA' : 'SECO';
+      // ajuste brusco de temp
+      state.trackTemp += (state.weather === 'CHUVA') ? -3 : +3;
+      state.trackTemp = clamp(state.trackTemp, 12, 46);
+
+      // quando muda, pilotos em slick na chuva sofrem mais (simples)
+      if (state.weather === 'CHUVA') {
+        state.drivers.forEach(d => {
+          if (d.tyre === 'S' || d.tyre === 'M' || d.tyre === 'H') d.tempShockMs = 2200 + Math.random() * 1200;
+        });
+      } else {
+        state.drivers.forEach(d => {
+          if (d.tyre === 'W' || d.tyre === 'I') d.tempShockMs = 1600 + Math.random() * 900;
+        });
+      }
+    }
+
+    safeText(dom.weatherLabel, state.weather === 'CHUVA' ? 'Chuva' : 'Seco');
+    safeText(dom.trackTempLabel, formatTemp(state.trackTemp));
+  }
+
+  // ------------------------------
+  // INIT DRIVERS
   // ------------------------------
   function initDrivers() {
     const runtime = getRuntimeDriversList();
     const grid = buildStartingGrid(runtime);
 
+    // setup do time do usuário (afeta os 2 pilotos do userTeam)
+    const userTeamKey = String(state.userTeam).toLowerCase();
+    const setup = readTeamSetup(userTeamKey);
+    const setupMul = setupToMultipliers(setup);
+
     state.drivers = grid.map((drv, idx) => {
       const ratingCenter = 92;
       const ratingDelta = (drv.rating || 75) - ratingCenter;
-      const skillFactor = 1 - ratingDelta * 0.006; // maior rating = menor tempo
+      const skillFactor = 1 - ratingDelta * 0.006;
 
       const perf = perfMultiplierByCode(drv.code || drv.id);
-      const targetLapMs = state.baseLapMs * clamp(skillFactor, 0.75, 1.35) / perf;
+      let targetLapMs = state.baseLapMs * clamp(skillFactor, 0.75, 1.35) / perf;
+
+      // aplica setup se for time do usuário
+      const isUser = String(drv.teamKey).toLowerCase() === userTeamKey;
+      if (isUser) targetLapMs = targetLapMs / setupMul.paceMul;
+
+      // pneus iniciais: seco => M, chuva => I
+      const initialTyre = (state.weather === 'CHUVA') ? 'I' : 'M';
 
       return {
         ...drv,
         index: idx,
 
         // corrida
-        progress: (idx * 0.02) % 1, // espaça no grid
+        progress: (idx * 0.02) % 1,
         laps: 0,
 
-        // ritmo
-        speedBase: 1 / targetLapMs, // volta por ms (1x)
-        speedVar: 0,
+        // ritmo base
+        speedBase: 1 / targetLapMs,
 
-        // estado simples
-        tyre: 'M',          // M = médio (placeholder etapa 1)
+        // estado
+        tyre: initialTyre,
+        tyreWear: 0.0,      // 0 novo, 1 morto
+        tyreMode: 'NORMAL', // ECO | NORMAL | ATK
+
+        engineMode: 'NORMAL', // ECO | NORMAL | ATK
         ers: 50,
-        engineMode: 'M2',   // placeholder etapa 1
-        aggr: 'A2',         // placeholder etapa 1
 
         // pit
         requestPit: false,
+        pitTargetTyre: null,
         inPit: false,
-        pitMsLeft: 0
+        pitMsLeft: 0,
+
+        // choque por mudança de clima
+        tempShockMs: 0,
+
+        // setup impact no desgaste (apenas userTeam)
+        setupWearMul: isUser ? setupMul.wearMul : 1.0
       };
     });
   }
 
   // ------------------------------
-  // TOP LOGO + USER CARDS
+  // TOP LOGO + USER CARDS + BOTÕES
   // ------------------------------
   function applyTopTeamBranding() {
     const teamKey = String(state.userTeam || 'ferrari').toLowerCase();
-
-    // tenta achar um piloto do userTeam
     const any = state.drivers.find(d => String(d.teamKey).toLowerCase() === teamKey) || state.drivers[0];
-
     const logoSrc = (any && any.logo) ? any.logo : `assets/logos/${teamKey}.png`;
     safeSetImg(dom.teamLogoTop, logoSrc, `assets/logos/${teamKey}.png`);
+  }
+
+  function ensurePitOverlay() {
+    if (document.getElementById('pit-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'pit-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(0,0,0,0.55)';
+    overlay.style.display = 'none';
+    overlay.style.zIndex = '9999';
+
+    const panel = document.createElement('div');
+    panel.id = 'pit-panel';
+    panel.style.position = 'absolute';
+    panel.style.left = '50%';
+    panel.style.top = '50%';
+    panel.style.transform = 'translate(-50%,-50%)';
+    panel.style.width = 'min(520px, 92vw)';
+    panel.style.background = 'rgba(20,25,40,0.96)';
+    panel.style.border = '1px solid rgba(255,255,255,0.12)';
+    panel.style.borderRadius = '14px';
+    panel.style.padding = '14px';
+    panel.style.color = '#fff';
+    panel.style.fontFamily = 'system-ui, -apple-system, Segoe UI, sans-serif';
+
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div>
+          <div id="pit-title" style="font-weight:700;font-size:16px;">Pit Stop</div>
+          <div id="pit-sub" style="opacity:.8;font-size:12px;margin-top:2px;">Escolha o pneu para a próxima saída</div>
+        </div>
+        <button id="pit-close" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:10px;padding:6px 10px;">Fechar</button>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="pit-tyre" data-tyre="S" style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;min-width:92px;">S (Macio)</button>
+        <button class="pit-tyre" data-tyre="M" style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;min-width:92px;">M (Médio)</button>
+        <button class="pit-tyre" data-tyre="H" style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;min-width:92px;">H (Duro)</button>
+        <button class="pit-tyre" data-tyre="I" style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;min-width:92px;">I (Inter)</button>
+        <button class="pit-tyre" data-tyre="W" style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;min-width:92px;">W (Chuva)</button>
+      </div>
+
+      <div style="margin-top:12px;opacity:.85;font-size:12px;">
+        Clima atual: <span id="pit-weather"></span> • Pista: <span id="pit-temp"></span>
+      </div>
+
+      <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:10px;">
+        <button id="pit-confirm" style="padding:10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,0.2);background:rgba(50,200,120,0.9);color:#081018;font-weight:700;">Confirmar</button>
+      </div>
+    `;
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) hidePitOverlay();
+    });
+
+    document.getElementById('pit-close').onclick = hidePitOverlay;
+  }
+
+  let pitOverlayTargetDriverId = null;
+  let pitOverlaySelectedTyre = null;
+
+  function showPitOverlay(driver) {
+    ensurePitOverlay();
+    pitOverlayTargetDriverId = driver?.id ?? null;
+    pitOverlaySelectedTyre = null;
+
+    const overlay = document.getElementById('pit-overlay');
+    const title = document.getElementById('pit-title');
+    const w = document.getElementById('pit-weather');
+    const t = document.getElementById('pit-temp');
+
+    if (title) title.textContent = `Pit Stop — ${driver?.name || 'Piloto'}`;
+    if (w) w.textContent = (state.weather === 'CHUVA') ? 'Chuva' : 'Seco';
+    if (t) t.textContent = formatTemp(state.trackTemp);
+
+    overlay.style.display = 'block';
+
+    document.querySelectorAll('.pit-tyre').forEach(btn => {
+      btn.style.outline = 'none';
+      btn.style.boxShadow = 'none';
+      btn.onclick = () => {
+        pitOverlaySelectedTyre = btn.dataset.tyre;
+        document.querySelectorAll('.pit-tyre').forEach(b => (b.style.boxShadow = 'none'));
+        btn.style.boxShadow = '0 0 0 2px rgba(255,255,255,0.35) inset';
+      };
+    });
+
+    const confirm = document.getElementById('pit-confirm');
+    if (confirm) {
+      confirm.onclick = () => {
+        if (!pitOverlayTargetDriverId || !pitOverlaySelectedTyre) return;
+        const d = state.drivers.find(x => String(x.id) === String(pitOverlayTargetDriverId));
+        if (d) {
+          d.requestPit = true;
+          d.pitTargetTyre = pitOverlaySelectedTyre;
+        }
+        hidePitOverlay();
+      };
+    }
+  }
+
+  function hidePitOverlay() {
+    const overlay = document.getElementById('pit-overlay');
+    if (overlay) overlay.style.display = 'none';
+    pitOverlayTargetDriverId = null;
+    pitOverlaySelectedTyre = null;
+  }
+
+  function bindCardButtons(card, driver) {
+    // PIT
+    const pitBtn =
+      card.querySelector('.btn-pit, .pit-btn, [data-action="pit"]') ||
+      Array.from(card.querySelectorAll('button')).find(b => /pit/i.test(b.textContent || ''));
+
+    if (pitBtn) {
+      pitBtn.onclick = () => showPitOverlay(driver);
+    }
+
+    // Modos (tentativa de capturar ECONOMIZAR / ATAQUE / NORMAL)
+    const buttons = Array.from(card.querySelectorAll('button'));
+
+    const btnEco = buttons.find(b => /econ/i.test(b.textContent || ''));
+    const btnAtk = buttons.find(b => /ataq/i.test(b.textContent || ''));
+    const btnNorm = buttons.find(b => /normal/i.test(b.textContent || ''));
+
+    // Se existir, aplica para pneus + motor juntos (sem mudar HTML)
+    // Depois, na Etapa 3, separaremos motor/pneu com UI melhor.
+    if (btnEco) btnEco.onclick = () => { driver.engineMode = 'ECO'; driver.tyreMode = 'ECO'; };
+    if (btnAtk) btnAtk.onclick = () => { driver.engineMode = 'ATK'; driver.tyreMode = 'ATK'; };
+    if (btnNorm) btnNorm.onclick = () => { driver.engineMode = 'NORMAL'; driver.tyreMode = 'NORMAL'; };
   }
 
   function fillUserCards() {
     const teamKey = String(state.userTeam).toLowerCase();
     let teamDrivers = state.drivers.filter(d => String(d.teamKey).toLowerCase() === teamKey);
 
-    // garante 2 pilotos para não quebrar o HUD (se o mercado vier errado)
     if (teamDrivers.length < 2) {
       const fill = state.drivers.filter(d => !teamDrivers.includes(d)).slice(0, 2 - teamDrivers.length);
       teamDrivers = teamDrivers.concat(fill);
@@ -505,15 +795,7 @@
       const teamLogo = drv?.logo || `assets/logos/${String(drv?.teamKey || teamKey)}.png`;
       safeSetImg(logoEl, teamLogo, `assets/logos/${String(drv?.teamKey || teamKey)}.png`);
 
-      // liga botões PIT do card (se existirem)
-      const pitBtn = card.querySelector('.btn-pit, .pit-btn, [data-action=\"pit\"]');
-      if (pitBtn) {
-        pitBtn.onclick = () => {
-          // request pit para esse piloto
-          const target = state.drivers.find(x => String(x.id) === String(drv.id));
-          if (target) target.requestPit = true;
-        };
-      }
+      bindCardButtons(card, drv);
     });
   }
 
@@ -535,104 +817,117 @@
   }
 
   // ------------------------------
-  // LOOP
+  // SIM: ritmo + pneus + motor + ERS + pit
   // ------------------------------
-  function loop(ts) {
-    if (state.lastFrame == null) state.lastFrame = ts;
-
-    const dt = (ts - state.lastFrame) * state.speedMultiplier;
-    state.lastFrame = ts;
-
-    if (state.running) {
-      update(dt);
-      render();
-    }
-
-    requestAnimationFrame(loop);
+  function tyreModeWearMul(mode) {
+    if (mode === 'ECO') return 0.80;
+    if (mode === 'ATK') return 1.18;
+    return 1.00;
   }
 
-  // ------------------------------
-  // UPDATE SIM
-  // ------------------------------
-  function update(dtMs) {
-    if (!state.pathPoints.length) return;
+  function engineModePaceMul(mode) {
+    if (mode === 'ECO') return 0.985;   // mais lento
+    if (mode === 'ATK') return 1.020;   // mais rápido
+    return 1.000;
+  }
 
-    // atualiza carros
-    for (const d of state.drivers) {
-      // PIT LOGIC (simples etapa 1)
-      if (d.requestPit && !d.inPit) {
-        d.requestPit = false;
-        d.inPit = true;
-        d.pitMsLeft = 6000 + Math.random() * 2500; // 6.0s a 8.5s
-      }
+  function engineModeWearRiskMul(mode) {
+    if (mode === 'ATK') return 1.15;
+    return 1.0;
+  }
 
-      if (d.inPit) {
-        d.pitMsLeft -= dtMs;
-        // enquanto no pit, anda bem devagar
-        const slow = d.speedBase * 0.12;
-        d.progress += slow * dtMs;
+  function computeEffectiveSpeed(driver) {
+    // grip do pneu (clima + desgaste)
+    const grip = wearToGrip(driver.tyreWear) * tyreWeatherGripFactor(driver.tyre, state.weather);
 
-        if (d.pitMsLeft <= 0) {
-          d.inPit = false;
-          d.pitMsLeft = 0;
+    // penalidade por choque climático
+    let shockMul = 1.0;
+    if (driver.tempShockMs > 0) shockMul = 0.92;
 
-          // troca pneu (placeholder simples)
-          d.tyre = (d.tyre === 'M') ? 'H' : 'M';
-        }
-      } else {
-        // ruído leve de ritmo
-        const noise = 1 + (Math.random() - 0.5) * 0.06; // +/- 3%
-        const speed = d.speedBase * noise;
-        d.progress += speed * dtMs;
-      }
+    // temp de pista: muito alta degrada e perde grip
+    let tempMul = 1.0;
+    if (state.trackTemp > 38) tempMul -= (state.trackTemp - 38) * 0.004;
+    if (state.trackTemp < 16) tempMul -= (16 - state.trackTemp) * 0.003;
+    tempMul = clamp(tempMul, 0.88, 1.02);
 
-      // completou volta
-      while (d.progress >= 1) {
-        d.progress -= 1;
-        d.laps += 1;
-      }
+    // motor mode afeta pace
+    const engMul = engineModePaceMul(driver.engineMode);
+
+    // ers (simples)
+    const ersMul = (driver.ers > 60 && driver.engineMode === 'ATK') ? 1.008 : 1.0;
+
+    // velocidade final
+    // speedBase = voltas/ms em condição neutra
+    return driver.speedBase * grip * shockMul * tempMul * engMul * ersMul;
+  }
+
+  function pitStopTimeMs(driver) {
+    // base
+    let t = 6500 + Math.random() * 2200;
+
+    // chuva aumenta variação/risco
+    if (state.weather === 'CHUVA') t += 700 + Math.random() * 700;
+
+    // ataque aumenta chance de erro no box
+    if (driver.engineMode === 'ATK' || driver.tyreMode === 'ATK') {
+      const errChance = (state.weather === 'CHUVA') ? 0.14 : 0.09;
+      if (Math.random() < errChance) t += 2500 + Math.random() * 2500; // erro de pit
     }
 
-    // volta atual = líder
-    const leader = getLeader();
-    const leaderLap = leader ? leader.laps : 0;
-    state.lapNumber = clamp(leaderLap + 1, 1, state.totalLaps);
-    safeText(dom.lapLabel, `Volta ${state.lapNumber}`);
+    return t;
+  }
 
-    // fim de corrida (etapa 1: encerra quando líder termina)
-    if (leader && leader.laps >= state.totalLaps) {
-      state.running = false;
-      // salva resultado simples
-      const ordered = getOrderByRace();
-      writeJSON('f1m2025_last_race', {
-        track: state.track,
-        gp: state.gp,
-        timestamp: Date.now(),
-        results: ordered.map((d, i) => ({
-          position: i + 1,
-          id: d.id,
-          code: d.code,
-          name: d.name,
-          teamKey: d.teamKey,
-          teamName: d.teamName,
-          laps: d.laps
-        }))
-      });
+  function tickDriverSystems(driver, dtMs) {
+    // ERS: ECO carrega, ATK gasta
+    if (driver.engineMode === 'ECO') driver.ers = clamp(driver.ers + dtMs * 0.004, 0, 100);
+    else if (driver.engineMode === 'ATK') driver.ers = clamp(driver.ers - dtMs * 0.007, 0, 100);
+    else driver.ers = clamp(driver.ers - dtMs * 0.002, 0, 100);
+
+    // choque de clima decai
+    if (driver.tempShockMs > 0) {
+      driver.tempShockMs -= dtMs;
+      if (driver.tempShockMs < 0) driver.tempShockMs = 0;
     }
   }
 
+  function applyTyreWear(driver, dtMs) {
+    // desgaste proporcional ao tempo rodando (aprox)
+    // converte dtMs em fração de volta baseada em velocidade atual
+    const effSpeed = computeEffectiveSpeed(driver);
+    const fracLap = effSpeed * dtMs; // volta/ms * ms => fração de volta
+
+    const baseWear = TYRE_WEAR_PER_LAP[driver.tyre] ?? 0.06;
+    const modeMul = tyreModeWearMul(driver.tyreMode);
+    const setupMul = driver.setupWearMul ?? 1.0;
+
+    // chuva reduz desgaste de slick mas aumenta de inter/wet se pista seca (simplificado)
+    let weatherWearMul = 1.0;
+    if (state.weather === 'CHUVA') {
+      if (driver.tyre === 'S' || driver.tyre === 'M' || driver.tyre === 'H') weatherWearMul = 1.35;
+      if (driver.tyre === 'W') weatherWearMul = 0.95;
+      if (driver.tyre === 'I') weatherWearMul = 1.00;
+    } else {
+      if (driver.tyre === 'W') weatherWearMul = 1.35;
+      if (driver.tyre === 'I') weatherWearMul = 1.22;
+    }
+
+    // motor ataque aumenta risco e desgaste geral (na vida real, afeta pneus também)
+    const engineMul = engineModeWearRiskMul(driver.engineMode);
+
+    const wearInc = baseWear * modeMul * setupMul * weatherWearMul * engineMul * fracLap;
+    driver.tyreWear = clamp(driver.tyreWear + wearInc, 0, 1);
+  }
+
   // ------------------------------
-  // ORDER / GAP
+  // UPDATE + LOOP
   // ------------------------------
   function getOrderByRace() {
     return state.drivers
       .slice()
       .sort((a, b) => {
-        // distância total (voltas + progresso)
         const da = a.laps + a.progress;
         const db = b.laps + b.progress;
         if (db !== da) return db - da;
-        // desempate por rating
         return (b.rating || 0) - (a.rating || 0);
       });
   }
@@ -642,16 +937,108 @@
     return ordered[0] || null;
   }
 
-  // ------------------------------
-  // RENDER (SVG + LIST)
-  // ------------------------------
+  function update(dtMs) {
+    if (!state.pathPoints.length) return;
+
+    tickWeather(dtMs);
+
+    for (const d of state.drivers) {
+      tickDriverSystems(d, dtMs);
+
+      // PIT logic
+      if (d.requestPit && !d.inPit) {
+        d.requestPit = false;
+        d.inPit = true;
+        d.pitMsLeft = pitStopTimeMs(d);
+      }
+
+      if (d.inPit) {
+        d.pitMsLeft -= dtMs;
+
+        // no pit: anda bem devagar
+        const slow = d.speedBase * 0.10;
+        d.progress += slow * dtMs;
+
+        if (d.pitMsLeft <= 0) {
+          d.inPit = false;
+          d.pitMsLeft = 0;
+
+          // aplica troca de pneu
+          const newTyre = d.pitTargetTyre || ((state.weather === 'CHUVA') ? 'I' : 'M');
+          d.tyre = newTyre;
+          d.tyreWear = 0.0;
+          d.pitTargetTyre = null;
+
+          // pequena perda de ERS
+          d.ers = clamp(d.ers - 6, 0, 100);
+        }
+      } else {
+        // normal: move
+        const effSpeed = computeEffectiveSpeed(d);
+
+        // ruído leve de pilotagem
+        const noise = 1 + (Math.random() - 0.5) * 0.045;
+
+        d.progress += effSpeed * noise * dtMs;
+
+        // desgaste do pneu
+        applyTyreWear(d, dtMs);
+      }
+
+      // completa voltas
+      while (d.progress >= 1) {
+        d.progress -= 1;
+        d.laps += 1;
+
+        // pequena chance de “erro” se slick na chuva e desgaste alto
+        if (state.weather === 'CHUVA' && (d.tyre === 'S' || d.tyre === 'M' || d.tyre === 'H')) {
+          const risk = 0.02 + d.tyreWear * 0.08;
+          if (Math.random() < risk) {
+            d.tempShockMs = 2400 + Math.random() * 1400;
+          }
+        }
+      }
+    }
+
+    // volta atual = líder
+    const leader = getLeader();
+    const leaderLap = leader ? leader.laps : 0;
+    state.lapNumber = clamp(leaderLap + 1, 1, state.totalLaps);
+    safeText(dom.lapLabel, `Volta ${state.lapNumber}`);
+
+    // fim de corrida
+    if (leader && leader.laps >= state.totalLaps) {
+      state.running = false;
+
+      const ordered = getOrderByRace();
+      writeJSON('f1m2025_last_race', {
+        track: state.track,
+        gp: state.gp,
+        timestamp: Date.now(),
+        weather: state.weather,
+        trackTemp: state.trackTemp,
+        results: ordered.map((d, i) => ({
+          position: i + 1,
+          id: d.id,
+          code: d.code,
+          name: d.name,
+          teamKey: d.teamKey,
+          teamName: d.teamName,
+          laps: d.laps,
+          tyre: d.tyre,
+          tyreWear: d.tyreWear
+        }))
+      });
+    }
+  }
+
   function render() {
     if (!state.pathPoints.length) return;
     if (!state.visuals.length) return;
 
-    // carros no SVG
     const byId = new Map(state.drivers.map(d => [String(d.id), d]));
 
+    // carros no SVG
     state.visuals.forEach(v => {
       const d = byId.get(String(v.id));
       if (!d) return;
@@ -659,7 +1046,6 @@
       v.g.setAttribute('transform', `translate(${pos.x},${pos.y})`);
     });
 
-    // lista grid
     renderDriversList();
   }
 
@@ -710,12 +1096,15 @@
 
       const dist = (d.laps + d.progress);
       const gap = leader ? (leaderDist - dist) : 0;
-      const gapSec = Math.max(0, gap) * (state.baseLapMs / 1000); // aproximação
+      const gapSec = Math.max(0, gap) * (state.baseLapMs / 1000);
+
+      const wearPct = Math.round(d.tyreWear * 100);
+      const tyreLabel = `${d.tyre}${d.inPit ? ' (PIT)' : ''}`;
 
       stats.innerHTML = `
         <div class="stat-line">Voltas <span>${d.laps}</span></div>
         <div class="stat-line">Gap <span>${idx === 0 ? 'LEADER' : `+${gapSec.toFixed(3)}`}</span></div>
-        <div class="stat-line">Pneu <span>${d.tyre}${d.inPit ? ' (PIT)' : ''}</span></div>
+        <div class="stat-line">Pneu <span>${tyreLabel} • ${wearPct}%</span></div>
       `;
 
       row.appendChild(pos);
@@ -730,6 +1119,19 @@
     });
   }
 
+  function loop(ts) {
+    if (state.lastFrame == null) state.lastFrame = ts;
+    const dt = (ts - state.lastFrame) * state.speedMultiplier;
+    state.lastFrame = ts;
+
+    if (state.running) {
+      update(dt);
+      render();
+    }
+
+    requestAnimationFrame(loop);
+  }
+
   // ------------------------------
   // INIT
   // ------------------------------
@@ -742,26 +1144,34 @@
     state.userTeam = q.get('userTeam') || localStorage.getItem('f1m2025_user_team') || 'ferrari';
     state.baseLapMs = TRACK_BASE_LAP_TIME_MS[state.track] || 90000;
 
+    // laps opcional via query (?laps=20)
+    const lapsQ = Number(q.get('laps') || '');
+    if (isFinite(lapsQ) && lapsQ >= 5 && lapsQ <= 70) state.totalLaps = Math.round(lapsQ);
+    else state.totalLaps = DEFAULT_TOTAL_LAPS;
+
+    initWeather();
+
     // UI topo
     safeText(dom.gpTitle, state.gp);
-    safeText(dom.weatherLabel, state.weather);
+    safeText(dom.weatherLabel, state.weather === 'CHUVA' ? 'Chuva' : 'Seco');
     safeText(dom.trackTempLabel, formatTemp(state.trackTemp));
     safeText(dom.lapLabel, `Volta ${state.lapNumber}`);
 
     setupSpeedControls();
-    initDrivers();
 
-    // aplica branding/driver cards antes e depois (pra evitar “sumir”)
+    // drivers + cards
+    initDrivers();
     applyTopTeamBranding();
     fillUserCards();
 
+    // pista (cria visuais com cores)
     await loadTrackSvg(state.track);
 
-    // reaplica (garante que visual não quebrou e piloto2 sempre aparece)
+    // reaplica (para evitar qualquer “sumiço” de logo/card)
     applyTopTeamBranding();
     fillUserCards();
 
-    state.lastFrame = performance.now();
+    state.lastFrame = nowMs();
     requestAnimationFrame(loop);
   }
 
@@ -774,7 +1184,11 @@
     state.speedMultiplier = clamp(Number(mult || 1), 0.25, 8);
   };
 
-  // Se seu HTML chama setQualySpeed por engano
-  window.setQualySpeed = window.setRaceSpeed;
+  window.forcePitForDriver = function forcePitForDriver(driverCodeOrId, tyre) {
+    const d = state.drivers.find(x => String(x.id) === String(driverCodeOrId) || String(x.code) === String(driverCodeOrId));
+    if (!d) return;
+    d.requestPit = true;
+    d.pitTargetTyre = tyre || null;
+  };
 
 })();
