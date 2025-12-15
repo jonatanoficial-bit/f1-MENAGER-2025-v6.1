@@ -5,53 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>F1 MANAGER 2025 — CORRIDA</title>
 
-  <!-- Se você já usa ui.css/style.css no projeto, mantenha as duas linhas abaixo como estão no seu padrão -->
+  <!-- Mantém seus CSS globais (mas o Race vai se proteger deles) -->
   <link rel="stylesheet" href="ui.css">
   <link rel="stylesheet" href="style.css">
 
   <style>
-    /* Garantia de layout consistente PC + celular */
-    html, body { height: 100%; margin: 0; background:#000; overflow:hidden; }
-    .race-shell { height: 100%; display:flex; flex-direction:column; }
+    /* ====== HARD RESET do Race (evita “camadas” cobrindo a tela) ====== */
+    html, body { height:100%; margin:0; overflow:hidden; background:#000; }
+    body { position:relative; }
+
+    /* Camada de background sempre ATRÁS (resolve “MANAGER” por cima no PC) */
+    .race-bg {
+      position:fixed; inset:0;
+      background: #000;
+      background-image: url("assets/ui/capa_bg.png");
+      background-size: cover;
+      background-position: center;
+      opacity: 0.20;
+      z-index: 0;
+      pointer-events: none;
+      filter: saturate(1.1) contrast(1.05);
+    }
+    /* Conteúdo sempre acima */
+    .race-shell { position:relative; z-index: 1; height:100%; display:flex; flex-direction:column; }
 
     .topbar {
       display:flex; align-items:center; justify-content:space-between;
       gap:12px; padding:14px 14px 10px 14px;
     }
-    .gp-pill {
+    .pill {
       display:flex; align-items:center; gap:10px;
       background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.10);
       padding:10px 12px; border-radius:18px;
-      min-width: 280px;
       backdrop-filter: blur(10px);
+      color:#fff;
+      min-width: 260px;
     }
-    .gp-flag { width:28px; height:28px; border-radius:8px; object-fit:cover; background:#111; }
-    .gp-title { display:flex; flex-direction:column; line-height:1.1; }
-    .gp-title .h { font-weight:700; color:#fff; font-size:14px; }
-    .gp-title .s { color:rgba(255,255,255,0.75); font-size:12px; }
+    .flag { width:28px; height:28px; border-radius:8px; object-fit:cover; background:#111; }
+    .tt { display:flex; flex-direction:column; line-height:1.1; min-width:0; }
+    .tt .h { font-weight:900; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tt .s { opacity:0.75; font-size:12px; }
 
-    .speed-pill {
+    .speed {
       display:flex; align-items:center; gap:10px;
       background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.10);
       padding:10px 12px; border-radius:18px;
       backdrop-filter: blur(10px);
+      color:#fff;
     }
-    .speed-pill .lbl { color:rgba(255,255,255,0.8); font-size:12px; }
-    .speed-btns { display:flex; gap:8px; }
-    .speed-btn {
-      border:1px solid rgba(255,255,255,0.10);
+    .speed .lbl { opacity:0.8; font-size:12px; }
+    .speed .btns { display:flex; gap:8px; }
+    .sbtn {
+      border:1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.25);
       color:#fff; padding:8px 12px;
       border-radius:999px; cursor:pointer;
-      font-weight:700;
-      min-width:52px;
+      font-weight:900; min-width:52px;
     }
-    .speed-btn.active { border-color: rgba(255,0,80,0.55); box-shadow: 0 0 0 2px rgba(255,0,80,0.12) inset; }
+    .sbtn.active { border-color: rgba(255,0,80,0.55); box-shadow: 0 0 0 2px rgba(255,0,80,0.12) inset; }
 
-    .btn-lobby {
-      border:0; cursor:pointer; font-weight:800;
+    .lobby {
+      border:0; cursor:pointer; font-weight:1000;
       padding:12px 18px; border-radius:999px;
       background:#fff; color:#111;
     }
@@ -65,67 +81,60 @@
     }
 
     .panel {
-      position:relative;
       background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.10);
       border-radius:18px;
       overflow:hidden;
       backdrop-filter: blur(12px);
-      min-height: 0;
+      min-height:0;
+      position:relative;
     }
-
-    .panel-h {
+    .ph {
       display:flex; align-items:center; justify-content:space-between;
       padding:12px 14px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.00));
-      border-bottom:1px solid rgba(255,255,255,0.08);
+      border-bottom:1px solid rgba(255,255,255,0.10);
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
       color:#fff;
-      font-weight:800;
-      letter-spacing:0.4px;
+      font-weight:1000;
       font-size:12px;
       text-transform:uppercase;
+      letter-spacing:0.4px;
     }
-    .panel-sub {
-      font-weight:600; text-transform:none; letter-spacing:0;
-      color: rgba(255,255,255,0.70);
-      font-size:12px;
-    }
+    .ph .sub { font-weight:700; text-transform:none; letter-spacing:0; opacity:0.75; font-size:12px; }
 
     /* MAPA */
-    .map-wrap { height:100%; display:flex; flex-direction:column; min-height:0; }
-    .map-stage {
-      position:relative;
-      flex:1; min-height:0;
-      display:flex; align-items:center; justify-content:center;
+    .map {
+      height:100%; display:flex; flex-direction:column; min-height:0;
+    }
+    .stage {
+      position:relative; flex:1; min-height:0;
       padding:10px;
     }
-    canvas#mapCanvas {
-      width: 100%;
-      height: 100%;
+    canvas#mapCanvas{
+      width:100%; height:100%;
       border-radius:14px;
-      background: #000;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+      background:#000;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
     }
-
-    .map-hud {
+    .hud {
       display:grid;
       grid-template-columns: repeat(4, 1fr);
       gap:10px;
       padding:12px;
-      border-top:1px solid rgba(255,255,255,0.08);
+      border-top:1px solid rgba(255,255,255,0.10);
     }
-    .hudbox {
-      background: rgba(255,255,255,0.05);
-      border:1px solid rgba(255,255,255,0.08);
+    .hb {
       border-radius:14px;
       padding:10px 12px;
+      background: rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.10);
       color:#fff;
     }
-    .hudbox .k { font-size:11px; color:rgba(255,255,255,0.72); }
-    .hudbox .v { margin-top:4px; font-size:14px; font-weight:900; }
+    .hb .k { font-size:11px; opacity:0.75; }
+    .hb .v { margin-top:4px; font-size:14px; font-weight:1000; }
 
-    /* LADO DIREITO */
-    .right-wrap { height:100%; display:grid; grid-template-rows: 1fr 1.1fr; gap:14px; min-height:0; }
+    /* DIREITA */
+    .right { height:100%; display:grid; grid-template-rows: 1fr 1.1fr; gap:14px; min-height:0; }
     .list { overflow:auto; padding:10px; min-height:0; }
     .row {
       display:grid;
@@ -135,264 +144,179 @@
       padding:10px;
       margin-bottom:10px;
       border-radius:14px;
-      background: rgba(0,0,0,0.20);
-      border:1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.22);
+      border:1px solid rgba(255,255,255,0.10);
       color:#fff;
     }
     .pos {
       width:44px; height:34px; border-radius:12px;
       display:flex; align-items:center; justify-content:center;
-      font-weight:900;
-      border:1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.03);
+      font-weight:1000;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
       position:relative;
       overflow:hidden;
     }
-    .pos::before{
-      content:"";
-      position:absolute; left:0; top:0; bottom:0;
-      width:5px; background: rgba(255,255,255,0.15);
-    }
-    .who { display:flex; flex-direction:column; gap:2px; }
-    .who .n { font-weight:900; font-size:13px; line-height:1.1; }
-    .who .t { font-size:11px; color:rgba(255,255,255,0.70); text-transform:uppercase; letter-spacing:0.4px; }
-    .gap { text-align:right; font-weight:900; color:#fff; }
-    .gap small { display:block; color:rgba(255,255,255,0.65); font-weight:700; }
+    .pos .bar { position:absolute; left:0; top:0; bottom:0; width:5px; opacity:0.95; }
+    .who { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .who .n { font-weight:1000; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .who .t { font-size:11px; opacity:0.70; text-transform:uppercase; letter-spacing:0.4px; }
+    .gap { text-align:right; font-weight:1000; }
+    .gap small { display:block; opacity:0.65; font-weight:800; }
 
-    .drivers {
-      padding:10px;
-      overflow:auto;
-      min-height:0;
-    }
-    .drivers-grid {
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:12px;
-    }
+    .drivers { padding:10px; overflow:auto; min-height:0; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
     .card {
       border-radius:16px;
-      border:1px solid rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.10);
       background: rgba(0,0,0,0.22);
       padding:12px;
       position:relative;
       overflow:hidden;
       color:#fff;
     }
-    .card::before{
-      content:"";
-      position:absolute; left:0; top:0; bottom:0;
-      width:4px; background: rgba(255,255,255,0.15);
-    }
-    .card-h {
-      display:flex; align-items:center; gap:10px;
-      margin-bottom:10px;
-    }
-    .avatar {
+    .card .bar { position:absolute; left:0; top:0; bottom:0; width:4px; opacity:0.95; }
+    .ch { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .av {
       width:40px; height:40px; border-radius:12px;
       background: rgba(255,255,255,0.08);
-      border:1px solid rgba(255,255,255,0.10);
+      border:1px solid rgba(255,255,255,0.12);
       overflow:hidden;
       display:flex; align-items:center; justify-content:center;
-      font-weight:900;
+      font-weight:1000;
     }
-    .avatar img { width:100%; height:100%; object-fit:cover; display:block; }
-    .card-name { display:flex; flex-direction:column; gap:2px; min-width:0; }
-    .card-name .n { font-weight:900; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .card-name .t { font-size:11px; color:rgba(255,255,255,0.70); text-transform:uppercase; letter-spacing:0.4px; }
+    .av img { width:100%; height:100%; object-fit:cover; display:block; }
+    .name { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .name .n { font-weight:1000; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .name .t { font-size:11px; opacity:0.70; text-transform:uppercase; letter-spacing:0.4px; display:flex; gap:8px; align-items:center; }
+    .logo {
+      width:18px; height:18px; border-radius:6px; object-fit:cover;
+      background: rgba(255,255,255,0.10);
+      border:1px solid rgba(255,255,255,0.10);
+    }
 
-    .stats {
-      display:flex; flex-wrap:wrap; gap:8px;
-      margin-bottom:10px;
-    }
-    .pill {
-      padding:7px 10px;
-      border-radius:999px;
+    .stats { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+    .sp {
+      padding:7px 10px; border-radius:999px;
       background: rgba(255,255,255,0.06);
-      border:1px solid rgba(255,255,255,0.08);
-      font-weight:800;
-      font-size:11px;
-      color:#fff;
+      border:1px solid rgba(255,255,255,0.10);
+      font-weight:1000; font-size:11px;
     }
-
-    .controls {
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
+    .ctrls { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .btn {
       border-radius:999px;
       padding:10px 12px;
-      font-weight:900;
-      border:1px solid rgba(255,255,255,0.10);
+      font-weight:1000;
+      border:1px solid rgba(255,255,255,0.12);
       background: rgba(255,255,255,0.06);
       color:#fff;
       cursor:pointer;
     }
     .btn.green { background: rgba(0,200,120,0.16); border-color: rgba(0,200,120,0.30); }
     .btn.red { background: rgba(255,0,80,0.16); border-color: rgba(255,0,80,0.30); }
-    .select {
+    .sel {
       grid-column: 1 / -1;
-      border-radius: 999px;
-      padding: 10px 12px;
-      border:1px solid rgba(255,255,255,0.10);
-      background: rgba(0,0,0,0.25);
+      border-radius:999px;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.30);
       color:#fff;
-      font-weight:900;
+      font-weight:1000;
       outline:none;
     }
 
     /* PÓDIO */
-    .modal {
-      position:fixed; inset:0;
-      background: rgba(0,0,0,0.72);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:9999;
-      padding:16px;
-    }
+    .modal { position:fixed; inset:0; background: rgba(0,0,0,0.72); display:none; align-items:center; justify-content:center; z-index:9999; padding:16px; }
     .modal.show { display:flex; }
-    .podium {
-      width:min(980px, 96vw);
-      border-radius:20px;
-      border:1px solid rgba(255,255,255,0.10);
-      background: rgba(20,20,24,0.92);
-      backdrop-filter: blur(14px);
-      overflow:hidden;
-      color:#fff;
-    }
-    .podium-h {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:14px 16px;
-      border-bottom:1px solid rgba(255,255,255,0.10);
-      font-weight:900;
-    }
-    .podium-body {
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap:12px;
-      padding:14px;
-    }
-    .pod {
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.04);
-      padding:12px;
-      text-align:center;
-    }
-    .pod .p { font-size:12px; opacity:0.8; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; }
-    .pod .nm { margin-top:6px; font-weight:1000; font-size:16px; }
-    .pod .tm { margin-top:6px; font-weight:900; font-size:13px; opacity:0.9; }
-    .pod .img {
-      width:90px; height:90px; border-radius:18px;
-      margin:10px auto 0 auto;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.06);
-      display:flex; align-items:center; justify-content:center;
-      font-weight:1000;
-    }
-    .pod .img img { width:100%; height:100%; object-fit:cover; display:block; }
+    .pod { width:min(980px, 96vw); border-radius:20px; border:1px solid rgba(255,255,255,0.12); background: rgba(20,20,24,0.92); backdrop-filter: blur(14px); overflow:hidden; color:#fff; }
+    .podh { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.12); font-weight:1000; }
+    .podb { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; padding:14px; }
+    .p { border-radius:16px; border:1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); padding:12px; text-align:center; }
+    .p .rank { font-size:12px; opacity:0.8; font-weight:1000; letter-spacing:0.5px; text-transform:uppercase; }
+    .p .nm { margin-top:6px; font-weight:1000; font-size:16px; }
+    .p .tm { margin-top:6px; font-weight:1000; font-size:13px; opacity:0.9; }
+    .p .img { width:90px; height:90px; border-radius:18px; margin:10px auto 0 auto; overflow:hidden; border:1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-weight:1000; }
+    .p .img img { width:100%; height:100%; object-fit:cover; display:block; }
 
-    /* Responsivo */
     @media (max-width: 980px){
-      .content{ grid-template-columns: 1fr; }
-      .right-wrap { grid-template-rows: 1fr 1fr; }
-      .gp-pill{ min-width: 0; flex:1; }
-      .btn-lobby{ padding:12px 14px; }
+      .content { grid-template-columns: 1fr; }
+      .right { grid-template-rows: 1fr 1fr; }
+      .pill { min-width: 0; flex:1; }
     }
   </style>
 </head>
 
 <body>
+  <div class="race-bg"></div>
+
   <div class="race-shell">
 
     <div class="topbar">
-      <div class="gp-pill">
-        <img id="gpFlag" class="gp-flag" alt="">
-        <div class="gp-title">
+      <div class="pill">
+        <img id="gpFlag" class="flag" alt="">
+        <div class="tt">
           <div id="gpName" class="h">GP</div>
           <div id="gpMeta" class="s">Volta 1 · Clima: Seco · Pista: 24°C</div>
         </div>
       </div>
 
-      <div class="speed-pill">
+      <div class="speed">
         <div class="lbl">Velocidade</div>
-        <div class="speed-btns">
-          <button class="speed-btn active" data-speed="1">1x</button>
-          <button class="speed-btn" data-speed="2">2x</button>
-          <button class="speed-btn" data-speed="4">4x</button>
+        <div class="btns">
+          <button class="sbtn active" data-speed="1">1x</button>
+          <button class="sbtn" data-speed="2">2x</button>
+          <button class="sbtn" data-speed="4">4x</button>
         </div>
       </div>
 
-      <button id="btnLobby" class="btn-lobby">VOLTAR AO LOBBY</button>
+      <button id="btnLobby" class="lobby">VOLTAR AO LOBBY</button>
     </div>
 
     <div class="content">
       <!-- MAPA -->
-      <div class="panel map-wrap">
-        <div class="panel-h">
+      <div class="panel map">
+        <div class="ph">
           <div>MAPA DA PISTA</div>
-          <div class="panel-sub">SVG • pathPoints • 60fps</div>
+          <div class="sub">SVG • pathPoints • 60fps</div>
         </div>
 
-        <div class="map-stage">
+        <div class="stage">
           <canvas id="mapCanvas"></canvas>
         </div>
 
-        <div class="map-hud">
-          <div class="hudbox">
-            <div class="k">Volta</div>
-            <div class="v" id="hudLap">1/10</div>
-          </div>
-          <div class="hudbox">
-            <div class="k">Estado</div>
-            <div class="v" id="hudState">Correndo</div>
-          </div>
-          <div class="hudbox">
-            <div class="k">Clima</div>
-            <div class="v" id="hudWeather">Seco</div>
-          </div>
-          <div class="hudbox">
-            <div class="k">Pista</div>
-            <div class="v" id="hudTrackTemp">24°C</div>
-          </div>
+        <div class="hud">
+          <div class="hb"><div class="k">Volta</div><div class="v" id="hudLap">1/10</div></div>
+          <div class="hb"><div class="k">Estado</div><div class="v" id="hudState">Correndo</div></div>
+          <div class="hb"><div class="k">Clima</div><div class="v" id="hudWeather">Seco</div></div>
+          <div class="hb"><div class="k">Pista</div><div class="v" id="hudTrackTemp">24°C</div></div>
         </div>
       </div>
 
       <!-- DIREITA -->
-      <div class="right-wrap">
-        <!-- GRID -->
+      <div class="right">
         <div class="panel">
-          <div class="panel-h">
-            <div>SESSÃO</div>
-            <div class="panel-sub">Tempo real</div>
-          </div>
+          <div class="ph"><div>SESSÃO</div><div class="sub">Tempo real</div></div>
           <div class="list" id="sessionList"></div>
         </div>
 
-        <!-- SEUS PILOTOS -->
         <div class="panel">
-          <div class="panel-h">
-            <div>SEUS PILOTOS</div>
-            <div class="panel-sub">Controles</div>
-          </div>
+          <div class="ph"><div>SEUS PILOTOS</div><div class="sub">Setup + Staff influenciam</div></div>
           <div class="drivers">
-            <div class="drivers-grid" id="yourDrivers"></div>
+            <div class="grid" id="yourDrivers"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- PODIUM MODAL -->
+  <!-- PÓDIO -->
   <div class="modal" id="podiumModal" aria-hidden="true">
-    <div class="podium">
-      <div class="podium-h">
+    <div class="pod">
+      <div class="podh">
         <div id="podiumTitle">PÓDIO</div>
         <button id="podiumClose" class="btn">FECHAR</button>
       </div>
-      <div class="podium-body" id="podiumBody"></div>
+      <div class="podb" id="podiumBody"></div>
     </div>
   </div>
 
