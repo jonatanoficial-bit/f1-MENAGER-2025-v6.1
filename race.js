@@ -1,9 +1,9 @@
 /* =========================================================
-   F1 MANAGER 2025 — RACE.JS (FIX)
-   Correções:
-   - Normaliza pathPoints para o viewBox do SVG (carros na pista)
-   - Desenha traçado (linha branca/cinza) no SVG
-   - Standings DOM “persistente” (fotos não piscam)
+   F1 MANAGER 2025 — RACE.JS (FIX DEFINITIVO)
+   FIXES:
+   - Carros renderizados DENTRO do SVG (mesmo viewBox) => nunca “fora da pista”
+   - Traçado branco/cinza sempre desenhado (polyline no SVG)
+   - Faces com fallback em cadeia (para parar de sumir)
    ========================================================= */
 
 (function () {
@@ -14,28 +14,13 @@
   --------------------------- */
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const NS = "http://www.w3.org/2000/svg";
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function now() { return performance.now(); }
 
-  function parseParams() {
-    const u = new URL(location.href);
-    return {
-      track: (u.searchParams.get("track") || "australia").toLowerCase(),
-      gp: u.searchParams.get("gp") || "GP",
-      userTeam: (u.searchParams.get("userTeam") || "ferrari").toLowerCase()
-    };
-  }
-
   function safeJSONParse(str) { try { return JSON.parse(str); } catch { return null; } }
-
-  function uniq(arr) {
-    const s = new Set();
-    const out = [];
-    for (const x of arr) { if (!s.has(x)) { s.add(x); out.push(x); } }
-    return out;
-  }
 
   function slug(s) {
     return String(s || "")
@@ -50,67 +35,106 @@
       .replace(/(^-|-$)/g, "");
   }
 
-  function setImgWithFallback(imgEl, src, fallbackSrc) {
-    if (!imgEl) return;
-
-    // evita piscar: só troca se mudou
-    const next = src || "";
-    if (imgEl.dataset.lastSrc === next) return;
-    imgEl.dataset.lastSrc = next;
-
-    imgEl.onerror = () => {
-      imgEl.onerror = null;
-      if (fallbackSrc && imgEl.src !== fallbackSrc) imgEl.src = fallbackSrc;
+  function parseParams() {
+    const u = new URL(location.href);
+    return {
+      track: (u.searchParams.get("track") || "australia").toLowerCase(),
+      gp: u.searchParams.get("gp") || "GP",
+      userTeam: (u.searchParams.get("userTeam") || "ferrari").toLowerCase()
     };
-    imgEl.src = next;
   }
 
-  function pickFirstExistingLocalStorageKey(candidates) {
-    for (const k of candidates) {
-      const v = localStorage.getItem(k);
-      if (v && v.length > 2) return k;
-    }
-    return null;
+  function uniq(arr) {
+    const s = new Set();
+    const out = [];
+    for (const x of arr) { if (!s.has(x)) { s.add(x); out.push(x); } }
+    return out;
   }
 
-  function findAnyQualiGridInLocalStorage() {
-    const explicit = pickFirstExistingLocalStorageKey([
-      "fm25_quali_grid_q3",
-      "fm25_quali_grid",
-      "fm25_quali_result_q3",
-      "quali_grid_q3",
-      "quali_grid",
-      "qualifying_grid",
-      "q3_grid",
-      "grid_q3"
-    ]);
-    if (explicit) return safeJSONParse(localStorage.getItem(explicit));
+  function ensureViewBox(svg) {
+    if (!svg) return;
+    if (svg.getAttribute("viewBox")) return;
 
-    const keys = Object.keys(localStorage);
-    for (const k of keys) {
-      const lk = k.toLowerCase();
-      if (lk.includes("quali") && (lk.includes("grid") || lk.includes("q3"))) {
-        const parsed = safeJSONParse(localStorage.getItem(k));
-        if (parsed) return parsed;
-      }
+    const w = Number(svg.getAttribute("width")) || 1000;
+    const h = Number(svg.getAttribute("height")) || 1000;
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  }
+
+  function makeSimpleOvalPoints(n = 260) {
+    const cx = 500, cy = 500, rx = 360, ry = 230;
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      pts.push({ x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry });
     }
-    return null;
+    return pts;
   }
 
   /* ---------------------------
-     Base Data
+     Asset fallback (faces/logos)
+  --------------------------- */
+  function setImgWithFallbackChain(imgEl, srcList) {
+    if (!imgEl) return;
+    const list = (srcList || []).filter(Boolean);
+
+    const first = list[0] || "";
+    if (imgEl.dataset.lastSrc === first) return; // evita flicker/reload
+    imgEl.dataset.lastSrc = first;
+
+    let idx = 0;
+    imgEl.onerror = () => {
+      idx++;
+      if (idx < list.length) imgEl.src = list[idx];
+    };
+    imgEl.src = first;
+  }
+
+  function faceCandidates(driver) {
+    // Mantém o que você já tinha + tenta variações comuns.
+    const id = slug(driver?.id || "");
+    const direct = driver?.face || "";
+
+    return [
+      direct,
+
+      // caminhos comuns
+      `assets/drivers/${id}.png`,
+      `assets/drivers/${id}.jpg`,
+      `assets/driver_faces/${id}.png`,
+      `assets/faces/${id}.png`,
+      `assets/pilots/${id}.png`,
+
+      // fallback final
+      `assets/drivers/default.png`,
+      `assets/ui/default_driver.png`
+    ];
+  }
+
+  function logoCandidates(teamKey) {
+    const k = normalizeTeamKey(teamKey);
+    return [
+      `assets/teams/${k}.png`,
+      `assets/teams/${k}.webp`,
+      `assets/teams/${k}.jpg`,
+      `assets/teams/default.png`,
+      `assets/ui/default_team.png`
+    ];
+  }
+
+  /* ---------------------------
+     Base Data (igual ao seu)
   --------------------------- */
   const TEAM = {
-    ferrari:   { name: "Ferrari",         color: "#d00000", logo: "assets/teams/ferrari.png" },
-    redbull:   { name: "Red Bull Racing", color: "#1e2a78", logo: "assets/teams/redbull.png" },
-    mercedes:  { name: "Mercedes",        color: "#00d2be", logo: "assets/teams/mercedes.png" },
-    mclaren:   { name: "McLaren",         color: "#ff8700", logo: "assets/teams/mclaren.png" },
-    aston:     { name: "Aston Martin",    color: "#006f62", logo: "assets/teams/aston.png" },
-    alpine:    { name: "Alpine",          color: "#0090ff", logo: "assets/teams/alpine.png" },
-    williams:  { name: "Williams",        color: "#005aff", logo: "assets/teams/williams.png" },
-    haas:      { name: "Haas",            color: "#b6babd", logo: "assets/teams/haas.png" },
-    rb:        { name: "RB",              color: "#6c6cff", logo: "assets/teams/rb.png" },
-    sauber:    { name: "Sauber / Audi",   color: "#00ff66", logo: "assets/teams/sauber.png" }
+    ferrari:   { name: "Ferrari",         color: "#d00000" },
+    redbull:   { name: "Red Bull Racing", color: "#1e2a78" },
+    mercedes:  { name: "Mercedes",        color: "#00d2be" },
+    mclaren:   { name: "McLaren",         color: "#ff8700" },
+    aston:     { name: "Aston Martin",    color: "#006f62" },
+    alpine:    { name: "Alpine",          color: "#0090ff" },
+    williams:  { name: "Williams",        color: "#005aff" },
+    haas:      { name: "Haas",            color: "#b6babd" },
+    rb:        { name: "RB",              color: "#6c6cff" },
+    sauber:    { name: "Sauber / Audi",   color: "#00ff66" }
   };
 
   const ROSTER = [
@@ -162,11 +186,40 @@
 
   function getTeamData(teamKey) {
     const k = normalizeTeamKey(teamKey);
-    return TEAM[k] || { name: teamKey || "Equipe", color: "#888", logo: "assets/teams/default.png" };
+    return TEAM[k] || { name: teamKey || "Equipe", color: "#888" };
+  }
+
+  function findAnyQualiGridInLocalStorage() {
+    const keys = [
+      "fm25_quali_grid_q3",
+      "fm25_quali_grid",
+      "fm25_quali_result_q3",
+      "quali_grid_q3",
+      "quali_grid",
+      "qualifying_grid",
+      "q3_grid",
+      "grid_q3"
+    ];
+
+    for (const k of keys) {
+      const v = localStorage.getItem(k);
+      const p = safeJSONParse(v);
+      if (p) return p;
+    }
+
+    // fallback heurístico
+    for (const k of Object.keys(localStorage)) {
+      const lk = k.toLowerCase();
+      if (lk.includes("quali") && (lk.includes("grid") || lk.includes("q3"))) {
+        const p = safeJSONParse(localStorage.getItem(k));
+        if (p) return p;
+      }
+    }
+    return null;
   }
 
   /* ---------------------------
-     DOM refs
+     DOM
   --------------------------- */
   const el = {
     teamLogoTop: $("#teamLogoTop"),
@@ -175,12 +228,12 @@
     weatherLabel: $("#weather-label"),
     trackTempLabel: $("#tracktemp-label"),
     btnBack: $("#btnBackLobby"),
+
     trackContainer: $("#track-container"),
     driversList: $("#drivers-list"),
 
     userCard0: $("#user-driver-card-0"),
     userCard1: $("#user-driver-card-1"),
-
     userCar0: $("#user-car-0"),
     userCar1: $("#user-car-1"),
     userTyre0: $("#user-tyre-0"),
@@ -209,8 +262,10 @@
     track: {
       name: params.track,
       svg: null,
+      vb: { x: 0, y: 0, width: 1000, height: 1000 },
       pathPoints: [],
-      vb: { x: 0, y: 0, width: 1000, height: 1000 }
+      gTrack: null,
+      gCars: null
     },
 
     drivers: [],
@@ -219,239 +274,11 @@
       driverIds: []
     },
 
-    ui: {
-      standingsRows: [] // elementos persistentes
-    },
+    ui: { standingsRows: [] },
 
     lastTick: now(),
     lastUiUpdate: 0
   };
-
-  /* ---------------------------
-     Track loading + NORMALIZE POINTS + DRAW LINE
-  --------------------------- */
-  async function loadTrackAssets() {
-    const track = params.track;
-
-    // SVG
-    const svgUrl = `assets/tracks/${track}.svg`;
-    try {
-      const svgText = await fetch(svgUrl, { cache: "no-store" }).then(r => r.text());
-      el.trackContainer.innerHTML = svgText;
-      state.track.svg = el.trackContainer.querySelector("svg");
-
-      if (state.track.svg) {
-        state.track.svg.style.width = "100%";
-        state.track.svg.style.height = "100%";
-        state.track.svg.style.display = "block";
-
-        // garante viewBox
-        ensureViewBox(state.track.svg);
-        const vb = state.track.svg.viewBox.baseVal;
-        state.track.vb = { x: vb.x, y: vb.y, width: vb.width, height: vb.height };
-      }
-    } catch (e) {
-      el.trackContainer.innerHTML = `<div style="color:#fff;padding:16px">Falha ao carregar SVG: ${svgUrl}</div>`;
-    }
-
-    // JSON pathPoints
-    const jsonUrl = `assets/tracks/${track}.json`;
-    try {
-      const data = await fetch(jsonUrl, { cache: "no-store" }).then(r => r.json());
-      const pts = data.pathPoints || data.points || data.path || [];
-      state.track.pathPoints = pts.map(p => ({ x: Number(p.x), y: Number(p.y) }))
-        .filter(p => isFinite(p.x) && isFinite(p.y));
-    } catch {
-      state.track.pathPoints = extractFallbackPointsFromSvg();
-    }
-
-    // fallback extremo
-    if (!state.track.pathPoints || state.track.pathPoints.length < 20) {
-      state.track.pathPoints = makeSimpleOvalPoints(280);
-    }
-
-    // >>> FIX PRINCIPAL: normaliza pontos para viewBox
-    normalizePathPointsToViewBox();
-
-    // >>> desenha a linha da pista (branco/cinza) conectando os pontos
-    drawTrackLineInSvg();
-  }
-
-  function ensureViewBox(svg) {
-    if (!svg) return;
-    const vb = svg.getAttribute("viewBox");
-    if (vb) return;
-
-    // tenta usar width/height do SVG
-    const w = Number(svg.getAttribute("width")) || 1000;
-    const h = Number(svg.getAttribute("height")) || 1000;
-    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-  }
-
-  function extractFallbackPointsFromSvg() {
-    try {
-      const svg = state.track.svg;
-      if (!svg) return [];
-
-      const pl = svg.querySelector("polyline, polygon");
-      if (pl && pl.getAttribute("points")) {
-        const raw = pl.getAttribute("points").trim().split(/\s+/);
-        const pts = raw.map(pair => {
-          const [x, y] = pair.split(",").map(Number);
-          return { x, y };
-        }).filter(p => isFinite(p.x) && isFinite(p.y));
-        return densifyPoints(pts, 450);
-      }
-
-      const path = svg.querySelector("path");
-      if (path && typeof path.getTotalLength === "function") {
-        const len = path.getTotalLength();
-        const n = 520;
-        const pts = [];
-        for (let i = 0; i < n; i++) {
-          const pt = path.getPointAtLength((i / n) * len);
-          pts.push({ x: pt.x, y: pt.y });
-        }
-        return pts;
-      }
-    } catch {}
-    return [];
-  }
-
-  function densifyPoints(pts, targetCount) {
-    if (!pts || pts.length < 2) return pts || [];
-    const out = [];
-    const segs = pts.length - 1;
-    for (let i = 0; i < segs; i++) {
-      const a = pts[i], b = pts[i+1];
-      const steps = Math.max(2, Math.floor(targetCount / segs));
-      for (let s = 0; s < steps; s++) {
-        const t = s / steps;
-        out.push({ x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) });
-      }
-    }
-    out.push(pts[pts.length - 1]);
-    return out;
-  }
-
-  function makeSimpleOvalPoints(n = 240) {
-    const cx = 500, cy = 500, rx = 360, ry = 230;
-    const pts = [];
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2;
-      pts.push({ x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry });
-    }
-    return pts;
-  }
-
-  function normalizePathPointsToViewBox() {
-    const pts = state.track.pathPoints;
-    const vb = state.track.vb;
-
-    if (!pts || pts.length < 2) return;
-
-    // detecta faixa
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const p of pts) {
-      if (p.x < minX) minX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y > maxY) maxY = p.y;
-    }
-
-    const spanX = maxX - minX;
-    const spanY = maxY - minY;
-
-    // Caso 1: pontos normalizados 0..1 (ou 0..100)
-    const looksNormalized01 = maxX <= 1.5 && maxY <= 1.5;
-    const looksNormalized100 = maxX <= 110 && maxY <= 110 && (spanX > 10 || spanY > 10);
-
-    if (looksNormalized01) {
-      // converte 0..1 para viewBox
-      state.track.pathPoints = pts.map(p => ({
-        x: vb.x + p.x * vb.width,
-        y: vb.y + p.y * vb.height
-      }));
-      return;
-    }
-
-    if (looksNormalized100) {
-      // converte 0..100 para viewBox
-      state.track.pathPoints = pts.map(p => ({
-        x: vb.x + (p.x / 100) * vb.width,
-        y: vb.y + (p.y / 100) * vb.height
-      }));
-      return;
-    }
-
-    // Caso 2: pontos estão em outra escala (ex: pixels de export), encaixa no viewBox preservando proporção
-    // Se já estiverem “parecidos” com o viewBox, não mexe.
-    const closeToViewBox =
-      spanX > vb.width * 0.6 && spanX < vb.width * 1.4 &&
-      spanY > vb.height * 0.6 && spanY < vb.height * 1.4;
-
-    if (closeToViewBox) return;
-
-    // encaixe (fit) dentro do viewBox com margem
-    const margin = 0.08;
-    const targetW = vb.width * (1 - margin * 2);
-    const targetH = vb.height * (1 - margin * 2);
-
-    const scale = Math.min(
-      targetW / (spanX || 1),
-      targetH / (spanY || 1)
-    );
-
-    const offsetX = vb.x + vb.width * margin - minX * scale;
-    const offsetY = vb.y + vb.height * margin - minY * scale;
-
-    state.track.pathPoints = pts.map(p => ({
-      x: p.x * scale + offsetX,
-      y: p.y * scale + offsetY
-    }));
-  }
-
-  function drawTrackLineInSvg() {
-    const svg = state.track.svg;
-    if (!svg) return;
-
-    // remove anteriores (se houver)
-    svg.querySelectorAll("[data-trackline='1']").forEach(n => n.remove());
-
-    const pts = state.track.pathPoints;
-    if (!pts || pts.length < 2) return;
-
-    // camada abaixo dos carros
-    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    g.setAttribute("data-trackline", "1");
-
-    // 1) linha “cinza” grossa (base)
-    const base = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-    base.setAttribute("fill", "none");
-    base.setAttribute("stroke", "rgba(180,180,180,0.75)");
-    base.setAttribute("stroke-width", "10");
-    base.setAttribute("stroke-linecap", "round");
-    base.setAttribute("stroke-linejoin", "round");
-    base.setAttribute("points", pts.map(p => `${p.x},${p.y}`).join(" "));
-    base.setAttribute("data-trackline", "1");
-
-    // 2) linha “branca” fina (top)
-    const top = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-    top.setAttribute("fill", "none");
-    top.setAttribute("stroke", "rgba(255,255,255,0.92)");
-    top.setAttribute("stroke-width", "4.5");
-    top.setAttribute("stroke-linecap", "round");
-    top.setAttribute("stroke-linejoin", "round");
-    top.setAttribute("points", pts.map(p => `${p.x},${p.y}`).join(" "));
-    top.setAttribute("data-trackline", "1");
-
-    // coloca no começo do svg (abaixo de tudo)
-    g.appendChild(base);
-    g.appendChild(top);
-
-    // insere como primeiro filho para ficar atrás
-    svg.insertBefore(g, svg.firstChild);
-  }
 
   /* ---------------------------
      Weather
@@ -461,18 +288,24 @@
     if (saved && saved.weather) {
       state.weather = saved.weather;
       state.trackTemp = saved.trackTemp ?? state.trackTemp;
-    } else {
-      const rainChance = 0.18;
-      state.weather = (Math.random() < rainChance) ? "Chuva" : "Seco";
-      state.trackTemp = state.weather === "Chuva" ? 21 + Math.floor(Math.random() * 3) : 24 + Math.floor(Math.random() * 8);
-      localStorage.setItem("fm25_weather", JSON.stringify({ weather: state.weather, trackTemp: state.trackTemp }));
+      return;
     }
+
+    const rainChance = 0.18;
+    state.weather = (Math.random() < rainChance) ? "Chuva" : "Seco";
+    state.trackTemp = state.weather === "Chuva"
+      ? 21 + Math.floor(Math.random() * 3)
+      : 24 + Math.floor(Math.random() * 8);
+
+    localStorage.setItem("fm25_weather", JSON.stringify({
+      weather: state.weather,
+      trackTemp: state.trackTemp
+    }));
   }
 
   function setTopBar() {
     if (el.gpTitle) el.gpTitle.textContent = params.gp;
-    const teamData = getTeamData(state.user.team);
-    setImgWithFallback(el.teamLogoTop, teamData.logo, "assets/teams/default.png");
+    setImgWithFallbackChain(el.teamLogoTop, logoCandidates(state.user.team));
   }
 
   function setWeatherUI() {
@@ -481,7 +314,149 @@
   }
 
   /* ---------------------------
-     Build grid / drivers
+     Track loading
+  --------------------------- */
+  async function loadTrackAssets() {
+    const track = params.track;
+
+    // SVG
+    const svgUrl = `assets/tracks/${track}.svg`;
+    const svgText = await fetch(svgUrl, { cache: "no-store" }).then(r => r.text());
+    el.trackContainer.innerHTML = svgText;
+
+    state.track.svg = el.trackContainer.querySelector("svg");
+    if (!state.track.svg) throw new Error("SVG não encontrado no container.");
+
+    state.track.svg.style.width = "100%";
+    state.track.svg.style.height = "100%";
+    state.track.svg.style.display = "block";
+
+    ensureViewBox(state.track.svg);
+    const vb = state.track.svg.viewBox.baseVal;
+    state.track.vb = { x: vb.x, y: vb.y, width: vb.width, height: vb.height };
+
+    // JSON
+    const jsonUrl = `assets/tracks/${track}.json`;
+    let pts = [];
+    try {
+      const data = await fetch(jsonUrl, { cache: "no-store" }).then(r => r.json());
+      const raw = data.pathPoints || data.points || data.path || [];
+      pts = raw.map(p => ({ x: Number(p.x), y: Number(p.y) })).filter(p => isFinite(p.x) && isFinite(p.y));
+    } catch {
+      pts = [];
+    }
+
+    if (!pts || pts.length < 20) pts = makeSimpleOvalPoints(280);
+
+    state.track.pathPoints = normalizePathPointsToViewBox(pts);
+
+    // Layers
+    mountSvgLayers();
+
+    // Track line
+    drawTrackLine();
+
+    // Car circles
+    createCarsInSvg();
+  }
+
+  function normalizePathPointsToViewBox(pts) {
+    const vb = state.track.vb;
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of pts) {
+      minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+    }
+    const spanX = maxX - minX;
+    const spanY = maxY - minY;
+
+    // 0..1
+    if (maxX <= 1.5 && maxY <= 1.5) {
+      return pts.map(p => ({
+        x: vb.x + p.x * vb.width,
+        y: vb.y + p.y * vb.height
+      }));
+    }
+
+    // 0..100
+    if (maxX <= 110 && maxY <= 110 && (spanX > 10 || spanY > 10)) {
+      return pts.map(p => ({
+        x: vb.x + (p.x / 100) * vb.width,
+        y: vb.y + (p.y / 100) * vb.height
+      }));
+    }
+
+    // Se já está “na escala” do viewBox, mantém
+    const close =
+      spanX > vb.width * 0.6 && spanX < vb.width * 1.4 &&
+      spanY > vb.height * 0.6 && spanY < vb.height * 1.4;
+    if (close) return pts;
+
+    // fit no viewBox
+    const margin = 0.08;
+    const targetW = vb.width * (1 - margin * 2);
+    const targetH = vb.height * (1 - margin * 2);
+    const scale = Math.min(targetW / (spanX || 1), targetH / (spanY || 1));
+
+    const offsetX = vb.x + vb.width * margin - minX * scale;
+    const offsetY = vb.y + vb.height * margin - minY * scale;
+
+    return pts.map(p => ({ x: p.x * scale + offsetX, y: p.y * scale + offsetY }));
+  }
+
+  function mountSvgLayers() {
+    const svg = state.track.svg;
+
+    // remove layers antigos
+    svg.querySelectorAll("[data-layer='track']").forEach(n => n.remove());
+    svg.querySelectorAll("[data-layer='cars']").forEach(n => n.remove());
+
+    const gTrack = document.createElementNS(NS, "g");
+    gTrack.setAttribute("data-layer", "track");
+
+    const gCars = document.createElementNS(NS, "g");
+    gCars.setAttribute("data-layer", "cars");
+
+    // Track abaixo
+    svg.insertBefore(gTrack, svg.firstChild);
+    svg.appendChild(gCars);
+
+    state.track.gTrack = gTrack;
+    state.track.gCars = gCars;
+  }
+
+  function drawTrackLine() {
+    const g = state.track.gTrack;
+    const pts = state.track.pathPoints;
+    if (!g || !pts || pts.length < 2) return;
+
+    g.innerHTML = "";
+
+    // base cinza
+    const base = document.createElementNS(NS, "polyline");
+    base.setAttribute("fill", "none");
+    base.setAttribute("stroke", "rgba(160,160,160,0.70)");
+    base.setAttribute("stroke-width", "12");
+    base.setAttribute("stroke-linecap", "round");
+    base.setAttribute("stroke-linejoin", "round");
+    base.setAttribute("points", pts.map(p => `${p.x},${p.y}`).join(" "));
+
+    // topo branco
+    const top = document.createElementNS(NS, "polyline");
+    top.setAttribute("fill", "none");
+    top.setAttribute("stroke", "rgba(255,255,255,0.92)");
+    top.setAttribute("stroke-width", "5");
+    top.setAttribute("stroke-linecap", "round");
+    top.setAttribute("stroke-linejoin", "round");
+    top.setAttribute("points", pts.map(p => `${p.x},${p.y}`).join(" "));
+
+    g.appendChild(base);
+    g.appendChild(top);
+  }
+
+  /* ---------------------------
+     Grid / drivers
   --------------------------- */
   function buildGridFromQualiOrDefault() {
     const quali = findAnyQualiGridInLocalStorage();
@@ -507,15 +482,14 @@
     state.drivers = finalIds.map((id, idx) => {
       const base = ROSTER.find(d => d.id === id) || ROSTER[idx] || ROSTER[0];
       const teamKey = normalizeTeamKey(base.team);
-      const tdata = getTeamData(teamKey);
+      const t = getTeamData(teamKey);
 
       return {
         id: base.id,
         name: base.name,
         team: teamKey,
-        teamName: tdata.name,
-        color: tdata.color,
-        logo: tdata.logo,
+        teamName: t.name,
+        color: t.color,
         face: base.face,
         pace: base.pace,
 
@@ -535,7 +509,7 @@
 
         pit: { requested: false, inPit: false, pitUntil: 0, lastPitLap: -999 },
 
-        carEl: null
+        carEl: null // agora é circle SVG
       };
     });
 
@@ -547,31 +521,23 @@
   }
 
   /* ---------------------------
-     Cars overlay + point sampling
+     Cars in SVG (FIX PRINCIPAL)
   --------------------------- */
-  function createCars() {
-    const overlay = document.createElement("div");
-    overlay.id = "cars-overlay";
-    overlay.style.position = "absolute";
-    overlay.style.inset = "0";
-    overlay.style.pointerEvents = "none";
-    overlay.style.zIndex = "6";
+  function createCarsInSvg() {
+    const g = state.track.gCars;
+    if (!g) return;
 
-    el.trackContainer.style.position = "relative";
-    el.trackContainer.appendChild(overlay);
+    g.innerHTML = "";
 
     for (const d of state.drivers) {
-      const car = document.createElement("div");
-      car.className = "car-dot";
-      car.style.position = "absolute";
-      car.style.width = "10px";
-      car.style.height = "10px";
-      car.style.borderRadius = "999px";
-      car.style.background = d.color || "#fff";
-      car.style.boxShadow = "0 0 10px rgba(255,255,255,.35)";
-      car.style.transform = "translate(-50%,-50%)";
-      overlay.appendChild(car);
-      d.carEl = car;
+      const c = document.createElementNS(NS, "circle");
+      c.setAttribute("r", state.user.driverIds.includes(d.id) ? "7" : "6");
+      c.setAttribute("fill", d.color || "#fff");
+      c.setAttribute("stroke", "rgba(255,255,255,0.55)");
+      c.setAttribute("stroke-width", "1.2");
+      c.setAttribute("opacity", "1");
+      g.appendChild(c);
+      d.carEl = c;
     }
   }
 
@@ -586,135 +552,24 @@
     return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) };
   }
 
-  function svgPointToOverlayPx(pt) {
-    const svg = state.track.svg;
-    if (!svg) return { x: 0, y: 0 };
-
-    const vb = svg.viewBox.baseVal;
-    const rect = svg.getBoundingClientRect();
-
-    const sx = rect.width / vb.width;
-    const sy = rect.height / vb.height;
-
-    return {
-      x: (pt.x - vb.x) * sx,
-      y: (pt.y - vb.y) * sy
-    };
-  }
-
   function renderCars() {
-    if (!state.track.svg) return;
-
     for (const d of state.drivers) {
       if (!d.carEl) continue;
 
       if (d.pit.inPit) {
-        d.carEl.style.opacity = "0.15";
+        d.carEl.setAttribute("opacity", "0.20");
         continue;
       }
-      d.carEl.style.opacity = "1";
+      d.carEl.setAttribute("opacity", "1");
 
       const pt = getPointAtProgress(d.progress);
-      const px = svgPointToOverlayPx(pt);
-
-      d.carEl.style.left = `${px.x}px`;
-      d.carEl.style.top = `${px.y}px`;
-
-      if (state.user.driverIds.includes(d.id)) {
-        d.carEl.style.width = "12px";
-        d.carEl.style.height = "12px";
-        d.carEl.style.boxShadow = "0 0 12px rgba(255,255,255,.65)";
-      } else {
-        d.carEl.style.width = "10px";
-        d.carEl.style.height = "10px";
-        d.carEl.style.boxShadow = "0 0 10px rgba(255,255,255,.35)";
-      }
+      d.carEl.setAttribute("cx", String(pt.x));
+      d.carEl.setAttribute("cy", String(pt.y));
     }
   }
 
   /* ---------------------------
-     Tyre/modes
-  --------------------------- */
-  function weatherWearMultiplier() { return (state.weather === "Chuva") ? 0.85 : 1.0; }
-
-  function engineFactor(mode) {
-    if (mode === "ECON") return 0.965;
-    if (mode === "ATTACK") return 1.020;
-    return 1.0;
-  }
-
-  function aggrWearFactor(aggr) {
-    const map = { A0: 0.80, A1: 0.92, A2: 1.00, A3: 1.12 };
-    return map[aggr] || 1.0;
-  }
-
-  function tyreBaseGrip(tyre) {
-    if (tyre === "S") return 1.020;
-    if (tyre === "M") return 1.000;
-    if (tyre === "H") return 0.985;
-    if (tyre === "I") return (state.weather === "Chuva") ? 1.005 : 0.960;
-    if (tyre === "W") return (state.weather === "Chuva") ? 1.015 : 0.940;
-    return 1.0;
-  }
-
-  function tyreWearDeltaPerSecond(d) {
-    const base = 0.028;
-    const grip = tyreBaseGrip(d.tyre);
-    const mode = engineFactor(d.engineMode);
-    const ag = aggrWearFactor(d.aggr);
-    const wmul = weatherWearMultiplier();
-
-    let rainPenalty = 1.0;
-    if (state.weather === "Chuva" && (d.tyre === "S" || d.tyre === "M" || d.tyre === "H")) rainPenalty = 1.55;
-
-    return base * grip * mode * ag * wmul * rainPenalty;
-  }
-
-  /* ---------------------------
-     PIT
-  --------------------------- */
-  function requestPit(driver) {
-    if (!driver || driver.pit.inPit) return;
-    driver.pit.requested = true;
-  }
-
-  function performPitStop(driver) {
-    driver.pit.requested = false;
-    driver.pit.inPit = true;
-
-    const base = 3.1;
-    const extra = (driver.engineMode === "ATTACK") ? 0.15 : 0;
-    const pitTime = base + extra + Math.random() * 0.35;
-
-    driver.pit.pitUntil = now() + pitTime * 1000 / state.speedMul;
-    driver.pit.lastPitLap = driver.lap;
-
-    // troca “default”
-    let target = (state.weather === "Chuva") ? "W" : "M";
-    driver.tyre = driver.tyre || target; // mantém se user já escolheu
-    driver.tyreWear = 100;
-
-    driver.totalTime += pitTime + 17.0;
-  }
-
-  function updatePit(driver) {
-    if (!driver) return;
-
-    if (driver.pit.inPit) {
-      if (now() >= driver.pit.pitUntil) driver.pit.inPit = false;
-      return;
-    }
-
-    if (!driver.pit.requested) return;
-    if (driver.lap < 1) return;
-    if (driver.pit.lastPitLap === driver.lap) return;
-
-    // gatilho simples: fim da volta
-    if (driver.progress >= 0.975) performPitStop(driver);
-  }
-
-  /* ---------------------------
-     UI: standings persistente (sem piscar)
+     UI: standings (persistente)
   --------------------------- */
   function buildStandingsUIOnce() {
     if (!el.driversList) return;
@@ -788,7 +643,6 @@
 
       row.appendChild(left);
       row.appendChild(right);
-
       el.driversList.appendChild(row);
 
       state.ui.standingsRows.push({ row, pos, avatar, name, sub, gap, wear });
@@ -811,7 +665,7 @@
       r.sub.textContent = `${d.teamName} • Voltas: ${d.lap} • Pneu: ${d.tyre}`;
       r.wear.textContent = `${Math.round(d.tyreWear)}%`;
 
-      setImgWithFallback(r.avatar, d.face, "assets/drivers/default.png");
+      setImgWithFallbackChain(r.avatar, faceCandidates(d));
 
       if (d === leader) {
         r.gap.textContent = "LEADER";
@@ -832,7 +686,7 @@
   }
 
   /* ---------------------------
-     User HUD (mantém o que você já tinha)
+     HUD user (mantém)
   --------------------------- */
   function setUserHud(index, driver) {
     const car = (index === 0) ? el.userCar0 : el.userCar1;
@@ -848,11 +702,25 @@
     if (ers) ers.textContent = `${Math.round(driver.ers)}%`;
   }
 
+  function hydrateUserCard(index, driver) {
+    const card = index === 0 ? el.userCard0 : el.userCard1;
+    if (!card || !driver) return;
+
+    const nameEl = $(".user-name", card);
+    const teamEl = $(".user-team", card);
+    const faceEl = $(".user-face", card);
+
+    if (nameEl) nameEl.textContent = driver.name;
+    if (teamEl) teamEl.textContent = driver.teamName;
+    if (faceEl) setImgWithFallbackChain(faceEl, faceCandidates(driver));
+
+    setUserHud(index, driver);
+  }
+
   function wireUserCards() {
     const d0 = state.drivers.find(d => d.id === state.user.driverIds[0]) || state.drivers[0];
     const d1 = state.drivers.find(d => d.id === state.user.driverIds[1]) || state.drivers[1];
 
-    // títulos + faces nos cards (se seu HTML tiver .user-name/.user-team/.user-face)
     hydrateUserCard(0, d0);
     hydrateUserCard(1, d1);
 
@@ -868,67 +736,100 @@
         });
       });
     });
-
-    if (el.userTyre0) el.userTyre0.addEventListener("click", () => cycleUserTyre(0));
-    if (el.userTyre1) el.userTyre1.addEventListener("click", () => cycleUserTyre(1));
   }
 
-  function hydrateUserCard(index, driver) {
-    const card = index === 0 ? el.userCard0 : el.userCard1;
-    if (!card || !driver) return;
+  /* ---------------------------
+     Modes / wear
+  --------------------------- */
+  function weatherWearMultiplier() { return (state.weather === "Chuva") ? 0.85 : 1.0; }
+  function engineFactor(mode) { if (mode === "ECON") return 0.965; if (mode === "ATTACK") return 1.020; return 1.0; }
+  function aggrWearFactor(aggr) { return ({ A0:0.80, A1:0.92, A2:1.00, A3:1.12 }[aggr] || 1.0); }
 
-    const nameEl = $(".user-name", card);
-    const teamEl = $(".user-team", card);
-    const faceEl = $(".user-face", card);
-
-    if (nameEl) nameEl.textContent = driver.name;
-    if (teamEl) teamEl.textContent = driver.teamName;
-    if (faceEl) setImgWithFallback(faceEl, driver.face, "assets/drivers/default.png");
-
-    setUserHud(index, driver);
+  function tyreBaseGrip(tyre) {
+    if (tyre === "S") return 1.020;
+    if (tyre === "M") return 1.000;
+    if (tyre === "H") return 0.985;
+    if (tyre === "I") return (state.weather === "Chuva") ? 1.005 : 0.960;
+    if (tyre === "W") return (state.weather === "Chuva") ? 1.015 : 0.940;
+    return 1.0;
   }
 
-  function cycleUserTyre(index) {
-    const driverId = state.user.driverIds[index];
-    const d = state.drivers.find(x => x.id === driverId);
-    if (!d) return;
+  function tyreWearDeltaPerSecond(d) {
+    const base = 0.028;
+    const grip = tyreBaseGrip(d.tyre);
+    const mode = engineFactor(d.engineMode);
+    const ag = aggrWearFactor(d.aggr);
+    const wmul = weatherWearMultiplier();
 
-    const orderDry = ["S", "M", "H"];
-    const orderWet = ["I", "W"];
-    const order = (state.weather === "Chuva") ? [...orderWet, ...orderDry] : [...orderDry, ...orderWet];
+    let rainPenalty = 1.0;
+    if (state.weather === "Chuva" && (d.tyre === "S" || d.tyre === "M" || d.tyre === "H")) rainPenalty = 1.55;
 
-    const cur = d.tyre;
-    const idx = order.indexOf(cur);
-    d.tyre = order[(idx + 1 + order.length) % order.length];
-
-    setUserHud(index, d);
+    return base * grip * mode * ag * wmul * rainPenalty;
   }
 
+  /* ---------------------------
+     PIT (mantém simples por enquanto)
+  --------------------------- */
+  function requestPit(driver) {
+    if (!driver || driver.pit.inPit) return;
+    driver.pit.requested = true;
+  }
+
+  function performPitStop(driver) {
+    driver.pit.requested = false;
+    driver.pit.inPit = true;
+
+    const base = 3.1;
+    const extra = (driver.engineMode === "ATTACK") ? 0.15 : 0;
+    const pitTime = base + extra + Math.random() * 0.35;
+
+    driver.pit.pitUntil = now() + pitTime * 1000 / state.speedMul;
+    driver.pit.lastPitLap = driver.lap;
+
+    driver.tyreWear = 100;
+    if (state.weather === "Chuva") driver.tyre = "W";
+    else driver.tyre = "M";
+
+    driver.totalTime += pitTime + 17.0;
+  }
+
+  function updatePit(driver) {
+    if (!driver) return;
+
+    if (driver.pit.inPit) {
+      if (now() >= driver.pit.pitUntil) driver.pit.inPit = false;
+      return;
+    }
+
+    if (!driver.pit.requested) return;
+    if (driver.lap < 1) return;
+    if (driver.pit.lastPitLap === driver.lap) return;
+
+    if (driver.progress >= 0.975) performPitStop(driver);
+  }
+
+  /* ---------------------------
+     User actions
+  --------------------------- */
   function onUserAction(driverId, action) {
     const d = state.drivers.find(x => x.id === driverId);
     if (!d) return;
 
     switch (action) {
-      case "pit":
-        requestPit(d);
-        break;
-      case "ataque":
-        d.engineMode = "ATTACK";
-        break;
-      case "economizar":
-        d.engineMode = "ECON";
-        break;
-      case "motor+":
+      case "pit": requestPit(d); break;
+      case "ataque": d.engineMode = "ATTACK"; break;
+      case "economizar": d.engineMode = "ECON"; break;
       case "motor":
+      case "motor+":
         d.engineMode = (d.engineMode === "ECON") ? "NORMAL" : (d.engineMode === "NORMAL" ? "ATTACK" : "ECON");
         break;
-      case "agress+":
       case "agress":
+      case "agress+":
         d.aggr = (d.aggr === "A0") ? "A1" : (d.aggr === "A1" ? "A2" : (d.aggr === "A2" ? "A3" : "A0"));
         break;
-      case "ers boost":
-      case "ersboost":
       case "ers":
+      case "ersboost":
+      case "ers boost":
         if (d.ers >= 10) d.ers -= 10;
         break;
     }
@@ -944,7 +845,7 @@
     const grip = tyreBaseGrip(d.tyre);
 
     const ersBonus = (d.ers - 50) * 0.00035;
-    const aggrBonusMap = { A0: -0.002, A1: 0.0, A2: 0.001, A3: 0.002 };
+    const aggrBonusMap = { A0:-0.002, A1:0.0, A2:0.001, A3:0.002 };
     const aggrBonus = aggrBonusMap[d.aggr] || 0;
 
     let v = (pace / 100) * 0.045;
@@ -1001,9 +902,7 @@
       return a.totalTime - b.totalTime;
     });
 
-    for (let i = 0; i < state.drivers.length; i++) {
-      state.drivers[i].pos = i + 1;
-    }
+    for (let i = 0; i < state.drivers.length; i++) state.drivers[i].pos = i + 1;
 
     const leader = state.drivers[0];
     for (const d of state.drivers) d.gap = d.totalTime - leader.totalTime;
@@ -1036,9 +935,7 @@
 
   function bindBackButton() {
     if (!el.btnBack) return;
-    el.btnBack.addEventListener("click", () => {
-      location.href = "index.html";
-    });
+    el.btnBack.addEventListener("click", () => { location.href = "index.html"; });
   }
 
   function loop() {
@@ -1047,9 +944,7 @@
     const dt = t - state.lastTick;
     state.lastTick = t;
 
-    const safeDt = clamp(dt, 0, 50);
-    tick(safeDt);
-
+    tick(clamp(dt, 0, 50));
     requestAnimationFrame(loop);
   }
 
@@ -1061,11 +956,7 @@
     buildGridFromQualiOrDefault();
     await loadTrackAssets();
 
-    createCars();
-
-    // standings sem piscar
     buildStandingsUIOnce();
-
     bindSpeedButtons();
     bindBackButton();
     wireUserCards();
