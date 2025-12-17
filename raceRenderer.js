@@ -1,341 +1,264 @@
-/* raceRenderer.js — carrega SVG, amostra path, desenha pista + carros no canvas */
+/* ==========================================================
+   RACE RENDERER — ÚNICA CAMADA DE DESENHO DO MAPA
+   - Injeta 1 SVG limpo (sem duplicar)
+   - Desenha carros como “bolinhas” coloridas por equipe
+   - Mantém escala consistente em PC e Mobile
+   - Carros seguem em cima da linha
+========================================================== */
 
 (function () {
   "use strict";
 
-  const { RaceState } = window.RaceSystem;
+  const NS = "http://www.w3.org/2000/svg";
+
+  const state = {
+    svgRoot: null,
+    svgCarsLayer: null,
+    svgTrackLayer: null,
+    pathPoints: [],
+    cars: new Map(), // id -> { g, body, outline, label }
+    viewBox: "0 0 1000 1000",
+    ready: false
+  };
+
+  // ==============
+  // HELPERS
+  // ==============
+  function createSvgEl(tag) {
+    return document.createElementNS(NS, tag);
+  }
+
+  function setAttrs(el, attrs) {
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+  }
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
-  function getCanvasSize(canvas) {
-    const rect = canvas.getBoundingClientRect();
-    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    canvas.width = Math.floor(rect.width * dpr);
-    canvas.height = Math.floor(rect.height * dpr);
-    return { w: canvas.width, h: canvas.height, dpr };
+  function getPoint(points, t) {
+    if (!points || !points.length) return { x: 0, y: 0 };
+    const n = points.length;
+    const idx = t * (n - 1);
+    const i0 = Math.floor(idx);
+    const i1 = (i0 + 1) % n;
+    const frac = idx - i0;
+
+    const p0 = points[clamp(i0, 0, n - 1)];
+    const p1 = points[clamp(i1, 0, n - 1)];
+
+    return {
+      x: p0.x + (p1.x - p0.x) * frac,
+      y: p0.y + (p1.y - p0.y) * frac
+    };
   }
 
-  function parseSvgAndAttach(svgText, stageEl) {
-    stageEl.querySelectorAll("svg").forEach(s => s.remove());
+  function inferTeamColor(driver) {
+    // se o RaceSystem já colocou teamColor, usa
+    if (driver && driver.teamColor) return driver.teamColor;
 
-    const wrap = document.createElement("div");
-    wrap.innerHTML = svgText.trim();
-    const svg = wrap.querySelector("svg");
-    if (!svg) throw new Error("SVG inválido");
+    // fallback simples
+    const team = (driver?.team || "").toLowerCase();
+    if (team.includes("ferrari")) return "#ff2a2a";
+    if (team.includes("mclaren")) return "#ff7a00";
+    if (team.includes("red")) return "#2e57ff";
+    if (team.includes("mercedes")) return "#00ffd5";
+    if (team.includes("aston")) return "#00a86b";
+    if (team.includes("alpine")) return "#ff4fd8";
+    if (team.includes("williams")) return "#2aa1ff";
+    if (team.includes("haas")) return "#bdbdbd";
+    if (team.includes("rb")) return "#5d7bff";
+    if (team.includes("sauber")) return "#44ff44";
+    return "#ffffff";
+  }
 
+  // ==============
+  // CREATE ROOT
+  // ==============
+  function ensureRoot() {
+    const container = document.getElementById("track-container");
+    if (!container) throw new Error("track-container não encontrado no HTML.");
+
+    // Limpa somente o container do mapa (UI fica fora)
+    container.innerHTML = "";
+
+    const svg = createSvgEl("svg");
+    svg.setAttribute("id", "race-track-svg");
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("viewBox", state.viewBox);
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    svg.style.pointerEvents = "none";
 
-    // Garante viewBox
-    if (!svg.getAttribute("viewBox")) {
-      const w = parseFloat(svg.getAttribute("width") || "1000");
-      const h = parseFloat(svg.getAttribute("height") || "600");
-      svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-    }
+    // Layers (ordem importa)
+    const trackLayer = createSvgEl("g");
+    trackLayer.setAttribute("id", "track-layer");
 
-    stageEl.appendChild(svg);
-    return svg;
+    const carsLayer = createSvgEl("g");
+    carsLayer.setAttribute("id", "cars-layer");
+
+    svg.appendChild(trackLayer);
+    svg.appendChild(carsLayer);
+
+    container.appendChild(svg);
+
+    state.svgRoot = svg;
+    state.svgTrackLayer = trackLayer;
+    state.svgCarsLayer = carsLayer;
   }
 
-  function findMainPath(svg) {
-    // preferências: #racePath, path mais longo, polyline maior
-    const preferred = svg.querySelector("#racePath");
-    if (preferred && preferred.tagName.toLowerCase() === "path") return preferred;
+  // ==============
+  // SET TRACK
+  // ==============
+  function setTrack(svgClean, pathPoints) {
+    state.ready = false;
 
-    const polys = [...svg.querySelectorAll("polyline, polygon")];
-    if (polys.length) {
-      // pega o que tem mais pontos
-      polys.sort((a, b) => (b.getAttribute("points") || "").length - (a.getAttribute("points") || "").length);
-      return polys[0];
-    }
+    // Extrai viewBox do svgClean (se houver)
+    try {
+      const doc = new DOMParser().parseFromString(svgClean, "image/svg+xml");
+      const svg = doc.querySelector("svg");
+      const vb = svg?.getAttribute("viewBox");
+      if (vb) state.viewBox = vb;
+    } catch {}
 
-    const paths = [...svg.querySelectorAll("path")];
-    if (paths.length) {
-      // pega o mais longo
-      let best = paths[0];
-      let bestLen = 0;
-      paths.forEach(p => {
-        try {
-          const len = p.getTotalLength();
-          if (len > bestLen) { bestLen = len; best = p; }
-        } catch {}
-      });
-      return best;
-    }
+    ensureRoot();
 
-    return null;
-  }
+    // Limpa layer da pista e injeta 1 SVG (sem duplicar)
+    state.svgTrackLayer.innerHTML = "";
 
-  function samplePointsFromPath(svg, shape, samples = 900) {
-    const tag = shape.tagName.toLowerCase();
+    // Injeta markup do SVG limpo dentro do track-layer
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = svgClean.trim();
+    const injectedSvg = wrapper.querySelector("svg");
 
-    if (tag === "polyline" || tag === "polygon") {
-      const pts = (shape.getAttribute("points") || "").trim();
-      if (!pts) throw new Error("Polyline sem points");
-      const arr = pts.split(/[\s]+/).map(p => p.split(",").map(Number)).filter(p => p.length === 2 && isFinite(p[0]) && isFinite(p[1]));
-      return arr.map(([x,y]) => ({ x, y }));
-    }
+    if (!injectedSvg) throw new Error("SVG inválido (sem <svg> injetável).");
 
-    if (tag === "path") {
-      const len = shape.getTotalLength();
-      const points = [];
-      for (let i = 0; i < samples; i++) {
-        const p = shape.getPointAtLength((i / samples) * len);
-        points.push({ x: p.x, y: p.y });
-      }
-      return points;
-    }
-
-    throw new Error("Shape não suportado para sampling");
-  }
-
-  function computeBounds(points) {
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    points.forEach(p => {
-      minX = Math.min(minX, p.x);
-      minY = Math.min(minY, p.y);
-      maxX = Math.max(maxX, p.x);
-      maxY = Math.max(maxY, p.y);
+    // Move apenas os paths internos para o track-layer
+    const children = Array.from(injectedSvg.childNodes).filter(n => n.nodeType === 1);
+    children.forEach(node => {
+      state.svgTrackLayer.appendChild(node);
     });
-    const w = Math.max(1, maxX - minX);
-    const h = Math.max(1, maxY - minY);
-    return { minX, minY, maxX, maxY, w, h };
-  }
 
-  function fitToCanvas(points, canvasW, canvasH, pad = 60) {
-    const b = computeBounds(points);
-    const scale = Math.min((canvasW - pad * 2) / b.w, (canvasH - pad * 2) / b.h);
-    const ox = (canvasW - b.w * scale) / 2 - b.minX * scale;
-    const oy = (canvasH - b.h * scale) / 2 - b.minY * scale;
+    // Traçado pontilhado (bolinhas pequenas) — UM conjunto apenas
+    // (isso resolve “sumiu a linha” e ajuda visual AAA)
+    if (Array.isArray(pathPoints) && pathPoints.length > 0) {
+      const dots = createSvgEl("g");
+      dots.setAttribute("opacity", "0.6");
 
-    return points.map(p => ({
-      x: p.x * scale + ox,
-      y: p.y * scale + oy
-    }));
-  }
-
-  function drawTrack(ctx, pts) {
-    if (!pts || pts.length < 2) return;
-
-    // pista “asfalto”
-    ctx.lineJoin = "round";
-    ctx.lineCap = "round";
-
-    // shadow
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-    ctx.closePath();
-    ctx.strokeStyle = "rgba(0,0,0,.55)";
-    ctx.lineWidth = 22;
-    ctx.stroke();
-
-    // road base
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-    ctx.closePath();
-    ctx.strokeStyle = "rgba(230,230,240,.85)";
-    ctx.lineWidth = 16;
-    ctx.stroke();
-
-    // inner line highlight
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-    ctx.closePath();
-    ctx.strokeStyle = "rgba(255,255,255,.95)";
-    ctx.lineWidth = 5;
-    ctx.stroke();
-  }
-
-  function drawStartLine(ctx, pts, idx) {
-    if (!pts || pts.length < 2) return;
-    const i = clamp(idx, 0, pts.length - 2);
-    const a = pts[i], b = pts[i + 1];
-
-    // normal
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const len = Math.max(1, Math.hypot(dx, dy));
-    const nx = -dy / len;
-    const ny = dx / len;
-
-    const midx = (a.x + b.x) / 2;
-    const midy = (a.y + b.y) / 2;
-
-    const w = 18;
-    const h = 56;
-
-    ctx.save();
-    ctx.translate(midx, midy);
-    const ang = Math.atan2(dy, dx);
-    ctx.rotate(ang);
-
-    // bandeirada
-    for (let r = -2; r <= 2; r++) {
-      for (let c = -1; c <= 1; c++) {
-        const x = r * 6;
-        const y = c * 12;
-        const isBlack = (r + c) % 2 === 0;
-        ctx.fillStyle = isBlack ? "rgba(255,255,255,.90)" : "rgba(0,0,0,.65)";
-        ctx.fillRect(x - 3, y - 6, 6, 12);
+      const step = Math.max(1, Math.floor(pathPoints.length / 220));
+      for (let i = 0; i < pathPoints.length; i += step) {
+        const p = pathPoints[i];
+        const c = createSvgEl("circle");
+        setAttrs(c, {
+          cx: p.x,
+          cy: p.y,
+          r: 2.0,
+          fill: "rgba(255,255,255,0.55)"
+        });
+        dots.appendChild(c);
       }
+      state.svgTrackLayer.appendChild(dots);
     }
 
-    ctx.restore();
+    state.pathPoints = Array.isArray(pathPoints) ? pathPoints : [];
+
+    // Cars reset
+    state.cars.clear();
+    state.svgCarsLayer.innerHTML = "";
+
+    // Ajusta viewBox final
+    state.svgRoot.setAttribute("viewBox", state.viewBox);
+
+    state.ready = true;
   }
 
-  function pointAtProgress(trackPts, progress) {
-    if (!trackPts || trackPts.length < 2) return { x: 0, y: 0 };
-    const n = trackPts.length;
-    const idx = Math.floor(progress * n) % n;
-    return trackPts[idx];
-  }
+  // ==============
+  // CREATE/UPDATE CARS
+  // ==============
+  function ensureCar(driver) {
+    const id = driver.id;
+    if (state.cars.has(id)) return state.cars.get(id);
 
-  function drawCars(ctx, trackPts, sortedDrivers) {
-    if (!trackPts || trackPts.length < 2) return;
+    const g = createSvgEl("g");
+    g.setAttribute("class", "car-marker");
 
-    sortedDrivers.forEach(d => {
-      const p = pointAtProgress(trackPts, d.progress);
-
-      // “offtrack” pequena: coloca o carro levemente ao lado da linha, para não ficar exatamente em cima
-      // calculamos direção aproximada
-      const n = trackPts.length;
-      const idx = Math.floor(d.progress * n) % n;
-      const a = trackPts[idx];
-      const b = trackPts[(idx + 1) % n];
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const len = Math.max(1, Math.hypot(dx, dy));
-      const nx = -dy / len;
-      const ny = dx / len;
-
-      const side = (d.position % 2 === 0) ? 1 : -1;
-      const off = 5 * side;
-
-      const x = p.x + nx * off;
-      const y = p.y + ny * off;
-
-      // glow
-      ctx.beginPath();
-      ctx.fillStyle = "rgba(0,0,0,.35)";
-      ctx.arc(x, y, 10, 0, Math.PI * 2);
-      ctx.fill();
-
-      // car
-      ctx.beginPath();
-      ctx.fillStyle = d.teamColor || "#ccc";
-      ctx.arc(x, y, 6.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // dot center
-      ctx.beginPath();
-      ctx.fillStyle = "rgba(255,255,255,.85)";
-      ctx.arc(x, y, 2.1, 0, Math.PI * 2);
-      ctx.fill();
-
-      // pit indicator
-      if (d.inPit) {
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(255,255,255,.8)";
-        ctx.lineWidth = 2;
-        ctx.arc(x, y, 10.5, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+    // outline (para destacar no traçado)
+    const outline = createSvgEl("circle");
+    setAttrs(outline, {
+      r: 7.8,
+      fill: "rgba(0,0,0,0.65)"
     });
+
+    const body = createSvgEl("circle");
+    setAttrs(body, {
+      r: 6.3,
+      fill: inferTeamColor(driver),
+      stroke: "rgba(0,0,0,0.55)",
+      "stroke-width": "1.2"
+    });
+
+    // label pequeno (código do piloto) — opcional, mas ajuda muito
+    const label = createSvgEl("text");
+    setAttrs(label, {
+      x: 0,
+      y: -10,
+      "text-anchor": "middle",
+      "font-size": "10",
+      "font-family": "system-ui, -apple-system, Segoe UI, sans-serif",
+      fill: "rgba(255,255,255,0.9)",
+      stroke: "rgba(0,0,0,0.55)",
+      "stroke-width": "2",
+      "paint-order": "stroke"
+    });
+    label.textContent = driver.code || "";
+
+    // seta para pilotos do usuário
+    if (driver.isPlayer) {
+      const tri = createSvgEl("polygon");
+      tri.setAttribute("points", "0,-18 8,-4 -8,-4");
+      tri.setAttribute("fill", inferTeamColor(driver));
+      tri.setAttribute("stroke", "rgba(0,0,0,0.6)");
+      tri.setAttribute("stroke-width", "1");
+      g.appendChild(tri);
+    }
+
+    g.appendChild(outline);
+    g.appendChild(body);
+    g.appendChild(label);
+
+    state.svgCarsLayer.appendChild(g);
+
+    const obj = { g, body, outline, label };
+    state.cars.set(id, obj);
+    return obj;
   }
 
-  // ===== Renderer State =====
-  const Renderer = {
-    stageEl: null,
-    canvas: null,
-    ctx: null,
-    svgEl: null,
+  // ==============
+  // RENDER
+  // ==============
+  function renderCars(drivers, pathPoints) {
+    if (!state.ready) return;
+    if (!drivers || !drivers.length) return;
 
-    rawPoints: [],
-    fittedPoints: [],
-    lastSizeKey: "",
+    const pts = pathPoints && pathPoints.length ? pathPoints : state.pathPoints;
+    if (!pts || !pts.length) return;
 
-    async loadTrack(trackKey) {
-      const stage = Renderer.stageEl;
-      if (!stage) throw new Error("trackStage não encontrado");
+    for (const d of drivers) {
+      const car = ensureCar(d);
 
-      // sempre SVG
-      const url = `assets/tracks/${trackKey}.svg`;
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Falha ao carregar: ${url} (${res.status})`);
-      const svgText = await res.text();
+      // Atualiza cor se mudou (nunca fica “tudo igual”)
+      const col = inferTeamColor(d);
+      if (car.body.getAttribute("fill") !== col) car.body.setAttribute("fill", col);
 
-      Renderer.svgEl = parseSvgAndAttach(svgText, stage);
-
-      // precisa estar no DOM para getTotalLength funcionar
-      const mainShape = findMainPath(Renderer.svgEl);
-      if (!mainShape) throw new Error("Não encontrei path/polyline no SVG da pista");
-
-      // amostra pontos
-      Renderer.rawPoints = samplePointsFromPath(Renderer.svgEl, mainShape, 900);
-
-      // start line (índice próximo ao “meio” do desenho ou o ponto mais próximo do lado direito)
-      // aqui preferimos o ponto com maior X (tende a ficar “perto” da reta principal)
-      let best = 0;
-      let bestX = -Infinity;
-      Renderer.rawPoints.forEach((p, i) => {
-        if (p.x > bestX) { bestX = p.x; best = i; }
-      });
-      RaceState.track.startIndex = best;
-
-      // marca pronto
-      window.dispatchEvent(new CustomEvent("track:ready", { detail: { trackKey } }));
-    },
-
-    resize() {
-      const { w, h, dpr } = getCanvasSize(Renderer.canvas);
-      Renderer.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // desenhar em coords CSS
-
-      // fit points
-      const cssW = Renderer.canvas.getBoundingClientRect().width;
-      const cssH = Renderer.canvas.getBoundingClientRect().height;
-      const sizeKey = `${Math.round(cssW)}x${Math.round(cssH)}`;
-      if (sizeKey !== Renderer.lastSizeKey) {
-        Renderer.lastSizeKey = sizeKey;
-        Renderer.fittedPoints = fitToCanvas(Renderer.rawPoints, cssW, cssH, 70);
-        RaceState.track.points = Renderer.fittedPoints;
-      }
-    },
-
-    draw(sorted) {
-      const ctx = Renderer.ctx;
-      const rect = Renderer.canvas.getBoundingClientRect();
-      const w = rect.width;
-      const h = rect.height;
-
-      ctx.clearRect(0, 0, w, h);
-
-      // pista
-      drawTrack(ctx, Renderer.fittedPoints);
-      drawStartLine(ctx, Renderer.fittedPoints, RaceState.track.startIndex);
-
-      // carros
-      drawCars(ctx, Renderer.fittedPoints, sorted);
+      // Posição: em cima da linha (sem offset lateral)
+      const p = getPoint(pts, clamp(d.progress, 0, 1));
+      car.g.setAttribute("transform", `translate(${p.x},${p.y})`);
     }
-  };
+  }
 
-  // ===== Boot =====
+  // ==========================
+  // PUBLIC API
+  // ==========================
   window.RaceRenderer = {
-    async init() {
-      Renderer.stageEl = document.getElementById("trackStage");
-      Renderer.canvas = document.getElementById("trackCanvas");
-      Renderer.ctx = Renderer.canvas.getContext("2d");
-
-      await Renderer.loadTrack(RaceState.trackKey);
-
-      Renderer.resize();
-      window.addEventListener("resize", () => Renderer.resize(), { passive: true });
-    },
-
-    render(sortedDrivers) {
-      Renderer.draw(sortedDrivers);
-    }
+    setTrack,
+    renderCars
   };
+
 })();
