@@ -3,90 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>F1 Manager 2025 – Corrida</title>
-
+  <title>F1 Manager 2025 – Race</title>
   <link rel="stylesheet" href="race.css" />
-
-  <!-- Se você já usa data.js no projeto, mantenha. Se não existir, pode remover. -->
-  <script defer src="data.js"></script>
-
-  <!-- Corrida -->
   <script defer src="race.js"></script>
 </head>
 
 <body>
-  <div class="race-shell">
+  <div class="app">
 
-    <!-- TOP BAR -->
-    <header class="topbar">
-      <div class="gpbox">
-        <img id="teamLogo" class="teamLogo" alt="Equipe" />
-        <div class="gptext">
-          <div id="gpTitle" class="gpTitle">GP</div>
-          <div id="gpMeta" class="gpMeta">Volta 1 • Clima: — • Pista: —</div>
+    <!-- TOP HUD -->
+    <header class="topHud">
+      <div class="topLeft">
+        <div class="tabPills">
+          <button class="tab active" type="button">CORRIDA</button>
+          <button class="tab" type="button">PONTOS</button>
+        </div>
+        <div class="topMeta">
+          <div id="uiLapSmall" class="metaLine">Volta 1/10</div>
+          <div id="uiTopHint" class="metaLine muted">Top 10</div>
         </div>
       </div>
 
-      <div class="speedbox">
-        <div class="speedLabel">Velocidade</div>
-        <div class="speedBtns">
-          <button class="btn chip" data-speed="1">1x</button>
-          <button class="btn chip" data-speed="2">2x</button>
-          <button class="btn chip" data-speed="4">4x</button>
-        </div>
+      <div class="topCenter">
+        <div id="uiLapsRemaining" class="lapsRemaining">10 VOLTAS RESTANTES</div>
+        <div id="uiLapBig" class="lapBig">VOLTA 1/10</div>
       </div>
 
-      <button id="btnBack" class="btn backBtn" type="button">VOLTAR AO LOBBY</button>
+      <div class="topRight">
+        <button id="btnBack" class="btnHud" type="button">VOLTAR AO LOBBY</button>
+      </div>
     </header>
 
-    <!-- MAIN GRID -->
-    <main class="grid">
+    <!-- MAIN -->
+    <main class="mainGrid">
 
-      <!-- TRACK PANEL -->
-      <section class="panel trackPanel">
-        <div class="panelHead">
-          <div class="panelTitle">MAPA DA PISTA</div>
-          <div id="trackInfo" class="panelHint">SVG • path sampling • 60fps</div>
+      <!-- LEFT: LEADERBOARD -->
+      <section class="panel leftPanel">
+        <div class="panelTitleRow">
+          <div class="panelTitle">CLASSIFICAÇÃO</div>
+          <div id="uiSessionClock" class="panelSub">Tempo real</div>
         </div>
 
-        <div class="trackStage">
-          <canvas id="trackCanvas" class="trackCanvas" width="900" height="900"></canvas>
-          <div class="trackFooter">
-            <div class="miniCard">
-              <div class="miniLabel">Volta</div>
-              <div id="uiLap" class="miniValue">1/10</div>
-            </div>
-            <div class="miniCard">
-              <div class="miniLabel">Estado</div>
-              <div id="uiState" class="miniValue">Correndo</div>
-            </div>
-            <div class="miniCard">
-              <div class="miniLabel">Clima</div>
-              <div id="uiWeather" class="miniValue">—</div>
-            </div>
-            <div class="miniCard">
-              <div class="miniLabel">Pista</div>
-              <div id="uiTemp" class="miniValue">—</div>
-            </div>
-          </div>
+        <div id="leaderboard" class="leaderboard"></div>
+      </section>
+
+      <!-- CENTER: TRACK -->
+      <section class="panel centerPanel">
+        <div class="centerWrap">
+          <canvas id="trackCanvas" class="trackCanvas" width="1200" height="1200"></canvas>
         </div>
       </section>
 
-      <!-- SESSION PANEL -->
-      <section class="panel sessionPanel">
-        <div class="panelHead">
-          <div class="panelTitle">SESSÃO</div>
-          <div class="panelHint">Tempo real</div>
-        </div>
-
-        <div id="sessionList" class="sessionList"></div>
-      </section>
-
-      <!-- YOUR DRIVERS PANEL -->
-      <section class="panel yourPanel">
-        <div class="panelHead">
+      <!-- RIGHT: YOUR DRIVERS -->
+      <section class="panel rightPanel">
+        <div class="panelTitleRow">
           <div class="panelTitle">SEUS PILOTOS</div>
-          <div class="panelHint">Setup + Staff influenciam</div>
+          <div class="panelSub muted">Estratégia • Pit • Potência</div>
         </div>
 
         <div id="yourDrivers" class="yourDrivers"></div>
@@ -94,15 +66,72 @@
 
     </main>
 
-    <!-- PODIUM MODAL -->
+    <!-- BOTTOM BAR -->
+    <footer class="bottomBar">
+      <button class="iconBtn" type="button" aria-label="Menu">☰</button>
+      <button class="iconBtn" type="button" aria-label="Mapa">⛓</button>
+      <button class="iconBtn" type="button" aria-label="Câmera">📷</button>
+
+      <div class="bottomCenter">
+        <button id="btnPause" class="pillBtn" type="button">⏸</button>
+        <div id="uiLapBottom" class="pillInfo">VOLTA 1/10</div>
+        <div class="speedGroup">
+          <button class="speedBtn active" data-speed="1" type="button">1x</button>
+          <button class="speedBtn" data-speed="2" type="button">2x</button>
+          <button class="speedBtn" data-speed="4" type="button">4x</button>
+        </div>
+      </div>
+
+      <button id="btnFast" class="pillBtn" type="button">⏩</button>
+    </footer>
+
+    <!-- PIT MODAL -->
+    <div id="pitModal" class="modal hidden">
+      <div class="modalBackdrop"></div>
+      <div class="modalCard">
+        <div class="modalHeader">
+          <div class="modalTitle">PIT STOP</div>
+          <button id="pitClose" class="closeBtn" type="button">✕</button>
+        </div>
+
+        <div class="modalBody">
+          <div id="pitDriverName" class="pitDriverName">Piloto</div>
+          <div class="tyreGrid">
+            <button class="tyreBtn" data-tyre="S" type="button">
+              <div class="tyreCode">S</div><div class="tyreName">Soft</div>
+            </button>
+            <button class="tyreBtn" data-tyre="M" type="button">
+              <div class="tyreCode">M</div><div class="tyreName">Medium</div>
+            </button>
+            <button class="tyreBtn" data-tyre="H" type="button">
+              <div class="tyreCode">H</div><div class="tyreName">Hard</div>
+            </button>
+            <button class="tyreBtn" data-tyre="W" type="button">
+              <div class="tyreCode">W</div><div class="tyreName">Wet</div>
+            </button>
+          </div>
+
+          <div class="modalActions">
+            <button id="pitCancel" class="btnSecondary" type="button">Cancelar</button>
+            <button id="pitOk" class="btnPrimary" type="button">OK • ENTRAR NO BOX</button>
+          </div>
+
+          <div class="modalHint">
+            O piloto entra no box ao fim da volta (próximo do pit entry).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PODIUM (optional) -->
     <div id="podiumModal" class="modal hidden">
       <div class="modalBackdrop"></div>
       <div class="modalCard">
-        <div class="modalTitle">PÓDIO</div>
-        <div id="podiumGrid" class="podiumGrid"></div>
-        <div class="modalActions">
-          <button id="btnContinue" class="btn primary" type="button">CONTINUAR</button>
+        <div class="modalHeader">
+          <div class="modalTitle">PÓDIO</div>
+          <button id="podiumClose" class="closeBtn" type="button">✕</button>
         </div>
+        <div id="podiumGrid" class="podiumGrid"></div>
       </div>
     </div>
 
