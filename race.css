@@ -1,1 +1,535 @@
+/* =========================================================
+   F1 MANAGER 2025 – RACE (AAA UI)  |  PC + MOBILE
+   Arquivo completo (substituir inteiro)
+   ========================================================= */
 
+/* ---------- Reset / Base ---------- */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: #070a10;
+  color: #ffffff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Evita “texto branco ilegível em fundo claro” quando algum CSS global interfere */
+:root{
+  --bg0:#060911;
+  --bg1:#0b1220;
+  --bg2:#0f1a2e;
+  --panel:#0b0f16cc;
+  --panel2:#0b0f16f2;
+  --stroke:#ffffff1f;
+  --stroke2:#ffffff2b;
+  --text:#ffffff;
+  --muted:#b8c0d4;
+  --muted2:#96a0b8;
+  --good:#2bd46f;
+  --warn:#ffb020;
+  --bad:#ff4d4d;
+
+  --r:18px;
+  --r2:22px;
+
+  --shadow: 0 18px 60px rgba(0,0,0,.55);
+  --shadow2: 0 10px 30px rgba(0,0,0,.45);
+
+  --gap: 14px;
+  --pad: 14px;
+}
+
+/* ---------- Shell principal ---------- */
+.race-shell{
+  width: min(1400px, 100%);
+  margin: 0 auto;
+  padding: 14px 14px 22px;
+}
+
+/* ---------- Top HUD ---------- */
+.race-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(14,18,28,.92), rgba(8,10,16,.78));
+  border-radius: var(--r2);
+  box-shadow: var(--shadow2);
+  backdrop-filter: blur(10px);
+}
+
+.race-topbar .gp-left{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.race-topbar .gp-badge{
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  overflow:hidden;
+  border: 1px solid var(--stroke2);
+  background: rgba(255,255,255,.06);
+  flex: 0 0 auto;
+}
+.race-topbar .gp-badge img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+}
+
+.race-topbar .gp-title{
+  display:flex;
+  flex-direction:column;
+  gap: 2px;
+  min-width: 0;
+}
+.race-topbar .gp-title strong{
+  font-size: 15px;
+  letter-spacing: .2px;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+.race-topbar .gp-title span{
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+.race-topbar .gp-right{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.speed-pill{
+  display:flex;
+  gap: 8px;
+  align-items:center;
+  padding: 8px 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  background: rgba(0,0,0,.28);
+}
+.speed-pill .lbl{
+  font-size: 12px;
+  color: var(--muted);
+  padding-left: 2px;
+}
+.speed-pill button{
+  border: 1px solid var(--stroke2);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+.speed-pill button.active{
+  border-color: rgba(255,77,77,.55);
+  box-shadow: 0 0 0 2px rgba(255,77,77,.15) inset;
+}
+
+.btn-back{
+  border: 0;
+  cursor:pointer;
+  font-weight: 900;
+  letter-spacing:.4px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  color:#0c0f16;
+  background: linear-gradient(180deg, #ffffff, #dbe3ff);
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
+}
+
+/* ---------- Layout principal ---------- */
+.race-layout{
+  margin-top: var(--gap);
+  display:grid;
+  grid-template-columns: 1.35fr .95fr;
+  gap: var(--gap);
+}
+
+/* ---------- Cards / Panels ---------- */
+.panel{
+  border-radius: var(--r2);
+  border: 1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(16,22,34,.78), rgba(8,10,16,.66));
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  overflow:hidden;
+}
+
+.panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--stroke);
+  background: rgba(0,0,0,.18);
+}
+.panel-head .title{
+  font-weight: 900;
+  letter-spacing:.8px;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #eaf0ff;
+}
+.panel-head .meta{
+  font-size: 12px;
+  color: var(--muted2);
+  white-space: nowrap;
+}
+
+/* ---------- Track Panel ---------- */
+.track-body{
+  padding: 12px;
+}
+.track-frame{
+  position: relative;
+  border-radius: var(--r2);
+  border: 1px solid var(--stroke);
+  background: radial-gradient(1200px 450px at 50% 0%, rgba(255,255,255,.05), rgba(0,0,0,.35));
+  overflow:hidden;
+  min-height: 420px;
+}
+
+/* IMPORTANTE:
+   Para não “explodir” no PC, forçamos o SVG/canvas a caber SEM distorcer */
+.track-frame svg,
+.track-frame canvas,
+.track-frame img{
+  position:absolute;
+  inset:0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  display:block;
+}
+
+/* Caso a pista esteja sendo desenhada por SVG inline sem position */
+.track-frame > svg{
+  position:absolute;
+  inset:0;
+}
+
+/* HUD pequeno embaixo do mapa */
+.track-stats{
+  margin-top: 10px;
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.stat{
+  border-radius: 16px;
+  border: 1px solid var(--stroke);
+  background: rgba(0,0,0,.22);
+  padding: 10px 12px;
+}
+.stat .k{
+  font-size: 12px;
+  color: var(--muted2);
+}
+.stat .v{
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+/* ---------- Right Column ---------- */
+.right-col{
+  display:flex;
+  flex-direction:column;
+  gap: var(--gap);
+  min-width: 0;
+}
+
+/* Lista da sessão */
+.session-body{
+  padding: 10px;
+}
+.session-list{
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+  max-height: 340px;
+  overflow:auto;
+  padding-right: 6px;
+}
+.session-row{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--stroke);
+  background: rgba(0,0,0,.22);
+}
+.session-row .pos{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display:grid;
+  place-items:center;
+  font-weight: 900;
+  border: 1px solid var(--stroke2);
+  background: rgba(255,255,255,.06);
+  flex: 0 0 auto;
+}
+.session-row .who{
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.session-row .who .name{
+  font-weight: 900;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+.session-row .who .team{
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--muted2);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+.session-row .gap{
+  font-weight: 900;
+  font-size: 12px;
+  color: #eaf0ff;
+  white-space: nowrap;
+}
+
+/* ---------- Seus pilotos (cards) ---------- */
+.pilots-body{
+  padding: 10px;
+}
+
+.pilots-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pilot-card{
+  border-radius: 18px;
+  border: 1px solid var(--stroke);
+  background: rgba(0,0,0,.22);
+  padding: 12px;
+  min-width: 0;
+  position: relative;
+  overflow:hidden;
+}
+
+/* “Borda” de equipe (quando o JS aplica cor por inline style) */
+.pilot-card::before{
+  content:"";
+  position:absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.20);
+}
+
+/* Header do card */
+.pilot-head{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+/* Avatar/Face – nunca pode estourar */
+.pilot-face{
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  overflow:hidden;
+  border: 1px solid var(--stroke2);
+  background: rgba(255,255,255,.06);
+  flex: 0 0 auto;
+}
+.pilot-face img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+
+/* Caso o HTML use iniciais (sem img) */
+.pilot-initials{
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  display:grid;
+  place-items:center;
+  font-weight: 900;
+  border: 1px solid var(--stroke2);
+  background: rgba(255,255,255,.06);
+  flex: 0 0 auto;
+}
+
+.pilot-info{
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.pilot-info .name{
+  font-weight: 900;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+.pilot-info .sub{
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--muted2);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+/* Badges */
+.badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.badge{
+  border: 1px solid var(--stroke2);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+/* Controles */
+.controls{
+  margin-top: 10px;
+  display:grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  align-items:center;
+}
+
+.controls .btn-pit{
+  border: 1px solid rgba(255,77,77,.35);
+  background: rgba(255,77,77,.12);
+  color: #fff;
+  font-weight: 1000;
+  letter-spacing:.6px;
+  border-radius: 999px;
+  padding: 10px 12px;
+  cursor:pointer;
+}
+
+.controls select{
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid var(--stroke2);
+  background: rgba(0,0,0,.25);
+  color: #fff;
+  padding: 10px 12px;
+  font-weight: 900;
+  outline:none;
+}
+
+/* Botões de estratégia */
+.strategy{
+  margin-top: 10px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.btn{
+  border: 1px solid var(--stroke2);
+  background: rgba(255,255,255,.06);
+  color:#fff;
+  border-radius: 999px;
+  padding: 11px 12px;
+  font-weight: 1000;
+  cursor:pointer;
+}
+.btn.attack{
+  border-color: rgba(43,212,111,.35);
+  background: rgba(43,212,111,.12);
+}
+.btn.save{
+  border-color: rgba(255,176,32,.35);
+  background: rgba(255,176,32,.12);
+}
+
+/* Ajustes finos (motor/agress/ERS) */
+.tuning{
+  margin-top: 10px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.tuning .btn{
+  padding: 10px 10px;
+  font-size: 12px;
+}
+
+/* ---------- Scrollbars (PC) ---------- */
+.session-list::-webkit-scrollbar{ width: 10px; }
+.session-list::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.12);
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,.25);
+}
+.session-list::-webkit-scrollbar-track{ background: transparent; }
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 980px){
+  .race-shell{ padding: 10px 10px 18px; }
+  .race-layout{ grid-template-columns: 1fr; }
+  .track-frame{ min-height: 380px; }
+  .session-list{ max-height: 260px; }
+}
+
+@media (max-width: 560px){
+  .race-topbar{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .race-topbar .gp-right{
+    justify-content: space-between;
+  }
+  .track-stats{
+    grid-template-columns: 1fr 1fr;
+  }
+  .pilots-grid{
+    grid-template-columns: 1fr;
+  }
+  .controls{
+    grid-template-columns: 1fr;
+  }
+  .controls .btn-pit{ width: 100%; }
+}
+
+/* ---------- Segurança extra contra CSS global ---------- */
+/* Se algum CSS global estiver colocando imagem de fundo forte na corrida */
+body.race-page{
+  background: #070a10 !important;
+  background-image: none !important;
+  }
