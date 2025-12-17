@@ -1,7 +1,7 @@
 /* ===========================
-   raceUI.js (FULL)
-   - Renderiza header, sessão, cards do jogador
-   - Faces: assets/faces/{CODE}.png (fallback automático)
+   raceUI.js (FULL) - FIX
+   - Corrige botões MOTOR/AGRESS (- e +)
+   - Mantém faces e cards
    =========================== */
 
 (function () {
@@ -16,7 +16,6 @@
     },
 
     renderHUD(state) {
-      // HUD inferior do painel de pista
       const lap = document.getElementById("lap-info");
       const st = document.getElementById("race-state");
       const w = document.getElementById("weather-info");
@@ -27,8 +26,8 @@
       if (w) w.textContent = state.weather || "Seco";
       if (tt) tt.textContent = state.trackTemp || "21°C";
 
-      // Atualiza sessão sem reconstruir tudo? (simplificado: re-render)
       this._renderSession(state);
+      this._updatePlayerCardsLight(state);
     },
 
     _renderHeader(state) {
@@ -39,13 +38,11 @@
       if (gpName) gpName.textContent = state.gpName || "GP";
       if (meta) meta.textContent = `Volta ${state.lap} · Clima: ${state.weather} · Pista: ${state.trackTemp}`;
 
-      // Bandeira opcional (se você tiver assets/flags/{track}.png depois)
       if (flag) {
         flag.src = "";
         flag.style.display = "none";
       }
 
-      // ativa botão 1x por padrão (caso não tenha clicado)
       const wrap = document.querySelector(".speed-controls");
       if (wrap) {
         const btns = Array.from(wrap.querySelectorAll("button[data-speed]"));
@@ -110,6 +107,7 @@
       for (const d of list) {
         const card = document.createElement("div");
         card.className = "driver-card";
+        card.dataset.code = d.code;
 
         const head = document.createElement("div");
         head.className = "driver-head";
@@ -119,9 +117,7 @@
         img.alt = d.code;
         img.src = `assets/faces/${d.code}.png`;
         img.onerror = () => {
-          // fallback: vira “badge” com iniciais se não achar imagem
           img.onerror = null;
-          img.removeAttribute("src");
           img.style.display = "none";
 
           const fallback = document.createElement("div");
@@ -161,15 +157,17 @@
         const actions = document.createElement("div");
         actions.className = "driver-actions";
 
+        // PIT
         const pitBtn = this._btn("PIT", "danger", () => {
-          const sel = card.querySelector("select");
+          const sel = card.querySelector("select[data-tyre='1']");
           const tyre = sel ? sel.value : d.tyre;
           window.RaceSystem?.pit(d.code, tyre);
-          this._renderPlayerDrivers(window.RaceSystem.state);
         });
 
+        // seletor de pneu
         const tyreSel = document.createElement("select");
         tyreSel.className = "select";
+        tyreSel.dataset.tyre = "1";
         ["M", "H", "S", "W"].forEach((t) => {
           const o = document.createElement("option");
           o.value = t;
@@ -178,19 +176,28 @@
           tyreSel.appendChild(o);
         });
 
+        // modo
         const econBtn = this._btn("ECONOMIZAR", "", () => window.RaceSystem?.setDriverMode(d.code, "ECONOMIZAR"));
         const atkBtn = this._btn("ATAQUE", "primary", () => window.RaceSystem?.setDriverMode(d.code, "ATAQUE"));
+
+        // MOTOR (- / +)
         const motM = this._btn("MOTOR -", "", () => window.RaceSystem?.adjustDriver(d.code, "motor", -1));
         const motP = this._btn("MOTOR +", "", () => window.RaceSystem?.adjustDriver(d.code, "motor", +1));
+
+        // AGRESS (- / +)
         const agrM = this._btn("AGRESS -", "", () => window.RaceSystem?.adjustDriver(d.code, "agress", -1));
         const agrP = this._btn("AGRESS +", "", () => window.RaceSystem?.adjustDriver(d.code, "agress", +1));
 
+        // Ordem fixa: nunca duplica
         actions.appendChild(pitBtn);
         actions.appendChild(tyreSel);
+
         actions.appendChild(econBtn);
         actions.appendChild(atkBtn);
+
         actions.appendChild(motM);
         actions.appendChild(motP);
+
         actions.appendChild(agrM);
         actions.appendChild(agrP);
 
@@ -199,6 +206,31 @@
         card.appendChild(actions);
 
         root.appendChild(card);
+      }
+    },
+
+    // Atualiza só textos (sem recriar tudo) – leve
+    _updatePlayerCardsLight(state) {
+      const root = document.getElementById("player-drivers");
+      if (!root) return;
+
+      const cards = Array.from(root.querySelectorAll(".driver-card"));
+      if (!cards.length) return;
+
+      for (const card of cards) {
+        const code = card.dataset.code;
+        const d = state.drivers.find((x) => x.code === code);
+        if (!d) continue;
+
+        const pills = card.querySelectorAll(".pill b");
+        // ordem: Carro, Pneu, ERS, Motor
+        if (pills[0]) pills[0].textContent = `${Math.round(d.carHealth)}%`;
+        if (pills[1]) pills[1].textContent = `${Math.round(d.tyreWear)}%`;
+        if (pills[2]) pills[2].textContent = `${Math.round(d.ers)}%`;
+        if (pills[3]) pills[3].textContent = `M${d.motor}`;
+
+        const teamLine = card.querySelector(".driver-title .team");
+        if (teamLine) teamLine.textContent = `${d.team} · ${d.mode}`;
       }
     },
 
