@@ -1,57 +1,98 @@
-/* =========================================================
-   F1 MANAGER 2025 – RACE SYSTEM (stable)
-   - Carrega SVG por pista: assets/tracks/<track>.svg
-   - Extrai o primeiro <path> do SVG e amostra pontos
-   - Desenha linha (cinza + branco) e move carros no path
-   - Faces: assets/faces/<CODE>.png (ex LEC.png, SAI.png)
-   - UI de controles sempre completa (motor +/- e agress +/-)
-   - Corrida termina e mostra PÓDIO
-========================================================= */
-
 (function () {
   "use strict";
 
-  // ---------------------------
-  // Helpers
-  // ---------------------------
-  const $ = (sel) => document.querySelector(sel);
+  const $ = (s) => document.querySelector(s);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
 
-  function getQS(name, fallback = "") {
-    const u = new URL(window.location.href);
+  function qs(name, fallback = "") {
+    const u = new URL(location.href);
     return u.searchParams.get(name) || fallback;
-  }
-
-  function safeText(el, txt) {
-    if (el) el.textContent = txt;
-  }
-
-  function safeImg(el, src) {
-    if (!el) return;
-    el.onerror = () => { el.style.visibility = "hidden"; };
-    el.onload = () => { el.style.visibility = "visible"; };
-    el.src = src;
   }
 
   function normalizeTrackId(id) {
     return (id || "").toLowerCase().trim().replace(/\s+/g, "");
   }
 
-  // ---------------------------
-  // Minimal data fallback (se data.js não existir ou faltar algo)
-  // ---------------------------
-  const FALLBACK_DRIVERS = [
+  // =========================
+  // CONFIG
+  // =========================
+  const trackId = normalizeTrackId(qs("track", "australia"));
+  const gpName = qs("gp", "GP");
+  const userTeam = (qs("userTeam", "ferrari") || "ferrari").toUpperCase();
+
+  const TOTAL_LAPS = Math.max(10, parseInt(qs("laps", "19"), 10) || 19);
+  let SPEED = 1;
+  let paused = false;
+
+  // Canvas
+  const canvas = $("#trackCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // UI
+  const uiLapSmall = $("#uiLapSmall");
+  const uiLapBig = $("#uiLapBig");
+  const uiLapBottom = $("#uiLapBottom");
+  const uiLapsRemaining = $("#uiLapsRemaining");
+  const uiSessionClock = $("#uiSessionClock");
+
+  const leaderboardEl = $("#leaderboard");
+  const yourDriversEl = $("#yourDrivers");
+
+  // PIT Modal
+  const pitModal = $("#pitModal");
+  const pitClose = $("#pitClose");
+  const pitCancel = $("#pitCancel");
+  const pitOk = $("#pitOk");
+  const pitDriverName = $("#pitDriverName");
+  const tyreBtns = Array.from(document.querySelectorAll(".tyreBtn"));
+
+  // Podium
+  const podiumModal = $("#podiumModal");
+  const podiumGrid = $("#podiumGrid");
+  const podiumClose = $("#podiumClose");
+
+  // Buttons
+  $("#btnBack").addEventListener("click", () => (location.href = "lobby.html"));
+
+  $("#btnPause").addEventListener("click", () => {
+    paused = !paused;
+    $("#btnPause").textContent = paused ? "▶" : "⏸";
+  });
+
+  $("#btnFast").addEventListener("click", () => {
+    SPEED = SPEED === 4 ? 1 : SPEED === 2 ? 4 : 2;
+    setSpeedUI();
+  });
+
+  document.querySelectorAll(".speedBtn").forEach((b) => {
+    b.addEventListener("click", () => {
+      SPEED = parseInt(b.dataset.speed, 10) || 1;
+      setSpeedUI();
+    });
+  });
+
+  function setSpeedUI() {
+    document.querySelectorAll(".speedBtn").forEach((b) => {
+      b.classList.toggle("active", parseInt(b.dataset.speed, 10) === SPEED);
+    });
+  }
+  setSpeedUI();
+
+  // =========================
+  // DATA (fallback)
+  // =========================
+  const DRIVERS = [
     { code: "VER", name: "Max Verstappen", team: "RED BULL" },
-    { code: "PER", name: "Sergio Perez", team: "RED BULL RACING" },
+    { code: "PER", name: "Sergio Perez", team: "RED BULL" },
     { code: "HAM", name: "Lewis Hamilton", team: "MERCEDES" },
     { code: "RUS", name: "George Russell", team: "MERCEDES" },
     { code: "LEC", name: "Charles Leclerc", team: "FERRARI" },
     { code: "SAI", name: "Carlos Sainz", team: "FERRARI" },
     { code: "NOR", name: "Lando Norris", team: "MCLAREN" },
     { code: "PIA", name: "Oscar Piastri", team: "MCLAREN" },
-    { code: "ALO", name: "Fernando Alonso", team: "ASTONMARTIN" },
-    { code: "STR", name: "Lance Stroll", team: "ASTONMARTIN" },
+    { code: "ALO", name: "Fernando Alonso", team: "ASTON MARTIN" },
+    { code: "STR", name: "Lance Stroll", team: "ASTON MARTIN" },
     { code: "GAS", name: "Pierre Gasly", team: "ALPINE" },
     { code: "OCO", name: "Esteban Ocon", team: "ALPINE" },
     { code: "HUL", name: "Nico Hulkenberg", team: "HAAS" },
@@ -64,272 +105,315 @@
     { code: "SAR", name: "Logan Sargeant", team: "WILLIAMS" },
   ];
 
-  // Tenta usar drivers do data.js se existir no seu projeto.
-  function getDriversFromProject() {
-    // Procura algumas chaves comuns (não quebra se não existir)
-    const g = window;
-    const candidates =
-      (g.DRIVERS && Array.isArray(g.DRIVERS) && g.DRIVERS) ||
-      (g.drivers && Array.isArray(g.drivers) && g.drivers) ||
-      (g.gameData && Array.isArray(g.gameData.drivers) && g.gameData.drivers) ||
-      null;
-
-    if (!candidates) return FALLBACK_DRIVERS;
-
-    // Normaliza campos mínimos
-    const out = candidates
-      .map((d) => ({
-        code: String(d.code || d.abbr || d.short || "").toUpperCase(),
-        name: String(d.name || d.fullName || "Piloto"),
-        team: String(d.team || d.teamName || "EQUIPE"),
-      }))
-      .filter((d) => d.code.length >= 2);
-
-    return out.length ? out : FALLBACK_DRIVERS;
-  }
-
-  // ---------------------------
-  // State
-  // ---------------------------
-  const canvas = $("#trackCanvas");
-  const ctx = canvas.getContext("2d", { alpha: true });
-
-  let SPEED_MULT = 1;
-  const TOTAL_LAPS = Math.max(10, parseInt(getQS("laps", "10"), 10) || 10);
-
-  const trackId = normalizeTrackId(getQS("track", "australia"));
-  const gpName = getQS("gp", "GP");
-  const userTeam = getQS("userTeam", "ferrari");
-
-  // UI refs
-  const gpTitleEl = $("#gpTitle");
-  const gpMetaEl = $("#gpMeta");
-  const uiLapEl = $("#uiLap");
-  const uiStateEl = $("#uiState");
-  const uiWeatherEl = $("#uiWeather");
-  const uiTempEl = $("#uiTemp");
-  const sessionListEl = $("#sessionList");
-  const yourDriversEl = $("#yourDrivers");
-  const trackInfoEl = $("#trackInfo");
-  const podiumModal = $("#podiumModal");
-  const podiumGrid = $("#podiumGrid");
-
-  // Setup/clima (pode integrar com o seu sistema depois)
-  const weather = "Seco";
-  const trackTemp = "21°C";
-
-  // Path points
-  let PATH = []; // {x,y}
-  let PATH_BOUNDS = null;
-
-  // Cars
-  const drivers = getDriversFromProject();
-
-  // Seleciona 2 pilotos do usuário (Ferrari padrão)
-  function pickUserDrivers() {
-    // Se seu projeto já salva isso no localStorage, respeita:
-    // Tenta chaves comuns: userTeamDrivers, career, save, etc.
-    try {
-      const saved = JSON.parse(localStorage.getItem("userTeamDrivers") || "null");
-      if (saved && Array.isArray(saved) && saved.length >= 2) {
-        return saved.slice(0, 2).map((x) => ({
-          code: String(x.code || x).toUpperCase(),
-          name: String(x.name || x.fullName || x.code || x),
-          team: String(x.team || userTeam.toUpperCase()),
-        }));
-      }
-    } catch (_) {}
-
-    // fallback: Ferrari LEC/SAI se existirem
-    const lec = drivers.find((d) => d.code === "LEC") || drivers[0];
-    const sai = drivers.find((d) => d.code === "SAI") || drivers[1] || drivers[0];
-    return [lec, sai];
-  }
-
-  const userDrivers = pickUserDrivers();
-
   function faceUrl(code) {
-    // Seus arquivos estão em assets/faces/LEC.png etc.
-    // (se estiverem em outro lugar, ajuste aqui)
     return `assets/faces/${code}.png`;
   }
 
-  // Cada carro tem "pos" (0..1) dentro da volta atual
-  function makeCar(d, isUser) {
-    return {
-      code: d.code,
-      name: d.name,
-      team: d.team,
-      isUser,
-      lap: 0,
-      pos: Math.random() * 0.02, // evita empilhar tudo
-      totalProgress: 0, // em voltas (ex 2.35 = volta 3)
-      delta: 0,
-      tyre: "M",
-      tyreWear: 0.0, // 0..1
-      carHealth: 1.0,
-      ers: 1.0,
-      engineMode: 0, // -2..+2
-      aggr: 0, // -2..+2
-      pitPending: false,
-      pitLock: 0, // frames
-    };
+  // Se você tiver uma seleção real no localStorage, respeita; senão LEC/SAI
+  function getUserDrivers() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("userTeamDrivers") || "null");
+      if (saved && Array.isArray(saved) && saved.length >= 2) {
+        return saved.slice(0, 2).map((x) => {
+          const code = String(x.code || x).toUpperCase();
+          const base = DRIVERS.find((d) => d.code === code);
+          return base || { code, name: x.name || code, team: userTeam };
+        });
+      }
+    } catch (_) {}
+    const lec = DRIVERS.find((d) => d.code === "LEC") || DRIVERS[0];
+    const sai = DRIVERS.find((d) => d.code === "SAI") || DRIVERS[1];
+    return [lec, sai];
   }
 
-  let cars = [];
-  let finished = false;
-  let raceTime = 0; // segundos "simulados"
+  // =========================
+  // TRACK PATH
+  // =========================
+  let PATH = [];
+  let BOUNDS = null;
 
-  // ---------------------------
-  // SVG -> PATH sampling
-  // ---------------------------
-  async function loadTrackSvgAndSample() {
-    const svgUrl = `assets/tracks/${trackId}.svg`;
-    const fallbackUrl = `assets/tracks/australia.svg`;
-
-    let text = null;
-    let usedUrl = svgUrl;
+  async function loadTrack() {
+    const url = `assets/tracks/${trackId}.svg`;
+    let svgText = null;
 
     try {
-      const r = await fetch(svgUrl, { cache: "no-store" });
-      if (!r.ok) throw new Error("SVG not ok");
-      text = await r.text();
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error("svg not ok");
+      svgText = await r.text();
     } catch (e) {
-      usedUrl = fallbackUrl;
-      const r2 = await fetch(fallbackUrl, { cache: "no-store" });
-      text = await r2.text();
+      // fallback: australia
+      const r2 = await fetch(`assets/tracks/australia.svg`, { cache: "no-store" });
+      svgText = await r2.text();
     }
 
-    safeText(trackInfoEl, `SVG • ${usedUrl.split("/").pop()} • path sampling • 60fps`);
-
-    // Parse
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, "image/svg+xml");
+    const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
     const svg = doc.querySelector("svg");
-    if (!svg) throw new Error("SVG inválido");
-
-    // Pega o primeiro path grande
     const paths = Array.from(doc.querySelectorAll("path"));
-    if (!paths.length) throw new Error("SVG sem <path>");
+    if (!svg || !paths.length) throw new Error("SVG inválido/sem path");
 
-    // Heurística: pega o path com maior comprimento
+    // maior comprimento
     let best = paths[0];
     let bestLen = 0;
     for (const p of paths) {
       try {
         const len = p.getTotalLength();
-        if (len > bestLen) {
-          bestLen = len;
-          best = p;
-        }
+        if (len > bestLen) { bestLen = len; best = p; }
       } catch (_) {}
     }
 
-    // Normaliza viewBox
+    // viewBox
     const vb = (svg.getAttribute("viewBox") || "").trim();
     let vbX = 0, vbY = 0, vbW = 1000, vbH = 1000;
     if (vb) {
       const parts = vb.split(/[\s,]+/).map(Number);
-      if (parts.length === 4 && parts.every((n) => Number.isFinite(n))) {
-        [vbX, vbY, vbW, vbH] = parts;
-      }
+      if (parts.length === 4 && parts.every(Number.isFinite)) [vbX, vbY, vbW, vbH] = parts;
     }
 
-    // Amostra pontos ao longo do path
-    const samples = 900; // alta resolução pro carro "colar" no traçado
+    // sample
+    const samples = 1200;
+    const totalLen = best.getTotalLength();
     const pts = [];
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
-    const totalLen = best.getTotalLength();
     for (let i = 0; i < samples; i++) {
       const t = i / samples;
       const pt = best.getPointAtLength(t * totalLen);
       const x = (pt.x - vbX) / vbW;
       const y = (pt.y - vbY) / vbH;
       pts.push({ x, y });
-
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
+      minX = Math.min(minX, x); minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
     }
 
     PATH = pts;
-    PATH_BOUNDS = { minX, minY, maxX, maxY };
+    BOUNDS = { minX, minY, maxX, maxY };
 
-    // “Fecha” o loop (último ponto = primeiro) para evitar salto visual
     if (PATH.length) PATH.push({ ...PATH[0] });
   }
 
-  function pathToCanvas(p) {
-    // Mapeia (0..1) do SVG para canvas com padding e mantendo proporção
-    const pad = 60;
-    const cw = canvas.width;
-    const ch = canvas.height;
+  function toCanvas(p) {
+    const pad = 90;
+    const cw = canvas.width, ch = canvas.height;
 
-    const bx = PATH_BOUNDS;
-    const w = (bx.maxX - bx.minX) || 1;
-    const h = (bx.maxY - bx.minY) || 1;
+    const w = (BOUNDS.maxX - BOUNDS.minX) || 1;
+    const h = (BOUNDS.maxY - BOUNDS.minY) || 1;
 
     const usableW = cw - pad * 2;
     const usableH = ch - pad * 2;
 
     const s = Math.min(usableW / w, usableH / h);
-
     const ox = (cw - w * s) / 2;
     const oy = (ch - h * s) / 2;
 
-    const x = ox + (p.x - bx.minX) * s;
-    const y = oy + (p.y - bx.minY) * s;
-
-    return { x, y };
+    return {
+      x: ox + (p.x - BOUNDS.minX) * s,
+      y: oy + (p.y - BOUNDS.minY) * s,
+    };
   }
 
-  function getPointByProgress(progress01) {
-    // progress01: 0..1
-    if (!PATH.length) return { x: 0.5, y: 0.5 };
-    const idx = Math.floor(progress01 * (PATH.length - 1));
-    const next = Math.min(PATH.length - 1, idx + 1);
-    const t = (progress01 * (PATH.length - 1)) - idx;
-    const a = PATH[idx];
-    const b = PATH[next];
+  function pointAt(progress01) {
+    const n = PATH.length - 1;
+    const raw = progress01 * n;
+    const i = Math.floor(raw);
+    const t = raw - i;
+    const a = PATH[i];
+    const b = PATH[Math.min(n, i + 1)];
     return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) };
   }
 
-  // ---------------------------
-  // Rendering
-  // ---------------------------
-  function clear() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // =========================
+  // RACE SIM
+  // =========================
+  function tyreGrip(t) {
+    if (t === "S") return 1.05;
+    if (t === "M") return 1.00;
+    if (t === "H") return 0.97;
+    if (t === "W") return 0.98;
+    return 1.0;
+  }
+  function wearRate(t) {
+    if (t === "S") return 0.00060;
+    if (t === "M") return 0.00042;
+    if (t === "H") return 0.00032;
+    if (t === "W") return 0.00046;
+    return 0.00042;
+  }
+  function skill(code) {
+    const seed = code.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+    return 0.985 + ((seed % 25) / 1000); // 0.985..1.010
   }
 
+  const userDrivers = getUserDrivers();
+  const userSet = new Set(userDrivers.map((d) => d.code));
+
+  function makeCar(d, isUser, color) {
+    return {
+      code: d.code,
+      name: d.name,
+      team: d.team,
+      isUser,
+      color,
+      lap: 0,
+      pos: Math.random() * 0.01,
+      total: 0,
+      tyre: "M",
+      tyreWear: 0,
+      condition: 1.0,
+      power: 1.0,     // “potência/energia”
+      paceMode: 0,    // -2..+2
+      powerMode: 0,   // -2..+2
+      pitPending: false,
+      pitTyre: "M",
+      pitLock: 0
+    };
+  }
+
+  // Cores FIXAS:
+  // - User #1: amarelo
+  // - User #2: branco
+  // - IA: azul/cinza discreto
+  const cars = DRIVERS.map((d) => {
+    const isUser = userSet.has(d.code);
+    if (isUser) return null; // adiciona abaixo para garantir ordem/cores
+    return makeCar(d, false, "rgba(90,160,255,.85)");
+  }).filter(Boolean);
+
+  // garante 2 user cars
+  const u1 = userDrivers[0];
+  const u2 = userDrivers[1];
+
+  cars.push(makeCar(u1, true, "rgba(242,209,75,.95)"));
+  cars.push(makeCar(u2, true, "rgba(255,255,255,.92)"));
+
+  let raceTime = 0;
+  let finished = false;
+
+  // PIT modal state
+  let pitTarget = null;
+  let pitChosenTyre = "M";
+
+  function openPit(car) {
+    pitTarget = car;
+    pitChosenTyre = car.pitTyre || "M";
+    pitDriverName.textContent = `${car.name} • ${car.team}`;
+    tyreBtns.forEach((b) => b.classList.toggle("active", b.dataset.tyre === pitChosenTyre));
+    pitModal.classList.remove("hidden");
+  }
+  function closePit() {
+    pitModal.classList.add("hidden");
+    pitTarget = null;
+  }
+
+  tyreBtns.forEach((b) => {
+    b.addEventListener("click", () => {
+      pitChosenTyre = b.dataset.tyre;
+      tyreBtns.forEach((x) => x.classList.toggle("active", x.dataset.tyre === pitChosenTyre));
+    });
+  });
+
+  pitClose.addEventListener("click", closePit);
+  pitCancel.addEventListener("click", closePit);
+
+  pitOk.addEventListener("click", () => {
+    if (!pitTarget) return closePit();
+    pitTarget.pitPending = true;
+    pitTarget.pitTyre = pitChosenTyre;
+    closePit();
+    renderRight();
+  });
+
+  if (podiumClose) podiumClose.addEventListener("click", () => podiumModal.classList.add("hidden"));
+
+  function step(dt) {
+    if (finished || paused) return;
+
+    raceTime += dt;
+
+    for (const c of cars) {
+      // PIT lock (tempo parado)
+      if (c.pitLock > 0) { c.pitLock -= 1; continue; }
+
+      // entra no box no fim da volta
+      if (c.pitPending && c.pos > 0.985) {
+        c.pitPending = false;
+        c.pitLock = Math.floor(75 / SPEED);
+        c.tyre = c.pitTyre || "M";
+        c.tyreWear = 0.0;
+        c.power = clamp(c.power + 0.35, 0, 1);
+      }
+
+      // modos
+      const grip = tyreGrip(c.tyre);
+      const wearPenalty = 1.0 - (c.tyreWear * 0.60);
+
+      const paceMul = 1.0 + (c.paceMode * 0.02);
+      const powerMul = 1.0 + (c.powerMode * 0.02);
+
+      // power drain (mais agressivo consome)
+      const drain = (0.00022 + Math.max(0, c.powerMode) * 0.00018 + Math.max(0, c.paceMode) * 0.00010) * dt * SPEED;
+      c.power = clamp(c.power - drain, 0, 1);
+
+      const boost = (c.power > 0.12 && c.powerMode > 0) ? 1.014 : 1.0;
+
+      // wear
+      const w = wearRate(c.tyre) * dt * SPEED * (1.0 + Math.max(0, c.paceMode) * 0.25 + Math.max(0, c.powerMode) * 0.20);
+      c.tyreWear = clamp(c.tyreWear + w, 0, 1);
+
+      // condition (pune desgaste extremo)
+      if (c.tyreWear > 0.85 && c.paceMode >= 1) {
+        c.condition = clamp(c.condition - 0.00010 * dt * SPEED, 0.6, 1);
+      }
+
+      const base = 0.0198; // velocidade base
+      const v = base * skill(c.code) * grip * wearPenalty * paceMul * powerMul * boost * c.condition;
+
+      c.pos += v * dt * SPEED;
+
+      if (c.pos >= 1) {
+        c.pos -= 1;
+        c.lap += 1;
+      }
+
+      c.total = c.lap + c.pos;
+    }
+
+    // finish condition: líder completa TOTAL_LAPS
+    const sorted = [...cars].sort((a, b) => b.total - a.total);
+    if (sorted[0].lap >= TOTAL_LAPS) {
+      finished = true;
+      showPodium(sorted.slice(0, 3));
+    }
+  }
+
+  // =========================
+  // DRAW
+  // =========================
   function drawTrack() {
     if (!PATH.length) return;
 
-    // sombra
     ctx.save();
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
 
-    // base cinza grossa
+    // base cinza
     ctx.beginPath();
-    const p0 = pathToCanvas(PATH[0]);
+    const p0 = toCanvas(PATH[0]);
     ctx.moveTo(p0.x, p0.y);
     for (let i = 1; i < PATH.length; i++) {
-      const p = pathToCanvas(PATH[i]);
+      const p = toCanvas(PATH[i]);
       ctx.lineTo(p.x, p.y);
     }
-    ctx.strokeStyle = "rgba(255,255,255,.14)";
-    ctx.lineWidth = 18;
+    ctx.strokeStyle = "rgba(255,255,255,.16)";
+    ctx.lineWidth = 22;
     ctx.stroke();
 
-    // linha branca interna
-    ctx.strokeStyle = "rgba(255,255,255,.82)";
-    ctx.lineWidth = 8;
+    // linha branca
+    ctx.strokeStyle = "rgba(255,255,255,.88)";
+    ctx.lineWidth = 10;
     ctx.stroke();
 
-    // linha highlight suave
-    ctx.strokeStyle = "rgba(90,160,255,.14)";
+    // brilho
+    ctx.strokeStyle = "rgba(90,160,255,.18)";
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -338,427 +422,249 @@
 
   function drawCars() {
     for (const c of cars) {
-      const p = getPointByProgress(c.pos);
-      const cp = pathToCanvas(p);
-
-      // cor por equipe / usuário
-      const fill = c.isUser ? "rgba(255,80,90,.95)" : "rgba(110,190,255,.90)";
-      const edge = "rgba(0,0,0,.65)";
+      const p = pointAt(c.pos);
+      const cp = toCanvas(p);
 
       ctx.save();
       ctx.beginPath();
-      ctx.arc(cp.x, cp.y, c.isUser ? 7 : 6, 0, Math.PI * 2);
-      ctx.fillStyle = fill;
+      ctx.arc(cp.x, cp.y, c.isUser ? 8 : 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = c.color;
       ctx.fill();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = edge;
+      ctx.strokeStyle = "rgba(0,0,0,.65)";
       ctx.stroke();
       ctx.restore();
     }
   }
 
-  // ---------------------------
-  // UI
-  // ---------------------------
-  function setSpeed(mult) {
-    SPEED_MULT = mult;
-    document.querySelectorAll(".btn.chip").forEach((b) => {
-      const v = parseInt(b.getAttribute("data-speed"), 10);
-      b.classList.toggle("active", v === mult);
-    });
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawTrack();
+    drawCars();
   }
 
-  function renderSessionList() {
-    // Ordena por totalProgress desc
-    const sorted = [...cars].sort((a, b) => b.totalProgress - a.totalProgress);
+  // =========================
+  // UI RENDER
+  // =========================
+  function leaderLap() {
+    const lead = [...cars].sort((a, b) => b.total - a.total)[0];
+    return lead ? lead.lap : 0;
+  }
 
-    sessionListEl.innerHTML = "";
-    sorted.slice(0, 20).forEach((c, i) => {
+  function updateTop() {
+    const lap = Math.min(TOTAL_LAPS, leaderLap() + 1);
+    const remaining = Math.max(0, TOTAL_LAPS - lap);
+
+    uiLapSmall.textContent = `Volta ${lap}/${TOTAL_LAPS}`;
+    uiLapBig.textContent = `VOLTA ${lap}/${TOTAL_LAPS}`;
+    uiLapBottom.textContent = `VOLTA ${lap}/${TOTAL_LAPS}`;
+    uiLapsRemaining.textContent = `${remaining} VOLTAS RESTANTES`;
+
+    uiSessionClock.textContent = `t=${raceTime.toFixed(1)}s • ${SPEED}x`;
+  }
+
+  function renderLeft() {
+    const sorted = [...cars].sort((a, b) => b.total - a.total);
+    const leader = sorted[0];
+
+    leaderboardEl.innerHTML = "";
+    sorted.slice(0, 20).forEach((c, idx) => {
+      const gap = idx === 0 ? "Líder" : `+${((leader.total - c.total) * 60).toFixed(3)}`;
+
       const row = document.createElement("div");
-      row.className = "sessionRow";
+      row.className = "lbRow";
 
-      const left = document.createElement("div");
-      left.className = "sessionLeft";
+      const pos = document.createElement("div");
+      pos.className = "lbPos";
+      pos.textContent = String(idx + 1);
 
-      const pill = document.createElement("div");
-      pill.className = "posPill";
-      pill.textContent = String(i + 1);
+      const name = document.createElement("div");
+      name.className = "lbName";
+      name.innerHTML = `
+        <div class="nm">${c.name}</div>
+        <div class="sub">${c.team} • ${c.tyre} • ${Math.round((1 - c.tyreWear) * 100)}%</div>
+      `;
 
-      const info = document.createElement("div");
-      info.style.minWidth = "0";
+      const g = document.createElement("div");
+      g.className = "lbGap";
+      g.textContent = gap;
 
-      const nm = document.createElement("div");
-      nm.className = "sessionName";
-      nm.textContent = c.name;
+      row.appendChild(pos);
+      row.appendChild(name);
+      row.appendChild(g);
 
-      const meta = document.createElement("div");
-      meta.className = "sessionMeta";
-      meta.textContent = `${c.team} • Voltas: ${c.lap} • Pneu: ${c.tyre}`;
-
-      info.appendChild(nm);
-      info.appendChild(meta);
-
-      left.appendChild(pill);
-      left.appendChild(info);
-
-      const right = document.createElement("div");
-      right.className = "sessionRight";
-      right.textContent = i === 0 ? "LEADER" : `+${(sorted[0].delta - c.delta).toFixed(3)}`;
-
-      row.appendChild(left);
-      row.appendChild(right);
-
-      sessionListEl.appendChild(row);
+      leaderboardEl.appendChild(row);
     });
   }
 
-  function renderYourDrivers() {
-    yourDriversEl.innerHTML = "";
+  function barHTML(value01, colorCss) {
+    const pct = clamp(value01, 0, 1) * 100;
+    return `<div class="bar"><i style="width:${pct}%;background:${colorCss};"></i></div>`;
+  }
 
+  function renderRight() {
     const yours = cars.filter((c) => c.isUser);
 
+    yourDriversEl.innerHTML = "";
     for (const c of yours) {
       const card = document.createElement("div");
       card.className = "driverCard";
 
-      const top = document.createElement("div");
-      top.className = "driverTop";
+      const header = document.createElement("div");
+      header.className = "driverHeader";
 
       const img = document.createElement("img");
       img.className = "face";
-      img.alt = c.code;
       img.src = faceUrl(c.code);
-      img.onerror = () => { img.style.visibility = "hidden"; };
+      img.alt = c.code;
+      img.onerror = () => (img.style.visibility = "hidden");
 
-      const tbox = document.createElement("div");
-      const nm = document.createElement("div");
-      nm.className = "driverName";
-      nm.textContent = c.name;
-
-      const tm = document.createElement("div");
-      tm.className = "driverTeam";
-      tm.textContent = `${c.team} • NORMAL`;
-
-      tbox.appendChild(nm);
-      tbox.appendChild(tm);
-
-      top.appendChild(img);
-      top.appendChild(tbox);
-
-      const stats = document.createElement("div");
-      stats.className = "statsRow";
-      stats.innerHTML = `
-        <div class="statPill"><span>Carro</span> ${Math.round(c.carHealth * 100)}%</div>
-        <div class="statPill"><span>Pneu</span> ${Math.round((1 - c.tyreWear) * 100)}%</div>
-        <div class="statPill"><span>ERS</span> ${Math.round(c.ers * 100)}%</div>
-        <div class="statPill"><span>Motor</span> M${c.engineMode + 2}</div>
+      const title = document.createElement("div");
+      title.className = "driverTitle";
+      title.innerHTML = `
+        <div class="name">${c.name}</div>
+        <div class="team">${c.team} • VOLTA ${Math.max(1, c.lap)}</div>
       `;
 
-      const controls = document.createElement("div");
-      controls.className = "controls";
+      header.appendChild(img);
+      header.appendChild(title);
 
-      // PIT + seletor pneu
-      const pitBtn = document.createElement("button");
-      pitBtn.className = "btn primary wide";
-      pitBtn.textContent = c.pitPending ? "PIT (AGENDADO)" : "PIT";
-      pitBtn.onclick = () => {
-        c.pitPending = !c.pitPending;
-        renderYourDrivers();
-      };
+      const kpis = document.createElement("div");
+      kpis.className = "kpiRow";
 
-      const tyreSel = document.createElement("select");
-      tyreSel.className = "select wide";
-      ["S", "M", "H", "W"].forEach((t) => {
-        const o = document.createElement("option");
-        o.value = t;
-        o.textContent = t === "W" ? "W (Wet)" : (t === "S" ? "S (Soft)" : t === "M" ? "M (Medium)" : "H (Hard)");
-        if (c.tyre === t) o.selected = true;
-        tyreSel.appendChild(o);
-      });
-      tyreSel.onchange = () => { c.tyre = tyreSel.value; renderYourDrivers(); };
+      const conditionPct = Math.round(c.condition * 100);
+      const tyrePct = Math.round((1 - c.tyreWear) * 100);
+      const powerPct = Math.round(c.power * 100);
 
-      // Estratégia
-      const ecoBtn = document.createElement("button");
-      ecoBtn.className = "btn gray";
-      ecoBtn.textContent = "ECONOMIZAR";
-      ecoBtn.onclick = () => { c.engineMode = clamp(c.engineMode - 1, -2, 2); renderYourDrivers(); };
+      const k1 = document.createElement("div");
+      k1.className = "kpi";
+      k1.innerHTML = `
+        <div class="label">CONDIÇÃO</div>
+        <div class="value"><span>${conditionPct}%</span><span>${c.tyre}</span></div>
+        ${barHTML(c.condition, "rgba(34,201,124,.85)")}
+      `;
 
-      const atkBtn = document.createElement("button");
-      atkBtn.className = "btn green";
-      atkBtn.textContent = "ATAQUE";
-      atkBtn.onclick = () => { c.engineMode = clamp(c.engineMode + 1, -2, 2); renderYourDrivers(); };
+      const k2 = document.createElement("div");
+      k2.className = "kpi";
+      k2.innerHTML = `
+        <div class="label">PNEU (desgaste)</div>
+        <div class="value"><span>${tyrePct}%</span><span>Uso +${(c.tyreWear * 10).toFixed(1)}x</span></div>
+        ${barHTML(1 - c.tyreWear, "rgba(242,209,75,.85)")}
+      `;
 
-      // Motor - / +
-      const mMinus = document.createElement("button");
-      mMinus.className = "btn gray";
-      mMinus.textContent = "MOTOR -";
-      mMinus.onclick = () => { c.engineMode = clamp(c.engineMode - 1, -2, 2); renderYourDrivers(); };
+      const k3 = document.createElement("div");
+      k3.className = "kpi";
+      k3.innerHTML = `
+        <div class="label">POTÊNCIA</div>
+        <div class="value"><span>${powerPct}%</span><span>Modo ${c.powerMode}</span></div>
+        ${barHTML(c.power, "rgba(57,183,255,.85)")}
+      `;
 
-      const mPlus = document.createElement("button");
-      mPlus.className = "btn gray";
-      mPlus.textContent = "MOTOR +";
-      mPlus.onclick = () => { c.engineMode = clamp(c.engineMode + 1, -2, 2); renderYourDrivers(); };
+      const k4 = document.createElement("div");
+      k4.className = "kpi";
+      k4.innerHTML = `
+        <div class="label">RITMO</div>
+        <div class="value"><span>Modo ${c.paceMode}</span><span>${c.pitPending ? "PIT ✔" : "—"}</span></div>
+        ${barHTML(clamp((c.paceMode + 2) / 4, 0, 1), "rgba(255,255,255,.55)")}
+      `;
 
-      // Agress - / +
-      const aMinus = document.createElement("button");
-      aMinus.className = "btn gray";
-      aMinus.textContent = "AGRESS -";
-      aMinus.onclick = () => { c.aggr = clamp(c.aggr - 1, -2, 2); renderYourDrivers(); };
+      kpis.appendChild(k1);
+      kpis.appendChild(k2);
+      kpis.appendChild(k3);
+      kpis.appendChild(k4);
 
-      const aPlus = document.createElement("button");
-      aPlus.className = "btn gray";
-      aPlus.textContent = "AGRESS +";
-      aPlus.onclick = () => { c.aggr = clamp(c.aggr + 1, -2, 2); renderYourDrivers(); };
+      const actions = document.createElement("div");
+      actions.className = "actions";
 
-      controls.appendChild(pitBtn);
-      controls.appendChild(tyreSel);
-      controls.appendChild(ecoBtn);
-      controls.appendChild(atkBtn);
-      controls.appendChild(mMinus);
-      controls.appendChild(mPlus);
-      controls.appendChild(aMinus);
-      controls.appendChild(aPlus);
+      const pit = document.createElement("button");
+      pit.className = "actionBtn pit";
+      pit.textContent = c.pitPending ? "PIT STOP (AGENDADO)" : "PIT STOP";
+      pit.addEventListener("click", () => openPit(c));
 
-      card.appendChild(top);
-      card.appendChild(stats);
-      card.appendChild(controls);
+      actions.appendChild(pit);
+
+      const small = document.createElement("div");
+      small.className = "smallActions";
+
+      const paceDown = document.createElement("button");
+      paceDown.className = "smallBtn acc";
+      paceDown.textContent = "RITMO -";
+      paceDown.onclick = () => { c.paceMode = clamp(c.paceMode - 1, -2, 2); renderRight(); };
+
+      const paceUp = document.createElement("button");
+      paceUp.className = "smallBtn acc";
+      paceUp.textContent = "RITMO +";
+      paceUp.onclick = () => { c.paceMode = clamp(c.paceMode + 1, -2, 2); renderRight(); };
+
+      const powDown = document.createElement("button");
+      powDown.className = "smallBtn pow";
+      powDown.textContent = "POTÊNCIA -";
+      powDown.onclick = () => { c.powerMode = clamp(c.powerMode - 1, -2, 2); renderRight(); };
+
+      const powUp = document.createElement("button");
+      powUp.className = "smallBtn pow";
+      powUp.textContent = "POTÊNCIA +";
+      powUp.onclick = () => { c.powerMode = clamp(c.powerMode + 1, -2, 2); renderRight(); };
+
+      small.appendChild(paceDown);
+      small.appendChild(paceUp);
+      small.appendChild(powDown);
+      small.appendChild(powUp);
+
+      card.appendChild(header);
+      card.appendChild(kpis);
+      card.appendChild(actions);
+      card.appendChild(small);
 
       yourDriversEl.appendChild(card);
     }
   }
 
-  function updateHeader() {
-    safeText(gpTitleEl, gpName);
-    safeText(gpMetaEl, `Volta ${Math.min(TOTAL_LAPS, getLeaderLap() + 1)} • Clima: ${weather} • Pista: ${trackTemp}`);
-    safeText(uiWeatherEl, weather);
-    safeText(uiTempEl, trackTemp);
-  }
-
-  function getLeaderLap() {
-    const leader = [...cars].sort((a, b) => b.totalProgress - a.totalProgress)[0];
-    return leader ? leader.lap : 0;
-  }
-
-  function updateMini() {
-    safeText(uiLapEl, `${Math.min(TOTAL_LAPS, getLeaderLap() + 1)}/${TOTAL_LAPS}`);
-    safeText(uiStateEl, finished ? "Finalizado" : "Correndo");
-  }
-
-  // ---------------------------
-  // Race simulation (simple but stable)
-  // ---------------------------
-  function tyreGrip(tyre) {
-    // grip base: S> M > H, W só exemplo
-    if (tyre === "S") return 1.04;
-    if (tyre === "M") return 1.00;
-    if (tyre === "H") return 0.97;
-    if (tyre === "W") return 0.98;
-    return 1.0;
-  }
-
-  function tyreWearRate(tyre) {
-    if (tyre === "S") return 0.00055;
-    if (tyre === "M") return 0.00040;
-    if (tyre === "H") return 0.00030;
-    if (tyre === "W") return 0.00045;
-    return 0.00040;
-  }
-
-  function basePaceFor(car) {
-    // base “habilidade” pseudo determinística
-    const seed = car.code.split("").reduce((a, ch) => a + ch.charCodeAt(0), 0);
-    const skill = 0.98 + ((seed % 17) / 1000); // 0.98..0.996
-    return skill;
-  }
-
-  function step(dt) {
-    if (finished) return;
-
-    raceTime += dt;
-
-    // Atualiza cada carro
-    for (const c of cars) {
-      // PIT handling (simples e estável)
-      if (c.pitLock > 0) {
-        c.pitLock -= 1;
-        continue;
-      }
-      if (c.pitPending && c.pos > 0.985) {
-        // entra no pit ao fim da volta
-        c.pitPending = false;
-        c.pitLock = Math.floor(70 / SPEED_MULT); // "tempo" parado
-        c.tyreWear = 0.0;
-        c.ers = Math.min(1.0, c.ers + 0.35);
-        c.carHealth = Math.max(0.72, c.carHealth); // não deixa morrer
-      }
-
-      const grip = tyreGrip(c.tyre);
-      const wearPenalty = 1.0 - (c.tyreWear * 0.55); // quanto mais gasto, mais lento
-      const eng = 1.0 + (c.engineMode * 0.02);
-      const ag = 1.0 + (c.aggr * 0.02);
-
-      // ERS (consome quando motor/agressivo alto)
-      const ersDrain = (0.00020 + Math.max(0, c.engineMode) * 0.00018 + Math.max(0, c.aggr) * 0.00010) * dt * SPEED_MULT;
-      c.ers = clamp(c.ers - ersDrain, 0, 1);
-
-      const ersBoost = (c.ers > 0.15 && c.engineMode > 0) ? 1.012 : 1.0;
-
-      // desgaste
-      const wear = tyreWearRate(c.tyre) * dt * SPEED_MULT * (1.0 + Math.max(0, c.aggr) * 0.22 + Math.max(0, c.engineMode) * 0.18);
-      c.tyreWear = clamp(c.tyreWear + wear, 0, 1);
-
-      // dano leve se for muito agressivo com pneu muito gasto
-      if (c.tyreWear > 0.82 && c.aggr >= 1) {
-        c.carHealth = clamp(c.carHealth - 0.00010 * dt * SPEED_MULT, 0, 1);
-      }
-
-      const pace = basePaceFor(c) * grip * wearPenalty * eng * ag * ersBoost * c.carHealth;
-      const speed = 0.0205 * pace; // “velocidade base” no espaço 0..1 por segundo (ajustada)
-
-      c.pos += speed * dt * SPEED_MULT;
-
-      // completou volta?
-      if (c.pos >= 1) {
-        c.pos -= 1;
-        c.lap += 1;
-      }
-
-      c.totalProgress = c.lap + c.pos;
-
-      // delta (apenas um número estável pro leaderboard)
-      c.delta = c.totalProgress * 90.0; // escala arbitrária
-    }
-
-    // fim da corrida: quando o líder completar TOTAL_LAPS
-    const leader = [...cars].sort((a, b) => b.totalProgress - a.totalProgress)[0];
-    if (leader && leader.lap >= TOTAL_LAPS) {
-      finished = true;
-      showPodium();
-    }
-  }
-
-  function showPodium() {
-    const sorted = [...cars].sort((a, b) => b.totalProgress - a.totalProgress);
-    const top3 = sorted.slice(0, 3);
-
+  function showPodium(top3) {
     podiumGrid.innerHTML = "";
     top3.forEach((c, i) => {
-      const slot = document.createElement("div");
-      slot.className = "podiumSlot";
-
-      const img = document.createElement("img");
-      img.alt = c.code;
-      img.src = faceUrl(c.code);
-      img.onerror = () => { img.style.visibility = "hidden"; };
-
-      const box = document.createElement("div");
-      const pos = document.createElement("div");
-      pos.className = "podiumPos";
-      pos.textContent = `#${i + 1}`;
-
-      const nm = document.createElement("div");
-      nm.className = "podiumName";
-      nm.textContent = c.name;
-
-      const meta = document.createElement("div");
-      meta.className = "podiumMeta";
-      meta.textContent = `${c.team} • Voltas: ${c.lap}`;
-
-      box.appendChild(pos);
-      box.appendChild(nm);
-      box.appendChild(meta);
-
-      slot.appendChild(img);
-      slot.appendChild(box);
-
-      podiumGrid.appendChild(slot);
+      const div = document.createElement("div");
+      div.style.padding = "12px";
+      div.style.borderRadius = "14px";
+      div.style.border = "1px solid rgba(255,255,255,.10)";
+      div.style.background = "rgba(255,255,255,.06)";
+      div.innerHTML = `<div style="font-weight:950;">#${i + 1} • ${c.name}</div><div style="color:rgba(255,255,255,.65);margin-top:4px;">${c.team}</div>`;
+      podiumGrid.appendChild(div);
     });
-
-    // salva resultado mínimo para seu resultsSystem ler depois, se quiser
-    try {
-      localStorage.setItem("lastRaceResult", JSON.stringify({
-        gp: gpName,
-        track: trackId,
-        laps: TOTAL_LAPS,
-        top3: top3.map((c, i) => ({ pos: i + 1, code: c.code, name: c.name, team: c.team })),
-        timestamp: Date.now()
-      }));
-    } catch (_) {}
-
     podiumModal.classList.remove("hidden");
   }
 
-  // ---------------------------
-  // Main loop
-  // ---------------------------
-  let lastT = performance.now();
+  // =========================
+  // LOOP
+  // =========================
+  let last = performance.now();
 
-  function frame(t) {
-    const dt = clamp((t - lastT) / 1000, 0, 0.05);
-    lastT = t;
+  function tick(now) {
+    const dt = clamp((now - last) / 1000, 0, 0.05);
+    last = now;
 
     step(dt);
+    render();
+    updateTop();
+    renderLeft();
 
-    clear();
-    drawTrack();
-    drawCars();
-
-    updateHeader();
-    updateMini();
-    renderSessionList();
-
-    requestAnimationFrame(frame);
+    requestAnimationFrame(tick);
   }
 
-  // ---------------------------
-  // Init
-  // ---------------------------
+  // =========================
+  // INIT
+  // =========================
   async function init() {
-    // Botões speed
-    document.querySelectorAll(".btn.chip").forEach((b) => {
-      b.addEventListener("click", () => setSpeed(parseInt(b.getAttribute("data-speed"), 10)));
-    });
-    setSpeed(1);
-
-    // Voltar
-    $("#btnBack").addEventListener("click", () => {
-      // ajuste o destino conforme seu fluxo real
-      window.location.href = "lobby.html";
-    });
-
-    // Continue (pós-corrida)
-    $("#btnContinue").addEventListener("click", () => {
-      podiumModal.classList.add("hidden");
-      // ajuste conforme seu fluxo real (ex: results.html / calendario.html)
-      window.location.href = "calendario.html";
-    });
-
-    // Logo da equipe do usuário (se existir)
-    // Se você tiver outro caminho, ajuste aqui.
-    safeImg($("#teamLogo"), `assets/teams/${userTeam}.png`);
-
-    // Monta grid de carros: todos drivers + marca 2 como user
-    const userCodes = new Set(userDrivers.map((d) => d.code));
-    cars = drivers.slice(0, 20).map((d) => makeCar(d, userCodes.has(d.code)));
-
-    // garante que os 2 do usuário existam no array, mesmo se drivers do projeto não incluírem
-    for (const ud of userDrivers) {
-      if (!cars.find((c) => c.code === ud.code)) cars.push(makeCar(ud, true));
-    }
-
-    // carrega pista e inicia UI
-    await loadTrackSvgAndSample();
-    renderYourDrivers();
-    updateHeader();
-    updateMini();
-
-    requestAnimationFrame(frame);
+    await loadTrack();
+    renderRight();
+    updateTop();
+    renderLeft();
+    requestAnimationFrame(tick);
   }
 
-  init().catch((err) => {
-    console.error(err);
-    safeText($("#gpTitle"), "Erro ao iniciar corrida");
-    safeText($("#gpMeta"), String(err && err.message ? err.message : err));
+  init().catch((e) => {
+    console.error(e);
+    alert("Erro ao iniciar corrida: " + (e.message || e));
   });
 
 })();
