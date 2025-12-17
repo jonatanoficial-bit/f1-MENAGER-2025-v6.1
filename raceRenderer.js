@@ -1,8 +1,8 @@
 /* ===========================
-   raceRenderer.js (FULL)
-   - Monta SVG no container
-   - Cria overlay para carros (bolinhas)
-   - Posiciona via getPointAtLength no path principal
+   raceRenderer.js (FULL) - FIX
+   - Carros seguem exatamente o traçado
+   - Força uma linha branca/cinza do traçado (overlay)
+   - Conversão de coordenadas robusta (getScreenCTM)
    =========================== */
 
 (function () {
@@ -22,7 +22,6 @@
 
       this.container.innerHTML = "";
 
-      // insere SVG
       const wrapper = document.createElement("div");
       wrapper.style.width = "100%";
       wrapper.style.height = "100%";
@@ -34,16 +33,14 @@
         return;
       }
 
-      // garante escala consistente
       svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
       svg.style.width = "100%";
       svg.style.height = "100%";
       svg.style.display = "block";
 
-      // NÃO desenha pista duplicada: usa o que já está no SVG
       this.svgRoot = svg;
 
-      // escolhe o path principal (o mais longo)
+      // escolhe path principal (o maior)
       const paths = Array.from(svg.querySelectorAll("path"));
       if (!paths.length) {
         this.container.appendChild(svg);
@@ -65,13 +62,20 @@
       this.mainPath = best;
       this.pathLen = bestLen || this.mainPath.getTotalLength();
 
-      // coloca no container
+      // >>> Overlay de linha (branca/cinza) para garantir traçado visível <<<
+      this._ensureTrackStroke(svg, this.mainPath);
+
+      // monta no container
       this.container.appendChild(svg);
 
-      // overlay para carros
+      // overlay dos carros
       const overlay = document.createElement("div");
       overlay.id = "track-overlay";
+      overlay.style.position = "absolute";
+      overlay.style.inset = "0";
+      overlay.style.pointerEvents = "none";
       this.overlay = overlay;
+      this.container.style.position = "relative";
       this.container.appendChild(overlay);
 
       this.nodes.clear();
@@ -80,7 +84,8 @@
     render(state) {
       if (!this.mainPath || !this.overlay) return;
 
-      // cria / atualiza bolinhas
+      const cb = this.container.getBoundingClientRect();
+
       for (const d of state.drivers) {
         let el = this.nodes.get(d.code);
         if (!el) {
@@ -101,57 +106,72 @@
           el.style.background = this._teamColor(d.team);
         }
 
-        const pt = this._pointAt(d.t);
-        // pequeno offset “fora da linha” (normal aproximada via lookahead)
-        const out = this._offsetNormal(d.t, 7); // 7px para fora
-        el.style.left = (pt.x + out.x) + "px";
-        el.style.top = (pt.y + out.y) + "px";
+        // ponto exato no path
+        const { x, y } = this._pointOnPathScreen(d.t);
+
+        // converte screen -> container
+        el.style.left = (x - cb.left) + "px";
+        el.style.top = (y - cb.top) + "px";
         el.style.opacity = d.finished ? "0.65" : "1";
       }
     },
 
-    _pointAt(t01) {
-      const L = this.pathLen;
+    _pointOnPathScreen(t01) {
       const t = ((t01 % 1) + 1) % 1;
-      const dist = t * L;
+      const dist = t * this.pathLen;
+
       const p = this.mainPath.getPointAtLength(dist);
 
-      // converte para coordenada do SVG na tela
       const svg = this.svgRoot;
       const pt = svg.createSVGPoint();
       pt.x = p.x;
       pt.y = p.y;
-      const ctm = this.mainPath.getCTM();
-      const screen = pt.matrixTransform(ctm);
 
-      // agora para coordenada do container:
-      const bbox = svg.getBoundingClientRect();
-      const cb = this.container.getBoundingClientRect();
-      return {
-        x: (screen.x - bbox.left) + (bbox.left - cb.left),
-        y: (screen.y - bbox.top) + (bbox.top - cb.top),
-      };
+      // MATRIZ CORRETA: screen CTM do path
+      const m = this.mainPath.getScreenCTM();
+      if (!m) return { x: 0, y: 0 };
+
+      const sp = pt.matrixTransform(m);
+      return { x: sp.x, y: sp.y };
     },
 
-    _offsetNormal(t01, magPx) {
-      const eps = 0.003; // pequeno passo
-      const p1 = this._pointAt(t01);
-      const p2 = this._pointAt(t01 + eps);
+    _ensureTrackStroke(svg, path) {
+      // cria um grupo overlay no final (garante “por cima”)
+      let g = svg.querySelector("g[data-track-overlay='1']");
+      if (!g) {
+        g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("data-track-overlay", "1");
+        svg.appendChild(g);
+      } else {
+        while (g.firstChild) g.removeChild(g.firstChild);
+      }
 
-      const dx = p2.x - p1.x;
-      const dy = p2.y - p1.y;
-      const len = Math.hypot(dx, dy) || 1;
+      // duplica o path e força stroke visível
+      const clone = path.cloneNode(true);
+      clone.removeAttribute("fill");
 
-      // normal (perp)
-      const nx = -dy / len;
-      const ny = dx / len;
+      // linha externa cinza
+      clone.setAttribute("stroke", "rgba(220,220,220,0.92)");
+      clone.setAttribute("stroke-width", "10");
+      clone.setAttribute("stroke-linecap", "round");
+      clone.setAttribute("stroke-linejoin", "round");
+      clone.setAttribute("opacity", "0.95");
 
-      return { x: nx * magPx, y: ny * magPx };
+      // linha interna branca (fica AAA)
+      const inner = path.cloneNode(true);
+      inner.removeAttribute("fill");
+      inner.setAttribute("stroke", "rgba(255,255,255,0.92)");
+      inner.setAttribute("stroke-width", "6");
+      inner.setAttribute("stroke-linecap", "round");
+      inner.setAttribute("stroke-linejoin", "round");
+      inner.setAttribute("opacity", "0.95");
+
+      g.appendChild(clone);
+      g.appendChild(inner);
     },
 
     _teamColor(team) {
       const t = (team || "").toUpperCase();
-      // cores base (pode ajustar depois)
       if (t.includes("FERRARI")) return "#e10600";
       if (t.includes("MCLAREN")) return "#ff7a00";
       if (t.includes("MERCEDES")) return "#00d2be";
