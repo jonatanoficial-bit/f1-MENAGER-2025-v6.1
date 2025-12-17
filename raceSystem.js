@@ -1,8 +1,8 @@
 /* ===========================
-   raceSystem.js (FULL)
-   - Resolve SVG de todas as pistas (assets/tracks)
+   raceSystem.js (FULL) - FIX
+   - Corrige velocidade (não fica preso na volta 1)
    - Min. 10 voltas
-   - Fonte de verdade do estado da corrida
+   - Mantém API para UI (pit, modo, motor/agress)
    =========================== */
 
 (function () {
@@ -11,17 +11,11 @@
   const RaceSystem = {
     state: null,
     speed: 1,
-    tickMs: 1000 / 60,
-    _acc: 0,
     _lastTs: 0,
     _running: false,
 
-    // IMPORTANTÍSSIMO: mapear query track -> nome real do arquivo
     trackFileMap: {
-      // já funciona
       australia: "australia.svg",
-
-      // arquivos que você mostrou no repo:
       abu_dhabi: "abu_dhabi.svg",
       arabia_saudita: "arabia_saudita.svg",
       austria: "austria.svg",
@@ -32,7 +26,7 @@
       china: "china.svg",
       espanha: "espanha.svg",
 
-      // aliases comuns (caso a URL use outro padrão)
+      // aliases comuns
       saudi: "arabia_saudita.svg",
       saudia: "arabia_saudita.svg",
       saudi_arabia: "arabia_saudita.svg",
@@ -52,24 +46,22 @@
         const lapsParam = parseInt(params.get("laps") || "10", 10);
         const totalLaps = Number.isFinite(lapsParam) ? Math.max(10, lapsParam) : 10;
 
-        // Estado base
         this.state = {
           trackKey,
           gpName,
           userTeam,
           totalLaps,
+
           lap: 1,
           weather: "Seco",
           trackTemp: "21°C",
           status: "Correndo",
-          // grid/posições
+
           drivers: [],
-          // runtime do mapa
-          track: {
-            svgText: "",
-            file: "",
-          },
-          // resultados
+          playerDrivers: [],
+
+          track: { svgText: "", file: "" },
+
           finished: false,
           winner: null,
         };
@@ -77,20 +69,16 @@
         this._bindSpeedButtons();
         this._bindBackButton();
 
-        // Monta lista de pilotos a partir do data.js (defensivo)
         this._buildDriversFromData(userTeam);
 
-        // Carrega SVG da pista (com fallback)
         this.loadTrackSVG(trackKey)
           .then(({ svgText, file }) => {
             this.state.track.svgText = svgText;
             this.state.track.file = file;
 
-            // Render inicial + UI
             if (window.RaceRenderer) window.RaceRenderer.mount(svgText);
             if (window.RaceUI) window.RaceUI.renderAll(this.state);
 
-            // Start loop
             this._running = true;
             this._lastTs = performance.now();
             requestAnimationFrame(this._loop.bind(this));
@@ -110,6 +98,7 @@
       if (!wrap) return;
 
       const buttons = Array.from(wrap.querySelectorAll("button[data-speed]"));
+
       const applyActive = () => {
         buttons.forEach((b) => b.classList.toggle("active", parseInt(b.dataset.speed, 10) === this.speed));
       };
@@ -124,7 +113,6 @@
         });
       });
 
-      // default
       this.speed = 1;
       applyActive();
     },
@@ -133,23 +121,19 @@
       const btn = document.getElementById("btn-back-lobby");
       if (!btn) return;
       btn.addEventListener("click", () => {
-        // ajuste se seu lobby tiver outro arquivo
         location.href = "lobby.html";
       });
     },
 
     async loadTrackSVG(trackKey) {
       const clean = String(trackKey || "").trim();
+
       const file = this.trackFileMap[clean] || `${clean}.svg`;
       const primary = `assets/tracks/${file}`;
 
-      // 1) tenta direto
       let res = await fetch(primary, { cache: "no-store" });
-      if (res.ok) {
-        return { svgText: await res.text(), file };
-      }
+      if (res.ok) return { svgText: await res.text(), file };
 
-      // 2) fallback: tenta normalizar (trocar hífen por underscore etc.)
       const normalized = clean
         .toLowerCase()
         .replace(/-/g, "_")
@@ -159,26 +143,20 @@
 
       const file2 = this.trackFileMap[normalized] || `${normalized}.svg`;
       const secondary = `assets/tracks/${file2}`;
-      res = await fetch(secondary, { cache: "no-store" });
-      if (res.ok) {
-        return { svgText: await res.text(), file: file2 };
-      }
 
-      // 3) último fallback: australia (para não “morrer” em demo)
+      res = await fetch(secondary, { cache: "no-store" });
+      if (res.ok) return { svgText: await res.text(), file: file2 };
+
       const fallback = `assets/tracks/australia.svg`;
       res = await fetch(fallback, { cache: "no-store" });
-      if (res.ok) {
-        return { svgText: await res.text(), file: "australia.svg" };
-      }
+      if (res.ok) return { svgText: await res.text(), file: "australia.svg" };
 
       throw new Error(`404 SVG. Tentativas: ${primary}, ${secondary}, ${fallback}`);
     },
 
     _buildDriversFromData(userTeam) {
-      // Tenta enxergar formatos comuns
       const data = window.DATA || window.data || window.F1DATA || null;
 
-      // fallback mínimo
       const defaultGrid = [
         { code: "LEC", name: "Charles Leclerc", team: "FERRARI" },
         { code: "SAI", name: "Carlos Sainz", team: "FERRARI" },
@@ -203,45 +181,48 @@
       ];
 
       let driversRaw = null;
-
-      // formatos possíveis: data.drivers / data.pilots / window.DRIVERS
       if (data?.drivers && Array.isArray(data.drivers)) driversRaw = data.drivers;
       else if (data?.pilots && Array.isArray(data.pilots)) driversRaw = data.pilots;
       else if (window.DRIVERS && Array.isArray(window.DRIVERS)) driversRaw = window.DRIVERS;
 
       const grid = Array.isArray(driversRaw) && driversRaw.length ? driversRaw : defaultGrid;
 
-      // Normaliza para o engine da corrida
-      this.state.drivers = grid.map((d, idx) => ({
-        id: d.id ?? idx,
-        code: (d.code || d.abbr || d.short || "").toString().toUpperCase().slice(0, 3) || "UNK",
-        name: d.name || d.fullName || d.driver || "Piloto",
-        team: (d.team || d.teamId || d.constructor || "TEAM").toString().toUpperCase(),
-        pos: idx + 1,
-        gap: 0,
-        lap: 0,
+      // >>> VELOCIDADE CORRIGIDA AQUI <<<
+      // t vai de 0 a 1 por volta.
+      // Queremos ~25s por volta em 1x (para demo), então v ~ 1/25 = 0.04 por segundo.
+      // Com variação por piloto.
+      const baseV = 0.040;
 
-        tyre: "M",
-        tyreWear: 100,
+      this.state.drivers = grid.map((d, idx) => {
+        const code = (d.code || d.abbr || d.short || "").toString().toUpperCase().slice(0, 3) || "UNK";
+        return {
+          id: d.id ?? idx,
+          code,
+          name: d.name || d.fullName || d.driver || "Piloto",
+          team: (d.team || d.teamId || d.constructor || "TEAM").toString().toUpperCase(),
 
-        carHealth: 100,
-        ers: 100,
+          pos: idx + 1,
+          gap: 0,
+          lap: 0,
 
-        mode: "NORMAL", // ECONOMIZAR / ATAQUE
-        motor: 2,
-        agress: 2,
+          tyre: "M",
+          tyreWear: 100,
 
-        // posição no traçado (0..1)
-        t: Math.random() * 0.05,
-        speed: 0.0008 + Math.random() * 0.0002,
-        finished: false,
-      }));
+          carHealth: 100,
+          ers: 100,
 
-      // Define player drivers a partir do userTeam, se bater
+          mode: "NORMAL", // ECONOMIZAR / ATAQUE / NORMAL
+          motor: 2,
+          agress: 2,
+
+          t: Math.random() * 0.02,
+          vBase: baseV * (0.92 + Math.random() * 0.16), // 0.0368..0.0464
+          finished: false,
+        };
+      });
+
       const teamKey = (userTeam || "").toString().toUpperCase();
       const player = this.state.drivers.filter((d) => d.team === teamKey);
-
-      // Se não bater, fallback: Ferrari
       this.state.playerDrivers = player.length ? player.map((d) => d.code) : ["LEC", "SAI"];
     },
 
@@ -251,7 +232,6 @@
       const dt = Math.min(0.05, (ts - this._lastTs) / 1000);
       this._lastTs = ts;
 
-      // simulação em 60fps com multiplicador
       const simDt = dt * this.speed;
 
       this._step(simDt);
@@ -265,24 +245,40 @@
     _step(dt) {
       if (this.state.finished) return;
 
-      // move cada piloto no traçado (t 0..1)
       for (const d of this.state.drivers) {
         if (d.finished) continue;
 
-        // desgaste simples (ajuste fino depois)
-        d.tyreWear = Math.max(0, d.tyreWear - dt * (0.35 + (d.mode === "ATAQUE" ? 0.25 : 0.05)));
-        d.ers = Math.max(0, d.ers - dt * (d.mode === "ATAQUE" ? 0.18 : 0.06));
+        const modeBoost =
+          d.mode === "ATAQUE" ? 1.10 :
+          d.mode === "ECONOMIZAR" ? 0.93 :
+          1.00;
 
-        // velocidade: base + influência de modo
-        const modeBoost = d.mode === "ATAQUE" ? 1.25 : d.mode === "ECONOMIZAR" ? 0.92 : 1.0;
-        const wearPenalty = 0.65 + (d.tyreWear / 100) * 0.45;
-        const ersBoost = 0.9 + (d.ers / 100) * 0.25;
+        const tyrePenalty = 0.70 + (d.tyreWear / 100) * 0.40; // 0.70..1.10
+        const ersBoost = 0.88 + (d.ers / 100) * 0.20;         // 0.88..1.08
 
-        const v = d.speed * modeBoost * wearPenalty * ersBoost;
+        // desgaste coerente para “demo”
+        const tyreDrain =
+          d.mode === "ATAQUE" ? 1.10 :
+          d.mode === "ECONOMIZAR" ? 0.55 :
+          0.80;
+
+        const ersDrain =
+          d.mode === "ATAQUE" ? 1.05 :
+          d.mode === "ECONOMIZAR" ? 0.45 :
+          0.70;
+
+        d.tyreWear = Math.max(0, d.tyreWear - dt * tyreDrain * 2.2); // ajustado
+        d.ers = Math.max(0, d.ers - dt * ersDrain * 2.0);
+
+        // motor/agress influenciam leve
+        const motorBoost = 0.96 + (d.motor * 0.02);   // M1=0.98, M5=1.06
+        const agressBoost = 0.96 + (d.agress * 0.02); // A1=0.98, A5=1.06
+
+        const v = d.vBase * modeBoost * tyrePenalty * ersBoost * motorBoost * agressBoost;
         d.t += v * dt;
 
         if (d.t >= 1) {
-          d.t = d.t - 1;
+          d.t -= 1;
           d.lap += 1;
 
           if (d.lap >= this.state.totalLaps) {
@@ -291,62 +287,55 @@
         }
       }
 
-      // ordena por (lap desc, t desc)
+      // ordena por progresso total
       this.state.drivers.sort((a, b) => (b.lap - a.lap) || (b.t - a.t));
 
-      // atualiza pos e gaps
       const leader = this.state.drivers[0];
-      leader.pos = 1;
-      leader.gap = 0;
-
       for (let i = 0; i < this.state.drivers.length; i++) {
         const d = this.state.drivers[i];
         d.pos = i + 1;
 
-        // gap simples (visual): baseado em diferença de progresso total
         const progLeader = leader.lap + leader.t;
         const prog = d.lap + d.t;
         const diff = progLeader - prog;
-        d.gap = diff <= 0 ? 0 : +(diff * 1.8).toFixed(3);
+        d.gap = diff <= 0 ? 0 : +(diff * 1.35).toFixed(3);
       }
 
-      // volta global (do líder)
       this.state.lap = Math.min(this.state.totalLaps, leader.lap + 1);
 
-      // fim
       const allFinished = this.state.drivers.every((d) => d.finished);
       if (allFinished) {
         this.state.finished = true;
         this.state.winner = leader;
         this.state.status = "Finalizada";
-
         if (window.ResultsSystem) window.ResultsSystem.show(this.state);
       }
     },
 
-    // API usada pela UI
     setDriverMode(code, mode) {
       const d = this.state.drivers.find((x) => x.code === code);
       if (!d) return;
       d.mode = mode;
     },
+
     adjustDriver(code, key, delta) {
       const d = this.state.drivers.find((x) => x.code === code);
       if (!d) return;
       if (key === "motor") d.motor = Math.max(1, Math.min(5, d.motor + delta));
       if (key === "agress") d.agress = Math.max(1, Math.min(5, d.agress + delta));
     },
+
     pit(code, tyre) {
       const d = this.state.drivers.find((x) => x.code === code);
       if (!d) return;
 
       d.tyre = tyre || d.tyre;
       d.tyreWear = 100;
-      d.ers = Math.min(100, d.ers + 25);
-      d.carHealth = Math.min(100, d.carHealth + 3);
+      d.ers = Math.min(100, d.ers + 28);
+      d.carHealth = Math.min(100, d.carHealth + 2.5);
 
-      // penalidade de pit (simples)
-      d.t = Math.max(0, d.t - 0.025);
+      // penalidade perceptível
+      d.t = Math.max(0, d.t - 0.055);
     },
   };
 
