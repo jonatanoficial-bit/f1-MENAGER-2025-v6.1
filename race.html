@@ -2,106 +2,110 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>F1 Manager 2025 – Corrida</title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-
-  <!-- CSS GLOBAL -->
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="ui.css" />
-  <link rel="stylesheet" href="ui-screens.css" />
   <link rel="stylesheet" href="race.css" />
 
+  <!-- Se você já usa data.js no projeto, mantenha. Se não existir, pode remover. -->
+  <script defer src="data.js"></script>
+
+  <!-- Corrida -->
+  <script defer src="race.js"></script>
 </head>
+
 <body>
+  <div class="race-shell">
 
-  <!-- =========================
-       HEADER
-  ========================== -->
-  <header class="race-header">
-    <div class="race-info">
-      <img id="gp-flag" class="gp-flag" src="" alt="Bandeira GP" />
-      <div>
-        <h1 id="gp-name">GP</h1>
-        <p id="gp-meta">Volta 1 · Clima · Pista</p>
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="gpbox">
+        <img id="teamLogo" class="teamLogo" alt="Equipe" />
+        <div class="gptext">
+          <div id="gpTitle" class="gpTitle">GP</div>
+          <div id="gpMeta" class="gpMeta">Volta 1 • Clima: — • Pista: —</div>
+        </div>
+      </div>
+
+      <div class="speedbox">
+        <div class="speedLabel">Velocidade</div>
+        <div class="speedBtns">
+          <button class="btn chip" data-speed="1">1x</button>
+          <button class="btn chip" data-speed="2">2x</button>
+          <button class="btn chip" data-speed="4">4x</button>
+        </div>
+      </div>
+
+      <button id="btnBack" class="btn backBtn" type="button">VOLTAR AO LOBBY</button>
+    </header>
+
+    <!-- MAIN GRID -->
+    <main class="grid">
+
+      <!-- TRACK PANEL -->
+      <section class="panel trackPanel">
+        <div class="panelHead">
+          <div class="panelTitle">MAPA DA PISTA</div>
+          <div id="trackInfo" class="panelHint">SVG • path sampling • 60fps</div>
+        </div>
+
+        <div class="trackStage">
+          <canvas id="trackCanvas" class="trackCanvas" width="900" height="900"></canvas>
+          <div class="trackFooter">
+            <div class="miniCard">
+              <div class="miniLabel">Volta</div>
+              <div id="uiLap" class="miniValue">1/10</div>
+            </div>
+            <div class="miniCard">
+              <div class="miniLabel">Estado</div>
+              <div id="uiState" class="miniValue">Correndo</div>
+            </div>
+            <div class="miniCard">
+              <div class="miniLabel">Clima</div>
+              <div id="uiWeather" class="miniValue">—</div>
+            </div>
+            <div class="miniCard">
+              <div class="miniLabel">Pista</div>
+              <div id="uiTemp" class="miniValue">—</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SESSION PANEL -->
+      <section class="panel sessionPanel">
+        <div class="panelHead">
+          <div class="panelTitle">SESSÃO</div>
+          <div class="panelHint">Tempo real</div>
+        </div>
+
+        <div id="sessionList" class="sessionList"></div>
+      </section>
+
+      <!-- YOUR DRIVERS PANEL -->
+      <section class="panel yourPanel">
+        <div class="panelHead">
+          <div class="panelTitle">SEUS PILOTOS</div>
+          <div class="panelHint">Setup + Staff influenciam</div>
+        </div>
+
+        <div id="yourDrivers" class="yourDrivers"></div>
+      </section>
+
+    </main>
+
+    <!-- PODIUM MODAL -->
+    <div id="podiumModal" class="modal hidden">
+      <div class="modalBackdrop"></div>
+      <div class="modalCard">
+        <div class="modalTitle">PÓDIO</div>
+        <div id="podiumGrid" class="podiumGrid"></div>
+        <div class="modalActions">
+          <button id="btnContinue" class="btn primary" type="button">CONTINUAR</button>
+        </div>
       </div>
     </div>
 
-    <div class="race-controls">
-      <div class="speed-controls">
-        <button data-speed="1">1x</button>
-        <button data-speed="2">2x</button>
-        <button data-speed="4">4x</button>
-      </div>
-      <button id="btn-back-lobby" class="btn-back">VOLTAR AO LOBBY</button>
-    </div>
-  </header>
-
-  <!-- =========================
-       CONTEÚDO PRINCIPAL
-  ========================== -->
-  <main class="race-main">
-
-    <!-- MAPA -->
-    <section class="track-panel">
-      <h2>MAPA DA PISTA</h2>
-
-      <!-- SVG É CARREGADO AQUI -->
-      <div id="track-container"></div>
-
-      <div class="track-status">
-        <div><strong>Volta</strong> <span id="lap-info">1/10</span></div>
-        <div><strong>Estado</strong> <span id="race-state">Correndo</span></div>
-        <div><strong>Clima</strong> <span id="weather-info">Seco</span></div>
-        <div><strong>Pista</strong> <span id="track-temp">21°C</span></div>
-      </div>
-    </section>
-
-    <!-- SESSÃO -->
-    <section class="session-panel">
-      <h2>SESSÃO</h2>
-      <div id="session-list"></div>
-    </section>
-
-    <!-- PILOTOS DO JOGADOR -->
-    <section class="drivers-panel">
-      <h2>SEUS PILOTOS</h2>
-      <div id="player-drivers"></div>
-    </section>
-
-  </main>
-
-  <!-- =========================
-       OVERLAY DE RESULTADOS
-  ========================== -->
-  <div id="results-overlay" class="hidden"></div>
-
-  <!-- =========================
-       SISTEMAS (ORDEM É CRÍTICA)
-  ========================== -->
-
-  <!-- BASE -->
-  <script src="data.js"></script>
-  <script src="saveSystem.js"></script>
-
-  <!-- SISTEMAS -->
-  <script src="setupSystem.js"></script>
-  <script src="staffSystem.js"></script>
-  <script src="tyreSystem.js"></script>
-  <script src="pitStopSystem.js"></script>
-
-  <!-- CORRIDA (ÚNICA FONTE DE VERDADE) -->
-  <script src="raceSystem.js"></script>
-  <script src="raceRenderer.js"></script>
-  <script src="raceUI.js"></script>
-  <script src="resultsSystem.js"></script>
-
-  <!-- BOOT -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      RaceSystem.init();
-    });
-  </script>
-
+  </div>
 </body>
 </html>
