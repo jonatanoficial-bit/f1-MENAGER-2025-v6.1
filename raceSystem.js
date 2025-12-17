@@ -1,389 +1,516 @@
-/* raceSystem.js — CORE da corrida (estado, desgaste, pit, voltas, fim) */
+/* ==========================================================
+   RACE SYSTEM — MOTOR ÚNICO DA CORRIDA (ESTÁVEL)
+   Objetivos:
+   - NÃO depende de *.json de pista (você só tem SVGs)
+   - Carrega SEMPRE assets/tracks/{track}.svg
+   - Gera pathPoints pelo PATH do SVG
+   - NÃO duplica pista (renderer controla 1 camada)
+   - Voltas avançam, corrida termina e chama pódio
+   - Setup + Staff influenciam (se existirem no save)
+========================================================== */
 
 (function () {
   "use strict";
 
-  // ===== Helpers =====
-  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-  function now() { return performance.now(); }
-  function qs(name, def = "") {
-    const url = new URL(location.href);
-    const v = url.searchParams.get(name);
-    return v == null || v === "" ? def : v;
+  // ==========================
+  // CONFIG
+  // ==========================
+  const FPS = 60;
+  const DT = 1 / FPS;
+  const DEFAULT_LAPS = 10;
+  const PATH_SAMPLES = 900; // mais pontos = movimento mais suave
+  const TRACKS_BASE = "assets/tracks/";
+  const SAVE_KEY = "f1Manager2025_save_v61"; // se você usa outro, o race.js pode passar via window
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // Paleta simples por equipe (ajuste se quiser, mas já resolve “todas iguais”)
+  const TEAM_COLORS = {
+    "Ferrari": "#ff2a2a",
+    "McLaren": "#ff7a00",
+    "Red Bull": "#2e57ff",
+    "Mercedes": "#00ffd5",
+    "Aston Martin": "#00a86b",
+    "Alpine": "#ff4fd8",
+    "Williams": "#2aa1ff",
+    "Haas": "#bdbdbd",
+    "RB": "#5d7bff",
+    "Sauber": "#44ff44"
+  };
+
+  // ==========================
+  // STATE
+  // ==========================
+  const RaceSystem = window.RaceSystem || (window.RaceSystem = {});
+  let race = null;
+  let running = false;
+  let speedMult = 1;
+  let lastTick = 0;
+
+  // ==========================
+  // HELPERS — URL PARAMS
+  // ==========================
+  function q(name) {
+    const u = new URL(window.location.href);
+    return u.searchParams.get(name);
   }
-  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-  function fmtPct(x) { return `${Math.round(x)}%`; }
 
-  // ===== Teams (cores) =====
-  const TEAMS = {
-    mclaren: { name: "McLaren", color: "#ff7a00" },
-    ferrari: { name: "Ferrari", color: "#e10600" },
-    mercedes: { name: "Mercedes", color: "#00d2be" },
-    redbull: { name: "Red Bull", color: "#2a4cff" },
-    aston: { name: "Aston Martin", color: "#006f62" },
-    alpine: { name: "Alpine", color: "#ff4db8" },
-    williams: { name: "Williams", color: "#00a6ff" },
-    haas: { name: "Haas", color: "#c9c9c9" },
-    rb: { name: "RB", color: "#4da3ff" },
-    sauber: { name: "Sauber / Audi", color: "#00ff5a" }
-  };
+  function decodePlus(s) {
+    if (!s) return "";
+    return decodeURIComponent(s.replace(/\+/g, " "));
+  }
 
-  // ===== Drivers (grid 20) =====
-  // IDs aqui precisam bater com o nome do arquivo em assets/faces/<id>.png
-  const GRID_20 = [
-    { id: "norris",    name: "Lando Norris",     team: "mclaren", code: "LN" },
-    { id: "piastri",   name: "Oscar Piastri",    team: "mclaren", code: "OP" },
+  // ==========================
+  // SAVE / LOAD CAREER DATA
+  // ==========================
+  function loadSave() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  }
 
-    { id: "leclerc",   name: "Charles Leclerc",  team: "ferrari", code: "CL" },
-    { id: "sainz",     name: "Carlos Sainz",     team: "ferrari", code: "CS" },
+  function pickTeamFromParamOrSave(save) {
+    const userTeam = decodePlus(q("userTeam")) || "";
+    if (userTeam) return userTeam;
 
-    { id: "hamilton",  name: "Lewis Hamilton",   team: "mercedes", code: "LH" },
-    { id: "russell",   name: "George Russell",   team: "mercedes", code: "GR" },
+    // fallback
+    if (save?.career?.team) return save.career.team;
+    if (save?.team) return save.team;
+    return "Ferrari";
+  }
 
-    { id: "verstappen",name: "Max Verstappen",   team: "redbull", code: "MV" },
-    { id: "perez",     name: "Sergio Perez",     team: "redbull", code: "SP" },
+  // ==========================
+  // DRIVERS BASE (fallback)
+  // Se o seu data.js já define window.DRIVERS / window.TEAMS, usamos.
+  // ==========================
+  function getDriverPool() {
+    if (Array.isArray(window.DRIVERS) && window.DRIVERS.length) return window.DRIVERS;
+    // fallback mínimo (não deveria acontecer no seu projeto)
+    return [
+      { id: "LEC", code: "LEC", name: "Charles Leclerc", team: "Ferrari" },
+      { id: "SAI", code: "SAI", name: "Carlos Sainz", team: "Ferrari" },
+      { id: "NOR", code: "NOR", name: "Lando Norris", team: "McLaren" },
+      { id: "PIA", code: "PIA", name: "Oscar Piastri", team: "McLaren" }
+    ];
+  }
 
-    { id: "alonso",    name: "Fernando Alonso",  team: "aston", code: "FA" },
-    { id: "stroll",    name: "Lance Stroll",     team: "aston", code: "LS" },
+  function getTeamDrivers(teamName) {
+    const pool = getDriverPool();
+    const inTeam = pool.filter(d => (d.team || "").toLowerCase() === (teamName || "").toLowerCase());
+    // se não achar (variação de nome), retorna os 2 primeiros do pool
+    return inTeam.length >= 2 ? inTeam.slice(0, 2) : pool.slice(0, 2);
+  }
 
-    { id: "ocon",      name: "Esteban Ocon",     team: "alpine", code: "EO" },
-    { id: "gasly",     name: "Pierre Gasly",     team: "alpine", code: "PG" },
+  // ==========================
+  // TRACK LOADER (SVG -> PATH -> POINTS)
+  // ==========================
+  async function fetchText(url) {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Falha ao carregar: ${url} (${res.status})`);
+    return await res.text();
+  }
 
-    { id: "albon",     name: "Alex Albon",       team: "williams", code: "AA" },
-    { id: "sargeant",  name: "Logan Sargeant",   team: "williams", code: "LO" },
+  function parseMainPathFromSVG(svgText) {
+    const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+    const svg = doc.querySelector("svg");
+    if (!svg) throw new Error("SVG inválido (sem <svg>)");
 
-    { id: "hulkenberg",name: "Nico Hülkenberg",  team: "haas", code: "NH" },
-    { id: "magnussen", name: "Kevin Magnussen",  team: "haas", code: "KM" },
+    // regra: primeiro <path> é a pista. Se tiver id="track" melhor ainda.
+    const preferred = svg.querySelector("path#track") || svg.querySelector("path.track");
+    const path = preferred || svg.querySelector("path");
 
-    { id: "tsunoda",   name: "Yuki Tsunoda",     team: "rb", code: "YT" },
-    { id: "lawson",    name: "Liam Lawson",      team: "rb", code: "LL" },
-
-    { id: "zhou",      name: "Guanyu Zhou",      team: "sauber", code: "GZ" },
-    { id: "bortoleto", name: "Gabriel Bortoleto",team: "sauber", code: "GB" }
-  ];
-
-  // ===== Race Config =====
-  const RaceConfig = {
-    fps: 60,
-    basePace: 0.040,           // avanço base por tick (normal)
-    overtakeNoise: 0.0025,     // variação
-    degradeBase: 0.010,        // desgaste base por segundo
-    engineWearBase: 0.004,     // motor base por segundo
-    ersRegen: 2.0,             // % por segundo
-    ersUse: 5.5,               // % por segundo quando boost
-    pitTimeMs: 6500,           // tempo total do pit
-    pitPenaltyProgress: 0.060, // “perda” em progress (simula entrar/saír)
-    lapWrapThreshold: 0.92,    // quando considera perto do fim
-    lapStartThreshold: 0.08    // quando considera início
-  };
-
-  // ===== Public State =====
-  const RaceState = {
-    gpName: qs("gp", "GP da Austrália 2025"),
-    trackKey: qs("track", "australia"),
-    userTeam: (qs("userTeam", "ferrari") || "ferrari").toLowerCase(),
-    totalLaps: parseInt(qs("laps", "5"), 10) || 5,
-    weather: qs("weather", pick(["Seco", "Chuva"])),
-    trackTemp: parseInt(qs("temp", String(pick([21,24,26,28,29]))), 10),
-
-    speedMult: 1,
-    startedAt: now(),
-    finished: false,
-    winnerId: null,
-
-    // preenchido depois que track points carregarem (renderer)
-    track: {
-      points: [],
-      startIndex: 0
-    },
-
-    drivers: [],
-    yourDriverIds: []
-  };
-
-  // ===== Driver factory =====
-  function makeDriver(base, seedIndex) {
-    const team = TEAMS[base.team] || { name: base.team, color: "#888" };
+    if (!path) throw new Error("SVG sem <path> para a pista");
 
     return {
-      id: base.id,
-      code: base.code || base.name.split(" ").map(s => s[0]).join("").slice(0,2).toUpperCase(),
-      name: base.name,
-      teamKey: base.team,
-      teamName: team.name,
-      teamColor: team.color,
-
-      // corrida
-      lap: 1,
-      finished: false,
-      delta: 0,
-      progress: (seedIndex * 0.012) % 1,   // posição ao longo da pista (0..1)
-      prevProgress: 0,
-      position: seedIndex + 1,
-      lastLapTime: null,
-
-      // desgaste / controles
-      tyre: 100,
-      engine: 100,
-      ers: 60,
-      mode: "NORMAL", // ECONOMIZAR, NORMAL, ATAQUE
-      motorMap: 2,    // 1..3
-      aggress: 2,     // 1..3
-      ersBoost: false,
-
-      // pit
-      requestPit: false,
-      inPit: false,
-      pitEndsAt: 0
+      viewBox: svg.getAttribute("viewBox") || null,
+      width: svg.getAttribute("width") || null,
+      height: svg.getAttribute("height") || null,
+      d: path.getAttribute("d")
     };
   }
 
-  // ===== Init grid + pick your drivers =====
-  function initDrivers() {
-    const drivers = GRID_20.map((d, i) => makeDriver(d, i));
-
-    // Seus pilotos:
-    // 1) se userTeam existe no grid, pega os 2 daquela equipe
-    const your = drivers.filter(d => d.teamKey === RaceState.userTeam).slice(0, 2);
-
-    // 2) fallback: se não existir (ex: userTeam inválido), pega Ferrari
-    if (your.length < 2) {
-      const fb = drivers.filter(d => d.teamKey === "ferrari").slice(0, 2);
-      RaceState.yourDriverIds = fb.map(x => x.id);
-    } else {
-      RaceState.yourDriverIds = your.map(x => x.id);
-    }
-
-    RaceState.drivers = drivers;
+  function buildSVGForCanvas(trackPath, viewBox) {
+    // cria um SVG “limpo” para ser injetado no container do renderer
+    const vb = viewBox || "0 0 1000 1000";
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+        <path d="${trackPath}" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${trackPath}" fill="none" stroke="rgba(255,255,255,0.90)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
   }
 
-  // ===== Core loop =====
-  function computePaceFactor(d) {
-    // base por modo
-    const modeMul =
-      d.mode === "ECONOMIZAR" ? 0.92 :
-      d.mode === "ATAQUE" ? 1.06 : 1.0;
+  function samplePointsFromPath(d, viewBox) {
+    // cria SVG/Path offscreen para amostrar
+    const temp = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    temp.setAttribute("viewBox", viewBox || "0 0 1000 1000");
 
-    // motorMap (1..3)
-    const motorMul = 0.92 + (d.motorMap - 1) * 0.06; // 1:0.92, 2:0.98, 3:1.04
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", d);
+    temp.appendChild(p);
+    document.body.appendChild(temp);
+    temp.style.position = "absolute";
+    temp.style.left = "-99999px";
+    temp.style.top = "-99999px";
+    temp.style.width = "1px";
+    temp.style.height = "1px";
+    temp.style.opacity = "0";
 
-    // agressividade
-    const aggressMul = 0.96 + (d.aggress - 1) * 0.05; // 1:0.96, 2:1.01, 3:1.06
-
-    // penaliza desgaste
-    const tyrePenalty = 0.80 + (d.tyre / 100) * 0.20;   // 80%..100%
-    const engPenalty  = 0.75 + (d.engine / 100) * 0.25; // 75%..100%
-
-    // ERS boost
-    const ersMul = (d.ersBoost && d.ers > 2) ? 1.06 : 1.0;
-
-    return modeMul * motorMul * aggressMul * tyrePenalty * engPenalty * ersMul;
-  }
-
-  function stepDriver(d, dtSec) {
-    if (d.finished) return;
-
-    // pit logic
-    if (d.requestPit && !d.inPit) {
-      d.inPit = true;
-      d.requestPit = false;
-      d.pitEndsAt = now() + RaceConfig.pitTimeMs;
-      // perda imediata de progress para simular entrada no pit
-      d.progress = clamp(d.progress - RaceConfig.pitPenaltyProgress, 0, 1);
+    const len = p.getTotalLength();
+    const pts = [];
+    for (let i = 0; i < PATH_SAMPLES; i++) {
+      const t = (i / PATH_SAMPLES) * len;
+      const pt = p.getPointAtLength(t);
+      pts.push({ x: pt.x, y: pt.y });
     }
 
-    if (d.inPit) {
-      // parado no pit: avança muito pouco
-      d.prevProgress = d.progress;
-      d.progress = clamp(d.progress + 0.002 * dtSec, 0, 1);
+    document.body.removeChild(temp);
+    return pts;
+  }
 
-      if (now() >= d.pitEndsAt) {
-        d.inPit = false;
-        d.tyre = 100;
-        d.ers = clamp(d.ers + 15, 0, 100);
-      }
+  async function loadTrack(trackKey) {
+    const svgUrl = `${TRACKS_BASE}${trackKey}.svg`;
+    const svgText = await fetchText(svgUrl);
+    const parsed = parseMainPathFromSVG(svgText);
+
+    // viewBox: se svg não tiver, usa fallback
+    let viewBox = parsed.viewBox;
+    if (!viewBox) viewBox = "0 0 1000 1000";
+
+    const points = samplePointsFromPath(parsed.d, viewBox);
+    const svgClean = buildSVGForCanvas(parsed.d, viewBox);
+
+    return { trackKey, svgUrl, svgClean, viewBox, points };
+  }
+
+  // ==========================
+  // SIMULATION CORE
+  // ==========================
+  function makeDriverRuntime(driver, idx) {
+    return {
+      ...driver,
+      index: idx,
+      gap: 0,
+      lap: 0,
+      progress: Math.random() * 0.05, // espalha um pouco na largada
+      basePace: 1.0 + Math.random() * 0.02,
+      tyre: "M",
+      ers: 72,
+      carWear: 100,
+      motor: 2,
+      aggress: 2,
+      mode: "normal",
+      pitting: false,
+      pitTimer: 0
+    };
+  }
+
+  function applySetupAndStaffInfluence(save, teamName) {
+    // influência leve (não “quebra” balanceamento)
+    // se não existir nada no save, retorna 0.
+    const setup = save?.setup?.[teamName] || save?.carSetup?.[teamName] || null;
+    const staff = save?.staff?.[teamName] || save?.teamStaff?.[teamName] || null;
+
+    let bonus = 0;
+
+    if (setup) {
+      // exemplo: se setupScore existe, usa; senão calcula de campos comuns
+      if (typeof setup.setupScore === "number") bonus += (setup.setupScore - 50) * 0.0008;
+      if (typeof setup.balance === "number") bonus += (setup.balance - 50) * 0.0003;
+      if (typeof setup.aero === "number") bonus += (setup.aero - 50) * 0.0002;
+    }
+
+    if (staff) {
+      if (typeof staff.pitCrew === "number") bonus += (staff.pitCrew - 50) * 0.0002;
+      if (typeof staff.engineers === "number") bonus += (staff.engineers - 50) * 0.0002;
+      if (typeof staff.strategy === "number") bonus += (staff.strategy - 50) * 0.0002;
+    }
+
+    return bonus;
+  }
+
+  function paceDelta(driver) {
+    // modo
+    let m = 0;
+    if (driver.mode === "eco") m -= 0.015;
+    if (driver.mode === "attack") m += 0.018;
+
+    // agressividade e motor (discreto)
+    m += (driver.motor - 2) * 0.006;
+    m += (driver.aggress - 2) * 0.004;
+
+    // desgaste: quanto menor carWear, mais lento
+    m += ((driver.carWear - 100) * 0.0004); // carWear cai -> m negativo
+
+    // pneu: Wet mais lento no seco; Medium base
+    if (driver.tyre === "W") m -= 0.010;
+
+    // ERS: boost momentâneo é tratado por botão (se existir)
+    return m;
+  }
+
+  function stepTyreWear(driver, dt) {
+    // desgaste proporcional ao modo/agress
+    const wear = (0.20 + (driver.motor - 2) * 0.08 + (driver.aggress - 2) * 0.05 + (driver.mode === "attack" ? 0.10 : 0)) * dt;
+    driver.carWear = clamp(driver.carWear - wear, 0, 100);
+  }
+
+  function stepPit(driver, dt) {
+    if (!driver.pitting) return;
+
+    driver.pitTimer -= dt;
+    if (driver.pitTimer <= 0) {
+      driver.pitting = false;
+      driver.pitTimer = 0;
+      driver.carWear = clamp(driver.carWear + 18, 0, 100);
+      // troca pneu simplificada
+      driver.tyre = (race.weather === "Chuva") ? "W" : "M";
+    }
+  }
+
+  function stepDriver(driver, dt, setupBonus) {
+    // pit para “congelar” progresso um pouco
+    if (driver.pitting) {
+      stepPit(driver, dt);
       return;
     }
 
-    // desgaste
-    let degradeMul =
-      d.mode === "ECONOMIZAR" ? 0.75 :
-      d.mode === "ATAQUE" ? 1.35 : 1.0;
+    const pace = driver.basePace + setupBonus + paceDelta(driver);
+    // andamento: progress aumenta até 1.0 -> volta
+    driver.progress += (0.060 * pace) * dt * speedMult;
 
-    // agressividade aumenta desgaste
-    degradeMul *= (0.90 + (d.aggress - 1) * 0.20);
+    if (driver.progress >= 1) {
+      driver.progress -= 1;
+      driver.lap += 1;
 
-    d.tyre = clamp(d.tyre - (RaceConfig.degradeBase * degradeMul * dtSec * 100 / 60), 0, 100);
-
-    // motor
-    let engineMul = 1.0 + (d.motorMap - 2) * 0.25; // 1:-0.25, 2:0, 3:+0.25
-    d.engine = clamp(d.engine - (RaceConfig.engineWearBase * engineMul * dtSec * 100 / 60), 0, 100);
-
-    // ers
-    if (d.ersBoost && d.ers > 0.5) {
-      d.ers = clamp(d.ers - (RaceConfig.ersUse * dtSec), 0, 100);
-    } else {
-      d.ers = clamp(d.ers + (RaceConfig.ersRegen * dtSec), 0, 100);
+      // pequena recuperação de ERS a cada volta (simplificado)
+      driver.ers = clamp(driver.ers + 5, 0, 100);
     }
 
-    // avanço
-    const factor = computePaceFactor(d);
-    const noise = (Math.random() - 0.5) * RaceConfig.overtakeNoise;
-    const adv = (RaceConfig.basePace * factor + noise) * dtSec * RaceState.speedMult;
-
-    d.prevProgress = d.progress;
-    d.progress += adv;
-
-    // wrap
-    if (d.progress >= 1) d.progress -= 1;
-
-    // lap count
-    // detecta quando cruza “volta” (de >0.92 pra <0.08)
-    const crossed =
-      (d.prevProgress > RaceConfig.lapWrapThreshold && d.progress < RaceConfig.lapStartThreshold);
-
-    if (crossed) {
-      d.lap += 1;
-      if (d.lap > RaceState.totalLaps) {
-        d.finished = true;
-      }
-    }
+    stepTyreWear(driver, dt);
   }
 
-  function sortPositions() {
-    // ordena por lap desc, progress desc
-    const sorted = [...RaceState.drivers].sort((a, b) => {
-      if (a.finished !== b.finished) return a.finished ? 1 : -1; // quem terminou “fica” no fim só no tick; depois tratamos
-      if (a.lap !== b.lap) return b.lap - a.lap;
+  function computeGaps(drivers) {
+    // ordenar por volta/progresso
+    drivers.sort((a, b) => {
+      if (b.lap !== a.lap) return b.lap - a.lap;
       return b.progress - a.progress;
     });
 
-    // se terminou, coloca no topo quem terminou primeiro (mantemos ordem estável por lap/progress)
-    sorted.forEach((d, idx) => d.position = idx + 1);
-
-    // delta simples (pro líder)
-    const leader = sorted[0];
-    if (leader) {
-      sorted.forEach(d => {
-        if (d === leader) d.delta = 0;
-        else d.delta = Math.max(0, (leader.lap - d.lap) * 90 + (leader.progress - d.progress) * 90);
-      });
-    }
-
-    return sorted;
+    // gap sintético: diferença de “distância” no ciclo
+    const leader = drivers[0];
+    drivers.forEach(d => {
+      const distLeader = leader.lap + leader.progress;
+      const distD = d.lap + d.progress;
+      const delta = distLeader - distD;
+      d.gap = delta <= 0 ? 0 : delta * 12.0; // 12s por volta (escala)
+    });
   }
 
-  function checkFinish(sorted) {
-    if (RaceState.finished) return;
+  function checkFinish(drivers) {
+    const finished = drivers.some(d => d.lap >= race.totalLaps);
+    if (!finished) return false;
 
-    const allFinished = RaceState.drivers.every(d => d.finished);
-    if (!allFinished) return;
+    // trava corrida, calcula resultado final
+    running = false;
+    race.state = "Finalizado";
 
-    RaceState.finished = true;
-    RaceState.winnerId = sorted[0]?.id || null;
+    computeGaps(drivers); // garante ordenação final
+    RaceUI.showResults(drivers.map(d => ({
+      id: d.id,
+      code: d.code,
+      name: d.name,
+      team: d.team
+    })));
 
-    // evento global para UI / podium
-    window.dispatchEvent(new CustomEvent("race:finished", { detail: { sorted } }));
+    return true;
   }
 
-  // ===== Public API =====
-  const API = {
-    TEAMS,
-    RaceState,
-    RaceConfig,
-
-    init() {
-      initDrivers();
-      window.dispatchEvent(new CustomEvent("race:ready", { detail: { state: RaceState } }));
-    },
-
-    setSpeed(mult) {
-      RaceState.speedMult = mult;
-      window.dispatchEvent(new CustomEvent("race:speed", { detail: { speedMult: mult } }));
-    },
-
-    getDriver(id) {
-      return RaceState.drivers.find(d => d.id === id) || null;
-    },
-
-    setMode(id, mode) {
-      const d = API.getDriver(id);
-      if (!d || d.finished) return;
-      d.mode = mode;
-      window.dispatchEvent(new CustomEvent("race:driver", { detail: { id } }));
-    },
-
-    adjustMotor(id, delta) {
-      const d = API.getDriver(id);
-      if (!d || d.finished) return;
-      d.motorMap = clamp(d.motorMap + delta, 1, 3);
-      window.dispatchEvent(new CustomEvent("race:driver", { detail: { id } }));
-    },
-
-    adjustAggress(id, delta) {
-      const d = API.getDriver(id);
-      if (!d || d.finished) return;
-      d.aggress = clamp(d.aggress + delta, 1, 3);
-      window.dispatchEvent(new CustomEvent("race:driver", { detail: { id } }));
-    },
-
-    toggleERS(id) {
-      const d = API.getDriver(id);
-      if (!d || d.finished) return;
-      d.ersBoost = !d.ersBoost;
-      window.dispatchEvent(new CustomEvent("race:driver", { detail: { id } }));
-    },
-
-    requestPit(id) {
-      const d = API.getDriver(id);
-      if (!d || d.finished) return;
-      d.requestPit = true;
-      window.dispatchEvent(new CustomEvent("race:driver", { detail: { id } }));
-    },
-
-    setTyre(id, tyreKey) {
-      // aqui você pode expandir depois para (S/M/H/W)
-      // por enquanto só afeta “modo” de desgaste (wet degrada diferente)
-      const d = API.getDriver(id);
-      if (!d || d.finished) return;
-
-      // simples: em chuva, W dura mais
-      if (tyreKey === "W") {
-        // “preserva” um pouco o desgaste
-        d.tyre = clamp(d.tyre + 4, 0, 100);
-      }
-      window.dispatchEvent(new CustomEvent("race:driver", { detail: { id } }));
-    },
-
-    tick(dtSec) {
-      if (RaceState.finished) return;
-
-      RaceState.drivers.forEach(d => stepDriver(d, dtSec));
-
-      const sorted = sortPositions();
-      window.dispatchEvent(new CustomEvent("race:tick", { detail: { sorted } }));
-
-      checkFinish(sorted);
-    },
-
-    restart() {
-      RaceState.finished = false;
-      RaceState.winnerId = null;
-      RaceState.startedAt = now();
-
-      // reinicializa drivers mantendo grid
-      const base = GRID_20.map((d, i) => makeDriver(d, i));
-      RaceState.drivers = base;
-
-      // recalcula seus pilotos
-      const your = base.filter(d => d.teamKey === RaceState.userTeam).slice(0, 2);
-      RaceState.yourDriverIds = (your.length === 2 ? your : base.filter(d => d.teamKey === "ferrari").slice(0,2)).map(x=>x.id);
-
-      window.dispatchEvent(new CustomEvent("race:restart", { detail: { state: RaceState } }));
-    },
-
-    format: { fmtPct }
+  // ==========================
+  // PUBLIC ACTIONS (UI -> SYSTEM)
+  // ==========================
+  RaceSystem.setSpeed = function (mult) {
+    speedMult = mult;
   };
 
-  window.RaceSystem = API;
+  RaceSystem.setMode = function (driverId, mode) {
+    const d = race?.drivers?.find(x => x.id === driverId);
+    if (!d) return;
+    d.mode = mode;
+  };
+
+  RaceSystem.adjustMotor = function (driverId, delta) {
+    const d = race?.drivers?.find(x => x.id === driverId);
+    if (!d) return;
+    d.motor = clamp(d.motor + delta, 1, 4);
+  };
+
+  RaceSystem.adjustAggress = function (driverId, delta) {
+    const d = race?.drivers?.find(x => x.id === driverId);
+    if (!d) return;
+    d.aggress = clamp(d.aggress + delta, 1, 4);
+  };
+
+  RaceSystem.callPit = function (driverId) {
+    const d = race?.drivers?.find(x => x.id === driverId);
+    if (!d) return;
+    if (d.pitting) return;
+
+    d.pitting = true;
+    // tempo de pit depende do staff (se existir)
+    const save = loadSave() || {};
+    const teamBonus = applySetupAndStaffInfluence(save, d.team);
+    const pitBase = 4.0; // segundos simulados
+    d.pitTimer = clamp(pitBase - (teamBonus * 80), 2.8, 4.8);
+  };
+
+  // ==========================
+  // BOOT / INIT
+  // ==========================
+  async function init() {
+    const trackKey = (q("track") || "australia").toLowerCase();
+    const gpName = decodePlus(q("gp")) || "GP";
+    const save = loadSave() || {};
+    const userTeam = pickTeamFromParamOrSave(save);
+
+    // clima simples
+    const weather = "Seco";
+    const trackTemp = 21;
+
+    // Carrega pista via SVG (SEM JSON)
+    let trackData;
+    try {
+      trackData = await loadTrack(trackKey);
+    } catch (e) {
+      alert(`Erro na corrida: Falha ao carregar: ${e.message}`);
+      return;
+    }
+
+    // Monta grid
+    const pool = getDriverPool().map((d, i) => makeDriverRuntime(d, i));
+    // garante os 2 pilotos do jogador “identificáveis”
+    const my2 = getTeamDrivers(userTeam);
+    const myIds = new Set(my2.map(x => x.id));
+
+    // se ids não baterem, tenta por code
+    const myCodes = new Set(my2.map(x => x.code));
+
+    pool.forEach(d => {
+      if (myIds.has(d.id) || myCodes.has(d.code)) d.isPlayer = true;
+      d.teamColor = TEAM_COLORS[d.team] || "#ffffff";
+    });
+
+    // corrida
+    race = {
+      name: gpName,
+      trackKey,
+      totalLaps: DEFAULT_LAPS,
+      currentLap: 1,
+      weather,
+      trackTemp,
+      state: "Correndo",
+      flag: "assets/flags/australia.png", // se não existir, UI ignora
+
+      // track
+      svgClean: trackData.svgClean,
+      points: trackData.points,
+
+      drivers: pool,
+      playerTeam: userTeam
+    };
+
+    // injeta SVG no renderer (uma vez)
+    if (window.RaceRenderer && typeof window.RaceRenderer.setTrack === "function") {
+      window.RaceRenderer.setTrack(race.svgClean, race.points);
+    }
+
+    // UI inicial
+    RaceUI.updateHeader(race);
+    RaceUI.updateTrackStatus(race);
+
+    // start loop
+    running = true;
+    lastTick = performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function loop(now) {
+    if (!running) return;
+
+    const dt = ((now - lastTick) / 1000);
+    lastTick = now;
+
+    // estabilidade: limita dt em travadas do navegador
+    const step = clamp(dt, 0, 0.05);
+
+    // setup/staff: cada piloto recebe “bonus” baseado no time dele
+    const save = loadSave() || {};
+    const bonusCache = new Map();
+
+    race.drivers.forEach(d => {
+      if (!bonusCache.has(d.team)) bonusCache.set(d.team, applySetupAndStaffInfluence(save, d.team));
+      stepDriver(d, step, bonusCache.get(d.team));
+    });
+
+    // gaps + lap atual
+    computeGaps(race.drivers);
+
+    // currentLap = lap do leader + 1 (visual)
+    const leader = race.drivers[0];
+    race.currentLap = clamp(leader.lap + 1, 1, race.totalLaps);
+
+    // UI
+    RaceUI.updateHeader(race);
+    RaceUI.updateTrackStatus(race);
+    RaceUI.renderSession(race.drivers.slice(0, 20));
+
+    const playerDrivers = race.drivers.filter(d => d.isPlayer).slice(0, 2);
+    // garante sempre 2 cards mesmo se salvar estranho
+    if (playerDrivers.length < 2) {
+      const fallback = getTeamDrivers(race.playerTeam);
+      fallback.forEach(fd => {
+        if (!playerDrivers.find(x => x.id === fd.id)) {
+          const inPool = race.drivers.find(x => x.id === fd.id || x.code === fd.code);
+          if (inPool) playerDrivers.push(inPool);
+        }
+      });
+    }
+    RaceUI.renderPlayerDrivers(playerDrivers);
+
+    // render posições dos carros no mapa
+    if (window.RaceRenderer && typeof window.RaceRenderer.renderCars === "function") {
+      window.RaceRenderer.renderCars(race.drivers, race.points);
+    }
+
+    // fim
+    if (!checkFinish(race.drivers)) requestAnimationFrame(loop);
+  }
+
+  // ==========================
+  // HOOKS UI SPEED BUTTONS
+  // ==========================
+  function hookSpeedButtons() {
+    const b1 = document.getElementById("speed-1x");
+    const b2 = document.getElementById("speed-2x");
+    const b4 = document.getElementById("speed-4x");
+
+    if (b1) b1.onclick = () => RaceSystem.setSpeed(1);
+    if (b2) b2.onclick = () => RaceSystem.setSpeed(2);
+    if (b4) b4.onclick = () => RaceSystem.setSpeed(4);
+  }
+
+  function hookBackButton() {
+    const btn = document.getElementById("back-lobby");
+    if (btn) btn.onclick = () => (window.location.href = "lobby.html");
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    hookSpeedButtons();
+    hookBackButton();
+    init();
+  });
+
 })();
