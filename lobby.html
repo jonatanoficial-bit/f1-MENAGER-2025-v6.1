@@ -1,385 +1,268 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>F1 Manager 2025 – Lobby da Equipe</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <style>
-    /* ===== RESET BÁSICO E FULLSCREEN ===== */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>F1 Manager 2025 — Lobby</title>
 
-    html, body {
-      height: 100vh;
-      overflow: hidden;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #ffffff;
-      background: #000000;
-    }
-
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: stretch;
-    }
-
-    /* ===== SHELL PRINCIPAL ===== */
-    .app-shell {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    .app-overlay {
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(1200px 800px at 22% 12%, rgba(255, 24, 68, 0.14), transparent 60%),
-        radial-gradient(900px 700px at 78% 88%, rgba(255, 255, 255, 0.06), transparent 55%),
-        linear-gradient(180deg, rgba(0,0,0,0.92), rgba(0,0,0,0.96));
-      pointer-events: none;
-    }
-
-    .app-content {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      padding: 16px 6vw 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      z-index: 2;
-    }
-
-    /* ===== TOP BAR ===== */
-    .top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .btn-back {
-      border: none;
-      cursor: pointer;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-weight: 700;
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      transition: transform 0.15s ease, background 0.15s ease;
-    }
-    .btn-back:hover { background: rgba(255,255,255,0.16); }
-    .btn-back:active { transform: translateY(1px); }
-
-    .team-pill {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.10);
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: 0 0 18px rgba(0,0,0,0.55);
-    }
-
-    .team-logo {
-      width: 28px;
-      height: 28px;
-      object-fit: contain;
-      filter: drop-shadow(0 0 10px rgba(0,0,0,0.75));
-    }
-
-    .team-name {
-      font-weight: 800;
-      letter-spacing: 0.2px;
-      font-size: 0.95rem;
-    }
-
-    .manager-card {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 16px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.10);
-      box-shadow: 0 0 18px rgba(0,0,0,0.55);
-    }
-
-    .manager-badge {
-      width: 34px;
-      height: 34px;
-      border-radius: 12px;
-      background: rgba(255, 23, 68, 0.18);
-      border: 1px solid rgba(255, 23, 68, 0.35);
-      display: grid;
-      place-items: center;
-      font-weight: 900;
-      letter-spacing: 0.06em;
-      font-size: 0.85rem;
-    }
-
-    .manager-meta {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.1;
-    }
-
-    .manager-meta .label {
-      opacity: 0.78;
-      font-size: 0.72rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .manager-meta .value {
-      font-weight: 800;
-      font-size: 0.9rem;
-    }
-
-    /* ===== GRID DE CARTÕES ===== */
-    .cards-grid {
-      flex: 1;
-      min-height: 0;
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 14px;
-      align-content: start;
-      overflow: auto;
-      padding-right: 2px;
-    }
-
-    .card {
-      grid-column: span 6;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 22px;
-      padding: 14px 14px 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 12px;
-      box-shadow: 0 0 22px rgba(0,0,0,0.65);
-    }
-
-    .card-header {
-      font-size: 0.72rem;
-      opacity: 0.8;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .card-title {
-      font-size: 1.15rem;
-      font-weight: 900;
-      letter-spacing: 0.2px;
-    }
-
-    .card-body {
-      font-size: 0.9rem;
-      opacity: 0.88;
-      line-height: 1.35;
-    }
-
-    .card-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: 2px;
-    }
-
-    .card-status {
-      font-size: 0.78rem;
-      opacity: 0.75;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 62%;
-    }
-
-    .card-button {
-      padding: 6px 14px;
-      border-radius: 999px;
-      border: none;
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      white-space: nowrap;
-      box-shadow: 0 0 20px rgba(0,0,0,0.8);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, background 0.15s ease;
-    }
-
-    .card-button.primary {
-      background: #ff1744;
-      color: #ffffff;
-    }
-
-    .card-button.primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 0 26px rgba(255,23,68,0.55);
-    }
-
-    .card-button.ghost {
-      background: rgba(255,255,255,0.10);
-      color: #ffffff;
-      border: 1px solid rgba(255,255,255,0.16);
-    }
-
-    .card-button.ghost:hover {
-      transform: translateY(-1px);
-      opacity: 0.95;
-    }
-
-    /* ===== RESPONSIVO ===== */
-    @media (max-width: 980px) {
-      .cards-grid { grid-template-columns: repeat(6, 1fr); }
-      .card { grid-column: span 6; }
-    }
-  </style>
+  <link rel="stylesheet" href="./lobby.css" />
 </head>
+
 <body>
-<div class="app-shell">
-  <div class="app-overlay"></div>
-
-  <div class="app-content">
-    <!-- TOP BAR -->
-    <div class="top-bar">
-      <button class="btn-back" onclick="window.location.href='index.html'">Voltar</button>
-
-      <div class="team-pill" id="team-pill">
-        <img id="team-logo" class="team-logo" src="assets/teams/ferrari.png" alt="Equipe" />
-        <span id="team-name" class="team-name">Ferrari</span>
-      </div>
-
-      <div class="manager-card" id="manager-card">
-        <div class="manager-badge">JV</div>
-        <div class="manager-meta">
-          <span class="label">Manager</span>
-          <span class="value" id="manager-name">Carreira</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- GRID DE CARTÕES -->
-    <div class="cards-grid">
-      <!-- CARRO – OFICINA -->
-      <div class="card car">
-        <div>
-          <div class="card-header">Carro</div>
-          <div class="card-title">Oficina &amp; Setup</div>
-          <div class="card-body">
-            Ajuste asas, motor e pneus. Nesta versão, o módulo é conceitual,
-            mas toda a lógica já conversa com a simulação futura.
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar__left">
+        <div class="brand">
+          <div class="brand__logo">F1</div>
+          <div class="brand__text">
+            <div class="brand__title">F1 Manager 2025</div>
+            <div class="brand__sub">Vale Edition — Lobby</div>
           </div>
         </div>
-        <div class="card-footer">
-          <span class="card-status">Estado: Protótipo visual</span>
-          <button class="card-button primary" onclick="window.location.href='oficina.html'">
-            Abrir oficina
-          </button>
-        </div>
       </div>
 
-      <!-- EQUIPE TÉCNICA – FUNCIONÁRIOS -->
-      <div class="card staff">
-        <div>
-          <div class="card-header">Equipe técnica</div>
-          <div class="card-title">Funcionários &amp; Staff</div>
-          <div class="card-body">
-            Engenheiros, estrategistas e mecânicos. Organize o cérebro da equipe e veja
-            como cada função influencia nas decisões de corrida.
+      <div class="topbar__right">
+        <button class="btn btn--ghost" id="btnHelp" aria-label="Ajuda">Ajuda</button>
+        <button class="btn btn--ghost" id="btnReset" aria-label="Resetar carreira">Reset</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- HERO / STATUS -->
+      <section class="card hero">
+        <div class="hero__left">
+          <div class="pill" id="pillSeason">Temporada 2025</div>
+          <h1 class="hero__title" id="teamName">Equipe</h1>
+          <div class="hero__meta">
+            <div class="metaItem">
+              <div class="metaLabel">Reputação</div>
+              <div class="metaValue" id="teamRep">—</div>
+            </div>
+            <div class="metaItem">
+              <div class="metaLabel">Dinheiro</div>
+              <div class="metaValue" id="teamMoney">—</div>
+            </div>
+            <div class="metaItem">
+              <div class="metaLabel">Cost Cap</div>
+              <div class="metaValue" id="teamCap">—</div>
+            </div>
+            <div class="metaItem">
+              <div class="metaLabel">Cargo</div>
+              <div class="metaValue" id="managerRole">—</div>
+            </div>
+          </div>
+
+          <div class="hero__actions">
+            <button class="btn btn--primary" id="btnContinue">Continuar Carreira</button>
+            <button class="btn btn--secondary" id="btnQuickRace">Corrida Rápida</button>
+          </div>
+
+          <div class="hero__hint">
+            <span class="dot"></span>
+            Dica: patrocínios e funcionários influenciam performance (treino/qualy/corrida) via <b>modificadores</b>.
           </div>
         </div>
-        <div class="card-footer">
-          <span class="card-status">Gestão da base humana</span>
-          <button class="card-button ghost" onclick="window.location.href='funcionarios.html'">
-            Em breve
-          </button>
-        </div>
-      </div>
 
-      <!-- PATROCÍNIO -->
-      <div class="card sponsor">
-        <div>
-          <div class="card-header">Negócios</div>
-          <div class="card-title">Patrocínios &amp; Metas</div>
-          <div class="card-body">
-            Escolha patrocinadores, metas e bônus. Cada contrato exige resultados em pista,
-            mas injeta dinheiro no desenvolvimento do carro.
+        <div class="hero__right">
+          <div class="statGrid">
+            <div class="statCard">
+              <div class="statLabel">Carro</div>
+              <div class="statValue" id="carOverall">—</div>
+              <div class="statHint">Aero • Motor • Chassi</div>
+            </div>
+            <div class="statCard">
+              <div class="statLabel">Pit Crew</div>
+              <div class="statValue" id="pitSkill">—</div>
+              <div class="statHint">Erros e tempo de pit</div>
+            </div>
+            <div class="statCard">
+              <div class="statLabel">Engenharia</div>
+              <div class="statValue" id="engSkill">—</div>
+              <div class="statHint">Setup e evolução</div>
+            </div>
+            <div class="statCard">
+              <div class="statLabel">Estratégia</div>
+              <div class="statValue" id="stratSkill">—</div>
+              <div class="statHint">Pit, pneus, clima</div>
+            </div>
+          </div>
+
+          <div class="miniCard">
+            <div class="miniCard__title">Próximo Evento</div>
+            <div class="miniCard__row">
+              <div class="miniCard__big" id="nextEventName">—</div>
+              <div class="pill pill--soft" id="nextEventType">—</div>
+            </div>
+            <div class="miniCard__sub" id="nextEventDesc">—</div>
+
+            <div class="miniCard__buttons">
+              <button class="btn btn--ghost" id="btnPractice">Treino Livre</button>
+              <button class="btn btn--ghost" id="btnQualy">Qualificação</button>
+              <button class="btn btn--ghost" id="btnRace">Corrida</button>
+            </div>
           </div>
         </div>
-        <div class="card-footer">
-          <span class="card-status">Reputação &amp; objetivos</span>
-          <button class="card-button ghost" onclick="window.location.href='patrocinio.html'">
-            Em breve
-          </button>
-        </div>
-      </div>
+      </section>
 
-      <!-- PILOTOS – MERCADO -->
-      <div class="card pilots">
-        <div>
-          <div class="card-header">Pilotos</div>
-          <div class="card-title">Mercado &amp; Contratos</div>
-          <div class="card-body">
-            Negocie contratos reais, rescisões e contratações. Este módulo usa o mesmo save
-            da economia e prepara o mercado completo de temporada.
+      <!-- GRID: STAFF + SPONSORS + MANAGER -->
+      <section class="grid">
+        <!-- STAFF -->
+        <div class="card">
+          <div class="card__head">
+            <div>
+              <div class="card__title">Funcionários</div>
+              <div class="card__sub">Contrate talentos e melhore o desempenho.</div>
+            </div>
+            <button class="btn btn--ghost" id="btnRefreshStaff">Atualizar ofertas</button>
+          </div>
+
+          <div class="list" id="staffList"></div>
+
+          <div class="divider"></div>
+
+          <div class="card__head">
+            <div>
+              <div class="card__title">Ofertas de Funcionários</div>
+              <div class="card__sub">Ofertas mudam com reputação e resultados.</div>
+            </div>
+          </div>
+          <div class="list" id="staffOffers"></div>
+        </div>
+
+        <!-- SPONSORS -->
+        <div class="card">
+          <div class="card__head">
+            <div>
+              <div class="card__title">Patrocínios</div>
+              <div class="card__sub">Dinheiro + objetivos por bônus.</div>
+            </div>
+            <button class="btn btn--ghost" id="btnRefreshSponsors">Atualizar ofertas</button>
+          </div>
+
+          <div class="list" id="sponsorList"></div>
+
+          <div class="divider"></div>
+
+          <div class="card__head">
+            <div>
+              <div class="card__title">Ofertas de Patrocínio</div>
+              <div class="card__sub">Aceite para receber dinheiro e metas.</div>
+            </div>
+          </div>
+          <div class="list" id="sponsorOffers"></div>
+        </div>
+
+        <!-- MANAGER -->
+        <div class="card">
+          <div class="card__head">
+            <div>
+              <div class="card__title">Contrato do Manager</div>
+              <div class="card__sub">Seu cargo é avaliado por objetivos e reputação.</div>
+            </div>
+            <button class="btn btn--ghost" id="btnSimulateWeek">Avançar 1 semana</button>
+          </div>
+
+          <div class="managerBox">
+            <div class="managerRow">
+              <div class="managerLabel">Nome</div>
+              <div class="managerValue" id="mgrName">—</div>
+            </div>
+            <div class="managerRow">
+              <div class="managerLabel">Contrato</div>
+              <div class="managerValue" id="mgrContract">—</div>
+            </div>
+            <div class="managerRow">
+              <div class="managerLabel">Objetivo da Equipe</div>
+              <div class="managerValue" id="mgrObjective">—</div>
+            </div>
+            <div class="managerRow">
+              <div class="managerLabel">Risco de Demissão</div>
+              <div class="managerValue" id="mgrRisk">—</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="card__head">
+            <div>
+              <div class="card__title">Ofertas para Manager</div>
+              <div class="card__sub">Equipes podem te contratar se sua reputação subir.</div>
+            </div>
+            <button class="btn btn--ghost" id="btnRefreshManagerOffers">Atualizar ofertas</button>
+          </div>
+
+          <div class="list" id="managerOffers"></div>
+        </div>
+      </section>
+
+      <!-- QUICK RACE MODAL -->
+      <div class="modal" id="quickRaceModal" aria-hidden="true">
+        <div class="modal__scrim" data-close="1"></div>
+        <div class="modal__panel">
+          <div class="modal__head">
+            <div>
+              <div class="modal__title">Corrida Rápida</div>
+              <div class="modal__sub">Entre direto na pista e escolha sessão.</div>
+            </div>
+            <button class="btn btn--ghost" data-close="1">Fechar</button>
+          </div>
+
+          <div class="modal__content">
+            <label class="fieldLabel">Pista (trackKey / nome do arquivo SVG)</label>
+            <input id="qrTrack" class="field" placeholder="Ex: australia, bahrain, monaco..." />
+
+            <label class="fieldLabel">Sessão</label>
+            <div class="row">
+              <button class="btn btn--secondary" id="qrPractice">Treino</button>
+              <button class="btn btn--secondary" id="qrQualy">Qualy</button>
+              <button class="btn btn--primary" id="qrRace">Corrida</button>
+            </div>
+
+            <div class="smallNote">
+              Dica: use o mesmo nome do SVG em <code>assets/tracks/&lt;nome&gt;.svg</code>.
+            </div>
           </div>
         </div>
-        <div class="card-footer">
-          <span class="card-status">Contratos, buyout e free agents</span>
-          <button class="card-button primary" onclick="window.location.href='pilotMarket.html'">
-            Abrir mercado
-          </button>
-        </div>
       </div>
 
-      <!-- CALENDÁRIO -->
-      <div class="card calendar">
-        <div>
-          <div class="card-header">Temporada</div>
-          <div class="card-title">Calendário &amp; GPs</div>
-          <div class="card-body">
-            Escolha o próximo Grande Prêmio, acompanhe o calendário oficial e avance para
-            treino, classificação e corrida.
+      <!-- HELP MODAL -->
+      <div class="modal" id="helpModal" aria-hidden="true">
+        <div class="modal__scrim" data-close="1"></div>
+        <div class="modal__panel">
+          <div class="modal__head">
+            <div>
+              <div class="modal__title">Ajuda rápida</div>
+              <div class="modal__sub">O que foi implementado neste Lobby.</div>
+            </div>
+            <button class="btn btn--ghost" data-close="1">Fechar</button>
+          </div>
+          <div class="modal__content">
+            <ul class="helpList">
+              <li><b>Patrocínios</b> dão dinheiro fixo + bônus por metas.</li>
+              <li><b>Funcionários</b> aplicam modificadores em treino/qualy/corrida.</li>
+              <li><b>Contrato do manager</b> pode gerar ofertas e risco de demissão.</li>
+              <li>Tudo é <b>offline</b> e salvo em <b>localStorage</b>.</li>
+            </ul>
+
+            <div class="smallNote">
+              Quando voltarmos para as pistas, os modificadores (staff/patrocínio) serão consumidos em
+              <code>practice.js</code>, <code>qualifying.js</code> e <code>race.js</code>.
+            </div>
           </div>
         </div>
-        <div class="card-footer">
-          <span class="card-status">Modo carreira</span>
-          <button class="card-button primary" onclick="window.location.href='calendario.html'">
-            Abrir calendário
-          </button>
-        </div>
       </div>
 
-    </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__left">
+        <span class="pill pill--soft">Offline</span>
+        <span class="smallNote">Salvamento: localStorage</span>
+      </div>
+      <div class="footer__right smallNote" id="buildInfo">Build: Lobby AAA</div>
+    </footer>
   </div>
-</div>
 
-<script>
-  // mantém seu estado atual
-  const JOGO = JSON.parse(localStorage.getItem("F1M_SAVE")) || {
-    etapaAtual: 1,
-    equipeJogador: "ferrari"
-  };
-
-  // Sync mínimo para o pill da equipe (mantido)
-  (function syncTeamPill() {
-    const teamKey = (localStorage.getItem("F1M_userTeam") || localStorage.getItem("f1m2025_user_team") || JOGO.equipeJogador || "ferrari").toLowerCase();
-    const logo = document.getElementById("team-logo");
-    const name = document.getElementById("team-name");
-    if (logo) logo.src = `assets/teams/${teamKey}.png`;
-    if (name) name.textContent = teamKey.charAt(0).toUpperCase() + teamKey.slice(1).replace("_"," ");
-  })();
-</script>
+  <script type="module" src="./lobby.js"></script>
 </body>
 </html>
