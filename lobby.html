@@ -1,268 +1,757 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>F1 Manager 2025 — Lobby</title>
 
-  <link rel="stylesheet" href="./lobby.css" />
+  <!-- Se existir um style global no projeto, mantenha -->
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    :root{
+      --bg: #05050a;
+      --panel: rgba(10, 10, 16, 0.78);
+      --panel2: rgba(12, 12, 20, 0.92);
+      --stroke: rgba(255,255,255,.08);
+      --text: rgba(255,255,255,.95);
+      --muted: rgba(255,255,255,.70);
+
+      --red: #ff1744;
+      --cyan: #40c4ff;
+      --green: #00e676;
+      --purple: #b388ff;
+      --orange: #ff9100;
+
+      --radius: 22px;
+      --radius2: 16px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+      --shadow2: 0 10px 30px rgba(0,0,0,.45);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; padding:0; }
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      background-image: url("assets/ui/lobby_bg.png");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      overflow-x:hidden;
+    }
+
+    .overlay{
+      min-height:100vh;
+      width:100%;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(64,196,255,.10), rgba(0,0,0,0) 40%),
+        radial-gradient(circle at 88% 20%, rgba(255,23,68,.10), rgba(0,0,0,0) 45%),
+        linear-gradient(to bottom, rgba(0,0,0,.52), rgba(0,0,0,.88));
+      backdrop-filter: blur(4px);
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* TOP BAR */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 14px;
+    }
+
+    .leftbar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 120px;
+    }
+
+    .btn-pill{
+      border:none;
+      outline:none;
+      cursor:pointer;
+      border-radius:999px;
+      padding:10px 16px;
+      font-weight:700;
+      font-size:.85rem;
+      color:#fff;
+      background: linear-gradient(135deg, rgba(255,23,68,.95), rgba(255,23,68,.70));
+      box-shadow: 0 0 18px rgba(255,23,68,.45);
+      transition: transform .12s ease, filter .12s ease;
+      white-space:nowrap;
+    }
+    .btn-pill:active{ transform: scale(.98); }
+    .btn-pill:hover{ filter:brightness(1.06); }
+
+    .centerTitle{
+      text-align:center;
+      flex:1;
+      padding: 0 6px;
+    }
+    .centerTitle h1{
+      margin:0;
+      font-size:1.05rem;
+      letter-spacing:.10em;
+      text-transform: uppercase;
+    }
+    .centerTitle p{
+      margin:.35rem 0 0;
+      font-size:.82rem;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+
+    .rightbar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 120px;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(9,9,15,.75);
+      border: 1px solid var(--stroke);
+      box-shadow: 0 10px 25px rgba(0,0,0,.35);
+      max-width: 250px;
+    }
+
+    .pill img{
+      width:34px;
+      height:34px;
+      border-radius:999px;
+      object-fit:cover;
+      background:#222;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .pill .meta{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+      min-width: 120px;
+      max-width: 170px;
+    }
+    .pill .meta small{
+      opacity:.7;
+      font-size:.68rem;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pill .meta strong{
+      font-size:.82rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* CONTENT */
+    .wrap{
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      padding: 10px 14px 18px;
+    }
+
+    .hero{
+      margin-top: 6px;
+      padding: 16px 14px;
+      border-radius: var(--radius);
+      background: rgba(10,10,16,.50);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background:
+        radial-gradient(circle at 25% 25%, rgba(64,196,255,.18), rgba(0,0,0,0) 45%),
+        radial-gradient(circle at 80% 30%, rgba(255,23,68,.16), rgba(0,0,0,0) 50%);
+      pointer-events:none;
+      opacity:.75;
+    }
+    .heroInner{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .heroTitle{
+      margin:0;
+      font-size:1.05rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .heroSubtitle{
+      margin:0;
+      color: var(--muted);
+      font-size:.90rem;
+      line-height:1.35;
+    }
+
+    .grid{
+      margin-top: 12px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+
+    @media (min-width: 900px){
+      .grid{
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .card{
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(12,12,20,.86), rgba(10,10,16,.72));
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: var(--shadow2);
+      padding: 16px;
+      position:relative;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .card:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      opacity:.18;
+      pointer-events:none;
+      background: radial-gradient(circle at 18% 22%, rgba(255,255,255,.25), rgba(0,0,0,0) 55%);
+    }
+
+    .cardHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      position:relative;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.10);
+      font-size:.72rem;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.86);
+      white-space:nowrap;
+    }
+
+    .cardTitle{
+      margin:0;
+      font-size:1rem;
+      font-weight:800;
+      letter-spacing:.02em;
+    }
+    .cardText{
+      margin:0;
+      color: var(--muted);
+      font-size:.88rem;
+      line-height:1.35;
+      position:relative;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 6px;
+      position:relative;
+    }
+
+    .btn{
+      border:none;
+      outline:none;
+      cursor:pointer;
+      border-radius: 999px;
+      padding: 12px 14px;
+      font-weight:800;
+      font-size:.82rem;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:#fff;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+      flex: 1;
+      min-width: 150px;
+      text-align:center;
+    }
+    .btn:hover{ filter:brightness(1.05); background: rgba(255,255,255,.13); }
+    .btn:active{ transform: scale(.985); }
+
+    .btn.red{ background: linear-gradient(135deg, rgba(255,23,68,.95), rgba(255,23,68,.62)); border-color: rgba(255,23,68,.35); }
+    .btn.cyan{ background: linear-gradient(135deg, rgba(64,196,255,.90), rgba(64,196,255,.55)); border-color: rgba(64,196,255,.35); }
+    .btn.green{ background: linear-gradient(135deg, rgba(0,230,118,.90), rgba(0,230,118,.50)); border-color: rgba(0,230,118,.35); }
+    .btn.purple{ background: linear-gradient(135deg, rgba(179,136,255,.90), rgba(179,136,255,.50)); border-color: rgba(179,136,255,.35); }
+    .btn.orange{ background: linear-gradient(135deg, rgba(255,145,0,.92), rgba(255,145,0,.55)); border-color: rgba(255,145,0,.35); }
+
+    /* Modal */
+    .modalBack{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.70);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 999;
+    }
+    .modal{
+      width: min(620px, 100%);
+      border-radius: var(--radius);
+      background: rgba(10,10,16,.92);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalTop{
+      padding: 14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.25);
+    }
+    .modalTop h2{
+      margin:0;
+      font-size: .95rem;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+    }
+    .modalClose{
+      border:none;
+      cursor:pointer;
+      border-radius:999px;
+      padding:10px 12px;
+      font-weight:900;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.12);
+      color:#fff;
+    }
+    .modalBody{
+      padding: 14px;
+    }
+    .row{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-bottom: 12px;
+    }
+    label{
+      font-size:.78rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      opacity:.8;
+    }
+    select{
+      width:100%;
+      border-radius: 14px;
+      padding: 12px 12px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      color:#fff;
+      font-weight:700;
+      outline:none;
+    }
+    option{ color:#000; }
+    .modalActions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      padding: 0 14px 14px;
+    }
+
+    /* Footer hint */
+    .hint{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.72);
+      font-size:.82rem;
+      line-height:1.3;
+    }
+  </style>
 </head>
 
 <body>
-  <div class="app">
-    <header class="topbar">
-      <div class="topbar__left">
-        <div class="brand">
-          <div class="brand__logo">F1</div>
-          <div class="brand__text">
-            <div class="brand__title">F1 Manager 2025</div>
-            <div class="brand__sub">Vale Edition — Lobby</div>
+  <div class="overlay">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="leftbar">
+        <button class="btn-pill" id="btnVoltar">VOLTAR</button>
+      </div>
+
+      <div class="centerTitle">
+        <h1>LOBBY DA EQUIPE</h1>
+        <p>Controle sua operação: carro, staff, patrocínios e calendário. Tudo integrado e pronto para corrida.</p>
+      </div>
+
+      <div class="rightbar">
+        <div class="pill" title="Equipe atual">
+          <img id="teamLogo" src="assets/teams/default.png" alt="Equipe" />
+          <div class="meta">
+            <small>EQUIPE</small>
+            <strong id="teamName">Carregando...</strong>
+          </div>
+        </div>
+
+        <div class="pill" title="Manager">
+          <img id="managerAvatar" src="assets/avatars/default.png" alt="Manager" />
+          <div class="meta">
+            <small>MANAGER</small>
+            <strong id="managerName">Seu Manager</strong>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="topbar__right">
-        <button class="btn btn--ghost" id="btnHelp" aria-label="Ajuda">Ajuda</button>
-        <button class="btn btn--ghost" id="btnReset" aria-label="Resetar carreira">Reset</button>
+    <div class="wrap">
+
+      <!-- HERO -->
+      <div class="hero">
+        <div class="heroInner">
+          <p class="heroTitle">TEMPORADA OFICIAL F1 — 2025</p>
+          <p class="heroSubtitle">
+            Modo carreira offline. Interface estilo broadcast. Decisões reais: estratégia, staff, contratos e desempenho.
+          </p>
+        </div>
       </div>
-    </header>
 
-    <main class="main">
-      <!-- HERO / STATUS -->
-      <section class="card hero">
-        <div class="hero__left">
-          <div class="pill" id="pillSeason">Temporada 2025</div>
-          <h1 class="hero__title" id="teamName">Equipe</h1>
-          <div class="hero__meta">
-            <div class="metaItem">
-              <div class="metaLabel">Reputação</div>
-              <div class="metaValue" id="teamRep">—</div>
+      <!-- GRID -->
+      <div class="grid">
+
+        <!-- CARRO -->
+        <div class="card">
+          <div class="cardHeader">
+            <div>
+              <div class="badge">CARRO • OFICINA & SETUP</div>
+              <h3 class="cardTitle">Configuração do Carro</h3>
             </div>
-            <div class="metaItem">
-              <div class="metaLabel">Dinheiro</div>
-              <div class="metaValue" id="teamMoney">—</div>
-            </div>
-            <div class="metaItem">
-              <div class="metaLabel">Cost Cap</div>
-              <div class="metaValue" id="teamCap">—</div>
-            </div>
-            <div class="metaItem">
-              <div class="metaLabel">Cargo</div>
-              <div class="metaValue" id="managerRole">—</div>
-            </div>
+            <div class="badge" style="border-color: rgba(64,196,255,.25);">Aero • Motor • Pneus</div>
           </div>
-
-          <div class="hero__actions">
-            <button class="btn btn--primary" id="btnContinue">Continuar Carreira</button>
-            <button class="btn btn--secondary" id="btnQuickRace">Corrida Rápida</button>
-          </div>
-
-          <div class="hero__hint">
-            <span class="dot"></span>
-            Dica: patrocínios e funcionários influenciam performance (treino/qualy/corrida) via <b>modificadores</b>.
+          <p class="cardText">
+            Ajuste asas, mapas de motor, setup e parâmetros de desempenho. Melhore consistência e ritmo do carro.
+          </p>
+          <div class="actions">
+            <button class="btn cyan" id="btnOficina">ABRIR OFICINA</button>
           </div>
         </div>
 
-        <div class="hero__right">
-          <div class="statGrid">
-            <div class="statCard">
-              <div class="statLabel">Carro</div>
-              <div class="statValue" id="carOverall">—</div>
-              <div class="statHint">Aero • Motor • Chassi</div>
-            </div>
-            <div class="statCard">
-              <div class="statLabel">Pit Crew</div>
-              <div class="statValue" id="pitSkill">—</div>
-              <div class="statHint">Erros e tempo de pit</div>
-            </div>
-            <div class="statCard">
-              <div class="statLabel">Engenharia</div>
-              <div class="statValue" id="engSkill">—</div>
-              <div class="statHint">Setup e evolução</div>
-            </div>
-            <div class="statCard">
-              <div class="statLabel">Estratégia</div>
-              <div class="statValue" id="stratSkill">—</div>
-              <div class="statHint">Pit, pneus, clima</div>
-            </div>
-          </div>
-
-          <div class="miniCard">
-            <div class="miniCard__title">Próximo Evento</div>
-            <div class="miniCard__row">
-              <div class="miniCard__big" id="nextEventName">—</div>
-              <div class="pill pill--soft" id="nextEventType">—</div>
-            </div>
-            <div class="miniCard__sub" id="nextEventDesc">—</div>
-
-            <div class="miniCard__buttons">
-              <button class="btn btn--ghost" id="btnPractice">Treino Livre</button>
-              <button class="btn btn--ghost" id="btnQualy">Qualificação</button>
-              <button class="btn btn--ghost" id="btnRace">Corrida</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- GRID: STAFF + SPONSORS + MANAGER -->
-      <section class="grid">
         <!-- STAFF -->
         <div class="card">
-          <div class="card__head">
+          <div class="cardHeader">
             <div>
-              <div class="card__title">Funcionários</div>
-              <div class="card__sub">Contrate talentos e melhore o desempenho.</div>
+              <div class="badge">EQUIPE TÉCNICA</div>
+              <h3 class="cardTitle">Funcionários & Staff</h3>
             </div>
-            <button class="btn btn--ghost" id="btnRefreshStaff">Atualizar ofertas</button>
+            <div class="badge" style="border-color: rgba(0,230,118,.25);">Engenharia • Pit</div>
           </div>
-
-          <div class="list" id="staffList"></div>
-
-          <div class="divider"></div>
-
-          <div class="card__head">
-            <div>
-              <div class="card__title">Ofertas de Funcionários</div>
-              <div class="card__sub">Ofertas mudam com reputação e resultados.</div>
-            </div>
+          <p class="cardText">
+            Contrate, ajuste hierarquia e evolua sua equipe. Staff forte melhora treino, estratégia e corrida.
+          </p>
+          <div class="actions">
+            <button class="btn green" id="btnFuncionarios">ABRIR STAFF</button>
           </div>
-          <div class="list" id="staffOffers"></div>
         </div>
 
-        <!-- SPONSORS -->
+        <!-- MERCADO -->
         <div class="card">
-          <div class="card__head">
+          <div class="cardHeader">
             <div>
-              <div class="card__title">Patrocínios</div>
-              <div class="card__sub">Dinheiro + objetivos por bônus.</div>
+              <div class="badge">PILOTOS</div>
+              <h3 class="cardTitle">Mercado de Pilotos</h3>
             </div>
-            <button class="btn btn--ghost" id="btnRefreshSponsors">Atualizar ofertas</button>
+            <div class="badge" style="border-color: rgba(179,136,255,.25);">Contratos • Talentos</div>
           </div>
-
-          <div class="list" id="sponsorList"></div>
-
-          <div class="divider"></div>
-
-          <div class="card__head">
-            <div>
-              <div class="card__title">Ofertas de Patrocínio</div>
-              <div class="card__sub">Aceite para receber dinheiro e metas.</div>
-            </div>
+          <p class="cardText">
+            Negocie contratos e monte sua dupla ideal. Resultados, reputação e salário definem o mercado.
+          </p>
+          <div class="actions">
+            <button class="btn purple" id="btnMercado">ABRIR MERCADO</button>
           </div>
-          <div class="list" id="sponsorOffers"></div>
         </div>
 
-        <!-- MANAGER -->
+        <!-- PATROCINIO -->
         <div class="card">
-          <div class="card__head">
+          <div class="cardHeader">
             <div>
-              <div class="card__title">Contrato do Manager</div>
-              <div class="card__sub">Seu cargo é avaliado por objetivos e reputação.</div>
+              <div class="badge">FINANÇAS</div>
+              <h3 class="cardTitle">Patrocínios & Marca</h3>
             </div>
-            <button class="btn btn--ghost" id="btnSimulateWeek">Avançar 1 semana</button>
+            <div class="badge" style="border-color: rgba(255,145,0,.25);">Objetivos • Bônus</div>
           </div>
-
-          <div class="managerBox">
-            <div class="managerRow">
-              <div class="managerLabel">Nome</div>
-              <div class="managerValue" id="mgrName">—</div>
-            </div>
-            <div class="managerRow">
-              <div class="managerLabel">Contrato</div>
-              <div class="managerValue" id="mgrContract">—</div>
-            </div>
-            <div class="managerRow">
-              <div class="managerLabel">Objetivo da Equipe</div>
-              <div class="managerValue" id="mgrObjective">—</div>
-            </div>
-            <div class="managerRow">
-              <div class="managerLabel">Risco de Demissão</div>
-              <div class="managerValue" id="mgrRisk">—</div>
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="card__head">
-            <div>
-              <div class="card__title">Ofertas para Manager</div>
-              <div class="card__sub">Equipes podem te contratar se sua reputação subir.</div>
-            </div>
-            <button class="btn btn--ghost" id="btnRefreshManagerOffers">Atualizar ofertas</button>
-          </div>
-
-          <div class="list" id="managerOffers"></div>
-        </div>
-      </section>
-
-      <!-- QUICK RACE MODAL -->
-      <div class="modal" id="quickRaceModal" aria-hidden="true">
-        <div class="modal__scrim" data-close="1"></div>
-        <div class="modal__panel">
-          <div class="modal__head">
-            <div>
-              <div class="modal__title">Corrida Rápida</div>
-              <div class="modal__sub">Entre direto na pista e escolha sessão.</div>
-            </div>
-            <button class="btn btn--ghost" data-close="1">Fechar</button>
-          </div>
-
-          <div class="modal__content">
-            <label class="fieldLabel">Pista (trackKey / nome do arquivo SVG)</label>
-            <input id="qrTrack" class="field" placeholder="Ex: australia, bahrain, monaco..." />
-
-            <label class="fieldLabel">Sessão</label>
-            <div class="row">
-              <button class="btn btn--secondary" id="qrPractice">Treino</button>
-              <button class="btn btn--secondary" id="qrQualy">Qualy</button>
-              <button class="btn btn--primary" id="qrRace">Corrida</button>
-            </div>
-
-            <div class="smallNote">
-              Dica: use o mesmo nome do SVG em <code>assets/tracks/&lt;nome&gt;.svg</code>.
-            </div>
+          <p class="cardText">
+            Escolha patrocinadores, metas e bônus. Seu caixa influencia upgrades, staff e estabilidade.
+          </p>
+          <div class="actions">
+            <button class="btn orange" id="btnPatrocinio">ABRIR PATROCÍNIOS</button>
           </div>
         </div>
-      </div>
 
-      <!-- HELP MODAL -->
-      <div class="modal" id="helpModal" aria-hidden="true">
-        <div class="modal__scrim" data-close="1"></div>
-        <div class="modal__panel">
-          <div class="modal__head">
+        <!-- CALENDARIO -->
+        <div class="card">
+          <div class="cardHeader">
             <div>
-              <div class="modal__title">Ajuda rápida</div>
-              <div class="modal__sub">O que foi implementado neste Lobby.</div>
+              <div class="badge">TEMPORADA</div>
+              <h3 class="cardTitle">Calendário & Grandes Prêmios</h3>
             </div>
-            <button class="btn btn--ghost" data-close="1">Fechar</button>
+            <div class="badge" style="border-color: rgba(255,255,255,.18);">Planejamento</div>
           </div>
-          <div class="modal__content">
-            <ul class="helpList">
-              <li><b>Patrocínios</b> dão dinheiro fixo + bônus por metas.</li>
-              <li><b>Funcionários</b> aplicam modificadores em treino/qualy/corrida.</li>
-              <li><b>Contrato do manager</b> pode gerar ofertas e risco de demissão.</li>
-              <li>Tudo é <b>offline</b> e salvo em <b>localStorage</b>.</li>
-            </ul>
-
-            <div class="smallNote">
-              Quando voltarmos para as pistas, os modificadores (staff/patrocínio) serão consumidos em
-              <code>practice.js</code>, <code>qualifying.js</code> e <code>race.js</code>.
-            </div>
+          <p class="cardText">
+            Escolha o próximo GP e acompanhe a temporada. A partir do calendário você pode ir para as sessões.
+          </p>
+          <div class="actions">
+            <button class="btn" id="btnCalendario">IR PARA CALENDÁRIO</button>
           </div>
         </div>
-      </div>
 
-    </main>
+        <!-- SESSOES RAPIDAS -->
+        <div class="card">
+          <div class="cardHeader">
+            <div>
+              <div class="badge">MODO RÁPIDO</div>
+              <h3 class="cardTitle">Sessões Diretas</h3>
+            </div>
+            <div class="badge" style="border-color: rgba(255,23,68,.25);">Live • Telemetria</div>
+          </div>
+          <p class="cardText">
+            Entre direto no Treino Livre, Classificação ou Corrida Rápida. Selecione o GP e comece.
+          </p>
+          <div class="actions">
+            <button class="btn cyan" id="btnTreinoLivre">TREINO LIVRE</button>
+            <button class="btn purple" id="btnQualy">CLASSIFICAÇÃO</button>
+            <button class="btn red" id="btnCorridaRapida">CORRIDA RÁPIDA</button>
+          </div>
+          <div class="hint">
+            Dica: Treino Livre e Classificação aqui abrem com seleção de GP. Corrida Rápida abre o modo rápido do jogo.
+          </div>
+        </div>
 
-    <footer class="footer">
-      <div class="footer__left">
-        <span class="pill pill--soft">Offline</span>
-        <span class="smallNote">Salvamento: localStorage</span>
       </div>
-      <div class="footer__right smallNote" id="buildInfo">Build: Lobby AAA</div>
-    </footer>
+    </div>
+
+    <!-- MODAL DE SELEÇÃO DE GP -->
+    <div class="modalBack" id="modalBack">
+      <div class="modal">
+        <div class="modalTop">
+          <h2 id="modalTitle">Selecionar GP</h2>
+          <button class="modalClose" id="modalClose">✕</button>
+        </div>
+        <div class="modalBody">
+          <div class="row">
+            <label for="gpSelect">Grande Prêmio</label>
+            <select id="gpSelect"></select>
+          </div>
+        </div>
+        <div class="modalActions">
+          <button class="btn green" id="modalStart">INICIAR</button>
+          <button class="btn" id="modalCancel">CANCELAR</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <script type="module" src="./lobby.js"></script>
+  <script>
+    // ============================================================
+    // LOBBY — ROTEAMENTO FUNCIONAL + VISUAL AAA
+    // NÃO altera início/capa/seleção. Só cria um lobby novo.
+    // ============================================================
+
+    // Lista de GPs (slug -> nome)
+    const GP_LIST = [
+      { slug: "bahrain", name: "GP do Bahrein 2025" },
+      { slug: "jeddah", name: "GP da Arábia Saudita 2025" },
+      { slug: "australia", name: "GP da Austrália 2025" },
+      { slug: "japan", name: "GP do Japão 2025" },
+      { slug: "china", name: "GP da China 2025" },
+      { slug: "miami", name: "GP de Miami 2025" },
+      { slug: "imola", name: "GP da Emilia-Romagna 2025" },
+      { slug: "monaco", name: "GP de Mônaco 2025" },
+      { slug: "canada", name: "GP do Canadá 2025" },
+      { slug: "spain", name: "GP da Espanha 2025" },
+      { slug: "austria", name: "GP da Áustria 2025" },
+      { slug: "uk", name: "GP da Grã-Bretanha 2025" },
+      { slug: "hungary", name: "GP da Hungria 2025" },
+      { slug: "belgium", name: "GP da Bélgica 2025" },
+      { slug: "netherlands", name: "GP da Holanda 2025" },
+      { slug: "italy", name: "GP da Itália 2025" },
+      { slug: "azerbaijan", name: "GP do Azerbaijão 2025" },
+      { slug: "singapore", name: "GP de Singapura 2025" },
+      { slug: "usa", name: "GP dos EUA 2025" },
+      { slug: "mexico", name: "GP do México 2025" },
+      { slug: "brazil", name: "GP do Brasil 2025" },
+      { slug: "lasvegas", name: "GP de Las Vegas 2025" },
+      { slug: "qatar", name: "GP do Qatar 2025" },
+      { slug: "abudhabi", name: "GP de Abu Dhabi 2025" }
+    ];
+
+    // Mapear nomes de equipe -> (logo opcional)
+    // Se você tiver logos em assets/teams/, renomeie e ajuste aqui.
+    const TEAM_META = {
+      redbull:   { name: "Oracle Red Bull Racing", logo: "assets/teams/redbull.png" },
+      mercedes:  { name: "Mercedes-AMG Petronas",  logo: "assets/teams/mercedes.png" },
+      ferrari:   { name: "Scuderia Ferrari",       logo: "assets/teams/ferrari.png" },
+      mclaren:   { name: "McLaren F1 Team",        logo: "assets/teams/mclaren.png" },
+      astonmartin:{name:"Aston Martin Aramco",     logo: "assets/teams/astonmartin.png" },
+      alpine:    { name: "BWT Alpine",             logo: "assets/teams/alpine.png" },
+      williams:  { name: "Williams Racing",        logo: "assets/teams/williams.png" },
+      rb:        { name: "RB F1 Team",             logo: "assets/teams/rb.png" },
+      sauber:    { name: "Kick Sauber",            logo: "assets/teams/sauber.png" },
+      haas:      { name: "Haas F1 Team",           logo: "assets/teams/haas.png" }
+    };
+
+    function getParams(){
+      const u = new URL(window.location.href);
+      return Object.fromEntries(u.searchParams.entries());
+    }
+
+    function buildUrl(page, extraParams = {}){
+      const u = new URL(page, window.location.href);
+      const base = getParams();
+      // preserva tudo (userTeam, manager, etc.)
+      Object.keys(base).forEach(k => u.searchParams.set(k, base[k]));
+      // adiciona extras
+      Object.keys(extraParams).forEach(k => u.searchParams.set(k, extraParams[k]));
+      return u.toString();
+    }
+
+    function go(page, extraParams = {}){
+      window.location.href = buildUrl(page, extraParams);
+    }
+
+    // Modal (seleção GP)
+    const modalBack = document.getElementById("modalBack");
+    const modalClose = document.getElementById("modalClose");
+    const modalCancel = document.getElementById("modalCancel");
+    const modalStart = document.getElementById("modalStart");
+    const modalTitle = document.getElementById("modalTitle");
+    const gpSelect = document.getElementById("gpSelect");
+
+    let modalTargetPage = null; // practice.html ou qualifying.html
+
+    function openGPModal(targetPage, title){
+      modalTargetPage = targetPage;
+      modalTitle.textContent = title;
+
+      // popula select só 1x por abertura (limpa e recria)
+      gpSelect.innerHTML = "";
+      GP_LIST.forEach(gp => {
+        const opt = document.createElement("option");
+        opt.value = gp.slug;
+        opt.textContent = gp.name;
+        gpSelect.appendChild(opt);
+      });
+
+      // tenta lembrar último GP escolhido
+      const last = localStorage.getItem("LAST_GP_SLUG");
+      if(last){
+        const found = GP_LIST.find(x => x.slug === last);
+        if(found) gpSelect.value = last;
+      }
+
+      modalBack.style.display = "flex";
+    }
+
+    function closeGPModal(){
+      modalBack.style.display = "none";
+    }
+
+    modalClose.addEventListener("click", closeGPModal);
+    modalCancel.addEventListener("click", closeGPModal);
+    modalBack.addEventListener("click", (e) => {
+      if(e.target === modalBack) closeGPModal();
+    });
+
+    modalStart.addEventListener("click", () => {
+      const slug = gpSelect.value;
+      localStorage.setItem("LAST_GP_SLUG", slug);
+
+      // Parâmetros esperados pelas páginas do seu jogo (conforme seu padrão atual)
+      // practice.html?track=bahrain&gp=GP+do+Bahrein+2025&userTeam=...
+      const gpObj = GP_LIST.find(x => x.slug === slug) || GP_LIST[0];
+
+      go(modalTargetPage, {
+        track: slug,
+        gp: gpObj.name
+      });
+    });
+
+    // BIND BOTÕES
+    document.getElementById("btnVoltar").addEventListener("click", () => {
+      // Volta para a tela anterior do seu fluxo (ajuste se necessário)
+      // Mantive start.html porque já aparece nos seus arquivos.
+      go("start.html");
+    });
+
+    document.getElementById("btnOficina").addEventListener("click", () => go("oficina.html"));
+    document.getElementById("btnFuncionarios").addEventListener("click", () => go("funcionarios.html"));
+    document.getElementById("btnPatrocinio").addEventListener("click", () => go("patrocinio.html"));
+    document.getElementById("btnMercado").addEventListener("click", () => go("mercado.html"));
+    document.getElementById("btnCalendario").addEventListener("click", () => go("calendario.html"));
+
+    document.getElementById("btnCorridaRapida").addEventListener("click", () => go("quickrace.html"));
+
+    document.getElementById("btnTreinoLivre").addEventListener("click", () => {
+      openGPModal("practice.html", "TREINO LIVRE — Selecionar GP");
+    });
+
+    document.getElementById("btnQualy").addEventListener("click", () => {
+      openGPModal("qualifying.html", "CLASSIFICAÇÃO — Selecionar GP");
+    });
+
+    // Carrega dados básicos (equipe/manager) sem quebrar se não existir
+    (function boot(){
+      const p = getParams();
+      const teamKey = (p.userTeam || "redbull").toLowerCase();
+
+      const teamData = TEAM_META[teamKey] || { name: teamKey.toUpperCase(), logo: "assets/teams/default.png" };
+      const teamNameEl = document.getElementById("teamName");
+      const teamLogoEl = document.getElementById("teamLogo");
+
+      teamNameEl.textContent = teamData.name;
+      teamLogoEl.src = teamData.logo;
+
+      // Manager (tenta pegar do localStorage — se você salva isso em outro lugar, ajuste)
+      const managerName = localStorage.getItem("MANAGER_NAME") || "Seu Manager";
+      document.getElementById("managerName").textContent = managerName;
+
+      const avatar = localStorage.getItem("MANAGER_AVATAR") || "assets/avatars/default.png";
+      document.getElementById("managerAvatar").src = avatar;
+
+      // Evita imagem quebrada: fallback se logo/avatar não existir
+      teamLogoEl.onerror = () => { teamLogoEl.src = "assets/teams/default.png"; };
+      document.getElementById("managerAvatar").onerror = () => { document.getElementById("managerAvatar").src = "assets/avatars/default.png"; };
+    })();
+  </script>
 </body>
 </html>
