@@ -1,304 +1,625 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>F1 MANAGER 2025 — Oficina (Setup)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F1 Manager 2025 — Oficina & Setup</title>
 
   <style>
     :root{
-      --bg:#05070c;
-      --glass: rgba(10,14,22,.66);
-      --stroke: rgba(255,255,255,.12);
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.66);
-      --red:#e10600;
-      --radius: 20px;
-      --radius2: 26px;
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --shadow2: 0 10px 26px rgba(0,0,0,.35);
+      --bg:#05050a;
+      --panel: rgba(10,10,16,.82);
+      --stroke: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.95);
+      --muted: rgba(255,255,255,.72);
+      --cyan:#40c4ff;
+      --green:#00e676;
+      --purple:#b388ff;
+      --orange:#ff9100;
+      --red:#ff1744;
+      --radius:22px;
+      --shadow2: 0 10px 30px rgba(0,0,0,.45);
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; padding:0; }
     body{
-      margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color: var(--text);
       background: var(--bg);
-      overflow-x:hidden;
-    }
-    body::before{
-      content:"";
-      position:fixed; inset:0;
-      background:
-        radial-gradient(1100px 650px at 10% 0%, rgba(225,6,0,.18), transparent 55%),
-        radial-gradient(900px 600px at 85% 10%, rgba(24,167,255,.12), transparent 55%),
-        linear-gradient(180deg, rgba(0,0,0,.72), rgba(0,0,0,.88)),
-        url("assets/ui/oficina_bg.png");
+      background-image: url("assets/ui/lobby_bg.png");
       background-size: cover;
       background-position: center;
-      filter: saturate(1.05) contrast(1.05);
-      z-index:-2;
+      background-attachment: fixed;
+      overflow-x:hidden;
+      overflow-y:auto;
+      -webkit-overflow-scrolling: touch;
     }
-    body::after{
-      content:"";
-      position:fixed; inset:0;
-      background: radial-gradient(900px 700px at 50% 30%, rgba(0,0,0,.10), rgba(0,0,0,.70));
-      z-index:-1;
+    body::-webkit-scrollbar{ width:10px; }
+    body::-webkit-scrollbar-track{ background: rgba(0,0,0,.25); }
+    body::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,.18);
+      border-radius: 999px;
+      border:2px solid rgba(0,0,0,.25);
     }
 
-    .wrap{ max-width: 1220px; margin:0 auto; padding: 18px 16px 28px; }
+    .overlay{
+      min-height:100vh;
+      width:100%;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(64,196,255,.10), rgba(0,0,0,0) 40%),
+        radial-gradient(circle at 88% 20%, rgba(255,145,0,.10), rgba(0,0,0,0) 45%),
+        linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,.90));
+      display:flex;
+      flex-direction:column;
+      padding: 14px;
+    }
 
     .topbar{
-      display:flex; align-items:center; justify-content:space-between; gap:14px;
-      padding:14px 16px;
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(10,14,22,.74), rgba(10,14,22,.52));
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(10px);
-    }
-    .brand{ display:flex; align-items:center; gap:12px; }
-    .brand img{ width:42px; height:42px; object-fit:contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,.55)); }
-    .brand h1{ margin:0; font-size: 14px; font-weight: 900; letter-spacing:.6px; text-transform: uppercase; }
-    .brand p{ margin:2px 0 0; font-size: 12px; color: var(--muted); }
-
-    .actions{ display:flex; gap:10px; }
-    .btn{
-      appearance:none; border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.25); color: var(--text);
-      padding: 10px 14px; border-radius: 999px; cursor:pointer;
-      font-weight: 800; letter-spacing:.2px;
-      box-shadow: 0 10px 22px rgba(0,0,0,.35);
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
-      user-select:none;
-    }
-    .btn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.24); background: rgba(0,0,0,.34); }
-    .btn.primary{
-      border-color: rgba(225,6,0,.38);
-      background: linear-gradient(180deg, rgba(225,6,0,.22), rgba(0,0,0,.22));
-    }
-
-    .grid{
-      margin-top: 16px;
-      display:grid;
-      grid-template-columns: 1.05fr .95fr;
-      gap: 14px;
-      align-items:start;
-    }
-
-    .panel{
-      border:1px solid rgba(255,255,255,.12);
-      background: linear-gradient(180deg, rgba(10,14,22,.76), rgba(10,14,22,.56));
-      border-radius: var(--radius2);
-      padding: 14px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
-
-    .title{
-      margin:0;
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing:.6px;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.88);
-    }
-    .sub{ margin:8px 0 0; font-size:12px; color: rgba(255,255,255,.62); line-height:1.35; }
-
-    .row{
-      display:grid;
-      grid-template-columns: 1fr 110px;
-      gap: 10px;
+      display:flex;
       align-items:center;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      justify-content:space-between;
+      gap:12px;
+      width: min(1200px, 100%);
+      margin: 0 auto;
     }
-    .row:last-child{ border-bottom:0; }
+    .pillBtn{
+      border:none; cursor:pointer;
+      border-radius:999px;
+      padding: 10px 16px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#fff;
+      background: linear-gradient(135deg, rgba(255,23,68,.95), rgba(255,23,68,.62));
+      box-shadow: 0 0 18px rgba(255,23,68,.45);
+    }
+    .title{
+      flex:1;
+      text-align:center;
+      padding: 0 8px;
+    }
+    .title h1{
+      margin:0;
+      font-size:1.02rem;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
+    .title p{
+      margin:.35rem 0 0;
+      color: var(--muted);
+      font-size:.88rem;
+      line-height:1.25;
+    }
 
-    .label{
-      display:flex; flex-direction:column; gap:4px;
-    }
-    .label strong{ font-size: 12px; letter-spacing:.2px; }
-    .label span{ font-size: 12px; color: rgba(255,255,255,.62); }
-
-    input[type="range"]{
-      width:100%;
-      accent-color: var(--red);
-    }
-    .value{
-      text-align:right;
-      font-weight: 900;
-      font-size: 12px;
-      color: rgba(255,255,255,.92);
-      background: rgba(0,0,0,.25);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius: 12px;
-      padding: 8px 10px;
-    }
-
-    .kpi{
+    .wrap{
+      width: min(1200px, 100%);
+      margin: 12px auto 40px;
       display:grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 12px;
+      grid-template-columns: 1fr;
+      gap:12px;
     }
-    .card{
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.28);
-      border-radius: 18px;
-      padding: 12px;
-      box-shadow: 0 10px 24px rgba(0,0,0,.28);
+    @media (min-width: 980px){
+      .wrap{ grid-template-columns: 1.15fr .85fr; }
     }
-    .k{ font-size: 12px; color: rgba(255,255,255,.62); }
-    .v{ margin-top:6px; font-size: 16px; font-weight: 900; }
 
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.25);
-      border-radius: 999px;
-      padding: 8px 10px;
-      font-size: 12px;
+    .card{
+      background: linear-gradient(180deg, rgba(12,12,20,.90), rgba(10,10,16,.74));
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    .cardHead{
+      padding: 14px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.28);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.12);
+      font-size:.72rem;
+      letter-spacing:.10em;
+      text-transform:uppercase;
       color: rgba(255,255,255,.86);
-      margin-right: 8px;
+      white-space:nowrap;
+    }
+    .cardBody{ padding: 14px; }
+
+    .statRow{
+      display:flex; flex-wrap:wrap; gap:10px;
       margin-top: 10px;
     }
-
-    .btnbar{
-      display:flex; gap:10px; flex-wrap:wrap;
-      margin-top: 12px;
+    .stat{
+      flex: 1;
+      min-width: 160px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.30);
+      border:1px solid rgba(255,255,255,.08);
     }
-    .btnbar .btn{ flex: 1 1 180px; }
+    .stat small{
+      display:block;
+      opacity:.72;
+      font-size:.70rem;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+    .stat strong{ font-size:1.05rem; }
 
-    @media (max-width: 1100px){
-      .grid{ grid-template-columns: 1fr; }
+    .group{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.30);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .group h3{
+      margin:0 0 10px;
+      font-size:.92rem;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      opacity:.92;
+    }
+    .row{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-bottom: 12px;
+    }
+    label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:.88rem;
+      color: rgba(255,255,255,.88);
+    }
+    .val{
+      font-weight:900;
+      letter-spacing:.03em;
+      color: rgba(255,255,255,.95);
+    }
+    input[type="range"]{ width:100%; }
+
+    .hint{
+      color: var(--muted);
+      font-size:.84rem;
+      line-height:1.35;
+      margin-top:8px;
+    }
+
+    .btnRow{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:none; cursor:pointer;
+      border-radius:999px;
+      padding: 12px 14px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#fff;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+      flex:1;
+      min-width: 180px;
+      text-align:center;
+    }
+    .btn.cyan{ background: linear-gradient(135deg, rgba(64,196,255,.90), rgba(64,196,255,.55)); border-color: rgba(64,196,255,.34); }
+    .btn.green{ background: linear-gradient(135deg, rgba(0,230,118,.90), rgba(0,230,118,.52)); border-color: rgba(0,230,118,.34); }
+    .btn.orange{ background: linear-gradient(135deg, rgba(255,145,0,.92), rgba(255,145,0,.55)); border-color: rgba(255,145,0,.34); }
+    .btn.red{ background: linear-gradient(135deg, rgba(255,23,68,.90), rgba(255,23,68,.55)); border-color: rgba(255,23,68,.34); }
+    .btn:active{ transform: scale(.99); }
+
+    .note{
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.72);
+      font-size:.86rem;
+      line-height:1.35;
+    }
+
+    .bar{
+      height:10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      margin-top:8px;
+    }
+    .bar > div{
+      height:100%;
+      width: 50%;
+      background: linear-gradient(90deg, rgba(64,196,255,.9), rgba(0,230,118,.8));
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
+  <div class="overlay">
+
     <div class="topbar">
-      <div class="brand">
-        <img id="teamLogo" src="" alt="Logo da equipe" />
-        <div>
-          <h1>OFICINA — SETUP DO CARRO</h1>
-          <p>As mudanças são salvas e afetam treino, quali e corrida (reta, curva, pneus e pit).</p>
-        </div>
+      <button class="pillBtn" id="btnBack">VOLTAR</button>
+      <div class="title">
+        <h1>OFICINA & SETUP DO CARRO</h1>
+        <p>Ajuste o carro, salve no modo carreira e gere modificadores reais para treino, qualy e corrida.</p>
       </div>
-      <div class="actions">
-        <button class="btn" id="btnDefault">Padrão</button>
-        <button class="btn primary" id="btnSave">Salvar</button>
-        <button class="btn primary" id="btnBack">Voltar</button>
-      </div>
+      <div style="width:110px;"></div>
     </div>
 
-    <div class="grid">
-      <div class="panel">
-        <h2 class="title">Controles principais</h2>
-        <p class="sub">Base realista: asa impacta reta/curva; suspensão/altura impacta estabilidade e pneus; diferencial impacta tração; motor impacta potência e risco.</p>
+    <div class="wrap">
 
-        <div class="row">
-          <div class="label">
-            <strong>Asa dianteira</strong>
-            <span>Curvas (grip) vs. resistência ao ar</span>
+      <!-- SETUP -->
+      <div class="card">
+        <div class="cardHead">
+          <div>
+            <div class="badge">SETUP</div>
+            <div style="margin-top:6px; font-weight:900; letter-spacing:.02em;">Ajustes principais</div>
           </div>
-          <div class="value" id="vFrontWing">50</div>
+          <div class="badge" id="teamBadge">EQUIPE</div>
         </div>
-        <input id="frontWing" type="range" min="0" max="100" value="50" />
 
-        <div class="row">
-          <div class="label">
-            <strong>Asa traseira</strong>
-            <span>Estabilidade em curva vs. velocidade de reta</span>
+        <div class="cardBody">
+
+          <div class="statRow">
+            <div class="stat">
+              <small>Caixa</small>
+              <strong id="cashTxt">--</strong>
+            </div>
+            <div class="stat">
+              <small>Reputação</small>
+              <strong id="repTxt">--</strong>
+            </div>
+            <div class="stat">
+              <small>Setup Atual</small>
+              <strong id="setupLabel">--</strong>
+            </div>
           </div>
-          <div class="value" id="vRearWing">55</div>
-        </div>
-        <input id="rearWing" type="range" min="0" max="100" value="55" />
 
-        <div class="row">
-          <div class="label">
-            <strong>Suspensão (rigidez)</strong>
-            <span>Resposta rápida vs. tração em zebras</span>
+          <div class="group">
+            <h3>Aerodinâmica</h3>
+
+            <div class="row">
+              <label>Asa Dianteira <span class="val" id="v_fw">--</span></label>
+              <input type="range" min="0" max="100" value="50" id="fw" />
+              <div class="hint">Mais asa = mais grip em curvas, porém mais arrasto em retas.</div>
+            </div>
+
+            <div class="row">
+              <label>Asa Traseira <span class="val" id="v_rw">--</span></label>
+              <input type="range" min="0" max="100" value="50" id="rw" />
+              <div class="hint">Equilibra estabilidade, tração e velocidade final.</div>
+            </div>
           </div>
-          <div class="value" id="vSuspension">55</div>
-        </div>
-        <input id="suspension" type="range" min="0" max="100" value="55" />
 
-        <div class="row">
-          <div class="label">
-            <strong>Altura do carro</strong>
-            <span>Baixo = rápida reta (risco/instável) | Alto = estável</span>
+          <div class="group">
+            <h3>Mecânica</h3>
+
+            <div class="row">
+              <label>Suspensão <span class="val" id="v_sus">--</span></label>
+              <input type="range" min="0" max="100" value="50" id="sus" />
+              <div class="hint">Mais firme = melhor em curvas rápidas, pior em zebras/tração.</div>
+            </div>
+
+            <div class="row">
+              <label>Distribuição de Freio <span class="val" id="v_brk">--</span></label>
+              <input type="range" min="0" max="100" value="55" id="brk" />
+              <div class="hint">Ajusta estabilidade em frenagem (frente x traseira).</div>
+            </div>
           </div>
-          <div class="value" id="vRideHeight">50</div>
-        </div>
-        <input id="rideHeight" type="range" min="0" max="100" value="50" />
 
-        <div class="row">
-          <div class="label">
-            <strong>Diferencial (baixa velocidade)</strong>
-            <span>Tração na saída de curva vs. desgaste</span>
+          <div class="group">
+            <h3>Power Unit</h3>
+
+            <div class="row">
+              <label>Mapa de Motor (base) <span class="val" id="v_eng">--</span></label>
+              <input type="range" min="0" max="100" value="55" id="eng" />
+              <div class="hint">Mais agressivo = melhor pace, mas pior desgaste e risco mecânico.</div>
+            </div>
           </div>
-          <div class="value" id="vDiffLow">55</div>
-        </div>
-        <input id="diffLow" type="range" min="0" max="100" value="55" />
 
-        <div class="row">
-          <div class="label">
-            <strong>Diferencial (alta velocidade)</strong>
-            <span>Estabilidade rápida vs. rotação e pneu</span>
+          <div class="btnRow">
+            <button class="btn cyan" id="btnSave">SALVAR SETUP</button>
+            <button class="btn green" id="btnApply">APLICAR MODIFICADORES</button>
+            <button class="btn red" id="btnReset">RESETAR</button>
           </div>
-          <div class="value" id="vDiffHigh">50</div>
-        </div>
-        <input id="diffHigh" type="range" min="0" max="100" value="50" />
 
-        <div class="row">
-          <div class="label">
-            <strong>Motor (modo)</strong>
-            <span>Eco / Normal / Ataque (potência x risco x consumo)</span>
+          <div class="note">
+            <b>Importante:</b> este setup gera modificadores e grava em <code>SaveSystem</code> para o resto do jogo usar.<br/>
+            Na ETAPA 4 eu vou integrar isso automaticamente dentro de practice/qualy/race (para influenciar tempos).
           </div>
-          <div class="value" id="vEngineMode">Normal</div>
-        </div>
 
-        <div class="btnbar">
-          <button class="btn" data-engine="eco">ECO</button>
-          <button class="btn" data-engine="normal">NORMAL</button>
-          <button class="btn" data-engine="attack">ATAQUE</button>
-        </div>
-
-        <div style="margin-top:12px">
-          <span class="pill" id="pillTeam">Equipe: —</span>
-          <span class="pill" id="pillTrack">Pista: —</span>
         </div>
       </div>
 
-      <div class="panel">
-        <h2 class="title">Impacto estimado</h2>
-        <p class="sub">Estimativa usada pelo simulador em tempo real: reta, curva, pneus, estabilidade e risco mecânico.</p>
-
-        <div class="kpi">
-          <div class="card"><div class="k">Velocidade em reta</div><div class="v" id="kStraight">x1.00</div></div>
-          <div class="card"><div class="k">Grip em curva</div><div class="v" id="kCorner">x1.00</div></div>
-          <div class="card"><div class="k">Estabilidade</div><div class="v" id="kStability">x1.00</div></div>
-          <div class="card"><div class="k">Desgaste pneus</div><div class="v" id="kTyre">x1.00</div></div>
-          <div class="card"><div class="k">Consumo/energia</div><div class="v" id="kFuel">x1.00</div></div>
-          <div class="card"><div class="k">Risco mecânico</div><div class="v" id="kRisk">Baixo</div></div>
+      <!-- PERF / MODS -->
+      <div class="card">
+        <div class="cardHead">
+          <div>
+            <div class="badge">ANÁLISE</div>
+            <div style="margin-top:6px; font-weight:900; letter-spacing:.02em;">Impacto na performance</div>
+          </div>
+          <div class="badge">SIMULAÇÃO</div>
         </div>
 
-        <div class="btnbar" style="margin-top:14px">
-          <button class="btn primary" id="btnSendPractice">Ir para Treino</button>
-          <button class="btn primary" id="btnSendQuali">Ir para Quali</button>
-          <button class="btn primary" id="btnSendRace">Ir para Corrida</button>
-        </div>
+        <div class="cardBody">
 
-        <p class="sub" style="margin-top:12px">
-          Observação: o simulador aplica a influência por segmento (reta/curva) usando curvatura do pathPoints da pista.
-        </p>
+          <div class="statRow">
+            <div class="stat">
+              <small>Mod Pace (carro)</small>
+              <strong id="mPace">--</strong>
+              <div class="bar"><div id="bPace"></div></div>
+            </div>
+            <div class="stat">
+              <small>Mod TireWear</small>
+              <strong id="mTire">--</strong>
+              <div class="bar"><div id="bTire"></div></div>
+            </div>
+          </div>
+
+          <div class="statRow">
+            <div class="stat">
+              <small>Mod Reliability</small>
+              <strong id="mRel">--</strong>
+              <div class="bar"><div id="bRel"></div></div>
+            </div>
+            <div class="stat">
+              <small>Mod TopSpeed</small>
+              <strong id="mTop">--</strong>
+              <div class="bar"><div id="bTop"></div></div>
+            </div>
+          </div>
+
+          <div class="note" id="modsNote">
+            Ajuste o setup para ver o impacto. Depois toque em <b>Aplicar</b> para gravar os modificadores.
+          </div>
+
+          <div class="btnRow">
+            <button class="btn orange" id="btnGoCalendar">IR PARA CALENDÁRIO</button>
+            <button class="btn purple" id="btnGoQuickRace">CORRIDA RÁPIDA</button>
+          </div>
+
+        </div>
       </div>
+
     </div>
   </div>
 
-  <script src="oficina.js"></script>
+  <script src="js/saveSystem.js"></script>
+  <script src="js/gameData.js"></script>
+  <script>
+    const params = new URL(window.location.href).searchParams;
+    const userTeam = (params.get("userTeam") || SaveSystem.load().profile.userTeam || "redbull").toLowerCase();
+
+    const teamBadge = document.getElementById("teamBadge");
+    const cashTxt = document.getElementById("cashTxt");
+    const repTxt = document.getElementById("repTxt");
+    const setupLabel = document.getElementById("setupLabel");
+
+    const fw = document.getElementById("fw");
+    const rw = document.getElementById("rw");
+    const sus = document.getElementById("sus");
+    const brk = document.getElementById("brk");
+    const eng = document.getElementById("eng");
+
+    const v_fw = document.getElementById("v_fw");
+    const v_rw = document.getElementById("v_rw");
+    const v_sus = document.getElementById("v_sus");
+    const v_brk = document.getElementById("v_brk");
+    const v_eng = document.getElementById("v_eng");
+
+    const mPace = document.getElementById("mPace");
+    const mTire = document.getElementById("mTire");
+    const mRel  = document.getElementById("mRel");
+    const mTop  = document.getElementById("mTop");
+
+    const bPace = document.getElementById("bPace");
+    const bTire = document.getElementById("bTire");
+    const bRel  = document.getElementById("bRel");
+    const bTop  = document.getElementById("bTop");
+
+    function goLobby(){
+      const url = new URL("lobby.html", window.location.href);
+      url.searchParams.set("userTeam", userTeam);
+      window.location.href = url.toString();
+    }
+    function goCalendar(){
+      const url = new URL("calendario.html", window.location.href);
+      url.searchParams.set("userTeam", userTeam);
+      window.location.href = url.toString();
+    }
+    function goQuickRace(){
+      const url = new URL("quickrace.html", window.location.href);
+      url.searchParams.set("userTeam", userTeam);
+      window.location.href = url.toString();
+    }
+
+    document.getElementById("btnBack").addEventListener("click", goLobby);
+    document.getElementById("btnGoCalendar").addEventListener("click", goCalendar);
+    document.getElementById("btnGoQuickRace").addEventListener("click", goQuickRace);
+
+    function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
+    function money(n){ return GameData.money(n); }
+
+    function getSavedSetup() {
+      const s = SaveSystem.load();
+      const setup = SaveSystem.get("car.setup", null);
+      if (setup) return setup;
+      return { fw:50, rw:50, sus:50, brk:55, eng:55, name:"Base" };
+    }
+
+    function computeMods(setup){
+      // Setup 0..100 -> gera multiplicadores simples e estáveis (offline).
+      // Valores próximos de "equilíbrio" geram melhor pace/consistência.
+      // Mapa motor alto melhora pace e top speed, mas piora confiabilidade e desgaste.
+      const f = Number(setup.fw||50);
+      const r = Number(setup.rw||50);
+      const s = Number(setup.sus||50);
+      const b = Number(setup.brk||55);
+      const e = Number(setup.eng||55);
+
+      // "sweet spot" (bem simples)
+      const aeroBalance = 1 - (Math.abs(f - r) / 120);        // 0.17..1
+      const mechBalance = 1 - (Math.abs(s - 50) / 140);       // 0.64..1
+      const brakeStab   = 1 - (Math.abs(b - 58) / 220);       // 0.74..1
+
+      const enginePush  = (e - 50) / 100;                    // -0.50..+0.50
+
+      // Pace: melhor se equilibrado e motor mais alto
+      let pace = 1.0 + ((aeroBalance - 0.85) * 0.10) + ((mechBalance - 0.85) * 0.08) + (enginePush * 0.10);
+      pace = clamp(pace, 0.94, 1.10);
+
+      // Tire wear: pior com motor agressivo, melhora com mecânica mais “gentil”
+      let tireWear = 1.0 + (enginePush * 0.10) - ((mechBalance - 0.80) * 0.10);
+      tireWear = clamp(tireWear, 0.90, 1.12);
+
+      // Reliability: pior com motor agressivo e freio instável
+      let reliability = 1.0 - (enginePush * 0.08) + ((brakeStab - 0.85) * 0.06);
+      reliability = clamp(reliability, 0.92, 1.06);
+
+      // Top Speed: aumenta com motor alto e asas mais baixas (somatório baixo)
+      const wingSum = (f + r) / 200; // 0..1
+      let topSpeed = 1.0 + (enginePush * 0.08) + ((0.55 - wingSum) * 0.06);
+      topSpeed = clamp(topSpeed, 0.95, 1.08);
+
+      return {
+        pace: Number(pace.toFixed(4)),
+        tireWear: Number(tireWear.toFixed(4)),
+        reliability: Number(reliability.toFixed(4)),
+        topSpeed: Number(topSpeed.toFixed(4))
+      };
+    }
+
+    function modToBar(v, isLowerBetter=false){
+      // retorna width% para barra. V típico ~0.90..1.12
+      // para lowerBetter (tireWear/pitSpeed), invertido.
+      const min=0.90, max=1.12;
+      let t = (v - min) / (max - min); // 0..1
+      t = clamp(t, 0, 1);
+      if (isLowerBetter) t = 1 - t;
+      return Math.round(10 + t * 90); // 10%..100%
+    }
+
+    function updateUI(){
+      const save = SaveSystem.load();
+      save.profile.userTeam = userTeam;
+      SaveSystem.save(save);
+
+      teamBadge.textContent = "EQUIPE: " + userTeam.toUpperCase();
+      cashTxt.textContent = money(save.economy.cash || 0);
+      repTxt.textContent = String(save.economy.reputation || 0);
+
+      const setup = getSavedSetup();
+      fw.value = setup.fw; rw.value = setup.rw; sus.value = setup.sus; brk.value = setup.brk; eng.value = setup.eng;
+
+      const currentName = setup.name || "Setup";
+      setupLabel.textContent = currentName;
+
+      syncValues();
+      renderMods();
+    }
+
+    function syncValues(){
+      v_fw.textContent = fw.value;
+      v_rw.textContent = rw.value;
+      v_sus.textContent = sus.value;
+      v_brk.textContent = brk.value;
+      v_eng.textContent = eng.value;
+    }
+
+    function currentSetup(){
+      // nome automático simples
+      const wing = Math.round((Number(fw.value)+Number(rw.value))/2);
+      const engv = Number(eng.value);
+      const name = (wing >= 60 ? "Alta Pressão" : wing <= 40 ? "Baixo Arrasto" : "Equilíbrio")
+        + (engv >= 65 ? " • Motor Agressivo" : engv <= 45 ? " • Motor Eco" : " • Motor Normal");
+      return {
+        fw: Number(fw.value),
+        rw: Number(rw.value),
+        sus: Number(sus.value),
+        brk: Number(brk.value),
+        eng: Number(eng.value),
+        name
+      };
+    }
+
+    function renderMods(){
+      const setup = currentSetup();
+      const mods = computeMods(setup);
+
+      mPace.textContent = mods.pace.toFixed(3);
+      mTire.textContent = mods.tireWear.toFixed(3);
+      mRel.textContent  = mods.reliability.toFixed(3);
+      mTop.textContent  = mods.topSpeed.toFixed(3);
+
+      bPace.style.width = modToBar(mods.pace).toString() + "%";
+      bTire.style.width = modToBar(mods.tireWear, true).toString() + "%"; // menor desgaste melhor
+      bRel.style.width  = modToBar(mods.reliability).toString() + "%";
+      bTop.style.width  = modToBar(mods.topSpeed).toString() + "%";
+
+      const note = document.getElementById("modsNote");
+      note.innerHTML = `
+        <b>Resumo:</b><br/>
+        • <b>Pace</b> ${mods.pace >= 1.02 ? "↑" : mods.pace <= 0.99 ? "↓" : "≈"}<br/>
+        • <b>Desgaste</b> ${mods.tireWear <= 0.98 ? "↓ (melhor)" : mods.tireWear >= 1.04 ? "↑ (pior)" : "≈"}<br/>
+        • <b>Confiabilidade</b> ${mods.reliability >= 1.02 ? "↑" : mods.reliability <= 0.98 ? "↓" : "≈"}<br/>
+        • <b>TopSpeed</b> ${mods.topSpeed >= 1.02 ? "↑" : mods.topSpeed <= 0.99 ? "↓" : "≈"}<br/>
+        <div style="margin-top:8px; opacity:.85;">Toque em <b>Aplicar</b> para gravar no save.</div>
+      `;
+    }
+
+    [fw,rw,sus,brk,eng].forEach(el=>{
+      el.addEventListener("input", ()=>{
+        syncValues();
+        renderMods();
+      });
+    });
+
+    document.getElementById("btnSave").addEventListener("click", ()=>{
+      const setup = currentSetup();
+      SaveSystem.set("car.setup", setup);
+      alert("Setup salvo com sucesso!");
+      updateUI();
+    });
+
+    document.getElementById("btnApply").addEventListener("click", ()=>{
+      const setup = currentSetup();
+      const mods = computeMods(setup);
+
+      SaveSystem.update(save=>{
+        save.car = save.car || {};
+        save.car.setup = setup;
+        save.car.modifiers = mods;
+        save.profile.userTeam = userTeam;
+      });
+
+      alert("Modificadores aplicados e gravados no save!");
+      updateUI();
+    });
+
+    document.getElementById("btnReset").addEventListener("click", ()=>{
+      fw.value=50; rw.value=50; sus.value=50; brk.value=55; eng.value=55;
+      syncValues();
+      renderMods();
+    });
+
+    updateUI();
+  </script>
 </body>
 </html>
