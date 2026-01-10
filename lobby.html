@@ -2,756 +2,627 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>F1 Manager 2025 — Lobby</title>
-
-  <!-- Se existir um style global no projeto, mantenha -->
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>F1 Manager 2025 — Lobby da Equipe</title>
 
   <style>
     :root{
-      --bg: #05050a;
-      --panel: rgba(10, 10, 16, 0.78);
-      --panel2: rgba(12, 12, 20, 0.92);
-      --stroke: rgba(255,255,255,.08);
-      --text: rgba(255,255,255,.95);
-      --muted: rgba(255,255,255,.70);
+      --bg:#070A12;
+      --glass: rgba(16, 20, 32, .62);
+      --glass2: rgba(10, 12, 18, .55);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.08);
+      --txt:#EAF0FF;
+      --muted: rgba(234,240,255,.72);
+      --muted2: rgba(234,240,255,.55);
+      --shadow: 0 18px 50px rgba(0,0,0,.55);
+      --shadow2: 0 10px 22px rgba(0,0,0,.42);
+      --r: 22px;
+      --r2: 16px;
 
-      --red: #ff1744;
-      --cyan: #40c4ff;
-      --green: #00e676;
-      --purple: #b388ff;
-      --orange: #ff9100;
-
-      --radius: 22px;
-      --radius2: 16px;
-      --shadow: 0 22px 70px rgba(0,0,0,.55);
-      --shadow2: 0 10px 30px rgba(0,0,0,.45);
+      --c-blue: #4CC3FF;
+      --c-green:#42E6B6;
+      --c-orange:#FFB64A;
+      --c-red:  #FF3B4E;
+      --c-violet:#A56DFF;
+      --c-pink:#FF4FE0;
+      --c-ice:#DCEBFF;
     }
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; margin:0; padding:0; }
+    *{ box-sizing: border-box; }
+    html, body{ height:100%; }
     body{
+      margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
+      color: var(--txt);
       background: var(--bg);
-      background-image: url("assets/ui/lobby_bg.png");
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-      overflow-x:hidden;
+      overflow-x: hidden;
+      overflow-y: auto; /* permite rolagem (mobile) */
+      -webkit-overflow-scrolling: touch;
     }
 
-    .overlay{
-      min-height:100vh;
-      width:100%;
+    /* Scrollbar (desktop) */
+    body::-webkit-scrollbar { width: 10px; }
+    body::-webkit-scrollbar-track { background: rgba(255,255,255,.05); }
+    body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 12px; }
+    body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.28); }
+
+    .bg{
+      position: fixed;
+      inset: 0;
       background:
-        radial-gradient(circle at 18% 12%, rgba(64,196,255,.10), rgba(0,0,0,0) 40%),
-        radial-gradient(circle at 88% 20%, rgba(255,23,68,.10), rgba(0,0,0,0) 45%),
-        linear-gradient(to bottom, rgba(0,0,0,.52), rgba(0,0,0,.88));
-      backdrop-filter: blur(4px);
-      display:flex;
-      flex-direction:column;
+        radial-gradient(1200px 700px at 18% 22%, rgba(255,255,255,.12), transparent 60%),
+        radial-gradient(1000px 650px at 85% 10%, rgba(76,195,255,.10), transparent 55%),
+        radial-gradient(900px 700px at 80% 75%, rgba(255,59,78,.10), transparent 58%),
+        linear-gradient(180deg, rgba(0,0,0,.75) 0%, rgba(0,0,0,.55) 35%, rgba(0,0,0,.82) 100%),
+        url('assets/backgrounds/lobby.jpg') center/cover no-repeat;
+      filter: saturate(1.05) contrast(1.05);
+      transform: scale(1.02);
+      z-index:-3;
     }
 
-    /* TOP BAR */
+    .noise{
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+      opacity:.18;
+      mix-blend-mode: overlay;
+      z-index:-2;
+      pointer-events:none;
+    }
+
+    .vignette{
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(1200px 700px at 50% 30%, transparent 40%, rgba(0,0,0,.62) 100%);
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    .app{
+      min-height: 100%;
+      height: auto;
+      padding: 16px 6vw calc(24px + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
     .topbar{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
-      padding: 14px 14px;
+      gap: 10px;
+      padding: 12px 12px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      position: sticky;
+      top: 10px;
+      z-index: 50;
     }
 
-    .leftbar{
+    .top-left{
       display:flex;
       align-items:center;
-      gap:10px;
-      min-width: 120px;
+      gap: 10px;
+      min-width: 160px;
     }
 
-    .btn-pill{
-      border:none;
-      outline:none;
+    .btn-back{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: var(--txt);
+      font-weight: 800;
+      padding: 10px 14px;
+      border-radius: 999px;
       cursor:pointer;
-      border-radius:999px;
-      padding:10px 16px;
-      font-weight:700;
-      font-size:.85rem;
-      color:#fff;
-      background: linear-gradient(135deg, rgba(255,23,68,.95), rgba(255,23,68,.70));
-      box-shadow: 0 0 18px rgba(255,23,68,.45);
-      transition: transform .12s ease, filter .12s ease;
-      white-space:nowrap;
-    }
-    .btn-pill:active{ transform: scale(.98); }
-    .btn-pill:hover{ filter:brightness(1.06); }
-
-    .centerTitle{
-      text-align:center;
-      flex:1;
-      padding: 0 6px;
-    }
-    .centerTitle h1{
-      margin:0;
-      font-size:1.05rem;
-      letter-spacing:.10em;
+      letter-spacing:.5px;
       text-transform: uppercase;
-    }
-    .centerTitle p{
-      margin:.35rem 0 0;
-      font-size:.82rem;
-      color: var(--muted);
-      line-height: 1.25;
+      font-size: 12px;
     }
 
-    .rightbar{
+    .title{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      flex:1;
+      text-align:center;
+      gap: 2px;
+      padding: 6px 10px;
+    }
+    .title h1{
+      margin:0;
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 900;
+      opacity:.95;
+    }
+    .title p{
+      margin:0;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: .5px;
+    }
+
+    .userbar{
       display:flex;
       align-items:center;
-      gap:10px;
-      min-width: 120px;
+      gap: 10px;
+      min-width: 220px;
       justify-content:flex-end;
     }
 
-    .pill{
+    .team-chip{
       display:flex;
       align-items:center;
-      gap:10px;
-      padding:8px 12px;
-      border-radius:999px;
-      background: rgba(9,9,15,.75);
-      border: 1px solid var(--stroke);
-      box-shadow: 0 10px 25px rgba(0,0,0,.35);
-      max-width: 250px;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid var(--stroke2);
+      max-width: 210px;
+      overflow:hidden;
+    }
+    .team-chip img{
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 10px rgba(0,0,0,.6));
+      flex: 0 0 auto;
+    }
+    .team-chip span{
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
     }
 
-    .pill img{
-      width:34px;
-      height:34px;
-      border-radius:999px;
-      object-fit:cover;
-      background:#222;
-      border: 1px solid rgba(255,255,255,.10);
+    .manager-chip{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid var(--stroke2);
+      max-width: 240px;
+      overflow:hidden;
     }
-
-    .pill .meta{
+    .manager-chip .avatar{
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 8px 18px rgba(0,0,0,.55);
+      flex:0 0 auto;
+    }
+    .manager-meta{
       display:flex;
       flex-direction:column;
-      line-height:1.1;
-      min-width: 120px;
-      max-width: 170px;
+      gap: 1px;
+      min-width: 0;
     }
-    .pill .meta small{
-      opacity:.7;
-      font-size:.68rem;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      white-space:nowrap;
+    .manager-meta strong{
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
       overflow:hidden;
-      text-overflow:ellipsis;
+      text-overflow: ellipsis;
+      letter-spacing:.2px;
     }
-    .pill .meta strong{
-      font-size:.82rem;
-      white-space:nowrap;
+    .manager-meta small{
+      display:flex;
+      align-items:center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
       overflow:hidden;
-      text-overflow:ellipsis;
+      text-overflow: ellipsis;
     }
-
-    /* CONTENT */
-    .wrap{
-      width: min(1200px, 100%);
-      margin: 0 auto;
-      padding: 10px 14px 18px;
+    .manager-meta small img{
+      width: 16px;
+      height: 12px;
+      border-radius: 2px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,.15);
+      flex: 0 0 auto;
     }
 
     .hero{
-      margin-top: 6px;
-      padding: 16px 14px;
-      border-radius: var(--radius);
-      background: rgba(10,10,16,.50);
-      border: 1px solid rgba(255,255,255,.08);
-      box-shadow: var(--shadow2);
-      overflow:hidden;
-      position:relative;
+      padding: 14px 18px;
+      border-radius: var(--r);
+      background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
-    .hero:before{
-      content:"";
-      position:absolute;
-      inset:-1px;
-      background:
-        radial-gradient(circle at 25% 25%, rgba(64,196,255,.18), rgba(0,0,0,0) 45%),
-        radial-gradient(circle at 80% 30%, rgba(255,23,68,.16), rgba(0,0,0,0) 50%);
-      pointer-events:none;
-      opacity:.75;
+    .hero h2{
+      margin: 0 0 6px 0;
+      font-size: 16px;
+      font-weight: 950;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
     }
-    .heroInner{
-      position:relative;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .heroTitle{
-      margin:0;
-      font-size:1.05rem;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-    }
-    .heroSubtitle{
-      margin:0;
+    .hero p{
+      margin: 0;
       color: var(--muted);
-      font-size:.90rem;
-      line-height:1.35;
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .grid{
-      margin-top: 12px;
       display:grid;
       grid-template-columns: 1fr;
-      gap:12px;
+      gap: 12px;
     }
-
-    @media (min-width: 900px){
-      .grid{
-        grid-template-columns: 1fr 1fr;
-      }
+    @media (min-width: 860px){
+      .grid{ grid-template-columns: 1fr 1fr; }
     }
 
     .card{
-      border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(12,12,20,.86), rgba(10,10,16,.72));
-      border: 1px solid rgba(255,255,255,.09);
+      border-radius: var(--r);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border: 1px solid var(--stroke);
       box-shadow: var(--shadow2);
-      padding: 16px;
-      position:relative;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 14px;
+      position: relative;
       overflow:hidden;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
     }
+
     .card:before{
       content:"";
       position:absolute;
       inset:-2px;
-      opacity:.18;
+      background: radial-gradient(600px 220px at 18% 0%, rgba(255,255,255,.12), transparent 60%);
+      opacity:.6;
       pointer-events:none;
-      background: radial-gradient(circle at 18% 22%, rgba(255,255,255,.25), rgba(0,0,0,0) 55%);
     }
 
-    .cardHeader{
+    .card-header{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
-      gap:10px;
-      position:relative;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .kicker{
+      display:flex;
+      flex-direction:column;
+      gap: 2px;
+    }
+    .kicker span{
+      color: rgba(234,240,255,.72);
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .kicker strong{
+      font-size: 14px;
+      font-weight: 950;
+      letter-spacing: .2px;
     }
 
     .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      background: rgba(0,0,0,.35);
-      border: 1px solid rgba(255,255,255,.10);
-      font-size:.72rem;
-      letter-spacing:.10em;
-      text-transform:uppercase;
-      color: rgba(255,255,255,.86);
-      white-space:nowrap;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.25);
+      color: rgba(255,255,255,.88);
+      position: relative;
+      z-index: 1;
     }
 
-    .cardTitle{
-      margin:0;
-      font-size:1rem;
-      font-weight:800;
-      letter-spacing:.02em;
-    }
-    .cardText{
-      margin:0;
+    .card p{
+      margin: 10px 0 12px 0;
       color: var(--muted);
-      font-size:.88rem;
-      line-height:1.35;
-      position:relative;
+      font-size: 12px;
+      line-height: 1.35;
+      position: relative;
+      z-index: 1;
     }
 
-    .actions{
+    .card-actions{
       display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top: 6px;
-      position:relative;
+      gap: 10px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
     }
 
-    .btn{
-      border:none;
-      outline:none;
+    .card-button{
+      appearance:none;
+      border: none;
       cursor:pointer;
       border-radius: 999px;
-      padding: 12px 14px;
-      font-weight:800;
-      font-size:.82rem;
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      color:#fff;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.14);
-      transition: transform .12s ease, filter .12s ease, background .12s ease;
-      box-shadow: 0 10px 18px rgba(0,0,0,.25);
-      flex: 1;
-      min-width: 150px;
-      text-align:center;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(10,10,16,.92);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
     }
-    .btn:hover{ filter:brightness(1.05); background: rgba(255,255,255,.13); }
-    .btn:active{ transform: scale(.985); }
 
-    .btn.red{ background: linear-gradient(135deg, rgba(255,23,68,.95), rgba(255,23,68,.62)); border-color: rgba(255,23,68,.35); }
-    .btn.cyan{ background: linear-gradient(135deg, rgba(64,196,255,.90), rgba(64,196,255,.55)); border-color: rgba(64,196,255,.35); }
-    .btn.green{ background: linear-gradient(135deg, rgba(0,230,118,.90), rgba(0,230,118,.50)); border-color: rgba(0,230,118,.35); }
-    .btn.purple{ background: linear-gradient(135deg, rgba(179,136,255,.90), rgba(179,136,255,.50)); border-color: rgba(179,136,255,.35); }
-    .btn.orange{ background: linear-gradient(135deg, rgba(255,145,0,.92), rgba(255,145,0,.55)); border-color: rgba(255,145,0,.35); }
+    .card-button.secondary{
+      background: rgba(255,255,255,.12);
+      color: var(--txt);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow:none;
+    }
 
-    /* Modal */
-    .modalBack{
-      position:fixed;
-      inset:0;
-      background: rgba(0,0,0,.70);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding: 18px;
-      z-index: 999;
-    }
-    .modal{
-      width: min(620px, 100%);
-      border-radius: var(--radius);
-      background: rgba(10,10,16,.92);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .modalTop{
-      padding: 14px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
+    .card-button.ghost{
       background: rgba(0,0,0,.25);
-    }
-    .modalTop h2{
-      margin:0;
-      font-size: .95rem;
-      letter-spacing:.10em;
-      text-transform:uppercase;
-    }
-    .modalClose{
-      border:none;
-      cursor:pointer;
-      border-radius:999px;
-      padding:10px 12px;
-      font-weight:900;
-      background: rgba(255,255,255,.10);
-      border:1px solid rgba(255,255,255,.12);
-      color:#fff;
-    }
-    .modalBody{
-      padding: 14px;
-    }
-    .row{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      margin-bottom: 12px;
-    }
-    label{
-      font-size:.78rem;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      opacity:.8;
-    }
-    select{
-      width:100%;
-      border-radius: 14px;
-      padding: 12px 12px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.12);
-      color:#fff;
-      font-weight:700;
-      outline:none;
-    }
-    option{ color:#000; }
-    .modalActions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      padding: 0 14px 14px;
+      color: var(--txt);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow:none;
     }
 
-    /* Footer hint */
-    .hint{
+    .accent-blue{ background: linear-gradient(90deg, rgba(76,195,255,.95), rgba(93,160,255,.95)); }
+    .accent-green{ background: linear-gradient(90deg, rgba(66,230,182,.95), rgba(60,200,255,.65)); }
+    .accent-orange{ background: linear-gradient(90deg, rgba(255,182,74,.95), rgba(255,120,70,.88)); }
+    .accent-red{ background: linear-gradient(90deg, rgba(255,59,78,.95), rgba(255,95,120,.80)); }
+    .accent-violet{ background: linear-gradient(90deg, rgba(165,109,255,.95), rgba(84,200,255,.55)); }
+    .accent-pink{ background: linear-gradient(90deg, rgba(255,79,224,.95), rgba(255,151,79,.65)); }
+
+    .two-actions{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .small-note{
       margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,.28);
-      border:1px solid rgba(255,255,255,.08);
-      color: rgba(255,255,255,.72);
-      font-size:.82rem;
-      line-height:1.3;
+      font-size: 11px;
+      color: var(--muted2);
+      line-height: 1.35;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 540px){
+      .topbar{ padding: 10px 10px; }
+      .userbar{ min-width: auto; }
+      .team-chip{ display:none; } /* reduz no mobile */
+      .manager-chip{ max-width: 180px; }
+      .hero h2{ font-size: 15px; }
+      .card{ padding: 13px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="overlay">
+  <div class="bg"></div>
+  <div class="noise"></div>
+  <div class="vignette"></div>
 
+  <div class="app" id="app">
     <!-- TOP BAR -->
     <div class="topbar">
-      <div class="leftbar">
-        <button class="btn-pill" id="btnVoltar">VOLTAR</button>
+      <div class="top-left">
+        <button class="btn-back" onclick="window.location.href='index.html'">Voltar</button>
       </div>
 
-      <div class="centerTitle">
-        <h1>LOBBY DA EQUIPE</h1>
-        <p>Controle sua operação: carro, staff, patrocínios e calendário. Tudo integrado e pronto para corrida.</p>
+      <div class="title">
+        <h1>Lobby da Equipe</h1>
+        <p>Prepare sua temporada — gestão, staff, patrocínios e decisões de pista</p>
       </div>
 
-      <div class="rightbar">
-        <div class="pill" title="Equipe atual">
-          <img id="teamLogo" src="assets/teams/default.png" alt="Equipe" />
-          <div class="meta">
-            <small>EQUIPE</small>
-            <strong id="teamName">Carregando...</strong>
-          </div>
+      <div class="userbar">
+        <div class="team-chip">
+          <img id="team-logo" src="assets/teams/redbull.png" alt="Equipe"/>
+          <span id="team-name">Equipe</span>
         </div>
 
-        <div class="pill" title="Manager">
-          <img id="managerAvatar" src="assets/avatars/default.png" alt="Manager" />
-          <div class="meta">
-            <small>MANAGER</small>
-            <strong id="managerName">Seu Manager</strong>
+        <div class="manager-chip">
+          <img class="avatar" id="manager-avatar" src="assets/managers/manager_ethnic_01.png" alt="Manager"/>
+          <div class="manager-meta">
+            <strong id="manager-name">Manager</strong>
+            <small>
+              <img id="manager-flag" src="assets/flags/br.png" alt="País"/>
+              <span id="manager-country-name">Brasil</span>
+            </small>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="wrap">
-
-      <!-- HERO -->
-      <div class="hero">
-        <div class="heroInner">
-          <p class="heroTitle">TEMPORADA OFICIAL F1 — 2025</p>
-          <p class="heroSubtitle">
-            Modo carreira offline. Interface estilo broadcast. Decisões reais: estratégia, staff, contratos e desempenho.
-          </p>
-        </div>
-      </div>
-
-      <!-- GRID -->
-      <div class="grid">
-
-        <!-- CARRO -->
-        <div class="card">
-          <div class="cardHeader">
-            <div>
-              <div class="badge">CARRO • OFICINA & SETUP</div>
-              <h3 class="cardTitle">Configuração do Carro</h3>
-            </div>
-            <div class="badge" style="border-color: rgba(64,196,255,.25);">Aero • Motor • Pneus</div>
-          </div>
-          <p class="cardText">
-            Ajuste asas, mapas de motor, setup e parâmetros de desempenho. Melhore consistência e ritmo do carro.
-          </p>
-          <div class="actions">
-            <button class="btn cyan" id="btnOficina">ABRIR OFICINA</button>
-          </div>
-        </div>
-
-        <!-- STAFF -->
-        <div class="card">
-          <div class="cardHeader">
-            <div>
-              <div class="badge">EQUIPE TÉCNICA</div>
-              <h3 class="cardTitle">Funcionários & Staff</h3>
-            </div>
-            <div class="badge" style="border-color: rgba(0,230,118,.25);">Engenharia • Pit</div>
-          </div>
-          <p class="cardText">
-            Contrate, ajuste hierarquia e evolua sua equipe. Staff forte melhora treino, estratégia e corrida.
-          </p>
-          <div class="actions">
-            <button class="btn green" id="btnFuncionarios">ABRIR STAFF</button>
-          </div>
-        </div>
-
-        <!-- MERCADO -->
-        <div class="card">
-          <div class="cardHeader">
-            <div>
-              <div class="badge">PILOTOS</div>
-              <h3 class="cardTitle">Mercado de Pilotos</h3>
-            </div>
-            <div class="badge" style="border-color: rgba(179,136,255,.25);">Contratos • Talentos</div>
-          </div>
-          <p class="cardText">
-            Negocie contratos e monte sua dupla ideal. Resultados, reputação e salário definem o mercado.
-          </p>
-          <div class="actions">
-            <button class="btn purple" id="btnMercado">ABRIR MERCADO</button>
-          </div>
-        </div>
-
-        <!-- PATROCINIO -->
-        <div class="card">
-          <div class="cardHeader">
-            <div>
-              <div class="badge">FINANÇAS</div>
-              <h3 class="cardTitle">Patrocínios & Marca</h3>
-            </div>
-            <div class="badge" style="border-color: rgba(255,145,0,.25);">Objetivos • Bônus</div>
-          </div>
-          <p class="cardText">
-            Escolha patrocinadores, metas e bônus. Seu caixa influencia upgrades, staff e estabilidade.
-          </p>
-          <div class="actions">
-            <button class="btn orange" id="btnPatrocinio">ABRIR PATROCÍNIOS</button>
-          </div>
-        </div>
-
-        <!-- CALENDARIO -->
-        <div class="card">
-          <div class="cardHeader">
-            <div>
-              <div class="badge">TEMPORADA</div>
-              <h3 class="cardTitle">Calendário & Grandes Prêmios</h3>
-            </div>
-            <div class="badge" style="border-color: rgba(255,255,255,.18);">Planejamento</div>
-          </div>
-          <p class="cardText">
-            Escolha o próximo GP e acompanhe a temporada. A partir do calendário você pode ir para as sessões.
-          </p>
-          <div class="actions">
-            <button class="btn" id="btnCalendario">IR PARA CALENDÁRIO</button>
-          </div>
-        </div>
-
-        <!-- SESSOES RAPIDAS -->
-        <div class="card">
-          <div class="cardHeader">
-            <div>
-              <div class="badge">MODO RÁPIDO</div>
-              <h3 class="cardTitle">Sessões Diretas</h3>
-            </div>
-            <div class="badge" style="border-color: rgba(255,23,68,.25);">Live • Telemetria</div>
-          </div>
-          <p class="cardText">
-            Entre direto no Treino Livre, Classificação ou Corrida Rápida. Selecione o GP e comece.
-          </p>
-          <div class="actions">
-            <button class="btn cyan" id="btnTreinoLivre">TREINO LIVRE</button>
-            <button class="btn purple" id="btnQualy">CLASSIFICAÇÃO</button>
-            <button class="btn red" id="btnCorridaRapida">CORRIDA RÁPIDA</button>
-          </div>
-          <div class="hint">
-            Dica: Treino Livre e Classificação aqui abrem com seleção de GP. Corrida Rápida abre o modo rápido do jogo.
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- MODAL DE SELEÇÃO DE GP -->
-    <div class="modalBack" id="modalBack">
-      <div class="modal">
-        <div class="modalTop">
-          <h2 id="modalTitle">Selecionar GP</h2>
-          <button class="modalClose" id="modalClose">✕</button>
-        </div>
-        <div class="modalBody">
-          <div class="row">
-            <label for="gpSelect">Grande Prêmio</label>
-            <select id="gpSelect"></select>
-          </div>
-        </div>
-        <div class="modalActions">
-          <button class="btn green" id="modalStart">INICIAR</button>
-          <button class="btn" id="modalCancel">CANCELAR</button>
         </div>
       </div>
     </div>
 
+    <!-- HERO -->
+    <div class="hero">
+      <h2>Temporada Oficial F1 2025</h2>
+      <p>
+        Aqui você controla tudo: desenvolvimento do carro, pilotos, staff, patrocínios e decisões de pista.
+        Use os módulos abaixo para preparar sua temporada antes de ir para o calendário e correr.
+      </p>
+    </div>
+
+    <!-- GRID -->
+    <div class="grid">
+      <!-- CARRO -->
+      <div class="card">
+        <div class="card-header">
+          <div class="kicker">
+            <span>Carro</span>
+            <strong>Oficina &amp; Setup</strong>
+          </div>
+          <div class="badge">Ajustes</div>
+        </div>
+        <p>Ajuste asas, motor e pneus. Use isso para influenciar ritmo, desgaste e confiabilidade.</p>
+        <div class="card-actions">
+          <button class="card-button accent-blue" onclick="window.location.href='oficina.html'">Abrir Oficina</button>
+        </div>
+        <div class="small-note">Status: protótipo visual — pronto para integrar lógica avançada.</div>
+      </div>
+
+      <!-- STAFF -->
+      <div class="card">
+        <div class="card-header">
+          <div class="kicker">
+            <span>Equipe Técnica</span>
+            <strong>Funcionários &amp; Staff</strong>
+          </div>
+          <div class="badge">Contratos</div>
+        </div>
+        <p>Contrate engenheiros, estrategistas e mecânicos. Multiplicadores afetam treino/corrida.</p>
+        <div class="card-actions">
+          <button class="card-button accent-green" onclick="window.location.href='staff.html'">Abrir Staff</button>
+        </div>
+        <div class="small-note">Dica: foque em PIT e STRAT para ganhos imediatos.</div>
+      </div>
+
+      <!-- PILOTOS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="kicker">
+            <span>Pilotos</span>
+            <strong>Mercado de Pilotos</strong>
+          </div>
+          <div class="badge">Contratos</div>
+        </div>
+        <p>Negocie contratos e monte sua dupla ideal. Resultados e reputação influenciam o mercado.</p>
+        <div class="card-actions">
+          <button class="card-button secondary" onclick="window.location.href='mercado_pilotos.html'">Abrir Mercado</button>
+        </div>
+        <div class="small-note">Se ainda não tiver essa tela pronta, mantenha como protótipo e ajuste depois.</div>
+      </div>
+
+      <!-- PATROCÍNIOS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="kicker">
+            <span>Finanças</span>
+            <strong>Patrocínios &amp; Marca</strong>
+          </div>
+          <div class="badge">Bônus</div>
+        </div>
+        <p>Escolha patrocinadores, metas e bônus. Cada contrato injeta dinheiro no desenvolvimento.</p>
+        <div class="card-actions">
+          <button class="card-button accent-orange" onclick="window.location.href='sponsors.html'">Abrir Patrocínios</button>
+        </div>
+        <div class="small-note">Reputação e resultados influenciam ofertas melhores.</div>
+      </div>
+
+      <!-- CALENDÁRIO -->
+      <div class="card">
+        <div class="card-header">
+          <div class="kicker">
+            <span>Temporada</span>
+            <strong>Calendário &amp; GPs</strong>
+          </div>
+          <div class="badge">Planejamento</div>
+        </div>
+        <p>Escolha o próximo Grande Prêmio, acompanhe a temporada e avance para treinos, qualy e corrida.</p>
+        <div class="card-actions">
+          <button class="card-button ghost" onclick="window.location.href='calendario.html'">Ir para o Calendário</button>
+        </div>
+        <div class="small-note">Você pode usar o calendário para abrir treinos/qualy/corrida por GP.</div>
+      </div>
+
+      <!-- MODO RÁPIDO -->
+      <div class="card">
+        <div class="card-header">
+          <div class="kicker">
+            <span>Modo Rápido</span>
+            <strong>Sessões Diretas</strong>
+          </div>
+          <div class="badge">Live</div>
+        </div>
+        <p>Entre direto em Treino Livre, Classificação ou Corrida Rápida. Ideal para testar setups.</p>
+
+        <div class="two-actions">
+          <button class="card-button accent-blue" onclick="window.location.href='selecionar_gp.html?mode=practice'">Treino Livre</button>
+          <button class="card-button secondary" onclick="window.location.href='selecionar_gp.html?mode=qualifying'">Classificação</button>
+          <button class="card-button accent-pink" onclick="window.location.href='selecionar_gp.html?mode=quickrace'">Corrida Rápida</button>
+        </div>
+
+        <div class="small-note">
+          Dica: Treino Livre e Classificação abrem seleção de GP. Corrida Rápida entra direto no modo rápido do jogo.
+        </div>
+      </div>
+    </div>
+
+    <div style="height: 12px;"></div>
   </div>
 
   <script>
-    // ============================================================
-    // LOBBY — ROTEAMENTO FUNCIONAL + VISUAL AAA
-    // NÃO altera início/capa/seleção. Só cria um lobby novo.
-    // ============================================================
+    // ===== TENTA ENTRAR EM FULLSCREEN (QUANDO POSSÍVEL) =====
+    function tryFullscreen() {
+      const docEl = document.documentElement;
 
-    // Lista de GPs (slug -> nome)
-    const GP_LIST = [
-      { slug: "bahrain", name: "GP do Bahrein 2025" },
-      { slug: "jeddah", name: "GP da Arábia Saudita 2025" },
-      { slug: "australia", name: "GP da Austrália 2025" },
-      { slug: "japan", name: "GP do Japão 2025" },
-      { slug: "china", name: "GP da China 2025" },
-      { slug: "miami", name: "GP de Miami 2025" },
-      { slug: "imola", name: "GP da Emilia-Romagna 2025" },
-      { slug: "monaco", name: "GP de Mônaco 2025" },
-      { slug: "canada", name: "GP do Canadá 2025" },
-      { slug: "spain", name: "GP da Espanha 2025" },
-      { slug: "austria", name: "GP da Áustria 2025" },
-      { slug: "uk", name: "GP da Grã-Bretanha 2025" },
-      { slug: "hungary", name: "GP da Hungria 2025" },
-      { slug: "belgium", name: "GP da Bélgica 2025" },
-      { slug: "netherlands", name: "GP da Holanda 2025" },
-      { slug: "italy", name: "GP da Itália 2025" },
-      { slug: "azerbaijan", name: "GP do Azerbaijão 2025" },
-      { slug: "singapore", name: "GP de Singapura 2025" },
-      { slug: "usa", name: "GP dos EUA 2025" },
-      { slug: "mexico", name: "GP do México 2025" },
-      { slug: "brazil", name: "GP do Brasil 2025" },
-      { slug: "lasvegas", name: "GP de Las Vegas 2025" },
-      { slug: "qatar", name: "GP do Qatar 2025" },
-      { slug: "abudhabi", name: "GP de Abu Dhabi 2025" }
-    ];
+      const alreadyFullscreen =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement;
 
-    // Mapear nomes de equipe -> (logo opcional)
-    // Se você tiver logos em assets/teams/, renomeie e ajuste aqui.
-    const TEAM_META = {
-      redbull:   { name: "Oracle Red Bull Racing", logo: "assets/teams/redbull.png" },
-      mercedes:  { name: "Mercedes-AMG Petronas",  logo: "assets/teams/mercedes.png" },
-      ferrari:   { name: "Scuderia Ferrari",       logo: "assets/teams/ferrari.png" },
-      mclaren:   { name: "McLaren F1 Team",        logo: "assets/teams/mclaren.png" },
-      astonmartin:{name:"Aston Martin Aramco",     logo: "assets/teams/astonmartin.png" },
-      alpine:    { name: "BWT Alpine",             logo: "assets/teams/alpine.png" },
-      williams:  { name: "Williams Racing",        logo: "assets/teams/williams.png" },
-      rb:        { name: "RB F1 Team",             logo: "assets/teams/rb.png" },
-      sauber:    { name: "Kick Sauber",            logo: "assets/teams/sauber.png" },
-      haas:      { name: "Haas F1 Team",           logo: "assets/teams/haas.png" }
-    };
+      const inStandalone =
+        window.matchMedia &&
+        window.matchMedia('(display-mode: standalone)').matches;
 
-    function getParams(){
-      const u = new URL(window.location.href);
-      return Object.fromEntries(u.searchParams.entries());
-    }
+      if (alreadyFullscreen || inStandalone) return;
 
-    function buildUrl(page, extraParams = {}){
-      const u = new URL(page, window.location.href);
-      const base = getParams();
-      // preserva tudo (userTeam, manager, etc.)
-      Object.keys(base).forEach(k => u.searchParams.set(k, base[k]));
-      // adiciona extras
-      Object.keys(extraParams).forEach(k => u.searchParams.set(k, extraParams[k]));
-      return u.toString();
-    }
+      const requestFS =
+        docEl.requestFullscreen ||
+        docEl.webkitRequestFullscreen ||
+        docEl.msRequestFullscreen;
 
-    function go(page, extraParams = {}){
-      window.location.href = buildUrl(page, extraParams);
-    }
-
-    // Modal (seleção GP)
-    const modalBack = document.getElementById("modalBack");
-    const modalClose = document.getElementById("modalClose");
-    const modalCancel = document.getElementById("modalCancel");
-    const modalStart = document.getElementById("modalStart");
-    const modalTitle = document.getElementById("modalTitle");
-    const gpSelect = document.getElementById("gpSelect");
-
-    let modalTargetPage = null; // practice.html ou qualifying.html
-
-    function openGPModal(targetPage, title){
-      modalTargetPage = targetPage;
-      modalTitle.textContent = title;
-
-      // popula select só 1x por abertura (limpa e recria)
-      gpSelect.innerHTML = "";
-      GP_LIST.forEach(gp => {
-        const opt = document.createElement("option");
-        opt.value = gp.slug;
-        opt.textContent = gp.name;
-        gpSelect.appendChild(opt);
-      });
-
-      // tenta lembrar último GP escolhido
-      const last = localStorage.getItem("LAST_GP_SLUG");
-      if(last){
-        const found = GP_LIST.find(x => x.slug === last);
-        if(found) gpSelect.value = last;
+      if (requestFS) {
+        requestFS.call(docEl).catch(() => {
+          // Ignora erro (usuário pode ter bloqueado)
+        });
       }
-
-      modalBack.style.display = "flex";
     }
 
-    function closeGPModal(){
-      modalBack.style.display = "none";
+    // ===== CARREGA DADOS BÁSICOS (TIME / MANAGER) DO LOCALSTORAGE =====
+    function loadUserBar() {
+      try {
+        const teamName  = localStorage.getItem('f1m2025_user_team_name')  || 'Ferrari';
+        const teamLogo  = localStorage.getItem('f1m2025_user_team_logo')  || 'assets/teams/ferrari.png';
+
+        const managerName   = localStorage.getItem('f1m2025_user_manager_name')   || 'Manager Demo';
+        const managerAvatar = localStorage.getItem('f1m2025_user_manager_avatar') || 'assets/managers/manager_ethnic_01.png';
+        const countryFlag   = localStorage.getItem('f1m2025_user_country_flag')   || 'assets/flags/br.png';
+        const countryName   = localStorage.getItem('f1m2025_user_country_name')   || 'Brasil';
+
+        document.getElementById('team-name').textContent  = teamName;
+        document.getElementById('team-logo').src          = teamLogo;
+
+        document.getElementById('manager-name').textContent  = managerName;
+        document.getElementById('manager-avatar').src        = managerAvatar;
+        document.getElementById('manager-flag').src          = countryFlag;
+        document.getElementById('manager-country-name').textContent = countryName;
+      } catch (e) {
+        console.warn('Não foi possível carregar dados do manager/equipe:', e);
+      }
     }
 
-    modalClose.addEventListener("click", closeGPModal);
-    modalCancel.addEventListener("click", closeGPModal);
-    modalBack.addEventListener("click", (e) => {
-      if(e.target === modalBack) closeGPModal();
+    document.addEventListener('DOMContentLoaded', () => {
+      tryFullscreen();
+      loadUserBar();
     });
-
-    modalStart.addEventListener("click", () => {
-      const slug = gpSelect.value;
-      localStorage.setItem("LAST_GP_SLUG", slug);
-
-      // Parâmetros esperados pelas páginas do seu jogo (conforme seu padrão atual)
-      // practice.html?track=bahrain&gp=GP+do+Bahrein+2025&userTeam=...
-      const gpObj = GP_LIST.find(x => x.slug === slug) || GP_LIST[0];
-
-      go(modalTargetPage, {
-        track: slug,
-        gp: gpObj.name
-      });
-    });
-
-    // BIND BOTÕES
-    document.getElementById("btnVoltar").addEventListener("click", () => {
-      // Volta para a tela anterior do seu fluxo (ajuste se necessário)
-      // Mantive start.html porque já aparece nos seus arquivos.
-      go("start.html");
-    });
-
-    document.getElementById("btnOficina").addEventListener("click", () => go("oficina.html"));
-    document.getElementById("btnFuncionarios").addEventListener("click", () => go("funcionarios.html"));
-    document.getElementById("btnPatrocinio").addEventListener("click", () => go("patrocinio.html"));
-    document.getElementById("btnMercado").addEventListener("click", () => go("mercado.html"));
-    document.getElementById("btnCalendario").addEventListener("click", () => go("calendario.html"));
-
-    document.getElementById("btnCorridaRapida").addEventListener("click", () => go("quickrace.html"));
-
-    document.getElementById("btnTreinoLivre").addEventListener("click", () => {
-      openGPModal("practice.html", "TREINO LIVRE — Selecionar GP");
-    });
-
-    document.getElementById("btnQualy").addEventListener("click", () => {
-      openGPModal("qualifying.html", "CLASSIFICAÇÃO — Selecionar GP");
-    });
-
-    // Carrega dados básicos (equipe/manager) sem quebrar se não existir
-    (function boot(){
-      const p = getParams();
-      const teamKey = (p.userTeam || "redbull").toLowerCase();
-
-      const teamData = TEAM_META[teamKey] || { name: teamKey.toUpperCase(), logo: "assets/teams/default.png" };
-      const teamNameEl = document.getElementById("teamName");
-      const teamLogoEl = document.getElementById("teamLogo");
-
-      teamNameEl.textContent = teamData.name;
-      teamLogoEl.src = teamData.logo;
-
-      // Manager (tenta pegar do localStorage — se você salva isso em outro lugar, ajuste)
-      const managerName = localStorage.getItem("MANAGER_NAME") || "Seu Manager";
-      document.getElementById("managerName").textContent = managerName;
-
-      const avatar = localStorage.getItem("MANAGER_AVATAR") || "assets/avatars/default.png";
-      document.getElementById("managerAvatar").src = avatar;
-
-      // Evita imagem quebrada: fallback se logo/avatar não existir
-      teamLogoEl.onerror = () => { teamLogoEl.src = "assets/teams/default.png"; };
-      document.getElementById("managerAvatar").onerror = () => { document.getElementById("managerAvatar").src = "assets/avatars/default.png"; };
-    })();
   </script>
 </body>
 </html>
