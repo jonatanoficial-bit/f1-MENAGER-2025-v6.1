@@ -1,345 +1,520 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>F1 MANAGER 2025 — Patrocínios</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F1 Manager 2025 — Patrocínios</title>
 
   <style>
     :root{
-      --bg:#05070c;
-      --glass: rgba(10,14,22,.62);
-      --glass2: rgba(10,14,22,.74);
+      --bg:#05050a;
+      --panel: rgba(10,10,16,.82);
       --stroke: rgba(255,255,255,.10);
-      --stroke2: rgba(255,255,255,.14);
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.68);
-      --chip: rgba(0,0,0,.35);
-      --blue:#18a7ff;
-      --blue2:#0a7bd6;
-      --ok:#23c55e;
-      --warn:#f59e0b;
-      --danger:#ef4444;
-      --radius:18px;
-      --radius2:24px;
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --shadow2: 0 10px 26px rgba(0,0,0,.35);
+      --text: rgba(255,255,255,.95);
+      --muted: rgba(255,255,255,.72);
+      --red:#ff1744;
+      --cyan:#40c4ff;
+      --green:#00e676;
+      --orange:#ff9100;
+      --radius:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+      --shadow2: 0 10px 30px rgba(0,0,0,.45);
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; padding:0; }
     body{
-      margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text);
-      background:var(--bg);
-      overflow-x:hidden;
-    }
-
-    /* Background */
-    body::before{
-      content:"";
-      position:fixed; inset:0;
-      background:
-        radial-gradient(1200px 700px at 10% 0%, rgba(24,167,255,.18), transparent 55%),
-        radial-gradient(900px 600px at 85% 10%, rgba(16,185,129,.10), transparent 55%),
-        linear-gradient(180deg, rgba(0,0,0,.72), rgba(0,0,0,.88)),
-        url("assets/ui/patrocinio_bg.png");
+      color: var(--text);
+      background: var(--bg);
+      background-image: url("assets/ui/lobby_bg.png");
       background-size: cover;
       background-position: center;
-      filter: saturate(1.05) contrast(1.05);
-      z-index:-2;
+      background-attachment: fixed;
+      overflow-x:hidden;
+      overflow-y:auto;
+      -webkit-overflow-scrolling: touch;
     }
-    body::after{
-      content:"";
-      position:fixed; inset:0;
-      background: radial-gradient(900px 700px at 50% 30%, rgba(0,0,0,.10), rgba(0,0,0,.70));
-      z-index:-1;
+    body::-webkit-scrollbar{ width:10px; }
+    body::-webkit-scrollbar-track{ background: rgba(0,0,0,.25); }
+    body::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,.18);
+      border-radius: 999px;
+      border:2px solid rgba(0,0,0,.25);
     }
-
-    .wrap{ max-width: 1220px; margin:0 auto; padding: 20px 18px 30px; }
-
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between; gap:14px;
-      padding:14px 16px;
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(10,14,22,.72), rgba(10,14,22,.48));
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(10px);
-    }
-    .brand{ display:flex; align-items:center; gap:12px; min-width: 260px; }
-    .brand img{ width:40px;height:40px;object-fit:contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,.55)); }
-    .brand h1{ font-size:14px; letter-spacing:.6px; margin:0; font-weight:800; text-transform:uppercase; line-height:1.15; }
-    .brand p{ margin:2px 0 0; font-size:12px; color:var(--muted); line-height:1.2; }
-
-    .actions{ display:flex; gap:10px; align-items:center; }
-    .btn{
-      appearance:none;
-      border:1px solid var(--stroke2);
-      background: rgba(0,0,0,.25);
-      color:var(--text);
-      padding:10px 14px;
-      border-radius:999px;
-      cursor:pointer;
-      font-weight:700;
-      letter-spacing:.2px;
-      box-shadow: 0 10px 22px rgba(0,0,0,.35);
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
-      user-select:none;
-    }
-    .btn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.22); background: rgba(0,0,0,.34); }
-    .btn:active{ transform: translateY(0); }
-    .btn.primary{
-      border-color: rgba(24,167,255,.38);
-      background: linear-gradient(180deg, rgba(24,167,255,.22), rgba(10,123,214,.18));
-    }
-
-    .grid{
-      margin-top: 18px;
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap: 14px;
-      align-items:start;
-    }
-
-    .panel{
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(10,14,22,.74), rgba(10,14,22,.56));
-      border-radius: var(--radius2);
+    .overlay{
+      min-height:100vh;
+      width:100%;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(64,196,255,.10), rgba(0,0,0,0) 40%),
+        radial-gradient(circle at 88% 20%, rgba(255,23,68,.10), rgba(0,0,0,0) 45%),
+        linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,.90));
+      display:flex;
+      flex-direction:column;
       padding: 14px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      width: min(1200px, 100%);
+      margin: 0 auto;
+    }
+    .pillBtn{
+      border:none; cursor:pointer;
+      border-radius:999px;
+      padding: 10px 16px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#fff;
+      background: linear-gradient(135deg, rgba(255,23,68,.95), rgba(255,23,68,.62));
+      box-shadow: 0 0 18px rgba(255,23,68,.45);
+    }
+    .title{
+      flex:1;
+      text-align:center;
+      padding: 0 8px;
+    }
+    .title h1{
+      margin:0;
+      font-size:1.02rem;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
+    .title p{
+      margin:.35rem 0 0;
+      color: var(--muted);
+      font-size:.88rem;
+      line-height:1.25;
     }
 
-    .kpi{
-      display:grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-      margin-top: 12px;
-    }
-    .kpi .card{
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.18));
-      border-radius: 18px;
-      padding: 12px;
-      box-shadow: var(--shadow2);
-    }
-    .kpi .k{ font-size:12px; color:var(--muted); }
-    .kpi .v{ margin-top:6px; font-weight:900; font-size:16px; }
-
-    .sectionTitle{
-      margin: 0;
-      font-size: 13px;
-      letter-spacing:.6px;
-      font-weight: 900;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.86);
-    }
-    .subhint{ margin:8px 0 0; color: rgba(255,255,255,.62); font-size:12px; line-height:1.35; }
-
-    /* Containers usados pelo sponsorSystem.js */
-    #listaSponsorsAtivos, #listaSponsorsOfertas{
+    .wrap{
+      width: min(1200px, 100%);
+      margin: 12px auto 40px;
       display:grid;
       grid-template-columns: 1fr;
-      gap: 12px;
-      margin-top: 12px;
+      gap:12px;
+    }
+    @media (min-width: 980px){
+      .wrap{ grid-template-columns: 1.1fr .9fr; }
     }
 
-    /* Cards gerados pelo JS */
-    .sponsor-card{
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.18));
-      border-radius: 18px;
-      padding: 14px;
-      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    .card{
+      background: linear-gradient(180deg, rgba(12,12,20,.90), rgba(10,10,16,.74));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
     }
-    .sponsor-card h3{ margin:0; font-size:14px; font-weight: 900; }
-    .sponsor-card .sub{ color: var(--muted); font-size:12px; margin-top:4px; line-height:1.25; }
-    .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-top:10px; }
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px;
+    .cardHead{
+      padding: 14px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.28);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: var(--chip);
-      font-size: 12px;
-      color: rgba(255,255,255,.82);
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.12);
+      font-size:.72rem;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.86);
       white-space:nowrap;
     }
+    .cardBody{ padding: 14px; }
 
-    .sponsor-card .btnrow{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
-    .sponsor-card button{
-      flex: 1 1 160px;
-      border-radius: 999px;
-      padding: 10px 12px;
+    .statRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top: 10px;
+    }
+    .stat{
+      flex: 1;
+      min-width: 180px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.30);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .stat small{
+      display:block;
+      opacity:.72;
+      font-size:.70rem;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+    .stat strong{
+      font-size:1.05rem;
+      letter-spacing:.02em;
+    }
+
+    .offer{
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.30);
+      border: 1px solid rgba(255,255,255,.10);
+      margin-bottom: 10px;
+    }
+    .offerTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .offerName{
+      margin:0;
+      font-size:1rem;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .offerTier{
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:900;
+      letter-spacing:.10em;
+      font-size:.72rem;
+      background: rgba(255,255,255,.10);
       border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.25);
-      color: rgba(255,255,255,.92);
-      font-weight: 800;
-      cursor:pointer;
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      white-space:nowrap;
     }
-    .sponsor-card button:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.22); background: rgba(0,0,0,.34); }
-    .sponsor-card button.primary{
-      border-color: rgba(24,167,255,.38);
-      background: linear-gradient(180deg, rgba(24,167,255,.22), rgba(10,123,214,.18));
+    .offerText{
+      margin:6px 0 0;
+      color: var(--muted);
+      font-size:.88rem;
+      line-height:1.32;
     }
-    .sponsor-card button.danger{
-      border-color: rgba(239,68,68,.30);
-      background: linear-gradient(180deg, rgba(239,68,68,.16), rgba(0,0,0,.22));
+    .goals{
+      margin-top: 10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .goal{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      font-size:.86rem;
+    }
+    .goal span{ color: rgba(255,255,255,.86); }
+    .goal b{ color: rgba(255,255,255,.95); }
+
+    .btnRow{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:none; cursor:pointer;
+      border-radius:999px;
+      padding: 12px 14px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#fff;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+      flex:1;
+      min-width: 180px;
+    }
+    .btn.green{ background: linear-gradient(135deg, rgba(0,230,118,.90), rgba(0,230,118,.52)); border-color: rgba(0,230,118,.34); }
+    .btn.orange{ background: linear-gradient(135deg, rgba(255,145,0,.92), rgba(255,145,0,.55)); border-color: rgba(255,145,0,.34); }
+    .btn.red{ background: linear-gradient(135deg, rgba(255,23,68,.92), rgba(255,23,68,.55)); border-color: rgba(255,23,68,.34); }
+    .btn:active{ transform: scale(.99); }
+
+    .note{
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.72);
+      font-size:.86rem;
+      line-height:1.35;
     }
 
-    @media (max-width: 1100px){
-      .grid{ grid-template-columns: 1fr; }
-      .kpi{ grid-template-columns: repeat(2, 1fr); }
-      .brand{ min-width: unset; }
+    .warn{
+      color: rgba(255,145,0,.95);
+      font-weight:800;
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
+  <div class="overlay">
+
     <div class="topbar">
-      <div class="brand">
-        <img id="teamLogo" src="" alt="Logo da equipe" />
-        <div>
-          <h1>PATROCÍNIOS & MARCA</h1>
-          <p>Negocie contratos, cumpra metas e converta em performance real.</p>
-        </div>
+      <button class="pillBtn" id="btnBack">VOLTAR</button>
+      <div class="title">
+        <h1>PATROCÍNIOS & MARCA</h1>
+        <p>Assine contratos, cumpra metas e aumente o caixa. Offline, integrado ao save do jogo.</p>
       </div>
-      <div class="actions">
-        <button class="btn" id="btnManager">Manager</button>
-        <button class="btn primary" id="btnVoltar">VOLTAR</button>
-      </div>
+      <div style="width:110px;"></div>
     </div>
 
-    <div class="grid">
-      <div class="panel">
-        <h2 class="sectionTitle">Central de contratos</h2>
-        <p class="subhint">Ofertas variam por reputação, exposição e marketing. Contratos pagam por GP e podem ter bônus/penalidades.</p>
+    <div class="wrap">
 
-        <div class="kpi">
-          <div class="card">
-            <div class="k">Caixa</div>
-            <div class="v" id="uiMoney">€ 0</div>
+      <!-- ESQUERDA: OFERTAS -->
+      <div class="card">
+        <div class="cardHead">
+          <div>
+            <div class="badge">OFERTAS DISPONÍVEIS</div>
+            <div style="margin-top:6px; font-weight:900; letter-spacing:.02em;">Selecione um patrocinador</div>
           </div>
-          <div class="card">
-            <div class="k">Reputação</div>
-            <div class="v" id="uiRep">0 / 100</div>
-          </div>
-          <div class="card">
-            <div class="k">Exposição</div>
-            <div class="v" id="uiExpo">0 / 100</div>
-          </div>
-          <div class="card">
-            <div class="k">Marketing</div>
-            <div class="v" id="uiMkt">0 / 100</div>
-          </div>
-          <div class="card">
-            <div class="k">Boost ofertas</div>
-            <div class="v" id="uiBoost">x1.0</div>
-          </div>
+          <div class="badge" id="repBadge">REPUTAÇÃO: --</div>
         </div>
-
-        <div style="margin-top:14px">
-          <div class="sectionTitle">Contratos ativos</div>
-          <div id="listaSponsorsAtivos"></div>
+        <div class="cardBody" id="offersBox">
+          <!-- ofertas via JS -->
         </div>
       </div>
 
-      <div class="panel">
-        <h2 class="sectionTitle">Ofertas disponíveis</h2>
-        <p class="subhint">Assine com atenção: metas podem encerrar contrato se não forem cumpridas.</p>
-        <div id="listaSponsorsOfertas"></div>
+      <!-- DIREITA: STATUS -->
+      <div class="card">
+        <div class="cardHead">
+          <div>
+            <div class="badge">STATUS FINANCEIRO</div>
+            <div style="margin-top:6px; font-weight:900; letter-spacing:.02em;">Contrato ativo & caixa</div>
+          </div>
+          <div class="badge" id="teamBadge">EQUIPE</div>
+        </div>
+
+        <div class="cardBody">
+          <div class="statRow">
+            <div class="stat">
+              <small>Caixa</small>
+              <strong id="cashTxt">--</strong>
+            </div>
+            <div class="stat">
+              <small>Reputação</small>
+              <strong id="repTxt">--</strong>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;" class="offer" id="activeBox">
+            <!-- contrato ativo -->
+          </div>
+
+          <div class="btnRow">
+            <button class="btn orange" id="btnSimPayout">RECEBER 1 SEMANA</button>
+            <button class="btn red" id="btnCancelSponsor">ENCERRAR CONTRATO</button>
+          </div>
+
+          <div class="note">
+            <b>Como funciona:</b><br/>
+            • Patrocinador paga semanalmente (simulado offline).<br/>
+            • Metas e bônus ficam registradas para a carreira (você pode ligar isso ao resultado das corridas depois).<br/>
+            • Staff e patrocínios influenciam seu crescimento e estabilidade.
+          </div>
+
+          <div class="note">
+            <span class="warn">Dica:</span> Se quiser “realismo FIA”, use o caixa para staff/upgrades e controle o cost cap em outra tela depois.
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
 
+  <script src="js/saveSystem.js"></script>
+  <script src="js/gameData.js"></script>
   <script>
-    const SAVE_KEY = "F1M2025_SAVE";
+    const params = new URL(window.location.href).searchParams;
+    const userTeam = (params.get("userTeam") || SaveSystem.load().profile.userTeam || "redbull").toLowerCase();
 
-    function defaultState(){
-      const params = new URLSearchParams(location.search);
-      const userTeam = (params.get("userTeam") || localStorage.getItem("F1M_userTeam") || "mclaren").toLowerCase();
-      localStorage.setItem("F1M_userTeam", userTeam);
+    const repBadge = document.getElementById("repBadge");
+    const repTxt = document.getElementById("repTxt");
+    const cashTxt = document.getElementById("cashTxt");
+    const teamBadge = document.getElementById("teamBadge");
+    const offersBox = document.getElementById("offersBox");
+    const activeBox = document.getElementById("activeBox");
 
-      return {
-        meta: { version: 1, lastSaved: Date.now() },
-        userTeam,
-        finances: {
-          money: 140_000_000,
-          weeklyCost: 0,
-          exposure: 35,
-          reputation: 82,
-          marketing: 59
-        },
-        sponsors: [],
-        sponsorPool: []
-      };
+    function money(n){ return GameData.money(n); }
+
+    function goLobby(){
+      const url = new URL("lobby.html", window.location.href);
+      url.searchParams.set("userTeam", userTeam);
+      window.location.href = url.toString();
     }
 
-    function loadState(){
-      try{
-        const raw = localStorage.getItem(SAVE_KEY);
-        if(!raw) return defaultState();
-        const parsed = JSON.parse(raw);
-        return Object.assign(defaultState(), parsed);
-      }catch(e){
-        return defaultState();
+    document.getElementById("btnBack").addEventListener("click", goLobby);
+
+    function refresh() {
+      const save = SaveSystem.load();
+      save.profile.userTeam = userTeam;
+      SaveSystem.save(save);
+
+      const rep = save.economy.reputation || 0;
+      repBadge.textContent = "REPUTAÇÃO: " + rep;
+      repTxt.textContent = rep;
+      cashTxt.textContent = money(save.economy.cash || 0);
+      teamBadge.textContent = "EQUIPE: " + String(userTeam).toUpperCase();
+
+      renderActive(save);
+      renderOffers(save);
+    }
+
+    function renderActive(save){
+      const active = save.sponsors.active;
+
+      if(!active){
+        activeBox.innerHTML = `
+          <div class="offerTop">
+            <div>
+              <p class="offerName" style="margin:0;">Sem patrocinador ativo</p>
+              <p class="offerText">Assine um contrato para receber pagamentos semanais e bônus.</p>
+            </div>
+            <div class="offerTier">--</div>
+          </div>
+        `;
+        return;
       }
+
+      const goalsHtml = (active.goals || []).map(g => `
+        <div class="goal">
+          <span>${g.label}</span>
+          <b>${money(g.bonus)}</b>
+        </div>
+      `).join("");
+
+      activeBox.innerHTML = `
+        <div class="offerTop">
+          <div>
+            <p class="offerName" style="margin:0;">${active.name}</p>
+            <p class="offerText">Pagamento semanal: <b>${money(active.weeklyPay)}</b> • Assinado em: <b>${(active.signedAt || "").slice(0,10)}</b></p>
+          </div>
+          <div class="offerTier">${active.tier}</div>
+        </div>
+
+        <div class="goals">
+          ${goalsHtml || `<div class="goal"><span>Sem metas</span><b>${money(0)}</b></div>`}
+        </div>
+      `;
     }
 
-    function saveState(){
-      try{
-        window.gameState.meta = window.gameState.meta || {};
-        window.gameState.meta.lastSaved = Date.now();
-        localStorage.setItem(SAVE_KEY, JSON.stringify(window.gameState));
-      }catch(e){}
+    function canOffer(sponsor, save){
+      const rep = save.economy.reputation || 0;
+      return rep >= (sponsor.reputationMin || 0);
     }
 
-    window.gameState = loadState();
+    function renderOffers(save){
+      offersBox.innerHTML = "";
 
-    (function setLogo(){
-      const team = (window.gameState.userTeam || "mclaren").toLowerCase();
-      const logo = document.getElementById("teamLogo");
-      logo.src = `assets/teams/${team}.png`;
-      logo.onerror = () => { logo.style.display = "none"; };
-    })();
+      GameData.Sponsors.forEach(sp => {
+        const locked = !canOffer(sp, save);
+        const repNeed = sp.reputationMin || 0;
 
-    document.getElementById("btnVoltar").addEventListener("click", () => {
-      if (history.length > 1) history.back();
-      else location.href = "index.html";
+        const goalsHtml = (sp.goals || []).map(g => `
+          <div class="goal">
+            <span>${g.label}</span>
+            <b>${money(g.bonus)}</b>
+          </div>
+        `).join("");
+
+        const btnLabel = locked ? `BLOQUEADO (REP ${repNeed})` : "ASSINAR CONTRATO";
+
+        const offer = document.createElement("div");
+        offer.className = "offer";
+        offer.innerHTML = `
+          <div class="offerTop">
+            <div>
+              <p class="offerName">${sp.name}</p>
+              <p class="offerText">${sp.flavor}</p>
+              <p class="offerText">Semanal: <b>${money(sp.weeklyPay)}</b> • Bônus de assinatura: <b>${money(sp.signingBonus)}</b></p>
+            </div>
+            <div class="offerTier">${sp.tier}</div>
+          </div>
+
+          <div class="goals">${goalsHtml}</div>
+
+          <div class="btnRow">
+            <button class="btn green" ${locked ? "disabled style='opacity:.45; cursor:not-allowed;'" : ""} data-id="${sp.id}">
+              ${btnLabel}
+            </button>
+          </div>
+        `;
+
+        offersBox.appendChild(offer);
+      });
+
+      offersBox.querySelectorAll("button[data-id]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-id");
+          const sp = GameData.Sponsors.find(x => x.id === id);
+          if(!sp) return;
+
+          SaveSystem.update(save => {
+            if(!canOffer(sp, save)) return;
+
+            // mover antigo para histórico
+            if(save.sponsors.active){
+              save.sponsors.history = save.sponsors.history || [];
+              save.sponsors.history.unshift(save.sponsors.active);
+            }
+
+            save.sponsors.active = {
+              id: sp.id,
+              name: sp.name,
+              tier: sp.tier,
+              weeklyPay: sp.weeklyPay,
+              goals: sp.goals || [],
+              signedAt: new Date().toISOString(),
+            };
+
+            // bônus de assinatura
+            save.economy.cash = Math.round((save.economy.cash || 0) + (sp.signingBonus || 0));
+          });
+
+          refresh();
+          alert("Contrato assinado! Bônus de assinatura recebido.");
+        });
+      });
+    }
+
+    document.getElementById("btnSimPayout").addEventListener("click", () => {
+      SaveSystem.update(save => {
+        const active = save.sponsors.active;
+        if(!active) return;
+        save.economy.cash = Math.round((save.economy.cash || 0) + (active.weeklyPay || 0));
+        save.sponsors.lastPayoutAt = new Date().toISOString();
+      });
+      refresh();
+      alert("Pagamento semanal recebido.");
     });
-    document.getElementById("btnManager").addEventListener("click", () => {
-      location.href = "index.html";
+
+    document.getElementById("btnCancelSponsor").addEventListener("click", () => {
+      const ok = confirm("Deseja encerrar o contrato atual? (Sem multa por enquanto)");
+      if(!ok) return;
+
+      SaveSystem.update(save => {
+        if(save.sponsors.active){
+          save.sponsors.history = save.sponsors.history || [];
+          save.sponsors.history.unshift(save.sponsors.active);
+        }
+        save.sponsors.active = null;
+      });
+
+      refresh();
+      alert("Contrato encerrado.");
     });
 
-    let saveT;
-    document.addEventListener("click", () => {
-      clearTimeout(saveT);
-      saveT = setTimeout(saveState, 120);
-    });
-
-    function euro(n){
-      return "€ " + Math.round(n).toLocaleString("pt-BR");
-    }
-    function refreshTop(){
-      const f = window.gameState.finances || {};
-      document.getElementById("uiMoney").textContent = euro(f.money || 0);
-      document.getElementById("uiRep").textContent = `${Math.round(f.reputation || 0)} / 100`;
-      document.getElementById("uiExpo").textContent = `${Math.round(f.exposure || 0)} / 100`;
-      document.getElementById("uiMkt").textContent = `${Math.round(f.marketing || 0)} / 100`;
-      const boost = 0.7 + ((f.reputation||0)*0.004) + ((f.exposure||0)*0.003) + ((f.marketing||0)*0.004);
-      document.getElementById("uiBoost").textContent = "x" + boost.toFixed(2);
-    }
-    refreshTop();
-    setInterval(refreshTop, 400);
-  </script>
-
-  <!-- IMPORTANTE: aqui NÃO carregamos main.js/data.js para não redeclarar TEAMS_2025 -->
-  <script src="sponsorSystem.js"></script>
-  <script>
-    if (typeof mostrarTelaSponsors === "function") mostrarTelaSponsors();
+    refresh();
   </script>
 </body>
 </html>
