@@ -7,60 +7,82 @@
 
   <style>
     :root{
-      --bg:#070A12;
-      --glass: rgba(16, 20, 32, .62);
-      --glass2: rgba(10, 12, 18, .55);
-      --stroke: rgba(255,255,255,.10);
+      --bg:#060812;
+      --txt:#ECF2FF;
+      --muted: rgba(236,242,255,.74);
+      --muted2: rgba(236,242,255,.56);
+
+      --glass: rgba(14, 18, 30, .58);
+      --glass2: rgba(10, 12, 18, .52);
+      --stroke: rgba(255,255,255,.12);
       --stroke2: rgba(255,255,255,.08);
-      --txt:#EAF0FF;
-      --muted: rgba(234,240,255,.72);
-      --muted2: rgba(234,240,255,.55);
-      --shadow: 0 18px 50px rgba(0,0,0,.55);
-      --shadow2: 0 10px 22px rgba(0,0,0,.42);
+
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --shadow2: 0 10px 26px rgba(0,0,0,.42);
+
       --r: 22px;
       --r2: 16px;
 
-      --c-blue: #4CC3FF;
-      --c-green:#42E6B6;
-      --c-orange:#FFB64A;
-      --c-red:  #FF3B4E;
-      --c-violet:#A56DFF;
-      --c-pink:#FF4FE0;
-      --c-ice:#DCEBFF;
+      /* Acentos (mais "AAA") */
+      --blue: #4CC3FF;
+      --blue2:#2E7BFF;
+
+      --green:#42E6B6;
+      --green2:#00D4FF;
+
+      --orange:#FFB64A;
+      --orange2:#FF5A3A;
+
+      --red:#FF3B4E;
+      --red2:#FF6A8C;
+
+      --violet:#A56DFF;
+      --violet2:#4BE3FF;
+
+      --pink:#FF4FE0;
+      --pink2:#FFB04A;
+
+      /* Glow */
+      --glowBlue: rgba(76,195,255,.30);
+      --glowGreen: rgba(66,230,182,.28);
+      --glowOrange: rgba(255,182,74,.26);
+      --glowRed: rgba(255,59,78,.24);
+      --glowViolet: rgba(165,109,255,.25);
+      --glowPink: rgba(255,79,224,.22);
     }
 
-    *{ box-sizing: border-box; }
+    *{ box-sizing:border-box; }
     html, body{ height:100%; }
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color: var(--txt);
       background: var(--bg);
-      overflow-x: hidden;
-      overflow-y: auto; /* permite rolagem (mobile) */
+      overflow-x:hidden;
+      overflow-y:auto;
       -webkit-overflow-scrolling: touch;
     }
 
     /* Scrollbar (desktop) */
     body::-webkit-scrollbar { width: 10px; }
     body::-webkit-scrollbar-track { background: rgba(255,255,255,.05); }
-    body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 12px; }
-    body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.28); }
+    body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.20); border-radius: 12px; }
+    body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.30); }
 
+    /* Fundo (usa imagem lobby do projeto) */
     .bg{
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(1200px 700px at 18% 22%, rgba(255,255,255,.12), transparent 60%),
-        radial-gradient(1000px 650px at 85% 10%, rgba(76,195,255,.10), transparent 55%),
-        radial-gradient(900px 700px at 80% 75%, rgba(255,59,78,.10), transparent 58%),
-        linear-gradient(180deg, rgba(0,0,0,.75) 0%, rgba(0,0,0,.55) 35%, rgba(0,0,0,.82) 100%),
+        radial-gradient(1200px 700px at 14% 18%, rgba(255,255,255,.13), transparent 60%),
+        radial-gradient(1000px 650px at 86% 10%, rgba(76,195,255,.12), transparent 55%),
+        radial-gradient(950px 720px at 80% 78%, rgba(255,59,78,.12), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.74) 0%, rgba(0,0,0,.52) 40%, rgba(0,0,0,.86) 100%),
         url('assets/backgrounds/lobby.jpg') center/cover no-repeat;
-      filter: saturate(1.05) contrast(1.05);
+      filter: saturate(1.08) contrast(1.08);
       transform: scale(1.02);
       z-index:-3;
     }
-
     .noise{
       position: fixed;
       inset: 0;
@@ -70,7 +92,6 @@
       z-index:-2;
       pointer-events:none;
     }
-
     .vignette{
       position: fixed;
       inset: 0;
@@ -80,16 +101,15 @@
     }
 
     .app{
-      min-height: 100%;
-      height: auto;
-      padding: 16px 6vw calc(24px + env(safe-area-inset-bottom));
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
       max-width: 1200px;
       margin: 0 auto;
+      padding: 16px 6vw calc(24px + env(safe-area-inset-bottom));
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
     }
 
+    /* Topbar AAA */
     .topbar{
       display:flex;
       align-items:center;
@@ -97,96 +117,117 @@
       gap: 10px;
       padding: 12px 12px;
       border-radius: 999px;
-      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
       border: 1px solid var(--stroke);
       box-shadow: var(--shadow2);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       position: sticky;
       top: 10px;
       z-index: 50;
+      overflow:hidden;
+    }
+
+    .topbar:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(520px 180px at 12% 0%, rgba(76,195,255,.30), transparent 65%),
+        radial-gradient(540px 180px at 88% 0%, rgba(255,59,78,.22), transparent 62%);
+      opacity:.65;
+      pointer-events:none;
     }
 
     .top-left{
       display:flex;
       align-items:center;
       gap: 10px;
-      min-width: 160px;
+      min-width: 140px;
+      position:relative;
+      z-index:1;
     }
 
     .btn-back{
       appearance:none;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.30);
       color: var(--txt);
-      font-weight: 800;
+      font-weight: 900;
       padding: 10px 14px;
       border-radius: 999px;
       cursor:pointer;
-      letter-spacing:.5px;
+      letter-spacing:.6px;
       text-transform: uppercase;
       font-size: 12px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.35);
     }
 
     .title{
       display:flex;
       flex-direction:column;
       align-items:center;
-      flex:1;
       text-align:center;
+      flex:1;
       gap: 2px;
       padding: 6px 10px;
+      position:relative;
+      z-index:1;
     }
     .title h1{
       margin:0;
       font-size: 14px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      font-weight: 900;
+      font-weight: 950;
       opacity:.95;
     }
     .title p{
       margin:0;
       font-size: 11px;
       color: var(--muted);
-      letter-spacing: .5px;
+      letter-spacing: .45px;
     }
 
     .userbar{
       display:flex;
       align-items:center;
       gap: 10px;
-      min-width: 220px;
+      min-width: 260px;
       justify-content:flex-end;
+      position:relative;
+      z-index:1;
     }
 
-    .team-chip{
+    .chip{
       display:flex;
       align-items:center;
       gap: 10px;
       padding: 8px 10px;
       border-radius: 999px;
-      background: rgba(0,0,0,.25);
+      background: rgba(0,0,0,.28);
       border: 1px solid var(--stroke2);
-      max-width: 210px;
       overflow:hidden;
+      box-shadow: 0 12px 30px rgba(0,0,0,.30);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
-    .team-chip img{
+    .chip img{
       width: 22px;
       height: 22px;
       object-fit: contain;
       filter: drop-shadow(0 2px 10px rgba(0,0,0,.6));
-      flex: 0 0 auto;
+      flex:0 0 auto;
     }
-    .team-chip span{
+    .chip span{
       font-size: 11px;
-      color: var(--muted);
-      font-weight: 800;
-      letter-spacing: .5px;
+      font-weight: 900;
+      letter-spacing:.55px;
       text-transform: uppercase;
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
+      color: rgba(255,255,255,.90);
     }
 
     .manager-chip{
@@ -195,33 +236,35 @@
       gap: 10px;
       padding: 8px 10px;
       border-radius: 999px;
-      background: rgba(0,0,0,.25);
+      background: rgba(0,0,0,.28);
       border: 1px solid var(--stroke2);
-      max-width: 240px;
       overflow:hidden;
+      box-shadow: 0 12px 30px rgba(0,0,0,.30);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      max-width: 320px;
     }
     .manager-chip .avatar{
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 10px;
       object-fit: cover;
-      border: 1px solid rgba(255,255,255,.18);
-      box-shadow: 0 8px 18px rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.20);
+      box-shadow: 0 10px 18px rgba(0,0,0,.55);
       flex:0 0 auto;
     }
     .manager-meta{
       display:flex;
       flex-direction:column;
       gap: 1px;
-      min-width: 0;
+      min-width:0;
     }
     .manager-meta strong{
       font-size: 12px;
-      font-weight: 900;
+      font-weight: 950;
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
-      letter-spacing:.2px;
     }
     .manager-meta small{
       display:flex;
@@ -242,29 +285,47 @@
       flex: 0 0 auto;
     }
 
+    /* Hero */
     .hero{
       padding: 14px 18px;
       border-radius: var(--r);
-      background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
       border: 1px solid var(--stroke);
+      background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
       box-shadow: var(--shadow);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      position:relative;
+      overflow:hidden;
+    }
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(720px 240px at 18% 0%, rgba(76,195,255,.22), transparent 62%),
+        radial-gradient(720px 240px at 85% 0%, rgba(255,59,78,.18), transparent 60%);
+      opacity:.75;
+      pointer-events:none;
     }
     .hero h2{
-      margin: 0 0 6px 0;
+      margin:0 0 6px 0;
       font-size: 16px;
       font-weight: 950;
-      letter-spacing: 1.6px;
+      letter-spacing: 1.8px;
       text-transform: uppercase;
+      position:relative;
+      z-index:1;
     }
     .hero p{
-      margin: 0;
+      margin:0;
       color: var(--muted);
       font-size: 12px;
       line-height: 1.35;
+      position:relative;
+      z-index:1;
     }
 
+    /* Grid */
     .grid{
       display:grid;
       grid-template-columns: 1fr;
@@ -274,34 +335,55 @@
       .grid{ grid-template-columns: 1fr 1fr; }
     }
 
+    /* Cards AAA com borda neon sutil */
     .card{
       border-radius: var(--r);
-      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
-      border: 1px solid var(--stroke);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
       padding: 14px;
-      position: relative;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      position:relative;
       overflow:hidden;
     }
-
     .card:before{
       content:"";
       position:absolute;
       inset:-2px;
-      background: radial-gradient(600px 220px at 18% 0%, rgba(255,255,255,.12), transparent 60%);
-      opacity:.6;
+      background: radial-gradient(520px 220px at 16% 0%, rgba(255,255,255,.14), transparent 62%);
+      opacity:.55;
       pointer-events:none;
     }
+
+    .card.neon-blue::after,
+    .card.neon-green::after,
+    .card.neon-orange::after,
+    .card.neon-red::after,
+    .card.neon-violet::after,
+    .card.neon-pink::after{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius: var(--r);
+      pointer-events:none;
+      filter: blur(10px);
+      opacity:.85;
+    }
+    .card.neon-blue::after{ box-shadow: 0 0 0 1px rgba(76,195,255,.28), 0 0 40px var(--glowBlue); }
+    .card.neon-green::after{ box-shadow: 0 0 0 1px rgba(66,230,182,.26), 0 0 40px var(--glowGreen); }
+    .card.neon-orange::after{ box-shadow: 0 0 0 1px rgba(255,182,74,.22), 0 0 40px var(--glowOrange); }
+    .card.neon-red::after{ box-shadow: 0 0 0 1px rgba(255,59,78,.20), 0 0 40px var(--glowRed); }
+    .card.neon-violet::after{ box-shadow: 0 0 0 1px rgba(165,109,255,.22), 0 0 40px var(--glowViolet); }
+    .card.neon-pink::after{ box-shadow: 0 0 0 1px rgba(255,79,224,.20), 0 0 40px var(--glowPink); }
 
     .card-header{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
       gap: 10px;
-      position: relative;
-      z-index: 1;
+      position:relative;
+      z-index:1;
     }
     .kicker{
       display:flex;
@@ -309,11 +391,11 @@
       gap: 2px;
     }
     .kicker span{
-      color: rgba(234,240,255,.72);
+      color: rgba(236,242,255,.70);
       letter-spacing: 1.8px;
       text-transform: uppercase;
       font-size: 11px;
-      font-weight: 900;
+      font-weight: 950;
     }
     .kicker strong{
       font-size: 14px;
@@ -325,14 +407,14 @@
       border-radius: 999px;
       padding: 7px 10px;
       font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .6px;
+      font-weight: 950;
+      letter-spacing: .7px;
       text-transform: uppercase;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.25);
-      color: rgba(255,255,255,.88);
-      position: relative;
-      z-index: 1;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.28);
+      color: rgba(255,255,255,.90);
+      position:relative;
+      z-index:1;
     }
 
     .card p{
@@ -340,21 +422,22 @@
       color: var(--muted);
       font-size: 12px;
       line-height: 1.35;
-      position: relative;
-      z-index: 1;
+      position:relative;
+      z-index:1;
     }
 
     .card-actions{
       display:flex;
       gap: 10px;
       flex-wrap: wrap;
-      position: relative;
-      z-index: 1;
+      position:relative;
+      z-index:1;
     }
 
-    .card-button{
+    /* Botões AAA com brilho */
+    .btn{
       appearance:none;
-      border: none;
+      border:none;
       cursor:pointer;
       border-radius: 999px;
       padding: 10px 14px;
@@ -362,30 +445,32 @@
       font-weight: 950;
       letter-spacing: 1px;
       text-transform: uppercase;
-      color: rgba(10,10,16,.92);
-      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      color: rgba(8,10,16,.92);
+      box-shadow: 0 14px 32px rgba(0,0,0,.40);
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
     }
+    .btn:active{ transform: scale(.98); }
+    .btn:hover{ filter: brightness(1.04); box-shadow: 0 16px 36px rgba(0,0,0,.50); }
 
-    .card-button.secondary{
-      background: rgba(255,255,255,.12);
+    .btn.secondary{
+      background: rgba(255,255,255,.13);
       color: var(--txt);
       border: 1px solid rgba(255,255,255,.18);
       box-shadow:none;
     }
-
-    .card-button.ghost{
-      background: rgba(0,0,0,.25);
+    .btn.ghost{
+      background: rgba(0,0,0,.30);
       color: var(--txt);
       border: 1px solid rgba(255,255,255,.14);
       box-shadow:none;
     }
 
-    .accent-blue{ background: linear-gradient(90deg, rgba(76,195,255,.95), rgba(93,160,255,.95)); }
-    .accent-green{ background: linear-gradient(90deg, rgba(66,230,182,.95), rgba(60,200,255,.65)); }
-    .accent-orange{ background: linear-gradient(90deg, rgba(255,182,74,.95), rgba(255,120,70,.88)); }
-    .accent-red{ background: linear-gradient(90deg, rgba(255,59,78,.95), rgba(255,95,120,.80)); }
-    .accent-violet{ background: linear-gradient(90deg, rgba(165,109,255,.95), rgba(84,200,255,.55)); }
-    .accent-pink{ background: linear-gradient(90deg, rgba(255,79,224,.95), rgba(255,151,79,.65)); }
+    .accent-blue{ background: linear-gradient(90deg, var(--blue), var(--blue2)); }
+    .accent-green{ background: linear-gradient(90deg, var(--green), var(--green2)); }
+    .accent-orange{ background: linear-gradient(90deg, var(--orange), var(--orange2)); }
+    .accent-red{ background: linear-gradient(90deg, var(--red), var(--red2)); }
+    .accent-violet{ background: linear-gradient(90deg, var(--violet), var(--violet2)); }
+    .accent-pink{ background: linear-gradient(90deg, var(--pink), var(--pink2)); }
 
     .two-actions{
       display:flex;
@@ -399,16 +484,15 @@
       font-size: 11px;
       color: var(--muted2);
       line-height: 1.35;
-      position: relative;
-      z-index: 1;
+      position:relative;
+      z-index:1;
     }
 
-    /* Mobile adjustments */
     @media (max-width: 540px){
       .topbar{ padding: 10px 10px; }
-      .userbar{ min-width: auto; }
-      .team-chip{ display:none; } /* reduz no mobile */
-      .manager-chip{ max-width: 180px; }
+      .userbar{ min-width:auto; }
+      #teamChip{ display:none; }
+      .manager-chip{ max-width: 190px; }
       .hero h2{ font-size: 15px; }
       .card{ padding: 13px; }
     }
@@ -420,7 +504,7 @@
   <div class="noise"></div>
   <div class="vignette"></div>
 
-  <div class="app" id="app">
+  <div class="app">
     <!-- TOP BAR -->
     <div class="topbar">
       <div class="top-left">
@@ -433,7 +517,7 @@
       </div>
 
       <div class="userbar">
-        <div class="team-chip">
+        <div class="chip" id="teamChip">
           <img id="team-logo" src="assets/teams/redbull.png" alt="Equipe"/>
           <span id="team-name">Equipe</span>
         </div>
@@ -463,7 +547,7 @@
     <!-- GRID -->
     <div class="grid">
       <!-- CARRO -->
-      <div class="card">
+      <div class="card neon-blue">
         <div class="card-header">
           <div class="kicker">
             <span>Carro</span>
@@ -471,15 +555,15 @@
           </div>
           <div class="badge">Ajustes</div>
         </div>
-        <p>Ajuste asas, motor e pneus. Use isso para influenciar ritmo, desgaste e confiabilidade.</p>
+        <p>Ajuste asas, motor e pneus. Isso influencia ritmo, desgaste e confiabilidade.</p>
         <div class="card-actions">
-          <button class="card-button accent-blue" onclick="window.location.href='oficina.html'">Abrir Oficina</button>
+          <button class="btn accent-blue" onclick="window.location.href='oficina.html'">Abrir Oficina</button>
         </div>
         <div class="small-note">Status: protótipo visual — pronto para integrar lógica avançada.</div>
       </div>
 
       <!-- STAFF -->
-      <div class="card">
+      <div class="card neon-green">
         <div class="card-header">
           <div class="kicker">
             <span>Equipe Técnica</span>
@@ -487,15 +571,15 @@
           </div>
           <div class="badge">Contratos</div>
         </div>
-        <p>Contrate engenheiros, estrategistas e mecânicos. Multiplicadores afetam treino/corrida.</p>
+        <p>Contrate especialistas. Multiplicadores afetam treino/corrida (pace, tire, pit e strat).</p>
         <div class="card-actions">
-          <button class="card-button accent-green" onclick="window.location.href='staff.html'">Abrir Staff</button>
+          <button class="btn accent-green" onclick="window.location.href='staff.html'">Abrir Staff</button>
         </div>
         <div class="small-note">Dica: foque em PIT e STRAT para ganhos imediatos.</div>
       </div>
 
       <!-- PILOTOS -->
-      <div class="card">
+      <div class="card neon-violet">
         <div class="card-header">
           <div class="kicker">
             <span>Pilotos</span>
@@ -503,15 +587,15 @@
           </div>
           <div class="badge">Contratos</div>
         </div>
-        <p>Negocie contratos e monte sua dupla ideal. Resultados e reputação influenciam o mercado.</p>
+        <p>Negocie contratos e monte sua dupla. Reputação e caixa influenciam as opções.</p>
         <div class="card-actions">
-          <button class="card-button secondary" onclick="window.location.href='mercado_pilotos.html'">Abrir Mercado</button>
+          <button class="btn accent-violet" onclick="window.location.href='mercado_pilotos.html'">Abrir Mercado</button>
         </div>
-        <div class="small-note">Se ainda não tiver essa tela pronta, mantenha como protótipo e ajuste depois.</div>
+        <div class="small-note">Agora essa tela vai existir e não dará mais 404.</div>
       </div>
 
       <!-- PATROCÍNIOS -->
-      <div class="card">
+      <div class="card neon-orange">
         <div class="card-header">
           <div class="kicker">
             <span>Finanças</span>
@@ -519,15 +603,15 @@
           </div>
           <div class="badge">Bônus</div>
         </div>
-        <p>Escolha patrocinadores, metas e bônus. Cada contrato injeta dinheiro no desenvolvimento.</p>
+        <p>Escolha patrocinadores, metas e bônus. Contratos injetam dinheiro na equipe.</p>
         <div class="card-actions">
-          <button class="card-button accent-orange" onclick="window.location.href='sponsors.html'">Abrir Patrocínios</button>
+          <button class="btn accent-orange" onclick="window.location.href='sponsors.html'">Abrir Patrocínios</button>
         </div>
         <div class="small-note">Reputação e resultados influenciam ofertas melhores.</div>
       </div>
 
       <!-- CALENDÁRIO -->
-      <div class="card">
+      <div class="card neon-red">
         <div class="card-header">
           <div class="kicker">
             <span>Temporada</span>
@@ -535,15 +619,15 @@
           </div>
           <div class="badge">Planejamento</div>
         </div>
-        <p>Escolha o próximo Grande Prêmio, acompanhe a temporada e avance para treinos, qualy e corrida.</p>
+        <p>Escolha o próximo GP e avance para treinos, qualy e corrida.</p>
         <div class="card-actions">
-          <button class="card-button ghost" onclick="window.location.href='calendario.html'">Ir para o Calendário</button>
+          <button class="btn accent-red" onclick="window.location.href='calendario.html'">Ir para o Calendário</button>
         </div>
-        <div class="small-note">Você pode usar o calendário para abrir treinos/qualy/corrida por GP.</div>
+        <div class="small-note">Use o calendário para abrir sessões por GP.</div>
       </div>
 
       <!-- MODO RÁPIDO -->
-      <div class="card">
+      <div class="card neon-pink">
         <div class="card-header">
           <div class="kicker">
             <span>Modo Rápido</span>
@@ -554,13 +638,13 @@
         <p>Entre direto em Treino Livre, Classificação ou Corrida Rápida. Ideal para testar setups.</p>
 
         <div class="two-actions">
-          <button class="card-button accent-blue" onclick="window.location.href='selecionar_gp.html?mode=practice'">Treino Livre</button>
-          <button class="card-button secondary" onclick="window.location.href='selecionar_gp.html?mode=qualifying'">Classificação</button>
-          <button class="card-button accent-pink" onclick="window.location.href='selecionar_gp.html?mode=quickrace'">Corrida Rápida</button>
+          <button class="btn accent-blue" onclick="window.location.href='selecionar_gp.html?mode=practice'">Treino Livre</button>
+          <button class="btn secondary" onclick="window.location.href='selecionar_gp.html?mode=qualifying'">Classificação</button>
+          <button class="btn accent-pink" onclick="window.location.href='selecionar_gp.html?mode=quickrace'">Corrida Rápida</button>
         </div>
 
         <div class="small-note">
-          Dica: Treino Livre e Classificação abrem seleção de GP. Corrida Rápida entra direto no modo rápido do jogo.
+          Dica: Treino Livre e Classificação abrem seleção de GP. Corrida Rápida entra no modo rápido do jogo.
         </div>
       </div>
     </div>
@@ -569,18 +653,16 @@
   </div>
 
   <script>
-    // ===== TENTA ENTRAR EM FULLSCREEN (QUANDO POSSÍVEL) =====
+    // ===== FULLSCREEN (quando possível) =====
     function tryFullscreen() {
       const docEl = document.documentElement;
-
       const alreadyFullscreen =
         document.fullscreenElement ||
         document.webkitFullscreenElement ||
         document.msFullscreenElement;
 
       const inStandalone =
-        window.matchMedia &&
-        window.matchMedia('(display-mode: standalone)').matches;
+        window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
 
       if (alreadyFullscreen || inStandalone) return;
 
@@ -590,22 +672,32 @@
         docEl.msRequestFullscreen;
 
       if (requestFS) {
-        requestFS.call(docEl).catch(() => {
-          // Ignora erro (usuário pode ter bloqueado)
-        });
+        requestFS.call(docEl).catch(() => {});
       }
     }
 
-    // ===== CARREGA DADOS BÁSICOS (TIME / MANAGER) DO LOCALSTORAGE =====
+    // ===== LÊ parâmetros da URL e salva no localStorage (se vier userTeam=...) =====
+    function readQueryParams() {
+      try{
+        const url = new URL(window.location.href);
+        const userTeam = (url.searchParams.get('userTeam') || "").trim();
+        if (userTeam) localStorage.setItem('f1m2025_userTeam_key', userTeam);
+      }catch(e){}
+    }
+
+    // ===== CARREGA dados do manager/equipe (fallbacks seguros) =====
     function loadUserBar() {
       try {
-        const teamName  = localStorage.getItem('f1m2025_user_team_name')  || 'Ferrari';
-        const teamLogo  = localStorage.getItem('f1m2025_user_team_logo')  || 'assets/teams/ferrari.png';
+        // Time
+        const fallbackTeamKey = localStorage.getItem('f1m2025_userTeam_key') || 'redbull';
+        const teamName  = localStorage.getItem('f1m2025_user_team_name')  || fallbackTeamKey.replace(/^\w/, c => c.toUpperCase());
+        const teamLogo  = localStorage.getItem('f1m2025_user_team_logo')  || `assets/teams/${fallbackTeamKey}.png`;
 
-        const managerName   = localStorage.getItem('f1m2025_user_manager_name')   || 'Manager Demo';
+        // Manager
+        const managerName   = localStorage.getItem('f1m2025_user_manager_name')   || 'Christian Horner';
         const managerAvatar = localStorage.getItem('f1m2025_user_manager_avatar') || 'assets/managers/manager_ethnic_01.png';
-        const countryFlag   = localStorage.getItem('f1m2025_user_country_flag')   || 'assets/flags/br.png';
-        const countryName   = localStorage.getItem('f1m2025_user_country_name')   || 'Brasil';
+        const countryFlag   = localStorage.getItem('f1m2025_user_country_flag')   || 'assets/flags/gb.png';
+        const countryName   = localStorage.getItem('f1m2025_user_country_name')   || 'Reino Unido';
 
         document.getElementById('team-name').textContent  = teamName;
         document.getElementById('team-logo').src          = teamLogo;
@@ -615,11 +707,12 @@
         document.getElementById('manager-flag').src          = countryFlag;
         document.getElementById('manager-country-name').textContent = countryName;
       } catch (e) {
-        console.warn('Não foi possível carregar dados do manager/equipe:', e);
+        console.warn('Falha ao carregar userbar:', e);
       }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      readQueryParams();
       tryFullscreen();
       loadUserBar();
     });
