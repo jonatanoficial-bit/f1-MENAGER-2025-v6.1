@@ -1,214 +1,236 @@
-/* js/staff.js - Funcionários (offline) */
+/* js/staff.js — Funcionários & Staff (funcional) */
 
 (function () {
   const GS = window.F1M25 && window.F1M25.GameState;
-  if (!GS) {
-    alert("GameState não encontrado. Verifique se js/gameState.js está carregando antes.");
-    return;
-  }
+  if (!GS) { alert("Erro: js/gameState.js não carregou."); return; }
 
-  const teamId = GS.normalizeTeamId(GS.getQueryParam("userTeam") || GS.getQueryParam("team") || null);
+  const teamId = GS.normalizeTeamId(GS.getQueryParam("userTeam") || "redbull");
   let state = GS.loadState(teamId);
 
-  const el = (id) => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
+
+  let selectedOfferId = null;
 
   function toast(msg) {
-    const t = el("toast");
+    const t = $("toast");
     if (!t) return;
     t.textContent = msg;
     t.style.display = "block";
-    clearTimeout(window.__toastTimer2);
-    window.__toastTimer2 = setTimeout(() => (t.style.display = "none"), 2200);
+    clearTimeout(window.__toastStaff);
+    window.__toastStaff = setTimeout(() => (t.style.display = "none"), 2200);
   }
 
-  function calcWeeklyWages() {
-    const hired = state.staff.hired || [];
-    return hired.reduce((sum, p) => sum + (p.wageWeekly || 0), 0);
+  function pct(v) {
+    const n = Number(v || 0);
+    const sign = n >= 0 ? "+" : "";
+    return `${sign}${Math.round(n * 100)}%`;
   }
 
-  function effectsToText(effects) {
-    if (!effects) return "Sem efeitos.";
-    const parts = [];
-    for (const [k, v] of Object.entries(effects)) {
-      const pct = Math.round(v * 100);
-      let label = k;
-      if (k === "setupGain") label = "Ganho de Setup";
-      if (k === "tyreWear") label = "Desgaste de pneus";
-      if (k === "reliability") label = "Confiabilidade";
-      if (k === "pitDecision") label = "Decisão de Pit";
-      if (k === "weatherRead") label = "Leitura de Clima";
-      if (k === "aeroEff") label = "Eficiência Aero";
-      if (k === "dragEff") label = "Eficiência Drag";
-      if (k === "pitTime") label = "Tempo de Pit";
-      if (k === "pitError") label = "Erro de Pit";
-      const sign = pct > 0 ? "+" : "";
-      parts.push(`${label}: ${sign}${pct}%`);
-    }
-    return parts.join(" • ");
+  function deepCopy(x) { return JSON.parse(JSON.stringify(x)); }
+
+  function setBackLink() {
+    const btn = $("btnBack");
+    if (!btn) return;
+    btn.onclick = () => {
+      window.location.href = `lobby.html?userTeam=${encodeURIComponent(teamId)}`;
+    };
   }
 
-  function renderHeader() {
-    el("teamBadge").textContent = `Equipe: ${state.roster.teamId.toUpperCase()}`;
-    el("wagePill").textContent = `-${GS.formatMoney(calcWeeklyWages())} / semana`;
-    el("offersPill").textContent = `${(state.staff.offers || []).length} ofertas`;
+  function updateHeader() {
+    $("pillTeam").textContent = `EQUIPE: ${teamId.toUpperCase()}`;
+    $("kpiMoney").textContent = GS.formatMoney(state.career.money);
+    $("kpiRep").textContent = String(Math.round(state.career.reputation));
+
+    const hired = state.staff.hired;
+    $("modPace").textContent = pct(hired.pace);
+    $("modTire").textContent = pct(hired.tire);
+    $("modPit").textContent = pct(hired.pit);
+    $("modStrat").textContent = pct(hired.strat);
+
+    $("pillSalary").textContent = `SALÁRIO / SEMANA: ${GS.formatMoney(calcWeeklyWage())}`;
   }
 
-  function staffCard(p, mode) {
-    const wrap = document.createElement("div");
-    wrap.className = "item";
-
-    const top = document.createElement("div");
-    top.className = "row";
-
-    const left = document.createElement("div");
-    left.className = "title";
-    left.innerHTML = `
-      <span>${p.name || "Staff"}</span>
-      <span class="role">${p.role || "Função"}</span>
-    `;
-
-    const right = document.createElement("div");
-    right.className = "pill good";
-    right.textContent = `Overall ${Math.round(p.rating || 0)}`;
-
-    top.appendChild(left);
-    top.appendChild(right);
-
-    const meta = document.createElement("div");
-    meta.className = "meta";
-    meta.innerHTML = `
-      <div><b>Salário semanal:</b> ${GS.formatMoney(p.wageWeekly || 0)}</div>
-      ${mode === "offer" ? `<div><b>Bônus assinatura:</b> ${GS.formatMoney(p.signingBonus || 0)}</div>` : ""}
-      <div><b>Efeitos:</b> ${effectsToText(p.effects)}</div>
-    `;
-
-    const actions = document.createElement("div");
-    actions.className = "actions";
-
-    if (mode === "hired") {
-      const btn = document.createElement("button");
-      btn.className = "btn btn-danger";
-      btn.textContent = "Demitir";
-      btn.onclick = () => fireStaff(p.id);
-      actions.appendChild(btn);
-    } else {
-      const btn = document.createElement("button");
-      btn.className = "btn btn-primary";
-      btn.textContent = "Contratar";
-      btn.onclick = () => hireStaff(p.id);
-      actions.appendChild(btn);
-    }
-
-    wrap.appendChild(top);
-    wrap.appendChild(meta);
-    wrap.appendChild(actions);
-    return wrap;
+  function calcWeeklyWage() {
+    const list = (state.staff.hired.list || []);
+    return list.reduce((sum, p) => sum + (p.weeklyWage || 0), 0);
   }
 
-  function renderLists() {
-    const hiredList = el("hiredList");
-    const offersList = el("offersList");
-    hiredList.innerHTML = "";
-    offersList.innerHTML = "";
-
-    const hired = state.staff.hired || [];
-    const offers = state.staff.offers || [];
-
-    if (!hired.length) {
-      const empty = document.createElement("div");
-      empty.className = "meta";
-      empty.textContent = "Sem funcionários contratados.";
-      hiredList.appendChild(empty);
-    } else {
-      hired.forEach((p) => hiredList.appendChild(staffCard(p, "hired")));
-    }
-
-    if (!offers.length) {
-      const empty = document.createElement("div");
-      empty.className = "meta";
-      empty.textContent = "Sem ofertas no momento.";
-      offersList.appendChild(empty);
-    } else {
-      offers.forEach((p) => offersList.appendChild(staffCard(p, "offer")));
-    }
+  function canSeeOffer(offer) {
+    const rep = Number(state.career.reputation || 0);
+    const req = Number(offer.reputationReq || 0);
+    return rep >= req;
   }
 
-  function canHireRole(role) {
-    // Regra simples: 1 por função principal (você pode alterar depois)
-    const hired = state.staff.hired || [];
-    return !hired.some((h) => h.role === role);
-  }
-
-  function hireStaff(id) {
-    const offers = state.staff.offers || [];
-    const idx = offers.findIndex((o) => o.id === id);
-    if (idx < 0) return;
-
-    const p = offers[idx];
-
-    if (!canHireRole(p.role)) {
-      toast(`Você já tem alguém no cargo "${p.role}". Demita antes para substituir.`);
-      return;
-    }
-
-    const cost = Math.floor(p.signingBonus || 0);
-    if (state.career.money < cost) {
-      toast("Dinheiro insuficiente para bônus de assinatura.");
-      return;
-    }
-
-    GS.addMoney(state, -cost);
-
-    const hired = state.staff.hired || [];
-    const newHire = Object.assign({}, p, { hiredAt: new Date().toISOString() });
-    delete newHire.signingBonus;
-    hired.push(newHire);
-
-    offers.splice(idx, 1);
-
-    state.staff.hired = hired;
-    state.staff.offers = offers;
-
-    state = GS.saveState(state);
-    renderHeader();
-    renderLists();
-    toast(`Contratado: ${p.name} (${p.role})`);
-  }
-
-  function fireStaff(id) {
-    const hired = state.staff.hired || [];
-    const idx = hired.findIndex((h) => h.id === id);
-    if (idx < 0) return;
-
-    const p = hired[idx];
-
-    // multa simples: 1 semana de salário
-    const penalty = Math.floor(p.wageWeekly || 0);
-    GS.addMoney(state, -penalty);
-
-    // volta pro pool como oferta
-    const backOffer = Object.assign({}, p, {
-      signingBonus: Math.floor((p.wageWeekly || 0) * 3), // 3 semanas
-      rating: Math.max(40, Math.round((p.rating || 60) - 1)),
+  function recomputeModsFromHired() {
+    const list = state.staff.hired.list || [];
+    let pace = 0, tire = 0, pit = 0, strat = 0;
+    list.forEach((p) => {
+      const m = p.mods || {};
+      pace += Number(m.pace || 0);
+      tire += Number(m.tire || 0);
+      pit += Number(m.pit || 0);
+      strat += Number(m.strat || 0);
     });
-    delete backOffer.hiredAt;
 
-    hired.splice(idx, 1);
-    state.staff.hired = hired;
-
-    state.staff.offers = state.staff.offers || [];
-    state.staff.offers.push(backOffer);
-
-    state = GS.saveState(state);
-    renderHeader();
-    renderLists();
-    toast(`Demitido: ${p.name}. Multa aplicada.`);
+    // limita para evitar quebrar simulação futura
+    state.staff.hired.pace = clamp(pace, -0.10, 0.25);
+    state.staff.hired.tire = clamp(tire, -0.10, 0.25);
+    state.staff.hired.pit = clamp(pit, -0.10, 0.25);
+    state.staff.hired.strat = clamp(strat, -0.10, 0.25);
   }
 
-  renderHeader();
-  renderLists();
+  function clamp(v, a, b) {
+    const n = Number(v || 0);
+    return Math.max(a, Math.min(b, n));
+  }
 
-  // mantém contexto no voltar
-  const back = document.getElementById("backBtn");
-  if (back) back.href = `lobby.html?userTeam=${encodeURIComponent(state.roster.teamId)}`;
+  function renderHiredList() {
+    const listEl = $("hiredList");
+    listEl.innerHTML = "";
+
+    const list = state.staff.hired.list || [];
+    if (!list.length) {
+      const div = document.createElement("div");
+      div.className = "meta";
+      div.textContent = "Nenhum staff contratado ainda.";
+      listEl.appendChild(div);
+      return;
+    }
+
+    list.forEach((p) => {
+      const item = document.createElement("div");
+      item.className = "offer";
+      item.style.cursor = "default";
+      item.innerHTML = `
+        <div class="row">
+          <div class="name">${p.name}</div>
+          <div class="tag">${p.role}</div>
+        </div>
+        <div class="meta">
+          <b>Salário:</b> ${GS.formatMoney(p.weeklyWage)} / semana<br/>
+          <b>Mods:</b> Pace ${pct(p.mods?.pace)} • Tire ${pct(p.mods?.tire)} • Pit ${pct(p.mods?.pit)} • Strat ${pct(p.mods?.strat)}
+        </div>
+      `;
+      listEl.appendChild(item);
+    });
+  }
+
+  function renderOffers() {
+    const listEl = $("offersList");
+    listEl.innerHTML = "";
+
+    const offers = (state.staff.offers || []).filter(canSeeOffer);
+    if (!offers.length) {
+      const div = document.createElement("div");
+      div.className = "meta";
+      div.textContent = "Sem ofertas disponíveis para sua reputação.";
+      listEl.appendChild(div);
+      selectedOfferId = null;
+      return;
+    }
+
+    offers.forEach((p) => {
+      const item = document.createElement("div");
+      item.className = "offer" + (p.id === selectedOfferId ? " activeSel" : "");
+      item.onclick = () => { selectedOfferId = p.id; renderOffers(); };
+      item.innerHTML = `
+        <div class="row">
+          <div class="name">${p.name}</div>
+          <div class="tag">${p.role}</div>
+        </div>
+        <div class="meta">
+          <b>Salário:</b> ${GS.formatMoney(p.weeklyWage)} / semana • <b>Bônus:</b> ${GS.formatMoney(p.signingBonus)}<br/>
+          <b>Mods:</b> Pace ${pct(p.mods?.pace)} • Tire ${pct(p.mods?.tire)} • Pit ${pct(p.mods?.pit)} • Strat ${pct(p.mods?.strat)}
+        </div>
+      `;
+      listEl.appendChild(item);
+    });
+
+    if (!selectedOfferId) selectedOfferId = offers[0].id;
+  }
+
+  function hireSelected() {
+    const offers = state.staff.offers || [];
+    const offer = offers.find((x) => x.id === selectedOfferId);
+    if (!offer) { toast("Selecione um staff válido."); return; }
+
+    // paga bônus de assinatura
+    if (Number(state.career.money || 0) < Number(offer.signingBonus || 0)) {
+      toast("Dinheiro insuficiente para contratar.");
+      return;
+    }
+    GS.addMoney(state, -(offer.signingBonus || 0));
+
+    // contrata (permite vários)
+    state.staff.hired.list = state.staff.hired.list || [];
+    state.staff.hired.list.push(deepCopy(offer));
+
+    // remove do mercado
+    state.staff.offers = offers.filter((x) => x.id !== offer.id);
+
+    recomputeModsFromHired();
+    GS.addReputation(state, 0.5);
+
+    state = GS.saveState(state);
+    toast(`Contratado: ${offer.name}`);
+    updateHeader();
+    renderHiredList();
+    renderOffers();
+  }
+
+  function payWeek() {
+    const wage = calcWeeklyWage();
+    if (wage <= 0) { toast("Sem salários para pagar."); return; }
+
+    GS.addMoney(state, -wage);
+    state.staff.lastWeekPaidAt = new Date().toISOString();
+
+    // reputação cai um pouco se ficar sem dinheiro (simples)
+    if (Number(state.career.money || 0) <= 0) GS.addReputation(state, -1);
+
+    state = GS.saveState(state);
+    toast("Salários semanais pagos.");
+    updateHeader();
+  }
+
+  function fireAll() {
+    const list = state.staff.hired.list || [];
+    if (!list.length) { toast("Não há staff para dispensar."); return; }
+
+    // penalidade simples: 1 semana de salário
+    const penalty = calcWeeklyWage();
+    GS.addMoney(state, -penalty);
+    GS.addReputation(state, -1.5);
+
+    // devolve para o mercado com bônus reduzido
+    state.staff.offers = state.staff.offers || [];
+    list.forEach((p) => {
+      const back = deepCopy(p);
+      back.signingBonus = Math.max(0, Math.floor((back.signingBonus || 0) * 0.4));
+      state.staff.offers.push(back);
+    });
+
+    state.staff.hired.list = [];
+    recomputeModsFromHired();
+
+    state = GS.saveState(state);
+    toast("Todos dispensados. Penalidade aplicada.");
+    updateHeader();
+    renderHiredList();
+    renderOffers();
+  }
+
+  function bindButtons() {
+    $("btnHire").onclick = hireSelected;
+    $("btnPayWeek").onclick = payWeek;
+    $("btnFireAll").onclick = fireAll;
+  }
+
+  // init
+  setBackLink();
+  bindButtons();
+  recomputeModsFromHired();
+  updateHeader();
+  renderHiredList();
+  renderOffers();
 })();
