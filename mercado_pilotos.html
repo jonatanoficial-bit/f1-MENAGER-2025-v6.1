@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>F1 Manager 2025 — Mercado de Pilotos</title>
+
+  <style>
+    :root{
+      --bg:#070A12;
+      --txt:#ECF2FF;
+      --muted: rgba(236,242,255,.72);
+      --muted2: rgba(236,242,255,.55);
+
+      --glass: rgba(14, 18, 30, .58);
+      --stroke: rgba(255,255,255,.12);
+      --stroke2: rgba(255,255,255,.08);
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --shadow2: 0 10px 26px rgba(0,0,0,.42);
+
+      --r: 22px;
+      --r2: 16px;
+
+      --violet:#A56DFF;
+      --violet2:#4BE3FF;
+      --green:#42E6B6;
+      --green2:#00D4FF;
+      --red:#FF3B4E;
+      --orange:#FFB64A;
+      --blue:#4CC3FF;
+
+      --glowViolet: rgba(165,109,255,.25);
+      --glowGreen: rgba(66,230,182,.22);
+      --glowRed: rgba(255,59,78,.18);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--txt);
+      background: var(--bg);
+      overflow-x:hidden;
+      overflow-y:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .bg{
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(1200px 700px at 14% 18%, rgba(255,255,255,.11), transparent 60%),
+        radial-gradient(1000px 650px at 86% 10%, rgba(165,109,255,.14), transparent 55%),
+        radial-gradient(950px 720px at 80% 78%, rgba(76,195,255,.10), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.76) 0%, rgba(0,0,0,.52) 40%, rgba(0,0,0,.88) 100%),
+        url('assets/backgrounds/lobby.jpg') center/cover no-repeat;
+      filter: saturate(1.06) contrast(1.06);
+      transform: scale(1.02);
+      z-index:-3;
+    }
+    .noise{
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+      opacity:.18;
+      mix-blend-mode: overlay;
+      z-index:-2;
+      pointer-events:none;
+    }
+    .vignette{
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(1200px 700px at 50% 30%, transparent 40%, rgba(0,0,0,.62) 100%);
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    .app{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 6vw calc(24px + env(safe-area-inset-bottom));
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 12px 12px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      position: sticky;
+      top: 10px;
+      z-index: 50;
+      overflow:hidden;
+    }
+    .topbar:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(520px 180px at 12% 0%, rgba(165,109,255,.32), transparent 65%),
+        radial-gradient(540px 180px at 88% 0%, rgba(66,230,182,.20), transparent 62%);
+      opacity:.70;
+      pointer-events:none;
+    }
+
+    .btn-back{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.30);
+      color: var(--txt);
+      font-weight: 950;
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor:pointer;
+      letter-spacing:.6px;
+      text-transform: uppercase;
+      font-size: 12px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.35);
+      position:relative;
+      z-index:1;
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      text-align:center;
+      flex:1;
+      gap: 2px;
+      padding: 6px 10px;
+      position:relative;
+      z-index:1;
+    }
+    .title h1{
+      margin:0;
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 950;
+      opacity:.95;
+    }
+    .title p{
+      margin:0;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: .45px;
+    }
+
+    .chip{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.28);
+      border: 1px solid var(--stroke2);
+      overflow:hidden;
+      box-shadow: 0 12px 30px rgba(0,0,0,.30);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position:relative;
+      z-index:1;
+      max-width: 240px;
+    }
+    .chip img{
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 10px rgba(0,0,0,.6));
+      flex:0 0 auto;
+    }
+    .chip span{
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing:.55px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      color: rgba(255,255,255,.90);
+    }
+
+    .hero{
+      padding: 14px 18px;
+      border-radius: var(--r);
+      border: 1px solid var(--stroke);
+      background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      position:relative;
+      overflow:hidden;
+    }
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(720px 240px at 18% 0%, rgba(165,109,255,.22), transparent 62%),
+        radial-gradient(720px 240px at 85% 0%, rgba(66,230,182,.18), transparent 60%);
+      opacity:.80;
+      pointer-events:none;
+    }
+    .hero h2{
+      margin:0 0 6px 0;
+      font-size: 15px;
+      font-weight: 950;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      position:relative;
+      z-index:1;
+    }
+    .hero p{
+      margin:0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      position:relative;
+      z-index:1;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 860px){
+      .grid{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .card{
+      border-radius: var(--r);
+      padding: 14px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      position:relative;
+      overflow:hidden;
+      min-height: 220px;
+    }
+    .card:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(520px 220px at 16% 0%, rgba(255,255,255,.14), transparent 62%);
+      opacity:.55;
+      pointer-events:none;
+    }
+    .card.neon::after{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius: var(--r);
+      pointer-events:none;
+      filter: blur(10px);
+      opacity:.88;
+      box-shadow: 0 0 0 1px rgba(165,109,255,.22), 0 0 44px var(--glowViolet);
+    }
+
+    .card h3{
+      margin:0;
+      font-size: 13px;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      font-weight: 950;
+      position:relative;
+      z-index:1;
+    }
+    .card .sub{
+      margin: 6px 0 12px 0;
+      color: var(--muted);
+      font-size: 12px;
+      position:relative;
+      z-index:1;
+      line-height:1.35;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.28);
+      color: rgba(255,255,255,.92);
+      position:relative;
+      z-index:1;
+    }
+
+    .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+      position:relative;
+      z-index:1;
+      margin-bottom: 10px;
+    }
+
+    .money{
+      font-weight: 950;
+      letter-spacing: .5px;
+      color: rgba(255,255,255,.92);
+    }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      position:relative;
+      z-index:1;
+    }
+
+    .item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .item .left{
+      display:flex;
+      flex-direction:column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .item .name{
+      font-weight: 950;
+      font-size: 13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .item .meta{
+      font-size: 11px;
+      color: var(--muted);
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+    }
+    .tag{
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.86);
+      font-weight: 900;
+      letter-spacing:.4px;
+    }
+
+    .actions{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: rgba(8,10,16,.92);
+      box-shadow: 0 14px 30px rgba(0,0,0,.35);
+      transition: transform .12s ease, filter .12s ease;
+      white-space:nowrap;
+    }
+    .btn:active{ transform: scale(.98); }
+    .btn:hover{ filter: brightness(1.05); }
+
+    .btn.violet{ background: linear-gradient(90deg, var(--violet), var(--violet2)); }
+    .btn.green{ background: linear-gradient(90deg, var(--green), var(--green2)); }
+    .btn.orange{ background: linear-gradient(90deg, var(--orange), #FF6B3D); }
+    .btn.red{ background: linear-gradient(90deg, var(--red), #FF7AA0); }
+    .btn.blue{ background: linear-gradient(90deg, var(--blue), #2E7BFF); }
+
+    .btn.secondary{
+      background: rgba(255,255,255,.13);
+      color: var(--txt);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow:none;
+    }
+
+    .note{
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--muted2);
+      line-height:1.35;
+      position:relative;
+      z-index:1;
+    }
+
+    @media (max-width: 540px){
+      #teamChip{ display:none; }
+      .card{ min-height: 240px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg"></div>
+  <div class="noise"></div>
+  <div class="vignette"></div>
+
+  <div class="app">
+    <div class="topbar">
+      <button class="btn-back" onclick="window.location.href='lobby.html'">Voltar</button>
+
+      <div class="title">
+        <h1>Mercado de Pilotos</h1>
+        <p>Contratos, renovações e oportunidades — integrado ao save do jogo</p>
+      </div>
+
+      <div class="chip" id="teamChip">
+        <img id="team-logo" src="assets/teams/redbull.png" alt="Equipe"/>
+        <span id="team-name">Equipe</span>
+      </div>
+    </div>
+
+    <div class="hero">
+      <h2>Visão geral do grid e contratos</h2>
+      <p>
+        Esta tela é offline e salva no seu dispositivo. Você pode contratar pilotos disponíveis e renovar seus pilotos atuais.
+        O custo é descontado da <b>CAIXA</b>.
+      </p>
+    </div>
+
+    <div class="grid">
+      <!-- Seus pilotos -->
+      <div class="card neon">
+        <div class="row">
+          <h3>Seus Pilotos</h3>
+          <span class="pill">Equipe</span>
+        </div>
+
+        <div class="row">
+          <div class="pill">Caixa</div>
+          <div class="money" id="moneyBox">—</div>
+        </div>
+
+        <div class="list" id="myDriversList"></div>
+
+        <div class="note">
+          Dica: renovar aumenta o salário semanal. (Simples e funcional para já.)
+        </div>
+      </div>
+
+      <!-- Pilotos disponíveis -->
+      <div class="card">
+        <div class="row">
+          <h3>Pilotos Disponíveis</h3>
+          <span class="pill">Mercado</span>
+        </div>
+
+        <div class="list" id="marketDriversList"></div>
+
+        <div class="note">
+          Observação: Se você quiser travar “janela de contratação por data”, dá pra fazer depois.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // STORAGE KEYS (compatível e seguro)
+    // ============================================================
+    const KEY_CASH = "f1m2025_cash";
+    const KEY_TEAM_NAME = "f1m2025_user_team_name";
+    const KEY_TEAM_LOGO = "f1m2025_user_team_logo";
+    const KEY_TEAM_KEY  = "f1m2025_userTeam_key";
+
+    const KEY_MY_DRIVERS = "f1m2025_my_drivers"; // array com 2 pilotos
+
+    function fmtMoney(n){
+      const v = Math.max(0, Math.floor(Number(n) || 0));
+      return "Cr$ " + v.toLocaleString("pt-BR");
+    }
+
+    function getCash(){
+      const v = Number(localStorage.getItem(KEY_CASH));
+      if (!Number.isFinite(v)) return 35000000; // caixa default inicial
+      return Math.max(0, Math.floor(v));
+    }
+    function setCash(v){
+      localStorage.setItem(KEY_CASH, String(Math.max(0, Math.floor(Number(v)||0))));
+    }
+
+    function loadTeamBar(){
+      const fallbackTeamKey = localStorage.getItem(KEY_TEAM_KEY) || "redbull";
+      const name = localStorage.getItem(KEY_TEAM_NAME) || fallbackTeamKey.replace(/^\w/, c => c.toUpperCase());
+      const logo = localStorage.getItem(KEY_TEAM_LOGO) || `assets/teams/${fallbackTeamKey}.png`;
+
+      const elName = document.getElementById("team-name");
+      const elLogo = document.getElementById("team-logo");
+      if (elName) elName.textContent = name;
+      if (elLogo) elLogo.src = logo;
+    }
+
+    // ============================================================
+    // MODELO DE DADOS (simples, funcional)
+    // ============================================================
+    const DEFAULT_MY_DRIVERS = [
+      { id:"driver_1", name:"Piloto 1", overall: 84, salaryWeek: 850000, contractUntil: 2026 },
+      { id:"driver_2", name:"Piloto 2", overall: 82, salaryWeek: 780000, contractUntil: 2026 }
+    ];
+
+    // Lista base (pode expandir depois)
+    const MARKET_POOL = [
+      { id:"max_verstappen", name:"Max Verstappen", overall: 96, salaryWeek: 2200000, fee: 18000000 },
+      { id:"lewis_hamilton", name:"Lewis Hamilton", overall: 93, salaryWeek: 2000000, fee: 15000000 },
+      { id:"charles_leclerc", name:"Charles Leclerc", overall: 92, salaryWeek: 1850000, fee: 14000000 },
+      { id:"lando_norris", name:"Lando Norris", overall: 91, salaryWeek: 1650000, fee: 12000000 },
+      { id:"george_russell", name:"George Russell", overall: 90, salaryWeek: 1500000, fee: 10500000 },
+      { id:"fernando_alonso", name:"Fernando Alonso", overall: 89, salaryWeek: 1400000, fee: 9000000 },
+      { id:"carlos_sainz", name:"Carlos Sainz", overall: 88, salaryWeek: 1350000, fee: 8500000 },
+      { id:"oscar_piastri", name:"Oscar Piastri", overall: 88, salaryWeek: 1250000, fee: 8000000 },
+      { id:"sergio_perez", name:"Sergio Pérez", overall: 87, salaryWeek: 1200000, fee: 7000000 },
+      { id:"esteban_ocon", name:"Esteban Ocon", overall: 84, salaryWeek: 820000, fee: 4500000 },
+      { id:"pierre_gasly", name:"Pierre Gasly", overall: 84, salaryWeek: 820000, fee: 4500000 },
+      { id:"alex_albon", name:"Alex Albon", overall: 83, salaryWeek: 760000, fee: 3800000 },
+      { id:"yuki_tsunoda", name:"Yuki Tsunoda", overall: 82, salaryWeek: 700000, fee: 3200000 },
+      { id:"rookie_f2", name:"Rookie F2 (Talento)", overall: 78, salaryWeek: 420000, fee: 1200000 }
+    ];
+
+    function loadMyDrivers(){
+      try{
+        const raw = localStorage.getItem(KEY_MY_DRIVERS);
+        if (!raw) return DEFAULT_MY_DRIVERS.slice();
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr) || arr.length < 2) return DEFAULT_MY_DRIVERS.slice();
+        return arr.map(x => ({
+          id: String(x.id || ""),
+          name: String(x.name || "Piloto"),
+          overall: Number(x.overall || 80),
+          salaryWeek: Number(x.salaryWeek || 500000),
+          contractUntil: Number(x.contractUntil || 2026)
+        })).slice(0,2);
+      }catch(e){
+        return DEFAULT_MY_DRIVERS.slice();
+      }
+    }
+
+    function saveMyDrivers(drivers){
+      localStorage.setItem(KEY_MY_DRIVERS, JSON.stringify(drivers));
+    }
+
+    // ============================================================
+    // RENDER UI
+    // ============================================================
+    function render(){
+      loadTeamBar();
+
+      const cash = getCash();
+      document.getElementById("moneyBox").textContent = fmtMoney(cash);
+
+      const my = loadMyDrivers();
+      const myList = document.getElementById("myDriversList");
+      const marketList = document.getElementById("marketDriversList");
+
+      myList.innerHTML = "";
+      marketList.innerHTML = "";
+
+      // Seus pilotos
+      my.forEach((d, idx) => {
+        const el = document.createElement("div");
+        el.className = "item";
+
+        const left = document.createElement("div");
+        left.className = "left";
+
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = d.name;
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.innerHTML =
+          `<span class="tag">OVR ${Math.round(d.overall)}</span>` +
+          `<span class="tag">Sal/sem ${fmtMoney(d.salaryWeek)}</span>` +
+          `<span class="tag">Até ${d.contractUntil}</span>`;
+
+        left.appendChild(name);
+        left.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const btnRename = document.createElement("button");
+        btnRename.className = "btn secondary";
+        btnRename.textContent = "Renomear";
+        btnRename.onclick = () => {
+          const nv = prompt("Nome do piloto:", d.name);
+          if (!nv) return;
+          my[idx].name = nv.trim().slice(0,40);
+          saveMyDrivers(my);
+          render();
+        };
+
+        const btnRenew = document.createElement("button");
+        btnRenew.className = "btn green";
+        btnRenew.textContent = "Renovar +1 ano";
+        btnRenew.onclick = () => {
+          // custo de renovação simples: 4 semanas do salário + aumento de 8%
+          const renewFee = Math.floor(d.salaryWeek * 4);
+          if (getCash() < renewFee){
+            alert("Caixa insuficiente para renovar este contrato.");
+            return;
+          }
+          setCash(getCash() - renewFee);
+          my[idx].contractUntil = (Number(my[idx].contractUntil)||2026) + 1;
+          my[idx].salaryWeek = Math.floor(my[idx].salaryWeek * 1.08);
+          saveMyDrivers(my);
+          render();
+          alert("Contrato renovado com sucesso!");
+        };
+
+        actions.appendChild(btnRename);
+        actions.appendChild(btnRenew);
+
+        el.appendChild(left);
+        el.appendChild(actions);
+        myList.appendChild(el);
+      });
+
+      // Pilotos disponíveis (filtra para não mostrar os já contratados)
+      const myIds = new Set(my.map(d => d.id));
+      MARKET_POOL.filter(p => !myIds.has(p.id)).forEach(p => {
+        const el = document.createElement("div");
+        el.className = "item";
+
+        const left = document.createElement("div");
+        left.className = "left";
+
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = p.name;
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.innerHTML =
+          `<span class="tag">OVR ${Math.round(p.overall)}</span>` +
+          `<span class="tag">Sal/sem ${fmtMoney(p.salaryWeek)}</span>` +
+          `<span class="tag">Taxa ${fmtMoney(p.fee)}</span>`;
+
+        left.appendChild(name);
+        left.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const btnHire1 = document.createElement("button");
+        btnHire1.className = "btn violet";
+        btnHire1.textContent = "Assinar (Vaga 1)";
+        btnHire1.onclick = () => hirePilot(p, 0);
+
+        const btnHire2 = document.createElement("button");
+        btnHire2.className = "btn blue";
+        btnHire2.textContent = "Assinar (Vaga 2)";
+        btnHire2.onclick = () => hirePilot(p, 1);
+
+        actions.appendChild(btnHire1);
+        actions.appendChild(btnHire2);
+
+        el.appendChild(left);
+        el.appendChild(actions);
+        marketList.appendChild(el);
+      });
+    }
+
+    function hirePilot(pilot, slotIndex){
+      const my = loadMyDrivers();
+      const cash = getCash();
+
+      const cost = Math.floor(Number(pilot.fee) || 0);
+      if (cash < cost){
+        alert("Caixa insuficiente para pagar a taxa de contratação.");
+        return;
+      }
+
+      const confirmText =
+        `Assinar ${pilot.name} na Vaga ${slotIndex+1}?\n\n` +
+        `Taxa: ${fmtMoney(cost)}\n` +
+        `Salário semanal: ${fmtMoney(pilot.salaryWeek)}\n` +
+        `OVR: ${pilot.overall}\n\n` +
+        `O piloto atual na vaga será substituído.`;
+      if (!confirm(confirmText)) return;
+
+      setCash(cash - cost);
+
+      my[slotIndex] = {
+        id: pilot.id,
+        name: pilot.name,
+        overall: pilot.overall,
+        salaryWeek: pilot.salaryWeek,
+        contractUntil: 2027
+      };
+
+      saveMyDrivers(my);
+      render();
+      alert("Contrato assinado e salvo!");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // garante caixa inicial
+      if (!localStorage.getItem(KEY_CASH)) setCash(35000000);
+      render();
+    });
+  </script>
+</body>
+</html>
