@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <title>Patrocínios | F1 Manager 2025</title>
+
+  <style>
+    :root{
+      --bg:#0b0f18;
+      --glass:rgba(255,255,255,.08);
+      --glass2:rgba(255,255,255,.12);
+      --stroke:rgba(255,255,255,.14);
+      --txt:#eaf0ff;
+      --muted:rgba(234,240,255,.68);
+      --good:#35ff9b;
+      --warn:#ffd05a;
+      --bad:#ff4d6d;
+      --accent:#7c5cff;
+      --accent2:#00d4ff;
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+      --radius: 18px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;
+      background:
+        radial-gradient(1100px 700px at 12% 8%, rgba(124,92,255,.35), transparent 55%),
+        radial-gradient(900px 550px at 85% 22%, rgba(0,212,255,.25), transparent 60%),
+        linear-gradient(180deg, #070a12, #0b0f18 40%, #070a12);
+      color:var(--txt);
+      min-height:100vh;
+    }
+
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      backdrop-filter: blur(10px);
+      background: rgba(6,10,18,.75);
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .topbar-inner{
+      max-width:1150px; margin:0 auto; padding:14px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800; letter-spacing:.4px;
+    }
+    .badge{
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      background: linear-gradient(90deg, rgba(124,92,255,.25), rgba(0,212,255,.18));
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--muted);
+    }
+
+    .btn{
+      appearance:none; border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color:var(--txt);
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:700;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      text-decoration:none; display:inline-flex; align-items:center; gap:10px;
+    }
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.22);}
+    .btn:active{ transform: translateY(0px) scale(.99); }
+
+    .wrap{
+      max-width:1150px;
+      margin:0 auto;
+      padding:18px 16px 30px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:16px;
+    }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .card-h{
+      padding:14px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .card-h h2{
+      margin:0; font-size:14px; letter-spacing:.8px; text-transform:uppercase; color:var(--muted);
+    }
+    .card-b{ padding:14px 16px; }
+
+    .money{
+      display:flex; flex-wrap:wrap; gap:10px;
+      align-items:center;
+      font-weight:900;
+    }
+    .money .val{
+      font-size:20px;
+      letter-spacing:.3px;
+    }
+    .money small{ color:var(--muted); font-weight:700; }
+
+    .list{
+      display:flex; flex-direction:column; gap:10px;
+    }
+
+    .item{
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .row{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      flex-wrap:wrap;
+    }
+    .title{
+      font-weight:900;
+      letter-spacing:.3px;
+      display:flex; align-items:center; gap:10px;
+    }
+    .tier{
+      font-size:12px; padding:4px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--muted);
+      background: rgba(255,255,255,.06);
+    }
+    .tier.principal{ border-color: rgba(0,212,255,.35); }
+    .tier.secundario{ border-color: rgba(124,92,255,.35); }
+    .tier.apoio{ border-color: rgba(255,208,90,.35); }
+
+    .meta{
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.4;
+    }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: rgba(234,240,255,.84);
+      font-weight:800;
+      font-size:12px;
+    }
+
+    .pill.good{ border-color: rgba(53,255,155,.35); }
+    .pill.warn{ border-color: rgba(255,208,90,.35); }
+    .pill.bad{ border-color: rgba(255,77,109,.35); }
+
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end;
+    }
+
+    .btn-primary{
+      border-color: rgba(0,212,255,.35);
+      background: linear-gradient(90deg, rgba(0,212,255,.18), rgba(124,92,255,.15));
+    }
+    .btn-danger{
+      border-color: rgba(255,77,109,.45);
+      background: rgba(255,77,109,.10);
+    }
+
+    .note{
+      color: var(--muted);
+      font-size: 12px;
+      line-height:1.5;
+      margin-top:10px;
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      background: rgba(10,14,24,.88);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 18px 55px rgba(0,0,0,.6);
+      color: var(--txt);
+      padding: 10px 12px;
+      border-radius: 14px;
+      max-width: 92vw;
+      display:none;
+      z-index:50;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div style="width:10px;height:10px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 25px rgba(0,212,255,.35)"></div>
+        <div>Patrocínios</div>
+        <span class="badge" id="teamBadge">Equipe</span>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+        <a class="btn" id="backBtn" href="lobby.html">⬅ Voltar ao Lobby</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+      <section class="card">
+        <header class="card-h">
+          <h2>Patrocinadores Ativos</h2>
+          <span class="pill good" id="weeklyIncomePill">+R$ 0 / semana</span>
+        </header>
+
+        <div class="card-b">
+          <div class="money">
+            <div class="val" id="moneyVal">R$ 0</div>
+            <small>caixa atual</small>
+          </div>
+
+          <div class="note">
+            Patrocínios pagam semanalmente e podem oferecer bônus por assinatura. Cada contrato também tem um objetivo.
+            Tudo funciona offline (localStorage).
+          </div>
+
+          <div style="height:12px"></div>
+          <div class="list" id="activeList"></div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <header class="card-h">
+          <h2>Ofertas Disponíveis</h2>
+          <span class="pill warn" id="offersPill">0 ofertas</span>
+        </header>
+
+        <div class="card-b">
+          <div class="list" id="offersList"></div>
+
+          <div class="note">
+            Dica: ofertas melhores aparecem com reputação maior e bom desempenho.
+            (No seu futuro motor de carreira, você pode gerar ofertas novas após cada GP.)
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/gameState.js"></script>
+  <script src="js/sponsors.js"></script>
+</body>
+</html>
