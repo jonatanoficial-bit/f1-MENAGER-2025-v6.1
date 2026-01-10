@@ -1,132 +1,212 @@
-/* =========================================================
-   F1 MANAGER 2025 — STAFF SYSTEM
-   ✔ Impacto real em corrida, pit e oficina
-   ✔ Conectado ao GAME_STATE
-   ✔ Contratação / Demissão
-   ✔ Custos mensais
-   ========================================================= */
+/* ============================================================
+   F1 MANAGER 2025 — SAVE SYSTEM (OFFLINE)
+   - localStorage
+   - versionado
+   - merge seguro
+   ============================================================ */
 
-if (!window.GAME_STATE) {
-  console.error("❌ GAME_STATE não encontrado");
-}
+(function () {
+  const SAVE_KEY = "F1M25_SAVE_V1";
+  const SAVE_VERSION = 1;
 
-/* =========================
-   CATÁLOGO DE FUNCIONÁRIOS
-   ========================= */
-
-const STAFF_POOL = [
-  { role: "mechanic", name: "Mecânico Júnior", level: 1, skill: 65, salary: 120_000 },
-  { role: "mechanic", name: "Mecânico Sênior", level: 3, skill: 82, salary: 380_000 },
-  { role: "mechanic", name: "Mecânico Elite", level: 5, skill: 95, salary: 850_000 },
-
-  { role: "engineer", name: "Engenheiro Júnior", level: 1, skill: 68, salary: 180_000 },
-  { role: "engineer", name: "Engenheiro de Performance", level: 3, skill: 85, salary: 520_000 },
-  { role: "engineer", name: "Engenheiro Chefe", level: 5, skill: 96, salary: 1_200_000 },
-
-  { role: "marketing", name: "Marketing Júnior", level: 1, skill: 60, salary: 140_000 },
-  { role: "marketing", name: "Marketing Global", level: 4, skill: 90, salary: 700_000 }
-];
-
-/* =========================
-   CONTRATAR FUNCIONÁRIO
-   ========================= */
-
-window.hireStaff = function (staffTemplate) {
-  const staff = {
-    id: crypto.randomUUID(),
-    role: staffTemplate.role,
-    name: staffTemplate.name,
-    level: staffTemplate.level,
-    skill: staffTemplate.skill,
-    salary: staffTemplate.salary,
-    morale: 80
-  };
-
-  GAME_STATE.staff.push(staff);
-  GAME_STATE.team.budget -= staff.salary;
-
-  recalcStaffModifiers();
-  console.log("✅ Funcionário contratado:", staff.name);
-};
-
-/* =========================
-   DEMITIR FUNCIONÁRIO
-   ========================= */
-
-window.fireStaff = function (id) {
-  const idx = GAME_STATE.staff.findIndex(s => s.id === id);
-  if (idx === -1) return;
-
-  const fired = GAME_STATE.staff[idx];
-  GAME_STATE.staff.splice(idx, 1);
-
-  GAME_STATE.manager.score -= 25; // impacto de reputação
-  recalcStaffModifiers();
-
-  console.log("❌ Funcionário demitido:", fired.name);
-};
-
-/* =========================
-   RECÁLCULO DE MODIFICADORES
-   ========================= */
-
-function recalcStaffModifiers() {
-  const staff = GAME_STATE.staff;
-
-  const mechanics = staff.filter(s => s.role === "mechanic");
-  const engineers = staff.filter(s => s.role === "engineer");
-  const marketing = staff.filter(s => s.role === "marketing");
-
-  // ---------- PIT STOP ----------
-  const mechSkillAvg = avg(mechanics.map(m => m.skill));
-  const mechLevelAvg = avg(mechanics.map(m => m.level));
-
-  GAME_STATE.modifiers.pitTime =
-    -(mechSkillAvg * 0.025) - (mechLevelAvg * 0.15);
-  // Ex: até -1.5s de pit
-
-  // ---------- OFICINA / SETUP ----------
-  const engSkillAvg = avg(engineers.map(e => e.skill));
-  const engLevelAvg = avg(engineers.map(e => e.level));
-
-  GAME_STATE.modifiers.setupEfficiency =
-    (engSkillAvg * 0.35) + (engLevelAvg * 2.5);
-
-  // ---------- PATROCÍNIO ----------
-  const mktSkillAvg = avg(marketing.map(m => m.skill));
-  const mktLevelAvg = avg(marketing.map(m => m.level));
-
-  GAME_STATE.modifiers.sponsorBoost =
-    (mktSkillAvg * 0.4) + (mktLevelAvg * 6);
-
-  console.log("🔧 Modificadores atualizados:", GAME_STATE.modifiers);
-}
-
-/* =========================
-   CUSTO MENSAL DE STAFF
-   ========================= */
-
-window.processMonthlyStaffCost = function () {
-  const total = GAME_STATE.staff.reduce((s, f) => s + f.salary, 0);
-  GAME_STATE.team.budget -= total;
-
-  if (GAME_STATE.team.budget < 0) {
-    GAME_STATE.manager.score -= 50;
+  function nowISO() {
+    return new Date().toISOString();
   }
-};
 
-/* =========================
-   UTIL
-   ========================= */
+  function deepMerge(target, source) {
+    if (!source || typeof source !== "object") return target;
+    if (!target || typeof target !== "object") target = {};
+    for (const k of Object.keys(source)) {
+      const sv = source[k];
+      const tv = target[k];
+      if (Array.isArray(sv)) {
+        target[k] = sv.slice();
+      } else if (sv && typeof sv === "object") {
+        target[k] = deepMerge(tv && typeof tv === "object" ? tv : {}, sv);
+      } else {
+        target[k] = sv;
+      }
+    }
+    return target;
+  }
 
-function avg(arr) {
-  if (!arr.length) return 0;
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
-}
+  function defaultSave() {
+    return {
+      meta: {
+        version: SAVE_VERSION,
+        createdAt: nowISO(),
+        updatedAt: nowISO(),
+      },
 
-/* =========================
-   INIT
-   ========================= */
+      profile: {
+        managerName: localStorage.getItem("MANAGER_NAME") || "Seu Manager",
+        managerAvatar: localStorage.getItem("MANAGER_AVATAR") || "assets/avatars/default.png",
+        userTeam: (new URL(window.location.href)).searchParams.get("userTeam") || "redbull",
+      },
 
-recalcStaffModifiers();
-console.log("✅ staffSystem.js carregado corretamente");
+      economy: {
+        cash: 25000000, // 25 mi inicial (ajuste depois se quiser)
+        reputation: 52, // 0-100
+        costCapUsed: 0,
+        costCapLimit: 135000000,
+      },
+
+      sponsors: {
+        active: null,  // {id, name, tier, weeklyPay, goals[], signedAt}
+        history: [],   // contratos antigos
+        lastPayoutAt: null,
+      },
+
+      staff: {
+        roster: {
+          technicalDirector: null,
+          raceEngineer: null,
+          strategist: null,
+          aeroLead: null,
+          pitCrewChief: null,
+        },
+        teamModifiers: {
+          // multiplicadores aplicáveis na simulação (practice/qualy/race)
+          pace: 1.0,
+          tireWear: 1.0,
+          reliability: 1.0,
+          pitSpeed: 1.0,
+          strategy: 1.0,
+        },
+      },
+    };
+  }
+
+  function loadRaw() {
+    try {
+      const s = localStorage.getItem(SAVE_KEY);
+      if (!s) return null;
+      return JSON.parse(s);
+    } catch (e) {
+      console.warn("[SAVE] erro ao carregar:", e);
+      return null;
+    }
+  }
+
+  function migrateIfNeeded(save) {
+    if (!save || typeof save !== "object") return defaultSave();
+    const v = save?.meta?.version || 0;
+
+    // Futuras migrações entram aqui:
+    if (v < 1) {
+      const fresh = defaultSave();
+      const merged = deepMerge(fresh, save);
+      merged.meta.version = 1;
+      merged.meta.updatedAt = nowISO();
+      return merged;
+    }
+
+    // Normaliza campos ausentes
+    const fresh = defaultSave();
+    const merged = deepMerge(fresh, save);
+    merged.meta.version = SAVE_VERSION;
+    return merged;
+  }
+
+  function load() {
+    const raw = loadRaw();
+    const ready = migrateIfNeeded(raw);
+    return ready;
+  }
+
+  function save(data) {
+    try {
+      data.meta = data.meta || {};
+      data.meta.version = SAVE_VERSION;
+      data.meta.updatedAt = nowISO();
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      return true;
+    } catch (e) {
+      console.warn("[SAVE] erro ao salvar:", e);
+      return false;
+    }
+  }
+
+  function update(mutatorFn) {
+    const s = load();
+    mutatorFn(s);
+    return save(s);
+  }
+
+  function get(path, fallback = undefined) {
+    const s = load();
+    const parts = String(path).split(".");
+    let cur = s;
+    for (const p of parts) {
+      if (!cur || typeof cur !== "object" || !(p in cur)) return fallback;
+      cur = cur[p];
+    }
+    return cur;
+  }
+
+  function set(path, value) {
+    return update((s) => {
+      const parts = String(path).split(".");
+      let cur = s;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const k = parts[i];
+        if (!cur[k] || typeof cur[k] !== "object") cur[k] = {};
+        cur = cur[k];
+      }
+      cur[parts[parts.length - 1]] = value;
+    });
+  }
+
+  function addCash(amount) {
+    return update((s) => {
+      s.economy.cash = Math.max(0, Math.round((s.economy.cash || 0) + amount));
+    });
+  }
+
+  function spendCash(amount) {
+    return update((s) => {
+      s.economy.cash = Math.max(0, Math.round((s.economy.cash || 0) - amount));
+    });
+  }
+
+  function computeStaffModifiers(roster) {
+    // Base: 1.0; rating 0..100 melhora multiplicador
+    // pace: +0.15 no máximo; tireWear: -0.12 no máximo; etc.
+    function r(x) { return Math.max(0, Math.min(100, Number(x || 0))); }
+
+    const td = roster.technicalDirector ? r(roster.technicalDirector.rating) : 0;
+    const re = roster.raceEngineer ? r(roster.raceEngineer.rating) : 0;
+    const st = roster.strategist ? r(roster.strategist.rating) : 0;
+    const ae = roster.aeroLead ? r(roster.aeroLead.rating) : 0;
+    const pc = roster.pitCrewChief ? r(roster.pitCrewChief.rating) : 0;
+
+    // Fórmulas simples e estáveis (offline, leves)
+    const pace = 1.0 + ((td * 0.0006) + (ae * 0.0007) + (re * 0.0004));         // até ~ +0.17
+    const tireWear = 1.0 - ((re * 0.0008) + (td * 0.0004));                      // até ~ -0.12
+    const reliability = 1.0 + ((td * 0.0006));                                   // até ~ +0.06
+    const pitSpeed = 1.0 - ((pc * 0.0010));                                       // até ~ -0.10 (menor é melhor)
+    const strategy = 1.0 + ((st * 0.0009));                                       // até ~ +0.09
+
+    return {
+      pace: Number(pace.toFixed(4)),
+      tireWear: Number(tireWear.toFixed(4)),
+      reliability: Number(reliability.toFixed(4)),
+      pitSpeed: Number(pitSpeed.toFixed(4)),
+      strategy: Number(strategy.toFixed(4)),
+    };
+  }
+
+  // Expor no window para uso no resto do jogo
+  window.SaveSystem = {
+    KEY: SAVE_KEY,
+    VERSION: SAVE_VERSION,
+    load,
+    save,
+    update,
+    get,
+    set,
+    addCash,
+    spendCash,
+    computeStaffModifiers,
+  };
+})();
