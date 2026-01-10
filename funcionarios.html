@@ -1,448 +1,513 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>F1 MANAGER 2025 — Funcionários</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F1 Manager 2025 — Funcionários</title>
 
   <style>
     :root{
-      --bg: #05070c;
-      --glass: rgba(10,14,22,.62);
-      --glass2: rgba(10,14,22,.72);
+      --bg:#05050a;
+      --panel: rgba(10,10,16,.82);
       --stroke: rgba(255,255,255,.10);
-      --stroke2: rgba(255,255,255,.14);
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.68);
-      --chip: rgba(0,0,0,.35);
-      --blue: #18a7ff;
-      --blue2:#0a7bd6;
-      --ok:#23c55e;
-      --warn:#f59e0b;
-      --danger:#ef4444;
-      --radius: 18px;
-      --radius2: 24px;
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --shadow2: 0 10px 26px rgba(0,0,0,.35);
+      --text: rgba(255,255,255,.95);
+      --muted: rgba(255,255,255,.72);
+
+      --cyan:#40c4ff;
+      --green:#00e676;
+      --purple:#b388ff;
+      --orange:#ff9100;
+      --red:#ff1744;
+
+      --radius:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+      --shadow2: 0 10px 30px rgba(0,0,0,.45);
     }
 
     *{ box-sizing:border-box; }
-    html,body{ height:100%; }
+    html,body{ height:100%; margin:0; padding:0; }
     body{
-      margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color: var(--text);
       background: var(--bg);
-      overflow-x:hidden;
-    }
-
-    /* ===== Background (AAA) ===== */
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      background:
-        radial-gradient(1200px 700px at 10% 0%, rgba(24,167,255,.18), transparent 55%),
-        radial-gradient(900px 600px at 85% 10%, rgba(99,102,241,.14), transparent 55%),
-        linear-gradient(180deg, rgba(0,0,0,.72), rgba(0,0,0,.86)),
-        url("assets/ui/funcionarios_bg.png");
+      background-image: url("assets/ui/lobby_bg.png");
       background-size: cover;
       background-position: center;
-      filter: saturate(1.05) contrast(1.05);
-      transform: translateZ(0);
-      z-index:-2;
+      background-attachment: fixed;
+      overflow-x:hidden;
+      overflow-y:auto;
+      -webkit-overflow-scrolling: touch;
     }
-    body::after{
-      content:"";
-      position:fixed;
-      inset:0;
-      background: radial-gradient(900px 700px at 50% 30%, rgba(0,0,0,.10), rgba(0,0,0,.70));
-      z-index:-1;
+    body::-webkit-scrollbar{ width:10px; }
+    body::-webkit-scrollbar-track{ background: rgba(0,0,0,.25); }
+    body::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,.18);
+      border-radius: 999px;
+      border:2px solid rgba(0,0,0,.25);
     }
 
-    /* ===== Layout ===== */
-    .wrap{
-      max-width: 1220px;
-      margin: 0 auto;
-      padding: 20px 18px 30px;
+    .overlay{
+      min-height:100vh;
+      width:100%;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(64,196,255,.10), rgba(0,0,0,0) 40%),
+        radial-gradient(circle at 88% 20%, rgba(179,136,255,.10), rgba(0,0,0,0) 45%),
+        linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,.90));
+      display:flex;
+      flex-direction:column;
+      padding: 14px;
     }
 
     .topbar{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:14px;
-      padding: 14px 16px;
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(10,14,22,.72), rgba(10,14,22,.48));
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(10px);
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
       gap:12px;
-      min-width: 260px;
+      width: min(1200px, 100%);
+      margin: 0 auto;
     }
-    .brand img{
-      width:40px;height:40px;object-fit:contain;
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,.55));
+    .pillBtn{
+      border:none; cursor:pointer;
+      border-radius:999px;
+      padding: 10px 16px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#fff;
+      background: linear-gradient(135deg, rgba(255,23,68,.95), rgba(255,23,68,.62));
+      box-shadow: 0 0 18px rgba(255,23,68,.45);
     }
-    .brand h1{
-      font-size: 14px;
-      letter-spacing:.6px;
+    .title{
+      flex:1;
+      text-align:center;
+      padding: 0 8px;
+    }
+    .title h1{
       margin:0;
-      font-weight: 800;
-      text-transform: uppercase;
-      line-height: 1.15;
+      font-size:1.02rem;
+      letter-spacing:.12em;
+      text-transform:uppercase;
     }
-    .brand p{
-      margin:2px 0 0;
-      font-size: 12px;
+    .title p{
+      margin:.35rem 0 0;
       color: var(--muted);
-      line-height:1.2;
+      font-size:.88rem;
+      line-height:1.25;
     }
 
-    .actions{
-      display:flex;
-      gap:10px;
-      align-items:center;
-    }
-
-    .btn{
-      appearance:none;
-      border:1px solid var(--stroke2);
-      background: rgba(0,0,0,.25);
-      color: var(--text);
-      padding: 10px 14px;
-      border-radius: 999px;
-      cursor:pointer;
-      font-weight: 700;
-      letter-spacing:.2px;
-      box-shadow: 0 10px 22px rgba(0,0,0,.35);
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
-      user-select:none;
-    }
-    .btn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.22); background: rgba(0,0,0,.34); }
-    .btn:active{ transform: translateY(0px); }
-
-    .btn.primary{
-      border-color: rgba(24,167,255,.38);
-      background: linear-gradient(180deg, rgba(24,167,255,.22), rgba(10,123,214,.18));
-    }
-
-    .grid{
-      margin-top: 18px;
+    .wrap{
+      width: min(1200px, 100%);
+      margin: 12px auto 40px;
       display:grid;
       grid-template-columns: 1fr;
-      gap: 14px;
+      gap:12px;
     }
-
-    .cards{
-      display:grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
+    @media (min-width: 980px){
+      .wrap{ grid-template-columns: 1fr 1fr; }
     }
 
     .card{
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(10,14,22,.68), rgba(10,14,22,.52));
+      background: linear-gradient(180deg, rgba(12,12,20,.90), rgba(10,10,16,.74));
+      border: 1px solid var(--stroke);
       border-radius: var(--radius);
-      padding: 14px;
       box-shadow: var(--shadow2);
-      backdrop-filter: blur(10px);
-      min-height: 86px;
+      overflow:hidden;
     }
-    .card .k{ font-size:12px; color: var(--muted); letter-spacing:.3px; }
-    .card .v{ font-size:16px; font-weight:900; margin-top:6px; }
-
-    .sectionTitle{
-      margin: 8px 0 0;
-      font-size: 13px;
-      letter-spacing:.6px;
-      font-weight: 900;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.86);
-    }
-
-    .panel{
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(10,14,22,.74), rgba(10,14,22,.56));
-      border-radius: var(--radius2);
-      padding: 14px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
-
-    /* Containers que o staffSystem.js usa */
-    #listaStaffAtual, #listaStaffMercado{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    /* Estilização “AAA” para cards gerados pelo JS */
-    .staff-card{
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.18));
-      border-radius: 18px;
-      padding: 14px;
-      box-shadow: 0 18px 40px rgba(0,0,0,.35);
-    }
-    .staff-card h3{
-      margin:0;
-      font-size: 14px;
-      font-weight: 900;
-      letter-spacing:.2px;
-    }
-    .staff-card .sub{
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 4px;
-      line-height:1.25;
-    }
-    .staff-card .row{
+    .cardHead{
+      padding: 14px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.28);
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
-      gap:10px;
-      margin-top: 10px;
-      flex-wrap: wrap;
+      gap:12px;
     }
-    .pill{
+
+    .badge{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: var(--chip);
-      font-size: 12px;
-      color: rgba(255,255,255,.82);
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.12);
+      font-size:.72rem;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.86);
       white-space:nowrap;
     }
-    .bar{
-      width: 100%;
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      overflow:hidden;
-      border: 1px solid rgba(255,255,255,.08);
+
+    .cardBody{ padding: 14px; }
+
+    .statGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
       margin-top: 10px;
     }
-    .bar > i{
+    .stat{
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.30);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .stat small{
       display:block;
-      height:100%;
-      width: 50%;
-      background: linear-gradient(90deg, rgba(24,167,255,.95), rgba(99,102,241,.85));
+      opacity:.72;
+      font-size:.70rem;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+    .stat strong{
+      font-size:1.00rem;
+      letter-spacing:.02em;
     }
 
-    .staff-card .btnrow{
+    .roleBox{
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.30);
+      border: 1px solid rgba(255,255,255,.10);
+      margin-bottom: 10px;
+    }
+    .roleTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .roleName{
+      margin:0;
+      font-size:1rem;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .roleText{
+      margin:6px 0 0;
+      color: var(--muted);
+      font-size:.88rem;
+      line-height:1.32;
+    }
+
+    .chip{
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:900;
+      letter-spacing:.10em;
+      font-size:.72rem;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      white-space:nowrap;
+    }
+    .chip.cyan{ border-color: rgba(64,196,255,.30); }
+    .chip.green{ border-color: rgba(0,230,118,.30); }
+    .chip.purple{ border-color: rgba(179,136,255,.30); }
+    .chip.orange{ border-color: rgba(255,145,0,.30); }
+
+    .btnRow{
       display:flex;
       gap:10px;
       margin-top: 12px;
-      flex-wrap: wrap;
+      flex-wrap:wrap;
     }
-    .staff-card button{
-      flex: 1 1 140px;
-      border-radius: 999px;
-      padding: 10px 12px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.25);
-      color: rgba(255,255,255,.92);
-      font-weight: 800;
-      cursor:pointer;
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    .btn{
+      border:none; cursor:pointer;
+      border-radius:999px;
+      padding: 12px 14px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#fff;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+      flex:1;
+      min-width: 180px;
+      text-align:center;
     }
-    .staff-card button:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.22); background: rgba(0,0,0,.34); }
-    .staff-card button.primary{
-      border-color: rgba(24,167,255,.38);
-      background: linear-gradient(180deg, rgba(24,167,255,.22), rgba(10,123,214,.18));
-    }
-    .staff-card button.danger{
-      border-color: rgba(239,68,68,.30);
-      background: linear-gradient(180deg, rgba(239,68,68,.16), rgba(0,0,0,.22));
-    }
+    .btn.green{ background: linear-gradient(135deg, rgba(0,230,118,.90), rgba(0,230,118,.52)); border-color: rgba(0,230,118,.34); }
+    .btn.cyan{ background: linear-gradient(135deg, rgba(64,196,255,.90), rgba(64,196,255,.55)); border-color: rgba(64,196,255,.34); }
+    .btn.purple{ background: linear-gradient(135deg, rgba(179,136,255,.90), rgba(179,136,255,.55)); border-color: rgba(179,136,255,.34); }
+    .btn.red{ background: linear-gradient(135deg, rgba(255,23,68,.90), rgba(255,23,68,.55)); border-color: rgba(255,23,68,.34); }
+    .btn:active{ transform: scale(.99); }
 
-    .footerHint{
+    .note{
       margin-top: 10px;
-      color: rgba(255,255,255,.62);
-      font-size: 12px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.72);
+      font-size:.86rem;
       line-height:1.35;
-    }
-
-    @media (max-width: 1100px){
-      .cards{ grid-template-columns: repeat(2, 1fr); }
-      #listaStaffAtual, #listaStaffMercado{ grid-template-columns: 1fr; }
-      .brand{ min-width: unset; }
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
+  <div class="overlay">
+
     <div class="topbar">
-      <div class="brand">
-        <img id="teamLogo" src="" alt="Logo da equipe" />
-        <div>
-          <h1>FUNCIONÁRIOS & EQUIPE TÉCNICA</h1>
-          <p>Contrate, demita e converta qualidade em pit-stop, pneus e desenvolvimento.</p>
-        </div>
+      <button class="pillBtn" id="btnBack">VOLTAR</button>
+      <div class="title">
+        <h1>FUNCIONÁRIOS & STAFF</h1>
+        <p>Contrate especialistas e aumente desempenho: ritmo, desgaste, confiabilidade, pit e estratégia.</p>
       </div>
-      <div class="actions">
-        <button class="btn" id="btnManager">Manager</button>
-        <button class="btn primary" id="btnVoltar">VOLTAR</button>
-      </div>
+      <div style="width:110px;"></div>
     </div>
 
-    <div class="grid">
-      <div class="cards">
-        <div class="card">
-          <div class="k">Caixa</div>
-          <div class="v" id="uiMoney">€ 0</div>
+    <div class="wrap">
+
+      <!-- ESQUERDA: ROSTER -->
+      <div class="card">
+        <div class="cardHead">
+          <div>
+            <div class="badge">SEU STAFF</div>
+            <div style="margin-top:6px; font-weight:900; letter-spacing:.02em;">Equipe contratada</div>
+          </div>
+          <div class="badge" id="teamBadge">EQUIPE</div>
         </div>
-        <div class="card">
-          <div class="k">Custo semanal</div>
-          <div class="v" id="uiWeekly">€ 0</div>
-        </div>
-        <div class="card">
-          <div class="k">Pit-stop</div>
-          <div class="v" id="uiPit">x1.00</div>
-        </div>
-        <div class="card">
-          <div class="k">Desenvolvimento</div>
-          <div class="v" id="uiDev">x1.00</div>
-        </div>
-        <div class="card">
-          <div class="k">Desgaste pneus</div>
-          <div class="v" id="uiTyre">x1.00</div>
+
+        <div class="cardBody">
+          <div class="statGrid">
+            <div class="stat"><small>Caixa</small><strong id="cashTxt">--</strong></div>
+            <div class="stat"><small>Reputação</small><strong id="repTxt">--</strong></div>
+            <div class="stat"><small>Mod Pace</small><strong id="mPace">--</strong></div>
+            <div class="stat"><small>Mod Tire</small><strong id="mTire">--</strong></div>
+            <div class="stat"><small>Mod Pit</small><strong id="mPit">--</strong></div>
+            <div class="stat"><small>Mod Strat</small><strong id="mStrat">--</strong></div>
+          </div>
+
+          <div style="margin-top:12px;" id="rosterBox">
+            <!-- roster via JS -->
+          </div>
+
+          <div class="note">
+            <b>Impacto real no jogo:</b><br/>
+            • Estes multiplicadores ficam gravados no save (offline).<br/>
+            • Depois, você liga isso na simulação de corrida/treino — o efeito já está pronto para ser lido.
+          </div>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="sectionTitle">Seu quadro técnico (ativo)</div>
-        <div id="listaStaffAtual"></div>
-        <div class="footerHint">
-          Dica: mecânicos reduzem tempo/erro de pit-stop; engenharia melhora precisão/impacto da oficina; aerodinâmica melhora estabilidade; marketing aumenta ofertas/valores de patrocínio.
+      <!-- DIREITA: MERCADO -->
+      <div class="card">
+        <div class="cardHead">
+          <div>
+            <div class="badge">MERCADO DE STAFF</div>
+            <div style="margin-top:6px; font-weight:900; letter-spacing:.02em;">Contrate especialistas</div>
+          </div>
+          <div class="badge">SALÁRIO / SEMANA</div>
+        </div>
+
+        <div class="cardBody" id="marketBox">
+          <!-- mercado via JS -->
         </div>
       </div>
 
-      <div class="panel">
-        <div class="sectionTitle">Mercado de talentos</div>
-        <div id="listaStaffMercado"></div>
-        <div class="footerHint">
-          Contratar aumenta custo recorrente. Demitir reduz custo, mas pode afetar reputação/eficiência.
-        </div>
-      </div>
     </div>
   </div>
 
+  <script src="js/saveSystem.js"></script>
+  <script src="js/gameData.js"></script>
   <script>
-    /* ===== Estado persistente (sem depender de main.js / data.js) ===== */
-    const SAVE_KEY = "F1M2025_SAVE";
+    const params = new URL(window.location.href).searchParams;
+    const userTeam = (params.get("userTeam") || SaveSystem.load().profile.userTeam || "redbull").toLowerCase();
 
-    function defaultState(){
-      const params = new URLSearchParams(location.search);
-      const userTeam = (params.get("userTeam") || localStorage.getItem("F1M_userTeam") || "mclaren").toLowerCase();
-      localStorage.setItem("F1M_userTeam", userTeam);
+    const cashTxt = document.getElementById("cashTxt");
+    const repTxt = document.getElementById("repTxt");
+    const teamBadge = document.getElementById("teamBadge");
 
-      return {
-        meta: { version: 1, lastSaved: Date.now() },
-        userTeam,
-        finances: {
-          money: 140_000_000,      // base para testes
-          weeklyCost: 0,
-          exposure: 35,
-          reputation: 82,
-          marketing: 59
-        },
-        staff: {
-          mechanics: 77,
-          engineering: 74,
-          aero: 68,
-          strategy: 66,
-          marketing: 59
-        },
-        staffPool: []
-      };
+    const mPace = document.getElementById("mPace");
+    const mTire = document.getElementById("mTire");
+    const mPit = document.getElementById("mPit");
+    const mStrat = document.getElementById("mStrat");
+
+    const rosterBox = document.getElementById("rosterBox");
+    const marketBox = document.getElementById("marketBox");
+
+    function money(n){ return GameData.money(n); }
+
+    function goLobby(){
+      const url = new URL("lobby.html", window.location.href);
+      url.searchParams.set("userTeam", userTeam);
+      window.location.href = url.toString();
+    }
+    document.getElementById("btnBack").addEventListener("click", goLobby);
+
+    const ROLE_LABEL = {
+      technicalDirector: "Diretor Técnico",
+      raceEngineer: "Engenheiro de Corrida",
+      strategist: "Estrategista",
+      aeroLead: "Chefe de Aerodinâmica",
+      pitCrewChief: "Chefe do Pit Crew",
+    };
+
+    const ROLE_BADGE = {
+      technicalDirector: "orange",
+      raceEngineer: "cyan",
+      strategist: "purple",
+      aeroLead: "cyan",
+      pitCrewChief: "green",
+    };
+
+    function refresh(){
+      const save = SaveSystem.load();
+      save.profile.userTeam = userTeam;
+      SaveSystem.save(save);
+
+      teamBadge.textContent = "EQUIPE: " + String(userTeam).toUpperCase();
+      cashTxt.textContent = money(save.economy.cash || 0);
+      repTxt.textContent = String(save.economy.reputation || 0);
+
+      // recalcula modifiers sempre
+      const mods = SaveSystem.computeStaffModifiers(save.staff.roster || {});
+      SaveSystem.set("staff.teamModifiers", mods);
+
+      mPace.textContent = mods.pace.toFixed(3);
+      mTire.textContent = mods.tireWear.toFixed(3);
+      mPit.textContent  = mods.pitSpeed.toFixed(3);
+      mStrat.textContent= mods.strategy.toFixed(3);
+
+      renderRoster(save);
+      renderMarket(save);
     }
 
-    function loadState(){
-      try{
-        const raw = localStorage.getItem(SAVE_KEY);
-        if(!raw) return defaultState();
-        const parsed = JSON.parse(raw);
-        return Object.assign(defaultState(), parsed);
-      }catch(e){
-        return defaultState();
-      }
+    function renderRoster(save){
+      const r = save.staff.roster || {};
+      rosterBox.innerHTML = "";
+
+      Object.keys(ROLE_LABEL).forEach(role => {
+        const person = r[role];
+
+        const box = document.createElement("div");
+        box.className = "roleBox";
+
+        if(!person){
+          box.innerHTML = `
+            <div class="roleTop">
+              <div>
+                <p class="roleName" style="margin:0;">${ROLE_LABEL[role]}</p>
+                <p class="roleText">Vaga aberta — contrate no mercado para melhorar desempenho.</p>
+              </div>
+              <div class="chip ${ROLE_BADGE[role] || ""}">VAZIO</div>
+            </div>
+          `;
+        } else {
+          box.innerHTML = `
+            <div class="roleTop">
+              <div>
+                <p class="roleName" style="margin:0;">${ROLE_LABEL[role]} — ${person.name}</p>
+                <p class="roleText">Rating: <b>${person.rating}</b> • Salário/semana: <b>${money(person.wageWeekly)}</b><br/>
+                Especialidade: <b>${person.specialty || "—"}</b></p>
+              </div>
+              <div class="chip ${ROLE_BADGE[role] || ""}">ATIVO</div>
+            </div>
+
+            <div class="btnRow">
+              <button class="btn red" data-fire="${role}">DEMITIR</button>
+            </div>
+          `;
+        }
+
+        rosterBox.appendChild(box);
+      });
+
+      rosterBox.querySelectorAll("button[data-fire]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const role = btn.getAttribute("data-fire");
+          const ok = confirm("Deseja demitir este funcionário? (sem multa por enquanto)");
+          if(!ok) return;
+
+          SaveSystem.update(save => {
+            save.staff.roster[role] = null;
+          });
+
+          refresh();
+        });
+      });
     }
 
-    function saveState(){
-      try{
-        window.gameState.meta = window.gameState.meta || {};
-        window.gameState.meta.lastSaved = Date.now();
-        localStorage.setItem(SAVE_KEY, JSON.stringify(window.gameState));
-      }catch(e){}
+    function renderMarket(save){
+      marketBox.innerHTML = "";
+
+      const rep = save.economy.reputation || 0;
+
+      GameData.StaffMarket.forEach(p => {
+        const roleLabel = ROLE_LABEL[p.role] || p.role;
+
+        // pequeno gating por reputação (opcional)
+        // aqui: rating alto exige reputação maior
+        const needRep = Math.max(0, Math.floor((p.rating - 60) * 1.2)); // ex: 86 -> ~31
+        const locked = rep < needRep;
+
+        const item = document.createElement("div");
+        item.className = "roleBox";
+        item.innerHTML = `
+          <div class="roleTop">
+            <div>
+              <p class="roleName">${p.name}</p>
+              <p class="roleText">
+                Cargo: <b>${roleLabel}</b><br/>
+                Rating: <b>${p.rating}</b> • Salário/semana: <b>${money(p.wageWeekly)}</b><br/>
+                Especialidade: <b>${p.specialty}</b>
+              </p>
+              ${locked ? `<p class="roleText" style="color:rgba(255,145,0,.95); font-weight:800;">Requer reputação ${needRep}+</p>` : ``}
+            </div>
+            <div class="chip ${ROLE_BADGE[p.role] || ""}">${p.role.toUpperCase()}</div>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn green" data-hire="${p.id}" ${locked ? "disabled style='opacity:.45; cursor:not-allowed;'" : ""}>
+              CONTRATAR
+            </button>
+          </div>
+        `;
+        marketBox.appendChild(item);
+      });
+
+      marketBox.querySelectorAll("button[data-hire]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-hire");
+          const cand = GameData.StaffMarket.find(x => x.id === id);
+          if(!cand) return;
+
+          const save = SaveSystem.load();
+          const cash = save.economy.cash || 0;
+
+          if (cash < cand.wageWeekly * 4) {
+            alert("Caixa insuficiente. Recomendado ter pelo menos 4 semanas de salário em caixa.");
+            return;
+          }
+
+          const ok = confirm(`Contratar ${cand.name} como ${ROLE_LABEL[cand.role]}?\nSalário semanal: ${money(cand.wageWeekly)}`);
+          if(!ok) return;
+
+          SaveSystem.update(s => {
+            // substitui o atual do cargo
+            s.staff.roster[cand.role] = {
+              id: cand.id,
+              role: cand.role,
+              name: cand.name,
+              rating: cand.rating,
+              wageWeekly: cand.wageWeekly,
+              specialty: cand.specialty,
+              hiredAt: new Date().toISOString(),
+            };
+
+            // efeito imediato: paga 1 semana adiantado (bem simples)
+            s.economy.cash = Math.max(0, Math.round((s.economy.cash || 0) - cand.wageWeekly));
+          });
+
+          refresh();
+          alert("Contratado! (1 semana paga adiantado)");
+        });
+      });
     }
 
-    window.gameState = loadState();
-
-    // Logo da equipe (padrão do jogo)
-    (function setLogo(){
-      const team = (window.gameState.userTeam || "mclaren").toLowerCase();
-      const logo = document.getElementById("teamLogo");
-      logo.src = `assets/teams/${team}.png`;
-      logo.onerror = () => { logo.style.display = "none"; };
-    })();
-
-    // Botões
-    document.getElementById("btnVoltar").addEventListener("click", () => {
-      if (history.length > 1) history.back();
-      else location.href = "index.html";
-    });
-    document.getElementById("btnManager").addEventListener("click", () => {
-      location.href = "index.html";
-    });
-
-    // Autosave após ações
-    let saveT;
-    document.addEventListener("click", () => {
-      clearTimeout(saveT);
-      saveT = setTimeout(saveState, 120);
-    });
-
-    // UI topo
-    function euro(n){
-      return "€ " + Math.round(n).toLocaleString("pt-BR");
-    }
-    function refreshTop(){
-      const f = window.gameState.finances;
-      document.getElementById("uiMoney").textContent = euro(f.money || 0);
-      document.getElementById("uiWeekly").textContent = euro(f.weeklyCost || 0);
-      // valores “impacto” (staffSystem.js já calcula também, mas garantimos fallback)
-      const st = window.gameState.staff;
-      const pit = 1.10 - (Math.min(100, st.mechanics || 0) / 100) * 0.30; // 0.80~1.10
-      const dev = 0.90 + (Math.min(100, st.engineering || 0) / 100) * 0.40; // 0.90~1.30
-      const tyre = 1.10 - (Math.min(100, st.strategy || 0) / 100) * 0.25; // 0.85~1.10
-      document.getElementById("uiPit").textContent = "x" + pit.toFixed(2);
-      document.getElementById("uiDev").textContent = "x" + dev.toFixed(2);
-      document.getElementById("uiTyre").textContent = "x" + tyre.toFixed(2);
-    }
-    refreshTop();
-
-    // Atualiza topo periodicamente
-    setInterval(refreshTop, 400);
-  </script>
-
-  <!-- IMPORTANTE: aqui NÃO carregamos main.js/data.js para não redeclarar TEAMS_2025 -->
-  <script src="staffSystem.js"></script>
-  <script>
-    // Inicializa a tela do staff usando a função do seu sistema
-    if (typeof mostrarTelaStaff === "function") mostrarTelaStaff();
+    refresh();
   </script>
 </body>
 </html>
