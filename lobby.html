@@ -1,721 +1,472 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>F1 Manager 2025 — Lobby da Equipe</title>
+  <title>F1 Manager 2025 — Lobby</title>
 
   <style>
     :root{
-      --bg:#060812;
-      --txt:#ECF2FF;
-      --muted: rgba(236,242,255,.74);
-      --muted2: rgba(236,242,255,.56);
+      --bg:#07080c;
+      --panel: rgba(18,20,28,.78);
+      --panel2: rgba(18,20,28,.62);
+      --stroke: rgba(255,255,255,.10);
+      --text:#e9eefc;
+      --muted: rgba(233,238,252,.72);
 
-      --glass: rgba(14, 18, 30, .58);
-      --glass2: rgba(10, 12, 18, .52);
-      --stroke: rgba(255,255,255,.12);
-      --stroke2: rgba(255,255,255,.08);
-
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --shadow2: 0 10px 26px rgba(0,0,0,.42);
-
-      --r: 22px;
-      --r2: 16px;
-
-      /* Acentos (mais "AAA") */
-      --blue: #4CC3FF;
-      --blue2:#2E7BFF;
-
-      --green:#42E6B6;
-      --green2:#00D4FF;
-
-      --orange:#FFB64A;
-      --orange2:#FF5A3A;
-
-      --red:#FF3B4E;
-      --red2:#FF6A8C;
-
-      --violet:#A56DFF;
-      --violet2:#4BE3FF;
-
-      --pink:#FF4FE0;
-      --pink2:#FFB04A;
-
-      /* Glow */
-      --glowBlue: rgba(76,195,255,.30);
-      --glowGreen: rgba(66,230,182,.28);
-      --glowOrange: rgba(255,182,74,.26);
-      --glowRed: rgba(255,59,78,.24);
-      --glowViolet: rgba(165,109,255,.25);
-      --glowPink: rgba(255,79,224,.22);
+      --red:#ff2e2e;
+      --cyan:#00e5ff;
+      --green:#00ff9a;
+      --orange:#ffb000;
+      --pink:#ff4fd8;
+      --blue:#4aa3ff;
+      --purple:#8a5bff;
     }
 
-    *{ box-sizing:border-box; }
-    html, body{ height:100%; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--txt);
+      color:var(--text);
       background: var(--bg);
-      overflow-x:hidden;
-      overflow-y:auto;
+      overflow-y:auto; /* ✅ barra de rolagem */
       -webkit-overflow-scrolling: touch;
     }
 
-    /* Scrollbar (desktop) */
-    body::-webkit-scrollbar { width: 10px; }
-    body::-webkit-scrollbar-track { background: rgba(255,255,255,.05); }
-    body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.20); border-radius: 12px; }
-    body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.30); }
-
-    /* Fundo (usa imagem lobby do projeto) */
+    /* fundo (imagem do projeto) */
     .bg{
-      position: fixed;
-      inset: 0;
+      position:fixed; inset:0;
       background:
-        radial-gradient(1200px 700px at 14% 18%, rgba(255,255,255,.13), transparent 60%),
-        radial-gradient(1000px 650px at 86% 10%, rgba(76,195,255,.12), transparent 55%),
-        radial-gradient(950px 720px at 80% 78%, rgba(255,59,78,.12), transparent 60%),
-        linear-gradient(180deg, rgba(0,0,0,.74) 0%, rgba(0,0,0,.52) 40%, rgba(0,0,0,.86) 100%),
-        url('assets/backgrounds/lobby.jpg') center/cover no-repeat;
-      filter: saturate(1.08) contrast(1.08);
+        radial-gradient(1200px 600px at 15% 0%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(900px 500px at 90% 10%, rgba(0,229,255,.10), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.75)),
+        url("assets/ui/lobby_bg.png");
+      background-size: cover;
+      background-position: center;
+      filter: saturate(1.12) contrast(1.05);
       transform: scale(1.02);
-      z-index:-3;
-    }
-    .noise{
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
-      opacity:.18;
-      mix-blend-mode: overlay;
       z-index:-2;
-      pointer-events:none;
     }
     .vignette{
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(1200px 700px at 50% 30%, transparent 40%, rgba(0,0,0,.62) 100%);
+      position:fixed; inset:0;
+      background: radial-gradient(circle at 50% 20%, transparent 0 45%, rgba(0,0,0,.85) 80%);
       z-index:-1;
       pointer-events:none;
     }
 
-    .app{
-      max-width: 1200px;
+    .wrap{
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 16px 6vw calc(24px + env(safe-area-inset-bottom));
-      display:flex;
-      flex-direction:column;
-      gap: 14px;
+      padding: 18px 14px 40px;
+      padding-bottom: calc(40px + env(safe-area-inset-bottom));
     }
 
-    /* Topbar AAA */
+    /* topbar */
     .topbar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      background: rgba(10,12,18,.60);
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 10px 32px rgba(0,0,0,.38);
+    }
+    .left{
+      display:flex; align-items:center; gap:10px;
+      min-width: 140px;
+    }
+    .btnBack{
+      border:none;
+      background: linear-gradient(180deg, rgba(255,46,46,.95), rgba(155,0,0,.95));
+      color:white;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      letter-spacing:.4px;
+      box-shadow: 0 10px 24px rgba(255,46,46,.25);
+      cursor:pointer;
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:2px;
+      line-height:1.1;
+    }
+    .brand b{
+      font-size: 13px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      opacity:.95;
+    }
+    .brand span{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .right{
+      display:flex; align-items:center; gap:10px;
+    }
+    .pill{
+      display:flex; align-items:center; gap:8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--stroke);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .pill strong{ color: var(--text); font-weight:800; }
+
+    /* header */
+    .hero{
+      margin-top: 14px;
+      padding: 18px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(18,20,28,.75), rgba(18,20,28,.55));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.44);
+    }
+    .hero h1{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .hero p{
+      margin:10px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    /* grid */
+    .grid{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+    }
+    @media (max-width: 860px){
+      .grid{ grid-template-columns: 1fr; }
+      .left{ min-width:auto; }
+    }
+
+    .card{
+      position:relative;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(18,20,28,.78), rgba(18,20,28,.52));
+      overflow:hidden;
+      box-shadow: 0 12px 36px rgba(0,0,0,.45);
+    }
+    .card::before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(800px 240px at 20% 0%, rgba(255,255,255,.12), transparent 60%);
+      pointer-events:none;
+    }
+    .cardInner{
+      padding: 14px 14px 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      position:relative;
+    }
+
+    .tagrow{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap: 10px;
-      padding: 12px 12px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
-      border: 1px solid var(--stroke);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      position: sticky;
-      top: 10px;
-      z-index: 50;
-      overflow:hidden;
     }
-
-    .topbar:before{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      background:
-        radial-gradient(520px 180px at 12% 0%, rgba(76,195,255,.30), transparent 65%),
-        radial-gradient(540px 180px at 88% 0%, rgba(255,59,78,.22), transparent 62%);
-      opacity:.65;
-      pointer-events:none;
-    }
-
-    .top-left{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      min-width: 140px;
-      position:relative;
-      z-index:1;
-    }
-
-    .btn-back{
-      appearance:none;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.30);
-      color: var(--txt);
-      font-weight: 900;
-      padding: 10px 14px;
-      border-radius: 999px;
-      cursor:pointer;
-      letter-spacing:.6px;
+    .tag{
+      font-size: 11px;
+      letter-spacing: .14em;
       text-transform: uppercase;
-      font-size: 12px;
-      box-shadow: 0 12px 28px rgba(0,0,0,.35);
+      color: rgba(233,238,252,.70);
+    }
+    .chip{
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: rgba(233,238,252,.78);
+      white-space:nowrap;
     }
 
     .title{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      text-align:center;
-      flex:1;
-      gap: 2px;
-      padding: 6px 10px;
-      position:relative;
-      z-index:1;
-    }
-    .title h1{
-      margin:0;
-      font-size: 14px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-weight: 950;
-      opacity:.95;
-    }
-    .title p{
-      margin:0;
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: .45px;
-    }
-
-    .userbar{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      min-width: 260px;
-      justify-content:flex-end;
-      position:relative;
-      z-index:1;
-    }
-
-    .chip{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: rgba(0,0,0,.28);
-      border: 1px solid var(--stroke2);
-      overflow:hidden;
-      box-shadow: 0 12px 30px rgba(0,0,0,.30);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-    .chip img{
-      width: 22px;
-      height: 22px;
-      object-fit: contain;
-      filter: drop-shadow(0 2px 10px rgba(0,0,0,.6));
-      flex:0 0 auto;
-    }
-    .chip span{
-      font-size: 11px;
+      font-size: 15px;
       font-weight: 900;
-      letter-spacing:.55px;
-      text-transform: uppercase;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-      color: rgba(255,255,255,.90);
-    }
-
-    .manager-chip{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: rgba(0,0,0,.28);
-      border: 1px solid var(--stroke2);
-      overflow:hidden;
-      box-shadow: 0 12px 30px rgba(0,0,0,.30);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      max-width: 320px;
-    }
-    .manager-chip .avatar{
-      width: 30px;
-      height: 30px;
-      border-radius: 10px;
-      object-fit: cover;
-      border: 1px solid rgba(255,255,255,.20);
-      box-shadow: 0 10px 18px rgba(0,0,0,.55);
-      flex:0 0 auto;
-    }
-    .manager-meta{
-      display:flex;
-      flex-direction:column;
-      gap: 1px;
-      min-width:0;
-    }
-    .manager-meta strong{
-      font-size: 12px;
-      font-weight: 950;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-    .manager-meta small{
-      display:flex;
-      align-items:center;
-      gap: 6px;
-      color: var(--muted);
-      font-size: 11px;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-    .manager-meta small img{
-      width: 16px;
-      height: 12px;
-      border-radius: 2px;
-      object-fit: cover;
-      border: 1px solid rgba(255,255,255,.15);
-      flex: 0 0 auto;
-    }
-
-    /* Hero */
-    .hero{
-      padding: 14px 18px;
-      border-radius: var(--r);
-      border: 1px solid var(--stroke);
-      background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      position:relative;
-      overflow:hidden;
-    }
-    .hero:before{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      background:
-        radial-gradient(720px 240px at 18% 0%, rgba(76,195,255,.22), transparent 62%),
-        radial-gradient(720px 240px at 85% 0%, rgba(255,59,78,.18), transparent 60%);
-      opacity:.75;
-      pointer-events:none;
-    }
-    .hero h2{
-      margin:0 0 6px 0;
-      font-size: 16px;
-      font-weight: 950;
-      letter-spacing: 1.8px;
-      text-transform: uppercase;
-      position:relative;
-      z-index:1;
-    }
-    .hero p{
       margin:0;
+    }
+    .desc{
+      margin:0;
+      font-size: 13px;
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      position:relative;
-      z-index:1;
+      line-height: 1.45;
     }
 
-    /* Grid */
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-    @media (min-width: 860px){
-      .grid{ grid-template-columns: 1fr 1fr; }
-    }
-
-    /* Cards AAA com borda neon sutil */
-    .card{
-      border-radius: var(--r);
-      padding: 14px;
-      border: 1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      position:relative;
-      overflow:hidden;
-    }
-    .card:before{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      background: radial-gradient(520px 220px at 16% 0%, rgba(255,255,255,.14), transparent 62%);
-      opacity:.55;
-      pointer-events:none;
-    }
-
-    .card.neon-blue::after,
-    .card.neon-green::after,
-    .card.neon-orange::after,
-    .card.neon-red::after,
-    .card.neon-violet::after,
-    .card.neon-pink::after{
-      content:"";
-      position:absolute;
-      inset:-1px;
-      border-radius: var(--r);
-      pointer-events:none;
-      filter: blur(10px);
-      opacity:.85;
-    }
-    .card.neon-blue::after{ box-shadow: 0 0 0 1px rgba(76,195,255,.28), 0 0 40px var(--glowBlue); }
-    .card.neon-green::after{ box-shadow: 0 0 0 1px rgba(66,230,182,.26), 0 0 40px var(--glowGreen); }
-    .card.neon-orange::after{ box-shadow: 0 0 0 1px rgba(255,182,74,.22), 0 0 40px var(--glowOrange); }
-    .card.neon-red::after{ box-shadow: 0 0 0 1px rgba(255,59,78,.20), 0 0 40px var(--glowRed); }
-    .card.neon-violet::after{ box-shadow: 0 0 0 1px rgba(165,109,255,.22), 0 0 40px var(--glowViolet); }
-    .card.neon-pink::after{ box-shadow: 0 0 0 1px rgba(255,79,224,.20), 0 0 40px var(--glowPink); }
-
-    .card-header{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 10px;
-      position:relative;
-      z-index:1;
-    }
-    .kicker{
-      display:flex;
-      flex-direction:column;
-      gap: 2px;
-    }
-    .kicker span{
-      color: rgba(236,242,255,.70);
-      letter-spacing: 1.8px;
-      text-transform: uppercase;
-      font-size: 11px;
-      font-weight: 950;
-    }
-    .kicker strong{
-      font-size: 14px;
-      font-weight: 950;
-      letter-spacing: .2px;
-    }
-
-    .badge{
-      border-radius: 999px;
-      padding: 7px 10px;
-      font-size: 11px;
-      font-weight: 950;
-      letter-spacing: .7px;
-      text-transform: uppercase;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.28);
-      color: rgba(255,255,255,.90);
-      position:relative;
-      z-index:1;
-    }
-
-    .card p{
-      margin: 10px 0 12px 0;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      position:relative;
-      z-index:1;
-    }
-
-    .card-actions{
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      position:relative;
-      z-index:1;
-    }
-
-    /* Botões AAA com brilho */
-    .btn{
-      appearance:none;
-      border:none;
-      cursor:pointer;
-      border-radius: 999px;
-      padding: 10px 14px;
-      font-size: 12px;
-      font-weight: 950;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: rgba(8,10,16,.92);
-      box-shadow: 0 14px 32px rgba(0,0,0,.40);
-      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
-    }
-    .btn:active{ transform: scale(.98); }
-    .btn:hover{ filter: brightness(1.04); box-shadow: 0 16px 36px rgba(0,0,0,.50); }
-
-    .btn.secondary{
-      background: rgba(255,255,255,.13);
-      color: var(--txt);
-      border: 1px solid rgba(255,255,255,.18);
-      box-shadow:none;
-    }
-    .btn.ghost{
-      background: rgba(0,0,0,.30);
-      color: var(--txt);
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow:none;
-    }
-
-    .accent-blue{ background: linear-gradient(90deg, var(--blue), var(--blue2)); }
-    .accent-green{ background: linear-gradient(90deg, var(--green), var(--green2)); }
-    .accent-orange{ background: linear-gradient(90deg, var(--orange), var(--orange2)); }
-    .accent-red{ background: linear-gradient(90deg, var(--red), var(--red2)); }
-    .accent-violet{ background: linear-gradient(90deg, var(--violet), var(--violet2)); }
-    .accent-pink{ background: linear-gradient(90deg, var(--pink), var(--pink2)); }
-
-    .two-actions{
+    .actions{
       display:flex;
       gap: 10px;
       flex-wrap: wrap;
       margin-top: 6px;
     }
 
-    .small-note{
-      margin-top: 10px;
-      font-size: 11px;
-      color: var(--muted2);
-      line-height: 1.35;
-      position:relative;
-      z-index:1;
+    .btn{
+      border: none;
+      cursor:pointer;
+      padding: 11px 14px;
+      border-radius: 14px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      color: rgba(255,255,255,.95);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      transition: transform .08s ease, filter .2s ease;
+    }
+    .btn:active{ transform: scale(.98); }
+    .btn:hover{ filter: brightness(1.08); }
+
+    .btnPrimary{
+      background: linear-gradient(180deg, rgba(255,46,46,.95), rgba(160,0,0,.95));
+      border: 1px solid rgba(255,46,46,.28);
+      box-shadow: 0 16px 36px rgba(255,46,46,.22);
+    }
+    .btnCyan{
+      background: linear-gradient(180deg, rgba(0,229,255,.95), rgba(0,120,140,.95));
+      border: 1px solid rgba(0,229,255,.30);
+      box-shadow: 0 16px 36px rgba(0,229,255,.18);
+    }
+    .btnGreen{
+      background: linear-gradient(180deg, rgba(0,255,154,.95), rgba(0,120,70,.95));
+      border: 1px solid rgba(0,255,154,.28);
+      box-shadow: 0 16px 36px rgba(0,255,154,.16);
+    }
+    .btnOrange{
+      background: linear-gradient(180deg, rgba(255,176,0,.95), rgba(140,80,0,.95));
+      border: 1px solid rgba(255,176,0,.26);
+      box-shadow: 0 16px 36px rgba(255,176,0,.16);
+    }
+    .btnPink{
+      background: linear-gradient(180deg, rgba(255,79,216,.95), rgba(140,30,120,.95));
+      border: 1px solid rgba(255,79,216,.22);
+      box-shadow: 0 16px 36px rgba(255,79,216,.16);
+    }
+    .btnBlue{
+      background: linear-gradient(180deg, rgba(74,163,255,.95), rgba(10,70,140,.95));
+      border: 1px solid rgba(74,163,255,.26);
+      box-shadow: 0 16px 36px rgba(74,163,255,.16);
+    }
+    .btnPurple{
+      background: linear-gradient(180deg, rgba(138,91,255,.95), rgba(60,30,140,.95));
+      border: 1px solid rgba(138,91,255,.24);
+      box-shadow: 0 16px 36px rgba(138,91,255,.15);
     }
 
-    @media (max-width: 540px){
-      .topbar{ padding: 10px 10px; }
-      .userbar{ min-width:auto; }
-      #teamChip{ display:none; }
-      .manager-chip{ max-width: 190px; }
-      .hero h2{ font-size: 15px; }
-      .card{ padding: 13px; }
+    .note{
+      margin-top: 10px;
+      color: rgba(233,238,252,.65);
+      font-size: 12px;
+      line-height: 1.35;
     }
   </style>
 </head>
 
 <body>
   <div class="bg"></div>
-  <div class="noise"></div>
   <div class="vignette"></div>
 
-  <div class="app">
-    <!-- TOP BAR -->
+  <div class="wrap">
     <div class="topbar">
-      <div class="top-left">
-        <button class="btn-back" onclick="window.location.href='index.html'">Voltar</button>
+      <div class="left">
+        <button class="btnBack" id="btnBack">VOLTAR</button>
+        <div class="brand">
+          <b>LOBBY DA EQUIPE</b>
+          <span id="subLine">Temporada oficial F1 2025</span>
+        </div>
       </div>
 
-      <div class="title">
-        <h1>Lobby da Equipe</h1>
-        <p>Prepare sua temporada — gestão, staff, patrocínios e decisões de pista</p>
-      </div>
-
-      <div class="userbar">
-        <div class="chip" id="teamChip">
-          <img id="team-logo" src="assets/teams/redbull.png" alt="Equipe"/>
-          <span id="team-name">Equipe</span>
-        </div>
-
-        <div class="manager-chip">
-          <img class="avatar" id="manager-avatar" src="assets/managers/manager_ethnic_01.png" alt="Manager"/>
-          <div class="manager-meta">
-            <strong id="manager-name">Manager</strong>
-            <small>
-              <img id="manager-flag" src="assets/flags/br.png" alt="País"/>
-              <span id="manager-country-name">Brasil</span>
-            </small>
-          </div>
-        </div>
+      <div class="right">
+        <div class="pill">Equipe: <strong id="teamName">--</strong></div>
+        <div class="pill">Manager: <strong id="managerName">--</strong></div>
       </div>
     </div>
 
-    <!-- HERO -->
     <div class="hero">
-      <h2>Temporada Oficial F1 2025</h2>
+      <h1>F1 MANAGER 2025 — VALE EDITION</h1>
       <p>
-        Aqui você controla tudo: desenvolvimento do carro, pilotos, staff, patrocínios e decisões de pista.
-        Use os módulos abaixo para preparar sua temporada antes de ir para o calendário e correr.
+        Prepare sua temporada: carro, staff, patrocínios e decisões de pista.
+        Todos os módulos são offline e conectados ao save (localStorage).
       </p>
     </div>
 
-    <!-- GRID -->
     <div class="grid">
-      <!-- CARRO -->
-      <div class="card neon-blue">
-        <div class="card-header">
-          <div class="kicker">
-            <span>Carro</span>
-            <strong>Oficina &amp; Setup</strong>
+      <!-- Oficina -->
+      <div class="card">
+        <div class="cardInner">
+          <div class="tagrow">
+            <div class="tag">CARRO</div>
+            <div class="chip">AJUSTES • SETUP</div>
           </div>
-          <div class="badge">Ajustes</div>
+          <h3 class="title">Oficina & Setup</h3>
+          <p class="desc">
+            Ajuste parâmetros do carro. Esses ajustes serão usados nas sessões (treino/qualy/corrida)
+            conforme a lógica do jogo.
+          </p>
+          <div class="actions">
+            <button class="btn btnBlue" id="btnOficina">ABRIR OFICINA</button>
+          </div>
+          <div class="note">Dica: use setup + staff para evoluir desempenho (vamos integrar no motor depois).</div>
         </div>
-        <p>Ajuste asas, motor e pneus. Isso influencia ritmo, desgaste e confiabilidade.</p>
-        <div class="card-actions">
-          <button class="btn accent-blue" onclick="window.location.href='oficina.html'">Abrir Oficina</button>
-        </div>
-        <div class="small-note">Status: protótipo visual — pronto para integrar lógica avançada.</div>
       </div>
 
-      <!-- STAFF -->
-      <div class="card neon-green">
-        <div class="card-header">
-          <div class="kicker">
-            <span>Equipe Técnica</span>
-            <strong>Funcionários &amp; Staff</strong>
+      <!-- Staff -->
+      <div class="card">
+        <div class="cardInner">
+          <div class="tagrow">
+            <div class="tag">EQUIPE TÉCNICA</div>
+            <div class="chip">CONTRATOS</div>
           </div>
-          <div class="badge">Contratos</div>
+          <h3 class="title">Funcionários & Staff</h3>
+          <p class="desc">
+            Contrate especialistas e melhore ritmo, desgaste, confiabilidade, pit e estratégia.
+          </p>
+          <div class="actions">
+            <button class="btn btnGreen" id="btnStaff">ABRIR STAFF</button>
+          </div>
+          <div class="note">O objetivo aqui é manter o módulo pronto para impactar corrida depois.</div>
         </div>
-        <p>Contrate especialistas. Multiplicadores afetam treino/corrida (pace, tire, pit e strat).</p>
-        <div class="card-actions">
-          <button class="btn accent-green" onclick="window.location.href='staff.html'">Abrir Staff</button>
-        </div>
-        <div class="small-note">Dica: foque em PIT e STRAT para ganhos imediatos.</div>
       </div>
 
-      <!-- PILOTOS -->
-      <div class="card neon-violet">
-        <div class="card-header">
-          <div class="kicker">
-            <span>Pilotos</span>
-            <strong>Mercado de Pilotos</strong>
+      <!-- Patrocínios -->
+      <div class="card">
+        <div class="cardInner">
+          <div class="tagrow">
+            <div class="tag">FINANÇAS</div>
+            <div class="chip">BÔNUS • METAS</div>
           </div>
-          <div class="badge">Contratos</div>
+          <h3 class="title">Patrocínios & Marca</h3>
+          <p class="desc">
+            Escolha contratos, receba caixa semanal e acompanhe reputação. Offline, integrado ao save.
+          </p>
+          <div class="actions">
+            <button class="btn btnOrange" id="btnPatro">ABRIR PATROCÍNIOS</button>
+          </div>
+          <div class="note">Dica: caixa e reputação determinam futuras ofertas e upgrades.</div>
         </div>
-        <p>Negocie contratos e monte sua dupla. Reputação e caixa influenciam as opções.</p>
-        <div class="card-actions">
-          <button class="btn accent-violet" onclick="window.location.href='mercado_pilotos.html'">Abrir Mercado</button>
-        </div>
-        <div class="small-note">Agora essa tela vai existir e não dará mais 404.</div>
       </div>
 
-      <!-- PATROCÍNIOS -->
-      <div class="card neon-orange">
-        <div class="card-header">
-          <div class="kicker">
-            <span>Finanças</span>
-            <strong>Patrocínios &amp; Marca</strong>
+      <!-- Mercado de pilotos -->
+      <div class="card">
+        <div class="cardInner">
+          <div class="tagrow">
+            <div class="tag">PILOTOS</div>
+            <div class="chip">MERCADO</div>
           </div>
-          <div class="badge">Bônus</div>
+          <h3 class="title">Mercado de Pilotos</h3>
+          <p class="desc">
+            Contratos e oportunidades. (Sem 404: link direto para mercado.html)
+          </p>
+          <div class="actions">
+            <button class="btn btnPurple" id="btnMercado">ABRIR MERCADO</button>
+          </div>
+          <div class="note">Se der 404, é porque o arquivo mercado.html não existe no repositório.</div>
         </div>
-        <p>Escolha patrocinadores, metas e bônus. Contratos injetam dinheiro na equipe.</p>
-        <div class="card-actions">
-          <button class="btn accent-orange" onclick="window.location.href='sponsors.html'">Abrir Patrocínios</button>
-        </div>
-        <div class="small-note">Reputação e resultados influenciam ofertas melhores.</div>
       </div>
 
-      <!-- CALENDÁRIO -->
-      <div class="card neon-red">
-        <div class="card-header">
-          <div class="kicker">
-            <span>Temporada</span>
-            <strong>Calendário &amp; GPs</strong>
+      <!-- Calendário -->
+      <div class="card">
+        <div class="cardInner">
+          <div class="tagrow">
+            <div class="tag">TEMPORADA</div>
+            <div class="chip">CALENDÁRIO</div>
           </div>
-          <div class="badge">Planejamento</div>
+          <h3 class="title">Calendário & GPs</h3>
+          <p class="desc">
+            Planeje a temporada e acesse sessões por GP.
+          </p>
+          <div class="actions">
+            <button class="btn btnCyan" id="btnCalendario">IR PARA O CALENDÁRIO</button>
+          </div>
+          <div class="note">Você pode usar o calendário para ir em treino/qualy/corrida por GP.</div>
         </div>
-        <p>Escolha o próximo GP e avance para treinos, qualy e corrida.</p>
-        <div class="card-actions">
-          <button class="btn accent-red" onclick="window.location.href='calendario.html'">Ir para o Calendário</button>
-        </div>
-        <div class="small-note">Use o calendário para abrir sessões por GP.</div>
       </div>
 
-      <!-- MODO RÁPIDO -->
-      <div class="card neon-pink">
-        <div class="card-header">
-          <div class="kicker">
-            <span>Modo Rápido</span>
-            <strong>Sessões Diretas</strong>
+      <!-- Sessões diretas -->
+      <div class="card">
+        <div class="cardInner">
+          <div class="tagrow">
+            <div class="tag">MODO RÁPIDO</div>
+            <div class="chip">LIVE • TELEMETRIA</div>
           </div>
-          <div class="badge">Live</div>
-        </div>
-        <p>Entre direto em Treino Livre, Classificação ou Corrida Rápida. Ideal para testar setups.</p>
-
-        <div class="two-actions">
-          <button class="btn accent-blue" onclick="window.location.href='selecionar_gp.html?mode=practice'">Treino Livre</button>
-          <button class="btn secondary" onclick="window.location.href='selecionar_gp.html?mode=qualifying'">Classificação</button>
-          <button class="btn accent-pink" onclick="window.location.href='selecionar_gp.html?mode=quickrace'">Corrida Rápida</button>
-        </div>
-
-        <div class="small-note">
-          Dica: Treino Livre e Classificação abrem seleção de GP. Corrida Rápida entra no modo rápido do jogo.
+          <h3 class="title">Sessões Diretas</h3>
+          <p class="desc">
+            Entre direto em Treino Livre, Classificação ou Corrida Rápida escolhendo o GP.
+          </p>
+          <div class="actions">
+            <button class="btn btnCyan" id="btnDiretoPractice">TREINO LIVRE</button>
+            <button class="btn btnBlue" id="btnDiretoQualy">CLASSIFICAÇÃO</button>
+            <button class="btn btnPink" id="btnDiretoRace">CORRIDA RÁPIDA</button>
+          </div>
+          <div class="note">
+            Importante: agora os botões abrem uma tela de seleção de GP (selecionar_gp.html),
+            evitando erro de pista/parametrização.
+          </div>
         </div>
       </div>
     </div>
-
-    <div style="height: 12px;"></div>
   </div>
 
   <script>
-    // ===== FULLSCREEN (quando possível) =====
-    function tryFullscreen() {
-      const docEl = document.documentElement;
-      const alreadyFullscreen =
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.msFullscreenElement;
+    (function(){
+      const qs = new URLSearchParams(location.search);
+      const userTeam = (qs.get('userTeam') || qs.get('team') || localStorage.getItem('f1_userTeam') || 'redbull').toLowerCase();
 
-      const inStandalone =
-        window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+      // persistência básica
+      localStorage.setItem('f1_userTeam', userTeam);
 
-      if (alreadyFullscreen || inStandalone) return;
+      // tenta ler um perfil salvo
+      const savedProfile = (() => {
+        try { return JSON.parse(localStorage.getItem('f1_profile_v1') || 'null'); } catch(e){ return null; }
+      })();
 
-      const requestFS =
-        docEl.requestFullscreen ||
-        docEl.webkitRequestFullscreen ||
-        docEl.msRequestFullscreen;
+      const teamEl = document.getElementById('teamName');
+      const managerEl = document.getElementById('managerName');
+      teamEl.textContent = userTeam.toUpperCase();
+      managerEl.textContent = (savedProfile && savedProfile.managerName) ? savedProfile.managerName : 'Chefe de Equipe';
 
-      if (requestFS) {
-        requestFS.call(docEl).catch(() => {});
-      }
-    }
+      // Voltar: tenta ir para a tela anterior, senão volta para index
+      document.getElementById('btnBack').addEventListener('click', () => {
+        if (history.length > 1) history.back();
+        else location.href = 'index.html';
+      });
 
-    // ===== LÊ parâmetros da URL e salva no localStorage (se vier userTeam=...) =====
-    function readQueryParams() {
-      try{
-        const url = new URL(window.location.href);
-        const userTeam = (url.searchParams.get('userTeam') || "").trim();
-        if (userTeam) localStorage.setItem('f1m2025_userTeam_key', userTeam);
-      }catch(e){}
-    }
+      // Rotas
+      const go = (page) => location.href = page + '?userTeam=' + encodeURIComponent(userTeam);
 
-    // ===== CARREGA dados do manager/equipe (fallbacks seguros) =====
-    function loadUserBar() {
-      try {
-        // Time
-        const fallbackTeamKey = localStorage.getItem('f1m2025_userTeam_key') || 'redbull';
-        const teamName  = localStorage.getItem('f1m2025_user_team_name')  || fallbackTeamKey.replace(/^\w/, c => c.toUpperCase());
-        const teamLogo  = localStorage.getItem('f1m2025_user_team_logo')  || `assets/teams/${fallbackTeamKey}.png`;
+      document.getElementById('btnOficina').addEventListener('click', () => go('oficina.html'));
+      document.getElementById('btnStaff').addEventListener('click', () => go('funcionarios.html'));
+      document.getElementById('btnPatro').addEventListener('click', () => go('patrocinio.html'));
+      document.getElementById('btnCalendario').addEventListener('click', () => go('calendario.html'));
+      document.getElementById('btnMercado').addEventListener('click', () => go('mercado.html'));
 
-        // Manager
-        const managerName   = localStorage.getItem('f1m2025_user_manager_name')   || 'Christian Horner';
-        const managerAvatar = localStorage.getItem('f1m2025_user_manager_avatar') || 'assets/managers/manager_ethnic_01.png';
-        const countryFlag   = localStorage.getItem('f1m2025_user_country_flag')   || 'assets/flags/gb.png';
-        const countryName   = localStorage.getItem('f1m2025_user_country_name')   || 'Reino Unido';
+      // Sessões diretas: abre a tela de selecionar GP
+      const goSelect = (mode) => {
+        location.href = 'selecionar_gp.html?mode=' + encodeURIComponent(mode) + '&userTeam=' + encodeURIComponent(userTeam);
+      };
 
-        document.getElementById('team-name').textContent  = teamName;
-        document.getElementById('team-logo').src          = teamLogo;
-
-        document.getElementById('manager-name').textContent  = managerName;
-        document.getElementById('manager-avatar').src        = managerAvatar;
-        document.getElementById('manager-flag').src          = countryFlag;
-        document.getElementById('manager-country-name').textContent = countryName;
-      } catch (e) {
-        console.warn('Falha ao carregar userbar:', e);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      readQueryParams();
-      tryFullscreen();
-      loadUserBar();
-    });
+      document.getElementById('btnDiretoPractice').addEventListener('click', () => goSelect('practice'));
+      document.getElementById('btnDiretoQualy').addEventListener('click', () => goSelect('qualifying'));
+      document.getElementById('btnDiretoRace').addEventListener('click', () => goSelect('quick_race'));
+    })();
   </script>
 </body>
 </html>
