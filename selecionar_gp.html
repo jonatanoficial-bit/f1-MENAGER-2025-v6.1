@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Selecionar GP — F1 Manager 2025</title>
+  <style>
+    :root{
+      --bg:#07080c;
+      --panel: rgba(18,20,28,.80);
+      --stroke: rgba(255,255,255,.10);
+      --text:#e9eefc;
+      --muted: rgba(233,238,252,.72);
+
+      --cyan:#00e5ff;
+      --blue:#4aa3ff;
+      --pink:#ff4fd8;
+      --red:#ff2e2e;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background: var(--bg);
+      overflow-y:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .bg{
+      position:fixed; inset:0;
+      background:
+        radial-gradient(1200px 600px at 15% 0%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.82)),
+        url("assets/ui/lobby_bg.png");
+      background-size: cover;
+      background-position: center;
+      filter: saturate(1.10) contrast(1.05);
+      z-index:-2;
+    }
+    .vignette{
+      position:fixed; inset:0;
+      background: radial-gradient(circle at 50% 20%, transparent 0 45%, rgba(0,0,0,.85) 80%);
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    .wrap{
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 18px 14px 40px;
+      padding-bottom: calc(40px + env(safe-area-inset-bottom));
+    }
+
+    .top{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(10,12,18,.60);
+      border: 1px solid var(--stroke);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 10px 32px rgba(0,0,0,.38);
+    }
+    .btnBack{
+      border:none;
+      background: linear-gradient(180deg, rgba(255,46,46,.95), rgba(155,0,0,.95));
+      color:white;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 900;
+      cursor:pointer;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:2px;
+      text-align:right;
+    }
+    .title b{
+      font-size: 13px;
+      letter-spacing:.14em;
+      text-transform: uppercase;
+    }
+    .title span{
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panel{
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(18,20,28,.82), rgba(18,20,28,.55));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.44);
+      padding: 14px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 780px){
+      .row{ grid-template-columns: 1fr; }
+      .title{ text-align:left; }
+    }
+
+    label{
+      display:block;
+      font-size: 11px;
+      letter-spacing:.14em;
+      text-transform: uppercase;
+      color: rgba(233,238,252,.70);
+      margin-bottom: 8px;
+    }
+    select, input{
+      width:100%;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 12px 12px;
+      outline:none;
+      font-size: 14px;
+    }
+
+    .actions{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .btn{
+      border: none;
+      cursor:pointer;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      color: rgba(255,255,255,.95);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+    }
+
+    .btnCyan{
+      background: linear-gradient(180deg, rgba(0,229,255,.95), rgba(0,120,140,.95));
+      border: 1px solid rgba(0,229,255,.30);
+      box-shadow: 0 16px 36px rgba(0,229,255,.18);
+    }
+    .btnBlue{
+      background: linear-gradient(180deg, rgba(74,163,255,.95), rgba(10,70,140,.95));
+      border: 1px solid rgba(74,163,255,.26);
+      box-shadow: 0 16px 36px rgba(74,163,255,.16);
+    }
+    .btnPink{
+      background: linear-gradient(180deg, rgba(255,79,216,.95), rgba(140,30,120,.95));
+      border: 1px solid rgba(255,79,216,.22);
+      box-shadow: 0 16px 36px rgba(255,79,216,.16);
+    }
+
+    .hint{
+      margin-top: 10px;
+      color: rgba(233,238,252,.65);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .modeBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(233,238,252,.80);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:99px;background:var(--cyan);
+      box-shadow: 0 0 18px rgba(0,229,255,.55);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg"></div>
+  <div class="vignette"></div>
+
+  <div class="wrap">
+    <div class="top">
+      <button class="btnBack" id="back">VOLTAR</button>
+      <div class="title">
+        <b>Selecionar Grande Prêmio</b>
+        <span id="sub">Escolha o GP e inicie a sessão</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="modeBadge"><span class="dot"></span> <span id="modeLabel">Modo: --</span></div>
+
+      <div class="row" style="margin-top:12px">
+        <div>
+          <label for="gp">Grande Prêmio</label>
+          <select id="gp"></select>
+        </div>
+
+        <div>
+          <label for="team">Equipe</label>
+          <input id="team" type="text" readonly />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btnCyan" id="start">INICIAR</button>
+        <button class="btn btnBlue" id="openCalendar">ABRIR CALENDÁRIO</button>
+        <button class="btn btnPink" id="openLobby">VOLTAR AO LOBBY</button>
+      </div>
+
+      <div class="hint" id="hint">
+        Dica: esta tela evita erro de parâmetros e garante URLs consistentes para Treino Livre, Qualificação e Corrida Rápida.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const qs = new URLSearchParams(location.search);
+      const mode = (qs.get('mode') || 'practice').toLowerCase();
+      const userTeam = (qs.get('userTeam') || localStorage.getItem('f1_userTeam') || 'redbull').toLowerCase();
+      localStorage.setItem('f1_userTeam', userTeam);
+
+      const gpSelect = document.getElementById('gp');
+      const teamInput = document.getElementById('team');
+      const modeLabel = document.getElementById('modeLabel');
+      const sub = document.getElementById('sub');
+      const hint = document.getElementById('hint');
+
+      teamInput.value = userTeam.toUpperCase();
+
+      const MODE_META = {
+        practice:   { label:'Treino Livre',       page:'practice.html'   },
+        qualifying: { label:'Classificação',      page:'qualifying.html' },
+        quick_race: { label:'Corrida Rápida',     page:'race.html'       }
+      };
+
+      const meta = MODE_META[mode] || MODE_META.practice;
+      modeLabel.textContent = 'Modo: ' + meta.label;
+
+      if(mode === 'quick_race'){
+        sub.textContent = 'Entre direto na corrida (sem treinos).';
+        hint.textContent = 'Corrida Rápida leva direto para race.html. Se a sua race.html exigir algum parâmetro extra, depois ajustamos nela.';
+      } else if(mode === 'qualifying'){
+        sub.textContent = 'Escolha o GP e vá para a qualificação.';
+      } else {
+        sub.textContent = 'Escolha o GP e vá para o treino livre.';
+      }
+
+      // ✅ Lista padrão (use as chaves que você já usa na URL: ?track=xxxxx)
+      const TRACKS = [
+        { key:'bahrain',   gp:'GP do Bahrein 2025' },
+        { key:'jeddah',    gp:'GP da Arábia Saudita 2025' },
+        { key:'australia', gp:'GP da Austrália 2025' },
+        { key:'japan',     gp:'GP do Japão 2025' },
+        { key:'china',     gp:'GP da China 2025' },
+        { key:'imola',     gp:'GP da Emilia-Romagna 2025' },
+        { key:'monaco',    gp:'GP de Mônaco 2025' },
+        { key:'canada',    gp:'GP do Canadá 2025' },
+        { key:'spain',     gp:'GP da Espanha 2025' },
+        { key:'austria',   gp:'GP da Áustria 2025' },
+        { key:'uk',        gp:'GP da Grã-Bretanha 2025' },
+        { key:'hungary',   gp:'GP da Hungria 2025' },
+        { key:'belgium',   gp:'GP da Bélgica 2025' },
+        { key:'netherlands', gp:'GP da Holanda 2025' },
+        { key:'italy',     gp:'GP da Itália 2025' },
+        { key:'azerbaijan',gp:'GP do Azerbaijão 2025' },
+        { key:'singapore', gp:'GP de Singapura 2025' },
+        { key:'usa',       gp:'GP dos EUA 2025' },
+        { key:'mexico',    gp:'GP do México 2025' },
+        { key:'brazil',    gp:'GP do Brasil 2025' },
+        { key:'lasvegas',  gp:'GP de Las Vegas 2025' },
+        { key:'qatar',     gp:'GP do Qatar 2025' },
+        { key:'abudhabi',  gp:'GP de Abu Dhabi 2025' }
+      ];
+
+      // popula select
+      TRACKS.forEach(t=>{
+        const opt = document.createElement('option');
+        opt.value = t.key;
+        opt.textContent = t.gp;
+        gpSelect.appendChild(opt);
+      });
+
+      // seleciona último gp salvo
+      const lastTrack = localStorage.getItem('f1_lastTrack');
+      if(lastTrack){
+        const found = TRACKS.some(t => t.key === lastTrack);
+        if(found) gpSelect.value = lastTrack;
+      }
+
+      document.getElementById('back').addEventListener('click', ()=>{
+        if(history.length > 1) history.back();
+        else location.href = 'lobby.html?userTeam=' + encodeURIComponent(userTeam);
+      });
+
+      document.getElementById('openLobby').addEventListener('click', ()=>{
+        location.href = 'lobby.html?userTeam=' + encodeURIComponent(userTeam);
+      });
+
+      document.getElementById('openCalendar').addEventListener('click', ()=>{
+        location.href = 'calendario.html?userTeam=' + encodeURIComponent(userTeam);
+      });
+
+      document.getElementById('start').addEventListener('click', ()=>{
+        const track = gpSelect.value;
+        const gpName = TRACKS.find(t=>t.key===track)?.gp || ('GP ' + track);
+        localStorage.setItem('f1_lastTrack', track);
+
+        // ✅ Monta URL compatível com o que você já usa:
+        // practice.html?track=bahrain&gp=GP+do+Bahrein+2025&userTeam=redbull
+        const url =
+          meta.page +
+          '?track=' + encodeURIComponent(track) +
+          '&gp=' + encodeURIComponent(gpName) +
+          '&userTeam=' + encodeURIComponent(userTeam) +
+          (mode === 'quick_race' ? '&quick=1' : '');
+
+        location.href = url;
+      });
+
+    })();
+  </script>
+</body>
+</html>
