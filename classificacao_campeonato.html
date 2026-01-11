@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Classificação do Campeonato — F1 Manager 2025</title>
+
+  <style>
+    :root{
+      --bg:#07080c;
+      --panel: rgba(18,20,28,.80);
+      --panel2: rgba(18,20,28,.62);
+      --stroke: rgba(255,255,255,.10);
+      --text:#e9eefc;
+      --muted: rgba(233,238,252,.72);
+
+      --red:#ff2e2e;
+      --cyan:#00e5ff;
+      --green:#00ff9a;
+      --orange:#ffb000;
+      --pink:#ff4fd8;
+      --blue:#4aa3ff;
+      --purple:#8a5bff;
+
+      --gold:#ffd166;
+      --silver:#cfd7e6;
+      --bronze:#d59a6f;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background: var(--bg);
+      overflow-y:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .bg{
+      position:fixed; inset:0;
+      background:
+        radial-gradient(1200px 600px at 15% 0%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(900px 500px at 90% 10%, rgba(0,229,255,.10), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.82)),
+        url("assets/ui/lobby_bg.png");
+      background-size: cover;
+      background-position: center;
+      filter: saturate(1.12) contrast(1.05);
+      transform: scale(1.02);
+      z-index:-2;
+    }
+    .vignette{
+      position:fixed; inset:0;
+      background: radial-gradient(circle at 50% 20%, transparent 0 45%, rgba(0,0,0,.85) 80%);
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 14px 44px;
+      padding-bottom: calc(44px + env(safe-area-inset-bottom));
+    }
+
+    .topbar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      background: rgba(10,12,18,.60);
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 10px 32px rgba(0,0,0,.38);
+    }
+
+    .left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 160px;
+    }
+
+    .btnBack{
+      border:none;
+      background: linear-gradient(180deg, rgba(255,46,46,.95), rgba(155,0,0,.95));
+      color:white;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 900;
+      letter-spacing:.4px;
+      cursor:pointer;
+      box-shadow: 0 10px 24px rgba(255,46,46,.22);
+    }
+
+    .brand{
+      display:flex; flex-direction:column; gap:2px;
+      line-height:1.1;
+    }
+    .brand b{
+      font-size: 13px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      opacity:.95;
+    }
+    .brand span{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      display:flex; align-items:center; gap:8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--stroke);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .pill strong{ color: var(--text); font-weight:900; }
+
+    .hero{
+      margin-top: 14px;
+      padding: 16px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(18,20,28,.75), rgba(18,20,28,.55));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.44);
+    }
+    .hero h1{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .hero p{
+      margin:10px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .tabs{
+      margin-top: 12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .tabBtn{
+      border:none;
+      cursor:pointer;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      color: rgba(255,255,255,.95);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+    }
+    .tabBtn.active{
+      background: linear-gradient(180deg, rgba(0,229,255,.95), rgba(0,120,140,.95));
+      border: 1px solid rgba(0,229,255,.30);
+      box-shadow: 0 16px 36px rgba(0,229,255,.18);
+    }
+
+    .grid{
+      margin-top: 12px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .left{ min-width:auto; }
+    }
+
+    .panel{
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(18,20,28,.78), rgba(18,20,28,.52));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 12px 36px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .panelHeader{
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .panelHeader h2{
+      margin:0;
+      font-size: 13px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .panelHeader .meta{
+      color: var(--muted);
+      font-size: 12px;
+      white-space:nowrap;
+    }
+
+    .table{
+      width:100%;
+      border-collapse: collapse;
+    }
+    .table th, .table td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      vertical-align: middle;
+    }
+    .table th{
+      text-align:left;
+      color: rgba(233,238,252,.65);
+      font-size: 11px;
+      letter-spacing:.14em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,.02);
+    }
+
+    .pos{
+      width:46px;
+      font-weight: 1000;
+      text-align:center;
+    }
+    .posBadge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:30px;height:30px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      font-weight: 1000;
+    }
+    .posBadge.p1{ background: rgba(255,209,102,.18); border-color: rgba(255,209,102,.35); }
+    .posBadge.p2{ background: rgba(207,215,230,.16); border-color: rgba(207,215,230,.35); }
+    .posBadge.p3{ background: rgba(213,154,111,.16); border-color: rgba(213,154,111,.35); }
+
+    .nameCell{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 0;
+    }
+    .avatar, .logo{
+      width:34px;height:34px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      object-fit: cover;
+      flex: 0 0 auto;
+    }
+    .logo{
+      border-radius: 10px;
+      padding: 3px;
+      object-fit: contain;
+      background: rgba(0,0,0,.18);
+    }
+
+    .nameMeta{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .nameMeta b{
+      font-size: 13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .nameMeta span{
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .pts{
+      width:90px;
+      text-align:right;
+      font-weight: 1000;
+      font-size: 14px;
+    }
+
+    .note{
+      padding: 12px 14px;
+      color: rgba(233,238,252,.65);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .btnSmall{
+      border:none;
+      cursor:pointer;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-weight: 900;
+      color: rgba(255,255,255,.95);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .btnDanger{
+      background: linear-gradient(180deg, rgba(255,46,46,.95), rgba(155,0,0,.95));
+      border-color: rgba(255,46,46,.25);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg"></div>
+  <div class="vignette"></div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div class="left">
+        <button class="btnBack" id="btnBack">VOLTAR</button>
+        <div class="brand">
+          <b>CLASSIFICAÇÃO DO CAMPEONATO</b>
+          <span id="subLine">Carreira 2025 • Pontuação FIA</span>
+        </div>
+      </div>
+      <div class="right">
+        <div class="pill">Equipe: <strong id="teamName">--</strong></div>
+        <div class="pill">Corridas feitas: <strong id="racesDone">0</strong></div>
+        <button class="btnSmall btnDanger" id="btnReset">Resetar classificação</button>
+      </div>
+    </div>
+
+    <div class="hero">
+      <h1>F1 MANAGER 2025 — TABELAS DE PILOTOS E CONSTRUTORES</h1>
+      <p>
+        Este painel lê os resultados gravados no save da carreira (localStorage) e calcula a pontuação automaticamente.
+        Fotos/Logos são carregados de <b>assets/drivers/</b> e <b>assets/teams/</b> (com fallback).
+      </p>
+      <div class="tabs">
+        <button class="tabBtn active" id="tabPilotos">PILOTOS</button>
+        <button class="tabBtn" id="tabEquipes">EQUIPES</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel" id="panelPilotos">
+        <div class="panelHeader">
+          <h2>Campeonato de Pilotos</h2>
+          <div class="meta">Pontos • vitórias • pódios</div>
+        </div>
+        <table class="table" id="tablePilotos">
+          <thead>
+            <tr>
+              <th class="pos">POS</th>
+              <th>Piloto</th>
+              <th style="text-align:right;width:90px;">PTS</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="note" id="notePilotos"></div>
+      </div>
+
+      <div class="panel" id="panelEquipes" style="display:none">
+        <div class="panelHeader">
+          <h2>Campeonato de Construtores</h2>
+          <div class="meta">Soma dos 2 pilotos</div>
+        </div>
+        <table class="table" id="tableEquipes">
+          <thead>
+            <tr>
+              <th class="pos">POS</th>
+              <th>Equipe</th>
+              <th style="text-align:right;width:90px;">PTS</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="note" id="noteEquipes"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panelHeader">
+          <h2>Ajuda rápida</h2>
+          <div class="meta">Como o save deve estar</div>
+        </div>
+        <div class="note">
+          <div style="margin-bottom:10px">
+            ✅ Esta tela procura os resultados em: <b>localStorage["f1_career_v1"]</b>.<br/>
+            Se não existir, ela cria um save base e você só precisa que suas corridas gravem as chegadas nele.
+          </div>
+
+          <div style="margin-bottom:10px">
+            📌 Estrutura esperada (resumo):
+            <ul style="margin:8px 0 0 18px; color: rgba(233,238,252,.70)">
+              <li><b>career.races</b> = lista de corridas</li>
+              <li>cada corrida: <b>{ track, gpName, results: [driverId...] , fastestLapDriverId }</b></li>
+            </ul>
+          </div>
+
+          <div>
+            🏁 Pontos FIA 2025: 25-18-15-12-10-8-6-4-2-1 + 1 ponto por volta mais rápida (se no top10).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      // =========================
+      // 1) Config/Helpers
+      // =========================
+      const qs = new URLSearchParams(location.search);
+      const userTeam = (qs.get('userTeam') || localStorage.getItem('f1_userTeam') || 'redbull').toLowerCase();
+      localStorage.setItem('f1_userTeam', userTeam);
+      document.getElementById('teamName').textContent = userTeam.toUpperCase();
+
+      const PTS_BY_POS = [25,18,15,12,10,8,6,4,2,1];
+
+      function safeJSONParse(str){
+        try { return JSON.parse(str); } catch(e){ return null; }
+      }
+
+      function getCareer(){
+        const raw = localStorage.getItem('f1_career_v1');
+        let obj = safeJSONParse(raw);
+        if(!obj || typeof obj !== 'object') obj = null;
+
+        // se não existir, cria base
+        if(!obj){
+          obj = {
+            season: 2025,
+            races: [], // aqui entram as corridas feitas
+            drivers: getDefaultDrivers(),
+            teams: getDefaultTeams()
+          };
+          localStorage.setItem('f1_career_v1', JSON.stringify(obj));
+        }
+
+        // garante arrays
+        obj.races = Array.isArray(obj.races) ? obj.races : [];
+        obj.drivers = Array.isArray(obj.drivers) ? obj.drivers : getDefaultDrivers();
+        obj.teams = Array.isArray(obj.teams) ? obj.teams : getDefaultTeams();
+
+        return obj;
+      }
+
+      function setCareer(obj){
+        localStorage.setItem('f1_career_v1', JSON.stringify(obj));
+      }
+
+      function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+      function calcStandings(career){
+        const driversById = new Map(career.drivers.map(d => [d.id, d]));
+        const teamsById = new Map(career.teams.map(t => [t.id, t]));
+
+        const driverStats = new Map();
+        career.drivers.forEach(d=>{
+          driverStats.set(d.id, { points:0, wins:0, podiums:0, top10:0 });
+        });
+
+        const teamPoints = new Map();
+        career.teams.forEach(t=>{
+          teamPoints.set(t.id, 0);
+        });
+
+        // computa pontos por corrida
+        for(const race of career.races){
+          const results = Array.isArray(race.results) ? race.results : [];
+          const fastestLapId = race.fastestLapDriverId || null;
+
+          // pontos posição
+          for(let i=0;i<results.length;i++){
+            const driverId = results[i];
+            if(!driverStats.has(driverId)) continue;
+            const pos = i+1;
+
+            // top 10
+            if(pos <= 10){
+              const pts = PTS_BY_POS[pos-1] || 0;
+              driverStats.get(driverId).points += pts;
+              driverStats.get(driverId).top10 += 1;
+            }
+
+            // vitórias e pódios
+            if(pos === 1) driverStats.get(driverId).wins += 1;
+            if(pos <= 3) driverStats.get(driverId).podiums += 1;
+          }
+
+          // ponto de volta mais rápida (se no top10)
+          if(fastestLapId && driverStats.has(fastestLapId)){
+            const idx = results.indexOf(fastestLapId);
+            const pos = idx >= 0 ? (idx+1) : 999;
+            if(pos <= 10){
+              driverStats.get(fastestLapId).points += 1;
+            }
+          }
+        }
+
+        // soma para equipes
+        for(const [driverId, st] of driverStats.entries()){
+          const d = driversById.get(driverId);
+          if(!d) continue;
+          const teamId = d.teamId;
+          if(teamPoints.has(teamId)){
+            teamPoints.set(teamId, teamPoints.get(teamId) + st.points);
+          }
+        }
+
+        // lista final pilotos
+        const driverRows = career.drivers.map(d=>{
+          const st = driverStats.get(d.id) || { points:0, wins:0, podiums:0, top10:0 };
+          return { ...d, ...st };
+        }).sort((a,b)=>{
+          if(b.points !== a.points) return b.points - a.points;
+          if(b.wins !== a.wins) return b.wins - a.wins;
+          if(b.podiums !== a.podiums) return b.podiums - a.podiums;
+          return (a.name || '').localeCompare(b.name || '');
+        });
+
+        // lista final equipes
+        const teamRows = career.teams.map(t=>{
+          const pts = teamPoints.get(t.id) || 0;
+          return { ...t, points: pts };
+        }).sort((a,b)=>{
+          if(b.points !== a.points) return b.points - a.points;
+          return (a.name || '').localeCompare(b.name || '');
+        });
+
+        return { driverRows, teamRows };
+      }
+
+      function imgWithFallback(imgEl, fallbackText){
+        imgEl.addEventListener('error', ()=>{
+          // troca para um "data svg" com iniciais
+          const svg =
+`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#1b1f2c"/>
+      <stop offset="1" stop-color="#0d0f16"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <text x="32" y="40" font-size="18" text-anchor="middle" fill="#e9eefc" font-family="system-ui" font-weight="900">${escapeXML(fallbackText)}</text>
+</svg>`;
+          imgEl.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+        });
+      }
+
+      function escapeXML(s){
+        return String(s || '')
+          .replace(/&/g,'&amp;')
+          .replace(/</g,'&lt;')
+          .replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;')
+          .replace(/'/g,'&apos;');
+      }
+
+      function initials(name){
+        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        const a = parts[0] ? parts[0][0] : 'P';
+        const b = parts.length>1 ? parts[parts.length-1][0] : '';
+        return (a + b).toUpperCase();
+      }
+
+      // =========================
+      // 2) Render
+      // =========================
+      function render(){
+        const career = getCareer();
+        document.getElementById('racesDone').textContent = career.races.length;
+
+        const { driverRows, teamRows } = calcStandings(career);
+
+        // Pilotos
+        const tbodyP = document.querySelector('#tablePilotos tbody');
+        tbodyP.innerHTML = '';
+        driverRows.forEach((d, idx)=>{
+          const tr = document.createElement('tr');
+
+          const tdPos = document.createElement('td');
+          tdPos.className = 'pos';
+          const badge = document.createElement('span');
+          badge.className = 'posBadge ' + (idx===0?'p1': idx===1?'p2': idx===2?'p3':'');
+          badge.textContent = String(idx+1);
+          tdPos.appendChild(badge);
+
+          const tdName = document.createElement('td');
+          const wrap = document.createElement('div');
+          wrap.className = 'nameCell';
+
+          const img = document.createElement('img');
+          img.className = 'avatar';
+          img.alt = d.name;
+          // padrão: assets/drivers/<id>.png (você pode trocar depois)
+          img.src = d.photo || ('assets/drivers/' + d.id + '.png');
+          imgWithFallback(img, initials(d.name));
+
+          const meta = document.createElement('div');
+          meta.className = 'nameMeta';
+          const b = document.createElement('b');
+          b.textContent = d.name;
+          const s = document.createElement('span');
+          s.textContent = d.teamName || d.teamId || '--';
+          meta.appendChild(b);
+          meta.appendChild(s);
+
+          wrap.appendChild(img);
+          wrap.appendChild(meta);
+          tdName.appendChild(wrap);
+
+          const tdPts = document.createElement('td');
+          tdPts.className = 'pts';
+          tdPts.textContent = String(d.points || 0);
+
+          tr.appendChild(tdPos);
+          tr.appendChild(tdName);
+          tr.appendChild(tdPts);
+
+          tbodyP.appendChild(tr);
+        });
+
+        document.getElementById('notePilotos').innerHTML =
+          'Critérios de desempate aplicados: <b>Pontos</b> → <b>Vitórias</b> → <b>Pódios</b> → ordem alfabética.';
+
+        // Equipes
+        const tbodyT = document.querySelector('#tableEquipes tbody');
+        tbodyT.innerHTML = '';
+        teamRows.forEach((t, idx)=>{
+          const tr = document.createElement('tr');
+
+          const tdPos = document.createElement('td');
+          tdPos.className = 'pos';
+          const badge = document.createElement('span');
+          badge.className = 'posBadge ' + (idx===0?'p1': idx===1?'p2': idx===2?'p3':'');
+          badge.textContent = String(idx+1);
+          tdPos.appendChild(badge);
+
+          const tdName = document.createElement('td');
+          const wrap = document.createElement('div');
+          wrap.className = 'nameCell';
+
+          const img = document.createElement('img');
+          img.className = 'logo';
+          img.alt = t.name;
+          img.src = t.logo || ('assets/teams/' + t.id + '.png');
+          imgWithFallback(img, t.short || (t.name ? t.name.slice(0,2).toUpperCase() : 'T'));
+
+          const meta = document.createElement('div');
+          meta.className = 'nameMeta';
+          const b = document.createElement('b');
+          b.textContent = t.name;
+          const s = document.createElement('span');
+          s.textContent = 'Construtor • ' + (t.engine || 'Motor');
+          meta.appendChild(b);
+          meta.appendChild(s);
+
+          wrap.appendChild(img);
+          wrap.appendChild(meta);
+          tdName.appendChild(wrap);
+
+          const tdPts = document.createElement('td');
+          tdPts.className = 'pts';
+          tdPts.textContent = String(t.points || 0);
+
+          tr.appendChild(tdPos);
+          tr.appendChild(tdName);
+          tr.appendChild(tdPts);
+
+          tbodyT.appendChild(tr);
+        });
+
+        document.getElementById('noteEquipes').innerHTML =
+          'Pontuação de equipes = soma dos pontos dos <b>dois pilotos</b> da equipe nas corridas já disputadas.';
+      }
+
+      // =========================
+      // 3) Dados padrão (2025)
+      // =========================
+      function getDefaultTeams(){
+        // ids curtos para usar em logos: assets/teams/<id>.png
+        return [
+          { id:'redbull',    name:'Oracle Red Bull Racing', short:'RBR', engine:'Honda RBPT' },
+          { id:'ferrari',    name:'Scuderia Ferrari', short:'FER', engine:'Ferrari' },
+          { id:'mercedes',   name:'Mercedes-AMG Petronas', short:'MER', engine:'Mercedes' },
+          { id:'mclaren',    name:'McLaren F1 Team', short:'MCL', engine:'Mercedes' },
+          { id:'aston',      name:'Aston Martin Aramco', short:'AST', engine:'Mercedes' },
+          { id:'alpine',     name:'BWT Alpine', short:'ALP', engine:'Renault' },
+          { id:'williams',   name:'Williams Racing', short:'WIL', engine:'Mercedes' },
+          { id:'sauber',     name:'Stake F1 Team', short:'SAU', engine:'Ferrari' },
+          { id:'rb',         name:'Visa Cash App RB', short:'RB', engine:'Honda RBPT' },
+          { id:'haas',       name:'MoneyGram Haas', short:'HAS', engine:'Ferrari' }
+        ];
+      }
+
+      function getDefaultDrivers(){
+        // ids para fotos: assets/drivers/<id>.png (você pode colocar as imagens depois)
+        return [
+          { id:'max_verstappen', name:'Max Verstappen', teamId:'redbull', teamName:'Oracle Red Bull Racing' },
+          { id:'sergio_perez',  name:'Sergio Pérez',   teamId:'redbull', teamName:'Oracle Red Bull Racing' },
+
+          { id:'charles_leclerc', name:'Charles Leclerc', teamId:'ferrari', teamName:'Scuderia Ferrari' },
+          { id:'carlos_sainz',    name:'Carlos Sainz',    teamId:'ferrari', teamName:'Scuderia Ferrari' },
+
+          { id:'lewis_hamilton',  name:'Lewis Hamilton',  teamId:'mercedes', teamName:'Mercedes-AMG Petronas' },
+          { id:'george_russell',  name:'George Russell',  teamId:'mercedes', teamName:'Mercedes-AMG Petronas' },
+
+          { id:'lando_norris',   name:'Lando Norris',   teamId:'mclaren', teamName:'McLaren F1 Team' },
+          { id:'oscar_piastri',  name:'Oscar Piastri',  teamId:'mclaren', teamName:'McLaren F1 Team' },
+
+          { id:'fernando_alonso', name:'Fernando Alonso', teamId:'aston', teamName:'Aston Martin Aramco' },
+          { id:'lance_stroll',    name:'Lance Stroll',    teamId:'aston', teamName:'Aston Martin Aramco' },
+
+          { id:'esteban_ocon',  name:'Esteban Ocon',  teamId:'alpine', teamName:'BWT Alpine' },
+          { id:'pierre_gasly',  name:'Pierre Gasly',  teamId:'alpine', teamName:'BWT Alpine' },
+
+          { id:'alex_albon',     name:'Alexander Albon', teamId:'williams', teamName:'Williams Racing' },
+          { id:'logan_sargeant', name:'Logan Sargeant',  teamId:'williams', teamName:'Williams Racing' },
+
+          { id:'valtteri_bottas', name:'Valtteri Bottas', teamId:'sauber', teamName:'Stake F1 Team' },
+          { id:'zhou_guanyu',     name:'Zhou Guanyu',     teamId:'sauber', teamName:'Stake F1 Team' },
+
+          { id:'yuki_tsunoda',  name:'Yuki Tsunoda',  teamId:'rb', teamName:'Visa Cash App RB' },
+          { id:'daniel_ricciardo', name:'Daniel Ricciardo', teamId:'rb', teamName:'Visa Cash App RB' },
+
+          { id:'kevin_magnussen', name:'Kevin Magnussen', teamId:'haas', teamName:'MoneyGram Haas' },
+          { id:'nico_hulkenberg', name:'Nico Hülkenberg', teamId:'haas', teamName:'MoneyGram Haas' }
+        ];
+      }
+
+      // =========================
+      // 4) UI (tabs / nav)
+      // =========================
+      const tabPilotos = document.getElementById('tabPilotos');
+      const tabEquipes = document.getElementById('tabEquipes');
+      const panelPilotos = document.getElementById('panelPilotos');
+      const panelEquipes = document.getElementById('panelEquipes');
+
+      tabPilotos.addEventListener('click', ()=>{
+        tabPilotos.classList.add('active');
+        tabEquipes.classList.remove('active');
+        panelPilotos.style.display = '';
+        panelEquipes.style.display = 'none';
+      });
+
+      tabEquipes.addEventListener('click', ()=>{
+        tabEquipes.classList.add('active');
+        tabPilotos.classList.remove('active');
+        panelEquipes.style.display = '';
+        panelPilotos.style.display = 'none';
+      });
+
+      document.getElementById('btnBack').addEventListener('click', ()=>{
+        if(history.length > 1) history.back();
+        else location.href = 'lobby.html?userTeam=' + encodeURIComponent(userTeam);
+      });
+
+      document.getElementById('btnReset').addEventListener('click', ()=>{
+        // reseta APENAS corridas, mantendo grid base (drivers/teams)
+        const career = getCareer();
+        career.races = [];
+        setCareer(career);
+        render();
+        alert('Classificação resetada. Corridas feitas = 0.');
+      });
+
+      // =========================
+      // 5) Inicializa
+      // =========================
+      render();
+
+    })();
+  </script>
+</body>
+</html>
